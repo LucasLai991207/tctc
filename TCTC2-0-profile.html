@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+    <head>
+        <meta charset="UTF-8">
+        
+    
+        <title>TCTC2.0</title>
+        <link rel="stylesheet" href="TCTC2-0-intro_lobby.css">
+        <link rel="stylesheet" href="TCTC2-0-main_lobby.css">
+        <link rel="stylesheet" href="TCTC2-0-profile.css">
+
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@200;300;400;500;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@200;300;400;500&display=swap" rel="stylesheet">
+    </head>
+    <body >
+        <nav>
+            <img src="TCTC2.0 logo.png" class="logo_style" onclick="window.location.href='TCTC2-0-main.html'">
+            <div class="nav_css">
+                <div>登入</div>
+                <div>排行榜</div>
+                <div>關於我們</div>
+                <div onclick="window.location.href='TCTC2-0-profile.html'">個人空間</div>
+            </div>
+        </nav>
+        <main class="profile_main_style">   
+            <section class="profile_first_section">
+                <!--箭頭-->
+               <div class="main_lobby_main_frame"> 
+                    <div class="main_lobby_back_to_intro_button" onclick="window.location.href='TCTC2-0-main.html'">
+                        ←
+                    </div>
+                </div>
+                <!--大白塊-->
+                <div class="profile_main_container"> <!--flex display-->
+                    <div class="profile_main_block">
+                        <div class="profile_block1">
+                            <p class="profile_block1-1">帳號資料</p>
+
+                            <p class="profile_block1-2">用戶姓名
+                                <input id="profile_username_input_block"type="text" name="username" class="profile_block1_input1" placeholder=" 輸入您想要更改的姓名" maxlength="16"> 
+                            </p>
+
+                            <p class="profile_block1-3">聯絡信箱
+                            <input id="profile_email_input_block"type="email" name="email" class="profile_block1_input1" placeholder="  xxxxx@gmail.com" maxlength="30"> 
+                            </p>
+
+                            <p class="profile_block1-3">個人簡介
+                            <textarea id="profile_intro_input_block"type="text" name="username" class="profile_block1_input2" placeholder=" 試著輸入點什麼..." style="resize: none;"></textarea>
+                            </p>
+
+                            <button class="profile_update_btn" onclick="Update_profile()">更新資料</button>
+                        </div>
+                    </div>
+                    <div id="profile_history_block"class="profile_main_block">
+                        <div class="profile_block1">
+                            <p class="profile_block1-1">個人資訊</p>
+                            <div style="display: flex; flex-direction: column;gap: 1rem;">
+                            <p class="profile_block1-2">用戶姓名&nbsp
+                                <span id="profile_history_default_name">玩家</span>
+                            </p>
+
+                            <p class="profile_block1-3">最高段位&nbsp
+                                <span id="profile_history_highest_rank">初學者</span>
+
+                            </p>
+
+                            <p class="profile_block1-3">目前段位&nbsp
+                                <span id="profile_history_current_rank">初學者</span>
+
+                            </p>
+
+                        </div>                    </div>
+                    <div class="profile_achievement_block">
+
+                    </div>
+                </div>
+
+                </div>
+            </section>
+        </main>
+        <footer>
+
+        </footer>
+        <script src="TCTC2-0-profile.js"></script>
+    </body>
+</html>

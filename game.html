@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="zh_TW">
+<head>
+    <meta charset="UTF-8">
+    <title>TCTC2.0 — 練習</title>
+    <link rel="stylesheet" href="TCTC2-0-intro_lobby.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@200;300;400;500;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --darker-blue: #0b1a37;
+            --dark-blue: #0B1E36;
+            --light-blue: #0e243e;
+            --champagne-gold: #c9a84c;
+        }
+        body {
+            background-color: var(--dark-blue);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        nav {
+            display: flex;
+            justify-content: space-between;
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            background-color: rgba(245, 243, 243, 0.85);
+            padding: 0.1rem;
+            border-bottom: 2px solid #C9A84C;
+            box-shadow: 0px 4px 15px rgba(0,0,0,0.7);
+            height: 58px;
+            z-index: 9999;
+        }
+        .nav_css {
+            display: flex;
+            flex-direction: row-reverse;
+            gap: 15px;
+            align-items: center;
+        }
+        .nav_css div {
+            font-size: 1.1rem;
+            color: rgb(34, 18, 48);
+            margin-right: 30px;
+            cursor: pointer;
+            transition: 200ms ease;
+        }
+        .nav_css div:hover { color: #C9A84C; }
+        .logo_style { margin-left: 10px; cursor: pointer; }
+        .game_back_btn {
+            position: fixed;
+            top: 70px;
+            left: 2rem;
+            height: 2.3rem;
+            width: 2.3rem;
+            background-color: var(--dark-blue);
+            border: 1px solid rgba(201,168,76,0.6);
+            border-radius: 0.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: #fff;
+            font-weight: 300;
+            cursor: pointer;
+            transition: all 250ms ease-in-out;
+            box-shadow: 0 0 1rem rgba(0,0,0,0.8);
+            z-index: 100;
+        }
+        .game_back_btn:hover {
+            background-color: var(--champagne-gold);
+            color: var(--dark-blue);
+        }
+        .game_main {
+            margin-top: 110px;
+            width: 70vw;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+        }
+        .game_stage_info { text-align: center; }
+        .game_stage_id {
+            color: var(--champagne-gold);
+            font-size: 0.9rem;
+            letter-spacing: 3px;
+        }
+        .game_stage_name {
+            color: #fff;
+            font-size: 2rem;
+            font-weight: 200;
+            margin-top: 0.3rem;
+        }
+        .gmae_stage_name3{
+            color: var(--champagne-gold);
+            text-shadow: 0px 0px 2px var(--champagne-gold);
+        }
+        .gmae_stage_name3::after{
+            content: " **";
+        }
+        .gmae_stage_name3::before{
+            content: "** ";
+        }
+        .game_char_container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.5rem;
+
+            width: 120%;
+            max-width: 1200px;
+
+            padding: 1rem 0.6rem;
+
+            background-color: var(--darker-blue);
+            border-radius: 12px;
+            border: 1px solid rgba(201,168,76,0.2);
+
+        }
+        .game_char_box {
+            width: 4rem;
+            height: 5rem;
+
+            background-color: var(--light-blue);
+            border: 1px solid rgba(201,168,76,0.3);
+
+            border-radius: 6px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            font-size: 3rem;
+
+            color: #fff;
+
+            transition: all 150ms ease;
+            
+            padding-left: 0.2rem;
+            padding-bottom: 0.2rem;
+        }
+        @media(max-width : 1400px){
+            .game_char_box {
+            width: 4rem;
+            height: 4rem;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            font-size: 2.6rem;
+
+            color: #fff;
+            transition: all 250ms ease;
+
+            padding-left: 0.2rem;
+            padding-bottom: 0.2rem;
+        }
+        }
+        /* 目前要打的那格：金框發光 */
+        .game_char_box.current {
+            outline: 2px solid var(--champagne-gold);
+            box-shadow: 0 0 6px rgba(201,168,76,0.5);
+
+            background-color: var(--darker-blue)
+        }
+        /* 打對的格子：綠色 */
+        .game_char_box.correct {
+            background-color: rgba(80,180,100,0.2);
+
+            outline: 1px solid rgba(80,180,100,0.7);
+
+            color: rgb(140,220,140);
+        }
+        /* 打錯的格子：紅色 */
+        .game_char_box.wrong {
+            background-color: rgba(200,60,60,0.5);
+            outline: 2px solid rgba(200,60,60,0.7);
+        }
+        .game_input_hint {
+            color: gray;
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+        }
+        /* 結果畫面預設隱藏，加上 .show 才顯示 */
+        .game_result {
+            display: none;
+            
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+
+            width: 100%;
+
+            padding: 2rem;
+
+            background-color: var(--darker-blue);
+
+            border-radius: 12px;
+            border: 1px solid rgba(201,168,76,0.3);
+        }
+        .game_result.show { display: flex; }
+        .game_result_title {
+            color: var(--champagne-gold);
+
+            font-size: 1rem;
+            letter-spacing: 4px;
+        }
+        .game_result_wpm {
+            color: #fff;
+
+            font-size: 4rem;
+            font-weight: 200;
+        }
+        .game_result_wpm span {
+            font-size: 1.2rem;
+
+            color: gray;
+            margin-left: 0.5rem;
+        }
+        .game_result_row { display: flex; gap: 3rem; }
+        .game_result_stat { text-align: center; }
+        .game_result_stat_num {
+            color: #fff;
+            font-size: 2rem;
+
+            font-weight: 200;
+        }
+        .game_result_stat_label {
+            color: gray;
+
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+
+            margin-top: 0.3rem;
+        }
+        .game_retry_btn {
+            box-sizing: border-box;
+
+            background-color: var(--champagne-gold);
+            color: var(--dark-blue);
+
+            padding: 0.7rem 2rem;
+
+            font-size: 1rem;
+            font-family: "Noto Serif TC", serif;
+            letter-spacing: 3px;
+
+            border: none;
+            border-radius: 5px;
+
+            cursor: pointer;
+
+            transition: all 300ms ease;
+        }
+        .next_game_btn {
+            box-sizing: border-box;
+
+            background-color: var(--champagne-gold);
+            color: var(--dark-blue);
+
+            padding: 0.8rem 3rem;
+
+            font-size: 1.1rem;
+            font-family: "Noto Serif TC", serif;
+            letter-spacing: 3px;
+
+            border: none;
+            border-radius: 5px;
+
+            cursor: pointer;
+
+            transition: all 300ms ease;
+        }
+        .game_retry_btn:hover {
+            background-color: var(--dark-blue);
+            color: var(--champagne-gold);
+            border: 1px solid var(--champagne-gold);
+        }
+        .next_game_btn:hover {
+            background-color: var(--dark-blue);
+            color: var(--champagne-gold);
+            border: 1px solid var(--champagne-gold);
+        }
+    </style>
+</head>
+<body>
+    <nav id="nav">
+        <img src="TCTC2.0 logo.png" class="logo_style" onclick="window.location.href='TCTC2-0-main.html'">
+        <div class="nav_css">
+            <div>登入</div>
+            <div>排行榜</div>
+            <div>關於我們</div>
+            <div>個人資訊</div>
+        </div>
+    </nav>
+
+    <div class="game_back_btn" onclick="window.location.href='TCTC2-0-main.html'">←</div>
+
+    <main class="game_main">
+        <div class="game_stage_info">
+            <div class="game_stage_id" id="game_stage_id">—</div>
+            <div class="game_stage_name" id="game_stage_name">載入中...</div>
+            <div class="gmae_stage_name3" id="game_stage_name3">無提示詞</div>
+        </div>
+
+        <div class="game_char_container" id="game_char_container"></div>
+
+        <div class="game_input_hint">--真正的高手打字從不看鍵盤--</div>
+
+        <div class="game_result" id="game_result" style="z-index: 9999;">
+            <div class="game_result_title">RESULT</div>
+            <div class="game_result_wpm" id="result_wpm">0<span>WPM</span></div>
+            <div class="game_result_row">
+                <div class="game_result_stat">
+                    <div class="game_result_stat_num" id="result_acc">0%</div>
+                    <div class="game_result_stat_label">準確率</div>
+                </div>
+                <div class="game_result_stat">
+                    <div class="game_result_stat_num" id="result_chars">0</div>
+                    <div class="game_result_stat_label">正確字數</div>
+                </div>
+                <div class="game_result_stat">
+                    <div class="game_result_stat_num" id="result_errors">0</div>
+                    <div class="game_result_stat_label">錯誤次數</div>
+                </div>
+            </div>
+            <button class="game_retry_btn" onclick="Init()">再試一次</button>
+            <button class="next_game_btn" onclick="Find_next_game(stageId)">下一關</button>
+        </div>
+        <!-- tuturial overlay-->
+        <div id="black_overlay" style="width: 100vw; height: 100vh;background-color: rgba(0,0,0,0.4);z-index: 9998;position:fixed;top: 0;left: 0;display: none;"></div>
+        <div id="tutorial_popup" style="display:none; position:fixed; top:30%; left:50%; transform:translate(-50%,-50%); background-color:var(--darker-blue); border:1px solid #c9a84c; border-radius:12px; padding:2rem; z-index:9999; width:30rem;box-shadow: 0px 0px 15px #c9a84c;">
+            <p style="color:#c9a84c; font-size:1.2rem; margin-bottom:1rem;">名詞解釋</p>
+            <p style="color:white; line-height:2rem;">
+                <b style="color:#c9a84c;">WPM</b>（每分鐘字數）<br>
+                每分鐘打幾個中文字，以每個字平均3個注音計算。<br><br>
+                <b style="color:#c9a84c;">準確率</b><br>
+                正確按鍵 ÷ 總按鍵次數，越高代表打字越穩定。
+            </p>
+            <button onclick="document.getElementById('tutorial_popup').style.display='none'; document.getElementById('black_overlay').style.display = 'none'" style="margin-top:1.5rem; background-color:#c9a84c; border:none; padding:0.5rem 1.5rem; border-radius:4px; cursor:pointer;">我知道了</button>
+        </div>
+    </main>
+
+    <script src="TCTC2-0-level_data.js"></script>
+    <script>
+
+        // ===== 讀取 URL 參數 =====
+        // window.location.search 是網址裡 ? 之後的部分，例如 "?stage=1-2-1"
+        // URLSearchParams 把它解析成可以用 .get() 查詢的格式
+        // params.get("stage") 取出 stage 的值，存進 stageId
+        const params = new URLSearchParams(window.location.search)
+
+        const stageId = params.get("stage")  //***********************
+
+        //檢查是否存在下一關卡得flag
+        let next_stage_is_exists = true
+
+        // ===== 注音對照表 =====
+        // key 是鍵盤按鍵，value 是對應的注音符號
+        const bopomofo = {
+            "1":"ㄅ","q":"ㄆ","a":"ㄇ","z":"ㄈ",
+            "2":"ㄉ","w":"ㄊ","s":"ㄋ","x":"ㄌ",
+            "e":"ㄍ","d":"ㄎ","c":"ㄏ",
+            "r":"ㄐ","f":"ㄑ","v":"ㄒ",
+            "5":"ㄓ","t":"ㄔ","g":"ㄕ","b":"ㄖ",
+            "y":"ㄗ","h":"ㄘ","n":"ㄙ",
+            "u":"ㄧ","j":"ㄨ","m":"ㄩ",
+            "8":"ㄚ","i":"ㄛ","k":"ㄜ",",":"ㄝ",
+            "9":"ㄞ","o":"ㄟ","l":"ㄠ",".":"ㄡ",
+            "0":"ㄢ","p":"ㄣ",";":"ㄤ","/":"ㄥ",
+            "=":"ㄦ","3":"ˇ","4":"ˋ","7":"˙","6":"ˊ", " ":" ", "Enter":"↵"
+        }
+
+
+        // ===== 遊戲狀態變數 =====
+        let target = ""          // 這關要打的字串，例如 "ㄑㄨㄑㄨ"
+        let current = 0          // 目前指到第幾個字（從 0 開始）
+        let wrong_input = false  // 目前是否處於打錯卡住的狀態
+        let wrong_key_times = 0  // 總共打錯幾次
+        let target_get = 0       // 總共打對幾個字
+        let isRunning = false    // 計時是否已經開始
+        let startTime = null     // 開始的時間點（毫秒）
+        let boxes = []           // 存所有方框 div 的陣列，方便用 boxes[0] boxes[1] 取得
+
+
+
+        // ===== FindStage：在 Level_Data 裡找到對應的關卡資料 =====
+        function FindStage(id) {
+            // 第一層：跑 Level_Data 的每個 key（easy / medium / hard）
+            for (const diff in Level_Data) {
+                // 第二層：跑該難度的每個章節
+                for (const chapter of Level_Data[diff].chapter) {
+                    // 有些章節可能沒有 stage（例如 hard），跳過
+                    if (!chapter.stage) continue
+                    // 第三層：跑該章節的每個關卡
+                    for (const stage of chapter.stage) {
+                        // 找到 id 符合的那筆，立刻回傳，迴圈停止
+                        if (stage.id === id) return stage
+                    }
+                }
+            }
+            return null  // 找不到就回傳 null
+        }
+
+
+        // ===== Init：初始化畫面，每次「再試一次」也會呼叫這裡 （渲染關卡）=====
+
+        function Init() {
+            // Find_next_game()
+            // if(next_stage_is_exists){
+            //     document.querySelector(".next_game_btn").style.display = "block";
+
+            // }
+            // else{
+            //     document.querySelector(".next_game_btn").style.display = "none";
+
+            // }
+            // 用 FindStage 找到這關的資料
+            const stage = FindStage(stageId)
+
+            // 找不到就顯示錯誤訊息，停止執行
+            if (!stage) {
+                document.getElementById("game_stage_name").textContent = "找不到關卡：" + stageId
+                return
+            }
+            if(!stage.name3){
+                document.getElementById("game_stage_name3").remove()
+            }
+            else{
+                document.getElementById("game_stage_name3").textContent = stage.name3
+
+            }
+
+            // 把關卡 id 和名稱顯示在畫面上
+            document.getElementById("game_stage_id").textContent = stage.id
+            document.getElementById("game_stage_name").textContent = stage.name + (stage.name2 ? " " + stage.name2 : "")
+
+            // 把 target 設成這關的練習字串
+            // 如果 stage.target 是空的，就用空字串
+            target = stage.target || ""
+
+            // 重置所有遊戲狀態
+            current = 0
+            wrong_input = false
+            wrong_key_times = 0
+            target_get = 0
+            isRunning = false
+            startTime = null
+
+            // 隱藏結果畫面（移除 show class）
+            document.getElementById("game_result").classList.remove("show")
+
+            // 清空方框區，準備重建
+            const container = document.getElementById("game_char_container")
+            container.innerHTML = ""
+            boxes = []
+
+
+
+            // 把 target 字串拆成每個字，每個字建一個方框 div
+            // split("") 把字串拆成陣列，例如 "ㄑㄨ" → ["ㄑ","ㄨ"]
+            // forEach 的第二個參數 i 是索引（第幾個字）
+
+            //介紹部分拆出來
+            if(stage.type === "基本介紹"){
+                const hint = document.querySelector(".game_input_hint")
+                hint.style.display = "none"
+                if(stage.id === "1-1-1"){
+                    game_char_container.innerHTML = `
+                    <div style="text-align: left; max-width: 900px; margin: 0 auto; font-family: 'Noto Serif TC', serif;color: white;font-weight: 150;position: relative;font-size: 0.9rem">
+                        <p style="font-size: 1.4rem; color: #c9a84c; text-align: center; margin-bottom: 1.5rem; font-weight: 500;">
+                            開始打字的第一步：摸到那條「線」
+                        </p>
+                        
+                        <p style="margin-bottom: 1.2rem; color: #ffffff;font-weight: 100;">
+                            所有打字高手在打字時，眼睛是不看鍵盤的。他們之所以不會按錯，是因為雙手食指隨時都靠在<b style="font-weight: 400;color: #c9a84c">「基準鍵（Home Row）」</b>上。
+                        </p>
+
+                        <div style="background-color: rgba(14, 36, 62, 0.6); padding: 1rem; border-radius: 8px; border-left: 4px solid #c9a84c; margin-bottom: 1.5rem;">
+                            <b style="color: #c9a84c;">請現在跟著做：</b><br>
+                            1. 將左手食指放在鍵盤的 <b style=" color: #c9a84c;font-size: 1.1rem">F</b> 鍵上（注音 <b style=" color: #c9a84c;font-size: 1.1rem">ㄑ</b>）<br>
+                            2. 將右手食指放在鍵盤的 <b style=" color: #c9a84c;font-size: 1.1rem">J</b> 鍵上（注音 <b style=" color: #c9a84c;font-size: 1.1rem">ㄨ</b>）
+                        </div>
+
+                        <p style="margin-bottom: 1.2rem; line-height: 1.8rem;">
+                            💡 <b>摸到了嗎？</b> <br>
+                            這兩個按鍵上有一個<b style="font-weight: 400;color: #c9a84c">凸起的小橫線</b>。這條橫線就是盲打的基礎。不論你的手指移到多遠去按別的字，按完後，兩隻食指都必須立刻<b>「彈回」</b>這兩個定位點。
+                        </p>
+
+                        <p style="color: gray; font-size: 0.9.rem; text-align: center; margin-top: 2rem;">
+                            準備好將雙手放到正確位置了嗎？
+                        </p>
+                        <button style="width: 10rem; height: 3rem; margin: auto; margin-top: 1.5rem; background-color: #c9a84c; display: flex; justify-content: center; align-items: center; color: var(--dark-blue); font-family: 'Noto Serif TC', serif; font-size: 1rem; letter-spacing: 2px; border: none; border-radius: 4px; cursor: pointer; transition: all 200ms ease;" 
+                                onmouseover="this.style.backgroundColor='#fff'; this.style.boxShadow='0 0 10px #c9a84c';" 
+                                onmouseout="this.style.backgroundColor='#c9a84c'; this.style.boxShadow='none';"
+                                onclick="window.location.href='game.html?stage=1-1-2'">
+                            下一頁 →
+                        </button>                    </div>`
+                }
+                else if(stage.id === "1-1-2"){
+                    game_char_container.innerHTML = `
+                        <div style="text-align: left; max-width: 900px; margin: 0 auto; font-family: 'Noto Serif TC', serif; color: white; font-weight: 150; position: relative;font-size: 0.9rem">
+                            <p style="font-size: 1.4rem; color: #c9a84c; text-align: center; margin-bottom: 1.5rem; font-weight: 500;">
+                                探索鍵盤：什麼是「大千式排列」？
+                            </p>
+                            
+                            <p style="margin-bottom: 1.2rem; color: #ffffff; font-weight: 100; line-height: 1.8rem;">
+                                大千式排列是由大千公司設計、後來成為台灣國家標準（CNS 2690）的注音輸入法鍵盤排列方式。<br>市面上99%的鍵盤佈局都為此種形式，掌握他的排列規則，能有效提升字速度。                            </p>
+
+                            <div style="background-color: rgba(14, 36, 62, 0.6); padding: 1.2rem; border-radius: 8px; border-left: 4px solid #c9a84c; margin-bottom: 1.5rem; line-height: 1.8rem;">
+                                <b style="color: #c9a84c; font-size: 1.1rem;">．三大排列隱藏規則：</b><br>
+                                <span style="color: #c9a84c;font-size: 1rem;font-weight: 500;">1. 聲母由上往下排：</span> 鍵盤最左邊那一縱列，<b>1➔Q➔A➔Z</b>，剛好對應 <b style="font-size: 1rem;">ㄅㄆㄇㄈ</b>接著往右看第二列 <b>&nbsp &nbsp &nbsp2➔W➔S➔X</b>，就是 <b style="font-size: 1rem;">ㄉㄊㄋㄌ</b>。它是「由上往下、再由左往右」整齊排列的。<br>                                
+                                <span style="color: #c9a84c;font-size: 1rem;font-weight: 500;"">2. 韻母藏在右手邊：</span> 介音（ㄧㄨㄩ）和韻母（ㄚㄛㄜㄝ...）幾乎全部集中在鍵盤的<b>右手邊</b>。<br>
+                                <span style="color: #c9a84c;font-size: 1rem;font-weight: 500;"">3. 聲調在鍵盤左下：</span> 輕聲、二聲、三聲、四聲（˙ ˊ ˇ ˋ）整齊地排在數字鍵 3、4、6 和空白鍵。
+                            </div>
+
+                            <p style="margin-bottom: 1.2rem; line-height: 1.8rem;">
+                                💡 <b style="color: #c9a84c;font-size: 1rem;">為什麼要這樣設計？</b> <br>
+                                因為打一個完整的中文字，順序一定是<b>「聲母 ➔ 介音 ➔ 韻母 ➔ 聲調」</b>。這種排列讓你的雙手在打字時，自然會形成<b>「左右交替」</b>的流暢節奏，打起來速度最快、最省力。
+                            </p>
+
+                            <p style="color: gray; font-size: 0.9rem; text-align: center; margin-top: 2rem;">
+                                初步理解大千式鍵盤後，我們要準備正式敲下第一個字了！
+                            </p>
+                            
+                            <button style="width: 10rem; height: 3rem; margin: auto; margin-top: 1.5rem; background-color: #c9a84c; display: flex; justify-content: center; align-items: center; color: var(--dark-blue); font-family: 'Noto Serif TC', serif; font-size: 1rem; letter-spacing: 2px; border: none; border-radius: 4px; cursor: pointer; transition: all 200ms ease;" 
+                                    onmouseover="this.style.backgroundColor='#fff'; this.style.boxShadow='0 0 10px #c9a84c';" 
+                                    onmouseout="this.style.backgroundColor='#c9a84c'; this.style.boxShadow='none';"
+                                    onclick="window.location.href='game.html?stage=1-1-3'">
+                                下一頁 →
+                            </button>
+                        </div>`
+                }
+                else if(stage.id === "1-1-3"){
+                    game_char_container.innerHTML = `
+                        <div style="text-align: left; max-width: 900px; margin: 0 auto; font-family: 'Noto Serif TC', serif; color: white; font-weight: 150; position: relative; font-size: 0.9rem">
+                            <p style="font-size: 1.4rem; color: #c9a84c; text-align: center; margin-bottom: 1.5rem; font-weight: 500;">
+                                鍵盤指法：十指的「守備範圍」
+                            </p>
+                            
+                            <p style="margin-bottom: 1.2rem; color: #ffffff; font-weight: 100; line-height: 1.8rem;">
+                                想提升打字速度，<b>「各司其職」</b>至關重要。鍵盤上的按鍵不是垂直的，而是向左傾斜。每隻手指都有自己專屬管轄的「傾斜縱列」！
+                            </p>
+
+                            <div style="background-color: rgba(14, 36, 62, 0.6); padding: 1.2rem; border-radius: 8px; border-left: 4px solid #c9a84c; margin-bottom: 1.5rem; line-height: 1.8rem;">
+                                <b style="color: #c9a84c; font-size: 1.1rem;">✋ 雙手手指正確分工：</b><br>
+                                <span style="color: #c9a84c; font-size: 1rem;">1. 左手四指（由外往內）：</span> <br>
+                                 • 小指專管：<b style="font-size: 1.2rem">ㄅ ㄆ ㄇ ㄈ</b><br>
+                                 • 無名指管：<b style="font-size: 1.2rem">ㄉ ㄊ ㄋ ㄌ</b><br>
+                                 • 中指專管：<b style="font-size: 1.2rem"> ˇ ㄍ ㄎ </b><br>
+                                 • 食指管轄：<b style="font-size: 1.2rem">4 ㄐ ㄑ ㄏ 5 ㄔ ㄕ ㄒ 6</b><br>
+                                <span style="color: #c9a84c; font-size: 1rem;">2. 右手四指（由內往外）：</span> <br>
+                                 • 食指管轄：<b style="font-size: 1.2rem">7 ㄗ ㄘ ㄖ ˙ ㄧ ㄨ ㄙ ㄩ</b><br>
+                                 • 中指專管：<b style="font-size: 1.2rem">ㄚ ㄛ ㄜ ㄝ</b><br>
+                                 • 無名指管：<b style="font-size: 1.2rem">ㄞ ㄟ ㄠ ㄡ 0</b><br>
+                                 • 小指專管：<b style="font-size: 1.2rem">ㄦ ㄣ ㄤ ㄥ</b> 以及右側所有標點符號與功能鍵。<br>
+                                <span style="color: #c9a84c; font-size: 1rem;">3. 大拇指：</span> 雙手大拇指只專職負責敲擊<b>空白鍵</b>。
+                            </div>
+
+                            <p style="margin-bottom: 1.2rem; line-height: 1.8rem;">
+                                💡 <b>盲打的核心心法：</b> <br>
+                                當某一隻手指移開基準鍵去按別的字時，<b>其他手指要盡量留在原位</b>，按完的那隻手指要立刻「彈回」定位點（F 和 J）。只要保持這個節奏，打字速度就會開始暴增！
+                            </p>
+
+                            <p style="color: gray; font-size: 1.5rem; text-align: center; margin-top: 2rem;">
+                                切記，正確率大於速度!！永遠記住這點 然後開始你的打字旅程吧~
+                            </p>
+                            
+                            <button style="width: 10rem; height: 3rem; margin: auto; margin-top: 1.5rem; background-color: #c9a84c; display: flex; justify-content: center; align-items: center; color: var(--dark-blue); font-family: 'Noto Serif TC', serif; font-size: 1rem; letter-spacing: 2px; border: none; border-radius: 4px; cursor: pointer; transition: all 200ms ease;" 
+                                    onmouseover="this.style.backgroundColor='#fff'; this.style.boxShadow='0 0 10px #c9a84c';" 
+                                    onmouseout="this.style.backgroundColor='#c9a84c'; this.style.boxShadow='none';"
+                                    onclick="window.location.href='game.html?stage=1-2-1'">
+                                進入實戰練習 →
+                            </button>
+                        </div>`
+                }
+            }else if(stage.type === "注音練習"){
+                target.split("").forEach(function(char, i) {
+                    const box = document.createElement("div")   // 建一個 div
+                    box.classList.add("game_char_box")           // 加上方框樣式
+                    box.textContent = char                        // 把注音字放進去
+                    if (i === 0) box.classList.add("current")   // 第一個格子加上金框（當前位置）
+                    container.appendChild(box)                   // 把 div 放進畫面
+                    boxes.push(box)                              // 同時存進 boxes 陣列
+                })
+
+
+            }
+                
+        }
+
+
+        //===== ShowResult：打完後計算並顯示結果 =====
+        function ShowResult() {
+
+            const stage = FindStage(stageId)
+
+            //計算花了幾秒（現在時間 - 開始時間，單位毫秒，除以1000換成秒）
+            const timeUsed = (Date.now() - startTime) / 1000
+
+            //WPM 計算：(打對的注音數 / 每個中文字平均3個注音) / (花費時間 / 60秒)
+            const wpm = Math.ceil((target_get / 3) / (timeUsed / 60))
+
+            //準確率：1 - (打錯次數 / 總按鍵次數)
+            //總按鍵次數 = 打對 + 打錯
+            const acc = target_get > 0
+                ? Math.round((1 - wrong_key_times / (target_get + wrong_key_times)) * 100)
+                : 0
+
+            //把數字填進對應元素
+            document.getElementById("result_wpm").innerHTML = wpm + '<span>WPM</span>'
+            document.getElementById("result_acc").textContent = acc + "%"
+            document.getElementById("result_chars").textContent = target_get
+            document.getElementById("result_errors").textContent = wrong_key_times
+
+            //顯示結果畫面
+            document.getElementById("game_result").classList.add("show")
+            document.getElementById("game_result").style.boxShadow = "0px 0px 15px #c9a84c"
+            document.getElementById("game_result").style.border = "2px solid #c9a84c"
+
+
+            //隱藏next btn
+            const nextBtn = document.querySelector(".next_game_btn")
+            let hasNext = false
+
+            for (const difficulty in Level_Data) {
+                for (const chapter of Level_Data[difficulty].chapter) {
+                    if (!chapter.stage) continue
+                    for (let i = 0; i < chapter.stage.length; i++) {
+                        if (chapter.stage[i].id === stageId) {
+                            // 同章節還有下一關
+                            if (i + 1 < chapter.stage.length) hasNext = true
+                        }
+                    }
+                }
+            }
+
+            if(hasNext){
+                nextBtn.style.display = "block"
+            }
+            else{
+                nextBtn.style.display = "none"
+            }
+
+
+            if(stage.id === "1-2-1"){
+                console.log("1-2-1")
+                intro_overlay = document.getElementById("tutorial_popup")
+                intro_overlay.style.display = "block"
+                document.getElementById("black_overlay").style.display = "block"
+            }
+        }
+
+        function Find_next_game(currentId){
+
+            
+
+            const current_stage = FindStage(stageId)
+            console.log("目前stage: ", current_stage)
+
+
+            for( const difficulty in Level_Data){
+                for (const chapter of Level_Data[difficulty].chapter){
+
+                    if(!chapter.stage) continue;
+
+                    for(let i = 0 ; i < chapter.stage.length ; i++){
+                        
+                        if (chapter.stage[i].id === currentId){
+                            console.log("找到currentid :", currentId)
+
+                            if(i + 1 < chapter.stage.length){
+                                console.log("此stage還有剩餘關卡")
+
+                                const next_stage = chapter.stage[i+1]
+
+                                console.log("跳轉到", next_stage)
+
+                                window.location.href = `game.html?stage=${next_stage.id}`
+                            }
+                            return;
+                        }
+                    }
+                }
+            }
+            
+
+        }
+
+
+
+        // ===== 鍵盤事件：每次按下按鍵都會觸發 =====
+        document.addEventListener("keydown", function(event) {
+
+            // 如果沒有練習內容，或方框還沒建好，直接忽略
+            if (target === "" || boxes.length === 0) return
+
+            // 如果已經打完全部（current 超出範圍），忽略
+            if (current >= target.length && !wrong_input) return
+
+            const key = event.key  // 取得按下的按鍵名稱
+
+            // 空白鍵預設會讓頁面捲動，這裡阻止這個預設行為
+            if (key === " ") event.preventDefault()
+
+            // ---- 處理 Backspace（退格）----
+            if (key === "Backspace"){
+                if (wrong_input) {
+                    // 目前打錯卡住：清除錯誤狀態，恢復金框
+                    wrong_input = false
+                    boxes[current].classList.remove("wrong")
+                    boxes[current].classList.add("current")
+                    return
+                }
+                // 沒有打錯：往前退一格
+                if (current <= 0) return  // 已經在第一格，不能再退
+                current--
+                target_get--
+                boxes[current].classList.remove("correct")
+                boxes[current].classList.add("current")
+                return
+            }
+
+            if(key === "Enter"){
+                event.preventDefault()
+
+                if (bopomofo[key] === undefined) return
+            }
+
+            // 按的鍵不在注音對照表裡，忽略（例如 Shift、Ctrl 等）
+            if (bopomofo[key] === undefined) return
+
+            // 第一次按注音鍵才開始計時
+            if (!isRunning) {
+                isRunning = true
+                startTime = Date.now()  // 記錄開始時間（毫秒）
+            }
+
+            // 目前卡在打錯狀態，不接受新輸入
+            if (wrong_input) return
+
+            // ---- 判斷對錯 ----
+            if (target[current] === bopomofo[key]) {
+                // 打對了
+                boxes[current].classList.remove("current", "wrong")  // 移除金框和紅框
+                boxes[current].classList.add("correct")               // 加上綠框
+                target_get++   // 打對數量 +1
+                current++      // 移到下一格
+
+                if (current < boxes.length) {
+                    // 還有下一格，把金框移過去
+                    boxes[current].classList.add("current")
+                } else {
+                    // 已經是最後一格，顯示結果
+                    ShowResult()
+                }
+            } else {
+                // 打錯了
+                wrong_key_times++   // 錯誤次數 +1
+                wrong_input = true  // 設為卡住狀態
+                boxes[current].classList.remove("current")  // 移除金框
+                boxes[current].classList.add("wrong")       // 加上紅框
+            }
+        })
+
+
+        // 頁面載入後立刻執行 Init，把畫面建好
+        Init()
+
+    </script>
+</body>
+</html>

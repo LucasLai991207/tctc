@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh_TW">
+<head>
+    <meta charset="UTF-8">
+    <title>TCTC2.0</title>
+    <link rel="stylesheet" href="TCTC2-0-intro_lobby.css">
+    <link rel="stylesheet" href="TCTC2-0-main_lobby.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@200;300;400;500;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@200;300;400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav id="nav">
+        <img src="TCTC2.0 logo.png" class="logo_style" onclick="window.location.href='TCTC2-0-main.html'">
+        <div class="nav_css">
+            <div>登入</div>
+            <div>排行榜</div>
+            <div>關於我們</div>
+            <div onclick="window.location.href='TCTC2-0-profile.html'">個人空間</div>
+        </div>
+    </nav>
+    <main id="main_lobby_frame">
+        <section id="main_lobby_main_frame">
+            <div class="main_lobby_main_frame">
+                <div class="main_lobby_back_to_intro_button" onclick="window.location.href='TCTC2-0-intro.html'">
+                    ←
+                </div>
+                <div class="main_lobby_main_frame_profileblock">
+                    <div class="profile_avatar_container" id="player_avatar_container">
+    <div class="avatar_default_head"></div>
+    <div class="avatar_default_body"></div>
+</div>
+                    
+                    <div class="main_lobby_main_frame_player_profile">
+                        <div class="main_lobby_main_frame_player_profile_left_div">
+                            <p class="main_lobby_main_frame_player_profile_left_div_name">
+                                
+                                <span class="main_lobby_main_frame_player_profile_left_div_username">玩家</span>
+                                <span class="main_lobby_main_frame_player_profile_left_div_LV">LV 0</span>
+                            </p>
+                            <p class="main_lobby_main_frame_player_profile_left_div_rank">初學者</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="main_lobby_main_frame_mode_selector">
+                    <div class="main_lobby_mode_beginner" id="mode_select_easy_btn">
+                        <p class="main_lobby_mode_beginner_text1-0">Level I</p>
+                        <h3 class="main_lobby_mode_beginner_text1-1">
+                            初級
+                        </h3>
+                        <p class="main_lobby_mode_beginner_text1-2">全注音輔助</p>
+                        <div id="main_lobby_mode_tag_easy"></div>
+
+                    </div>
+                    <div class="main_lobby_mode_medium" id="mode_select_medium_btn">
+                        <p class="main_lobby_mode_beginner_text1-0">Level II</p>
+                        <h3 class="main_lobby_mode_beginner_text1-1">
+                            中級
+                        </h3>
+                        <p class="main_lobby_mode_beginner_text1-2">半注音輔助</p>
+                        <div id="main_lobby_mode_tag_medium"></div>
+
+                    </div>
+                    <div class="main_lobby_mode_master" id="mode_select_hard_btn">
+                        <p class="main_lobby_mode_beginner_text1-0">Level III</p>
+                        <h3 class="main_lobby_mode_beginner_text1-1">
+                            高級
+                        </h3>
+                        <p class="main_lobby_mode_beginner_text1-2">無注音輔助</p>
+                        <div id="main_lobby_mode_tag_hard"></div>
+                    
+                    </div>
+                    <div class="main_lobby_main_frame_mode_selector_intro" onclick="Show_difficulty_selector()">？</div>
+                </div>
+                <div class="main_lobby_main_frame_row"> <!-- 左右槽 -->
+                    <div class="main_lobby_main_frame_mainblock" id="main_lobby_level_container"> <!--關卡選擇-->
+                        <!-- <div class="main_lobby_map_stage" id="easy_stage1">
+                            <div class="main_lobby_map_stage_row">
+                                <div class="main_lobby_map_stage_text1">第一階段</div>
+                                <div class="main_lobby_map_stage_text2">
+                                    <p class="main_lobby_map_stage_text2-1">
+                                        基礎注音 -<span class="main_lobby_map_stage_text2-2"> ㄑ ㄨ ㄔ ㄧ</span>
+                                    </p>
+                                <div class="main_lobby_map_stage_text3">注音練習</div>
+                                <div class="main_lobby_map_stage_difficulty_star">☆☆☆☆☆☆★</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="main_lobby_map_stage" id="easy_stage2">
+                            <div class="main_lobby_map_stage_row">
+                                <div class="main_lobby_map_stage_text1">第二階段</div>
+                                <div class="main_lobby_map_stage_text2">
+                                    <p class="main_lobby_map_stage_text2-1">
+                                        基礎注音 -<span class="main_lobby_map_stage_text2-2"> ㄎ ㄜ ㄍ ㄛ</span>
+                                    </p>
+                                <div class="main_lobby_map_stage_text3">注音練習</div>
+                                <div class="main_lobby_map_stage_difficulty_star">☆☆☆☆☆☆★</div>
+                                </div>
+                            </div>
+                        </div> -->
+                    </div>
+                    <div class="main_lobby_main_frame_map_selector" id="main_lobby_chapter_selector"> <!--章節-->
+                        <p class="main_lobby_chapter_selector_text1">章節選擇</p>
+                        <!-- <div class="easy_chapter_frame" id="easy_chapter1" data-level="1-1">
+                            <div class="easy_chapter_frame_row">
+                                <p class="easy_chapter_frame_number">
+                                    01<span class="easy_chapter_name">認識鍵盤</span><span class="easy_chapter_progress">
+                                    
+                                </p>
+                            </div>
+                        </div>
+                        <div class="easy_chapter_frame" id="easy_chapter2" data-level="1-2">
+                            <div class="easy_chapter_frame_row">
+                                <p class="easy_chapter_frame_number">
+                                    02<span class="easy_chapter_name">基礎注音-1</span><span class="easy_chapter_progress">
+                                    
+                                </p>
+                            </div>
+                        </div>
+                        <div class="easy_chapter_frame" id="easy_chapter3" data-level="1-3">
+                            <div class="easy_chapter_frame_row">
+                                <p class="easy_chapter_frame_number">
+                                    03<span class="easy_chapter_name">基礎注音-2</span><span class="easy_chapter_progress">
+                                    
+                                </p>
+                            </div>
+                        </div>
+                        <div class="easy_chapter_frame" id="easy_chapter3" data-level="1-4">
+                            <div class="easy_chapter_frame_row">
+                                <p class="easy_chapter_frame_number">
+                                    04<span class="easy_chapter_name">基礎注音-3</span><span class="easy_chapter_progress">
+                                    
+                                </p>
+                            </div>
+                        </div>
+                        <div class="easy_chapter_frame" id="easy_chapter4" data-level="1-4">
+                            <div class="easy_chapter_frame_row">
+                                <p class="easy_chapter_frame_number">
+                                    04<span class="easy_chapter_name">基礎注音-4</span><span class="easy_chapter_progress">
+                                </p>
+                            </div>
+                        </div>
+                        <div class="easy_chapter_frame" id="easy_chapter5" data-level="1-5">
+                            <div class="easy_chapter_frame_row">
+                                <p class="easy_chapter_frame_number">
+                                    03<span class="easy_chapter_name">程度測試</span><span class="easy_chapter_progress">
+                                    
+                                </p>
+                            </div>
+                        </div> -->
+                        <div id="chapter_list" class="main_lobby_chapter_list_style"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <section class="main_lobby_difficulty_selet">
+            <div class="main_lobby_difficulty_selet_window is_hidden" id="main_lobby_mode_select_window">
+                <div class="main_lobby_difficulty_selector">
+                    <div class="main_lobby_difficulty_selector_text1">
+                        <h6 class="main_lobby_difficulty_selector_text1-0">難度選擇</h6>
+                        <h1 class="main_lobby_difficulty_selector_text1-1">選擇你的程度</h1>
+                        <h6 class="main_lobby_difficulty_selector_text1-2">＃可在之後更改</h6>
+                    </div>
+                    <div class="main_lobby_difficulty_selector_row">
+                        <div class="main_lobby_difficulty_seletor_easy" id="main_lobby_easy_mode" onclick="Exit_mode_selector();Difficulty_Choose_Easy();">
+                            <p class="main_lobby_difficulty_Level2_style">
+                                初級<span class="main_lobby_difficulty_Level_style">LEVEL I</span>
+                            </p>
+                            <div class="main_lobby_difficulty_easy_intro">
+                                專屬初學者的模式，建議普通人都可從此開始慢慢練習，精熟後再選擇進一步難度
+                            </div>
+                            <div class="main_lobby_difficulty_easy_intro2">
+                                <div class="main_lobby_difficulty_easy_intro2-1">從注音開始練起</div>
+                                <div class="main_lobby_difficulty_easy_intro2-1">從零開始</div>
+                                <div class="main_lobby_difficulty_easy_intro2-1">節奏寬鬆無壓力</div>                                
+                            </div>
+                        </div>
+                        <div class="main_lobby_difficulty_seletor_medium" id="main_lobby_medium_mode" onclick="Exit_mode_selector();Difficulty_Choose_Medium();">
+                            <p class="main_lobby_difficulty_Level2_style">
+                                中級<span class="main_lobby_difficulty_Level_style">LEVEL II</span>
+                            </p>
+                            <div class="main_lobby_difficulty_easy_intro">
+                                為有打字基礎的人專屬設計的難度，使用者不需要高頻率的看鍵盤也能維持精準度
+                            </div>
+                            <div class="main_lobby_difficulty_easy_intro2">
+                                <div class="main_lobby_difficulty_easy_intro2-1">國字注音混合出現</div>
+                                <div class="main_lobby_difficulty_easy_intro2-1">銜接高級模式</div>
+                                <div class="main_lobby_difficulty_easy_intro2-1">開放計時模式</div>                                
+                            </div>
+                        </div>
+                        <div class="main_lobby_difficulty_seletor_hard" id="main_lobby_hard_mode" onclick="Exit_mode_selector();Difficulty_Choose_Hard();">
+                            <p class="main_lobby_difficulty_Level2_style">
+                                高級<span class="main_lobby_difficulty_Level_style">LEVEL III</span>
+                            </p>
+                            <div class="main_lobby_difficulty_easy_intro">
+                                此難度有極高的準確率標準，使用者已輕易掌控盲打能力，在維持準確率的同時速度也在線
+                            </div>
+                             <div class="main_lobby_difficulty_easy_intro2">
+                                <div class="main_lobby_difficulty_easy_intro2-1">無注音輔助</div>
+                                <div class="main_lobby_difficulty_easy_intro2-1">計時壓力模式</div>
+                                <div class="main_lobby_difficulty_easy_intro2-1">挑戰個人極限</div>                                
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+    </main>
+    <footer class="intro_footer">
+        <div class="footer_div">
+            <div style="display: flex;justify-content: flex-start;;flex-direction: column;gap: 0.7rem;">
+                <p style="margin: 0;font-size: larger;">關於我們</p>    
+            </div>
+            <div style="display: flex;justify-content: flex-start;;flex-direction: column;gap: 0.7rem;">
+                <p style="margin: 0;font-size: larger;">聯絡我們</p>
+                <a style="font-size: 0.8rem;">✉ fanjonwan@gmail.com</a>   
+            </div>
+            <div style="display: flex;justify-content: flex-start;flex-direction: column;gap: 0.7rem;">
+                <p style="margin: 0;font-size: larger;">平台連結</p>
+                <a style="font-size: 0.8rem;" href="https://www.youtube.com/channel/UCIA5fwMrvGpvcQbG0ZX2ZLA">Youtube</a>   
+            </div>
+        </div>
+        
+        <div style="margin-top: 2rem; font-size: 0.8rem; color: #555; letter-spacing: 1px;">
+            &copy; 2026 TCTC2.0 繁中打字中心. All Rights Reserved.
+        </div>
+        </footer>
+    <script src="TCTC2-0.js"></script>
+    <script src="TCTC2-0-difficulty_selet.js"></script>
+    <script src="TCTC2-0-level_data.js"></script>
+</body>
+</html>
