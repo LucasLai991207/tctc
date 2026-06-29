@@ -25,8 +25,8 @@
     `;
 
     overlay.innerHTML = `
-        <div style="font-size: 4rem; margin-bottom: 1rem;">⌨️</div>
-        <h1 style="font-size: 3rem; color: #c9a84c; margin-bottom: 0.75rem;">
+        <div style="font-size: 8rem; margin-bottom: 1rem;">⌨️</div>
+        <h1 style="font-size: 9rem; color: #c9a84c; margin-bottom: 0.75rem;">
         請使用非行動裝置開啟
         </h1>
         <p style="font-size: 1rem; color: #aaa; max-width: 300px; line-height: 1.6;">
@@ -41,7 +41,7 @@
         border: 1px solid #555;
         color: #777;
 
-        font-size: 2rem;
+        font-size: 8rem;
 
         border-radius: 3px;
 
