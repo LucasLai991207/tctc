@@ -346,8 +346,89 @@
             <button class="next_game_btn" onclick="Find_next_game(stageId)">下一關</button>
         </div>
         <!-- tuturial overlay-->
-        <div id="black_overlay" style="width: 100vw; height: 100vh;background-color: rgba(0,0,0,0.4);z-index: 9998;position:fixed;top: 0;left: 0;display: none;"></div>
-        <div id="tutorial_popup" style="display:none; position:fixed; top:30%; left:50%; transform:translate(-50%,-50%); background-color:var(--darker-blue); border:1px solid #c9a84c; border-radius:12px; padding:2rem; z-index:9999; width:30rem;box-shadow: 0px 0px 15px #c9a84c;">
+
+        <div id="black_overlay" style="
+            width: 100vw;
+            height: 100vh;background-color: rgba(0,0,0,0.4);z-index: 9998;
+            position:fixed;
+            top: 0;
+            left: 0;
+            display: none;">
+        </div>
+
+
+        <!--1-2-1打字前輸入法提示-->
+        <div id="ime_warning_popup" style="
+            display: none;
+            position: fixed;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: var(--darker-blue);
+            border: 1px solid #c9a84c;
+            border-radius: 12px;
+            padding: 2rem 2.5rem;
+            z-index: 9999;
+            width: 26rem;
+            box-shadow: 0px 0px 10px #c9a84c;
+            text-align: center;
+        ">
+            <div style="font-size: 5rem; margin-bottom: 1rem;">⌨️</div>
+
+            <p style="color: #c9a84c; font-size: 1.1rem; letter-spacing: 3px; margin-bottom: 1.2rem;">
+                開始前請注意
+            </p>
+
+            <div style="
+                background-color: rgba(14,36,62,0.6);
+                border-left: 3px solid #c9a84c;
+                border-radius: 6px;
+                padding: 0.8rem 1.2rem;
+                text-align: left;
+                margin: 1rem 0 1.5rem 0;
+                line-height: 2rem;
+                font-size: 0.9rem;
+                color: #ddd;
+            ">
+                1. 請切換至<b style="color: #c9a84c;">英文輸入法</b><br>
+                2. 確認 <b style="color: #c9a84c;">Caps Lock 未開啟</b>
+            </div>
+
+            <button onclick="
+                document.getElementById('ime_warning_popup').style.display='none';
+                document.getElementById('black_overlay').style.display='none';
+            " style="
+                background-color: #c9a84c;
+                border: none;
+                padding: 0.6rem 2rem;
+                border-radius: 4px;
+                cursor: pointer;
+                font-family: 'Noto Serif TC', serif;
+                font-size: 0.95rem;
+                letter-spacing: 2px;
+                color: var(--dark-blue);
+                transition: all 200ms ease;
+            "
+            onmouseover="this.style.backgroundColor='#fff'; this.style.boxShadow='0 0 10px #c9a84c';"
+            onmouseout="this.style.backgroundColor='#c9a84c'; this.style.boxShadow='none';"
+            >
+                我知道了，開始練習
+            </button>
+        </div>
+        <div id="tutorial_popup" 
+            style="
+            display:none;
+            position:fixed;
+            top:40%;
+            left:50%;
+            transform:translate(-50%,-50%);
+            background-color:var(--darker-blue);
+            border:1px solid #c9a84c;
+            border-radius:12px;
+            padding:2rem; z-index:9999;
+            width:30rem;box-shadow: 0px 0px 10px #c9a84c;
+            ">
+
             <p style="color:#c9a84c; font-size:1.2rem; margin-bottom:1rem;">名詞解釋</p>
             <p style="color:white; line-height:2rem;">
                 <b style="color:#c9a84c;">WPM</b>（每分鐘字數）<br>
@@ -355,7 +436,23 @@
                 <b style="color:#c9a84c;">準確率</b><br>
                 正確按鍵 ÷ 總按鍵次數，越高代表打字越穩定。
             </p>
-            <button onclick="document.getElementById('tutorial_popup').style.display='none'; document.getElementById('black_overlay').style.display = 'none'" style="margin-top:1.5rem; background-color:#c9a84c; border:none; padding:0.5rem 1.5rem; border-radius:4px; cursor:pointer;">我知道了</button>
+            <button onclick="
+                document.getElementById('tutorial_popup').style.display='none';
+                document.getElementById('black_overlay').style.display = 'none'
+                "
+                style="margin-top:1.5rem;
+                background-color:#c9a84c;
+                border:none;
+                padding:0.5rem 1.5rem;
+                border-radius:4px;
+                cursor:pointer;
+                transition: all 200ms ease-in-out;
+                "
+                onmouseover="this.style.backgroundColor='#fff'; this.style.boxShadow='0 0 10px #c9a84c';"
+                onmouseout="this.style.backgroundColor='#c9a84c'; this.style.boxShadow='none';"
+            >
+                我知道了
+            </button>
         </div>
     </main>
 
@@ -602,6 +699,11 @@
                     boxes.push(box)                              // 同時存進 boxes 陣列
                 })
 
+                if(stageId === "1-2-1"){
+                    document.getElementById("ime_warning_popup").style.display = "block"
+                    document.getElementById("black_overlay").style.display = "block"
+                }
+                    
 
             }
                 
@@ -732,8 +834,12 @@
                 }
                 // 沒有打錯：往前退一格
                 if (current <= 0) return  // 已經在第一格，不能再退
+
+                boxes[current].classList.remove("current")
+
                 current--
                 target_get--
+                
                 boxes[current].classList.remove("correct")
                 boxes[current].classList.add("current")
                 return
