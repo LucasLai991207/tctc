@@ -26,7 +26,7 @@
 
     overlay.innerHTML = `
         <div style="font-size: 8rem; margin-bottom: 1rem;">⌨️</div>
-        <h1 style="font-size: 9rem; color: #c9a84c; margin-bottom: 0.75rem;">
+        <h1 style="font-size: 5rem; color: #c9a84c; margin-bottom: 0.75rem;">
         請使用非行動裝置開啟
         </h1>
         <p style="font-size: 1rem; color: #aaa; max-width: 300px; line-height: 1.6;">
@@ -41,7 +41,7 @@
         border: 1px solid #555;
         color: #777;
 
-        font-size: 8rem;
+        font-size: 6rem;
 
         border-radius: 3px;
 
