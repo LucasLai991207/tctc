@@ -306,3 +306,168 @@ a.si-scroll-cta {
     text-decoration: none;
     display: inline-flex;
 }
+section {
+scroll-margin-top: 63px; /* 對齊 nav 高度，避免被遮住 */
+position: relative;
+}
+
+/* 統一所有 section 的「下一頁」按鈕位置：固定貼在底部置中 */
+.si-next-wrap {
+position: absolute;
+left: 50%;
+bottom: 36px;
+transform: translateX(-50%);
+margin: 0;
+padding: 0;
+}
+
+.si-scroll-cta {
+background-color: transparent;
+color: var(--champagne-gold);
+font-family: "Noto Serif TC", serif;
+padding: 9px 24px;
+font-size: 1rem;
+font-weight: 400;
+letter-spacing: 4px;
+border: 1px solid var(--champagne-gold);
+border-radius: 2px;
+box-shadow: 0px 0px 4px rgba(0, 0, 0, 0.5);
+transition: all 400ms ease;
+cursor: pointer;
+}
+
+.si-scroll-cta:hover {
+background-color: #C9A84C;
+color: #0B1E36;
+box-shadow: 0px 0px 8px #C9A84C;
+}
+
+/* ===== 新章節：核心功能（獨立 section，不跟介紹文字混在一起）===== */
+
+.intro_features_section {
+width: 100vw;
+min-height: 70vh;
+background-color: var(--darker-blue);
+box-shadow: 0px 10px 100px rgba(0, 0, 0, 0.6),
+0px -10px 100px rgba(0, 0, 0, 0.4);
+padding-top: 79px;
+padding-bottom: 130px;
+}
+
+.si-feature_grid {
+display: flex;
+gap: 30px;
+padding-left: 50px;
+padding-right: 50px;
+margin-top: 20px;
+flex-wrap: wrap;
+}
+
+.si-feature_card {
+flex: 1;
+min-width: 220px;
+background-color: var(--dark-blue);
+border: 1px solid rgba(201, 168, 76, 0.2);
+padding: 30px 25px;
+border-radius: 4px;
+transition: all 400ms ease;
+cursor: default;
+}
+
+.si-feature_card:hover {
+transform: translateY(-8px);
+border-color: var(--champagne-gold);
+box-shadow: 0px 8px 25px rgba(201, 168, 76, 0.25);
+}
+
+.si-feature_icon {
+font-size: 1.8rem;
+color: whitesmoke;
+margin-bottom: 15px;
+}
+
+.si-feature_title {
+color: whitesmoke;
+font-size: 1.15rem;
+font-weight: 500;
+margin-bottom: 12px;
+letter-spacing: 2px;
+}
+
+.si-feature_desc {
+color: rgb(170, 170, 170);
+font-size: 0.95rem;
+line-height: 1.8;
+letter-spacing: 1px;
+}
+
+/* ===== 第四章節：難度卡片 ===== */
+
+.intro_third_section_flex {
+display: flex;
+gap: 25px;
+background-color: transparent;
+border: none;
+padding: 0 20px;
+}
+
+.si-difficulty_card {
+flex: 1;
+height: 100%;
+
+background-color: var(--darker-blue);
+
+border: 1px solid rgba(201, 168, 76, 0.2);
+border-radius: 4px;
+
+padding: 35px 30px;
+
+display: flex;
+flex-direction: column;
+
+transition: all 400ms ease;
+cursor: pointer;
+
+}
+
+.si-difficulty_card:hover {
+transform: translateY(-10px);
+border-color: var(--champagne-gold);
+box-shadow: 0px 10px 30px rgba(201, 168, 76, 0.3);
+background-color: var(--light-blue);
+}
+
+.si-difficulty_level {
+color: var(--champagne-gold);
+
+font-size: 0.9rem;
+
+letter-spacing: 3px;
+margin-bottom: 10px;
+}
+
+.si-difficulty_name {
+color: whitesmoke;
+
+font-size: 1.8rem;
+font-weight: 300;
+
+margin-bottom: 20px;
+}
+
+.si-difficulty_desc {
+color: rgb(170, 170, 170);
+font-size: 0.95rem;
+line-height: 1.9;
+letter-spacing: 1px;
+flex-grow: 1;
+}
+
+.si-difficulty_wpm {
+color: var(--champagne-gold);
+font-size: 0.85rem;
+letter-spacing: 2px;
+margin-top: 20px;
+border-top: 1px solid rgba(201, 168, 76, 0.2);
+padding-top: 15px;
+}
