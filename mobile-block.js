@@ -47,7 +47,8 @@
 
         cursor: pointer;
         transition: border-color 0.2s, color 0.2s;
-        ">
+        "
+        onclick="window.location.href='TCTC2-0-main.html'">
         我了解，仍要繼續
         </button>
     `;
