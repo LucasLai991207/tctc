@@ -35,12 +35,12 @@
         <div class="nav_css">
             <div onclick="">登入</div>
             <div>排行榜</div>
-            <div>關於我們</div>
+            <div onclick="window.location.href='index.html'">關於我們</div>
             <div onclick="window.location.href='TCTC2-0-profile.html'">個人空間</div>
         </div>
     </nav>
     <main>
-        <section class="intro_first_section">
+        <section class="intro_first_section" id="section1">
                 <div class="intro_first_section_text1_and_img">
                     <div class="intro_first_section_text0">
                         <p class="intro_first_section_text0-0">
@@ -66,11 +66,11 @@
                     </div>
                     <div class="intro_first_section_text3-1"></div> <!--string-->
                     <div class="intro_first_section_text5">
-                        <button class="intro_first_section_text5_button" onclick="window.location.href='TCTC2-0-main.html'">開啟你的打字之旅</button>
+                        <a href="#section2" class="intro_first_section_text5_button si-btn">開始探索</a>
                     </div>
                 </div>
         </section>
-        <section class="intro_second_section">
+        <section class="intro_second_section" id="section2">
             <div class="intro_second_section_text1">
                 <p class="intro_second_section_text1-1">
                     網站介紹<br>
@@ -84,8 +84,36 @@
                     的時代，它同時也是人類與電腦溝通的最佳途徑。
                 </p>
             </div>
+            <div class="si-next-wrap">
+                <a href="#section_features" class="si-scroll-cta si-btn">下一頁</a>
+            </div>
         </section>
-        <section class="intro_third_section">
+        <section class="intro_features_section" id="section_features">
+            <div class="intro_third_section_text1">
+                <p class="intro_third_section_text1-1">
+                    核心功能
+                <p class="intro_third_section_text1-2">三項打字練習利器</p>
+                </p>
+            </div>
+            <div class="si-feature_grid">
+                <div class="si-feature_card">
+                    <div class="si-feature_icon">即時錯字分析系統</div><br>
+                    <div class="si-feature_desc">打字過程中即時標示錯誤字元，<br>幫助你立即修正手感與習慣。</div>
+                </div>
+                <div class="si-feature_card">
+                    <div class="si-feature_icon">精準數據統計</div><br>
+                    <div class="si-feature_desc">每次練習結束自動計算速度與<br>正確率，清楚追蹤你的進步曲線。</div>
+                </div>
+                <div class="si-feature_card">
+                    <div class="si-feature_icon">客製化自選難度</div><br>
+                    <div class="si-feature_desc">依照程度選擇練習內容，<br>從基礎到高速挑戰循序漸進。</div>
+                </div>
+            </div>
+            <div class="si-next-wrap">
+                <a href="#section3" class="si-scroll-cta si-btn">下一頁</a>
+            </div>
+        </section>
+        <section class="intro_third_section" id="section3">
             <div class="intro_third_section_style">
                 <div class="intro_third_section_text1">
                     <p class="intro_third_section_text1-1">
@@ -94,8 +122,39 @@
                     </p>
                 </div>
                 <div class="intro_third_section_flex">
-                    
-
+                    <div class="si-difficulty_card" onclick="window.location.href='TCTC2-0-main.html'">
+                        <div class="si-difficulty_level">LEVEL 01</div>
+                        <div class="si-difficulty_name">初級</div>
+                        <div class="si-difficulty_desc">
+                            適合剛接觸中文打字的初學者，<br>
+                            著重於基礎指法熟悉與正確率培養，<br>
+                            不追求速度，先求穩定。
+                        </div>
+                        <div class="si-difficulty_wpm">建議速度 ｜ 0 - 50 WPM</div>
+                    </div>
+                    <div class="si-difficulty_card" onclick="window.location.href='TCTC2-0-main.html'">
+                        <div class="si-difficulty_level">LEVEL 02</div>
+                        <div class="si-difficulty_name">中級</div>
+                        <div class="si-difficulty_desc">
+                            適合已有基礎手感的使用者，<br>
+                            開始加入更長句子與標點符號，<br>
+                            訓練速度與準確率的平衡。
+                        </div>
+                        <div class="si-difficulty_wpm">建議速度 ｜ 50 - 100 WPM</div>
+                    </div>
+                    <div class="si-difficulty_card" onclick="window.location.href='TCTC2-0-main.html'">
+                        <div class="si-difficulty_level">LEVEL 03</div>
+                        <div class="si-difficulty_name">高級</div>
+                        <div class="si-difficulty_desc">
+                            挑戰高速與高壓力情境，<br>
+                            內容涵蓋複雜詞彙與長篇文章，<br>
+                            適合追求極限速度的玩家。
+                        </div>
+                        <div class="si-difficulty_wpm">建議速度 ｜ 100 WPM 以上</div>
+                    </div>
+                </div>
+                <div class="si-next-wrap">
+                    <a href="TCTC2-0-main.html" class="intro_first_section_text5_button si-btn">開始你的打字旅程</a>
                 </div>
             </div>
         </section>
