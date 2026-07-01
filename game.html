@@ -299,6 +299,26 @@
             color: var(--champagne-gold);
             border: 1px solid var(--champagne-gold);
         }
+        .game_stage_target1{
+            margin-top: 3rem;
+            padding: 0.2rem 1rem;
+
+            width: 55vw;
+            height: 14vh;
+
+            background-color: var(--light-blue);
+            color: #ffffff;
+
+            border: 2px solid rgba(201,168,76,0.2);
+            border-radius: 5px;
+            border-top: 3px solid var(--champagne-gold);
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            letter-spacing: 4px;
+        }
     </style>
 </head>
 <body>
@@ -319,6 +339,7 @@
             <div class="game_stage_id" id="game_stage_id">—</div>
             <div class="game_stage_name" id="game_stage_name">載入中...</div>
             <div class="gmae_stage_name3" id="game_stage_name3">無提示詞</div>
+            <div class="game_stage_target1" id="game_stage_target1" style="display: none;">嗨嗨嗨</div>
         </div>
 
         <div class="game_char_container" id="game_char_container"></div>
@@ -484,7 +505,7 @@
             "8":"ㄚ","i":"ㄛ","k":"ㄜ",",":"ㄝ",
             "9":"ㄞ","o":"ㄟ","l":"ㄠ",".":"ㄡ",
             "0":"ㄢ","p":"ㄣ",";":"ㄤ","/":"ㄥ",
-            "=":"ㄦ","3":"ˇ","4":"ˋ","7":"˙","6":"ˊ", " ":" ", "Enter":"↵"
+            "=":"ㄦ","3":"ˇ","4":"ˋ","7":"˙","6":"ˊ", " ":" ", "Enter":"↵", "<": "，"
         }
 
 
@@ -573,9 +594,8 @@
 
 
 
-            // 把 target 字串拆成每個字，每個字建一個方框 div
+            // 把target字串拆成每個字 每個字建一個方框 div
             // split("") 把字串拆成陣列，例如 "ㄑㄨ" → ["ㄑ","ㄨ"]
-            // forEach 的第二個參數 i 是索引（第幾個字）
 
             //介紹部分拆出來
             if(stage.type === "基本介紹"){
@@ -699,13 +719,44 @@
                     container.appendChild(box)                   // 把 div 放進畫面
                     boxes.push(box)                              // 同時存進 boxes 陣列
                 })
-
                 if(stage.id === "1-2-1"){
                     document.getElementById("ime_warning_popup").style.display = "block"
                     document.getElementById("black_overlay").style.display = "block"
                 }
                     
 
+            }
+            else if(stage.type === "綜合練習"){
+                target.split("").forEach(function(char, i) {
+
+                    const container = document.getElementById("game_char_container")
+                    if(container){
+                        container.style.gap = "0.2rem";
+                    }
+
+                    const target_box = document.getElementById("game_stage_target1")
+                    if(target_box){
+                        target_box.style.display = "flex";
+                    }
+                    target_box.textContent = stage.target1
+                    target_box.style.justifyContent = "center";
+                    target_box.style.alignItems = "center";
+
+
+                    const box = document.createElement("div")   // 建一個 div
+                    box.classList.add("game_char_box");           // 加上方框樣式
+                    box.style.width = "2.6rem";
+                    box.style.height = "2.4rem";
+                    box.style.fontSize = "1.8rem";
+                    box.style.paddingLeft = "2px";
+
+                    box.textContent = char                       // 把注音字放進去
+                    if (i === 0) box.classList.add("current")   // 第一個格子加上金框（當前位置）
+                    container.appendChild(box);                // 把 div 放進畫面
+                    boxes.push(box);                              // 同時存進 boxes 陣列
+
+                    
+                })
             }
                 
         }
