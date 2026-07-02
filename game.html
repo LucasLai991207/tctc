@@ -505,7 +505,7 @@
             "8":"ㄚ","i":"ㄛ","k":"ㄜ",",":"ㄝ",
             "9":"ㄞ","o":"ㄟ","l":"ㄠ",".":"ㄡ",
             "0":"ㄢ","p":"ㄣ",";":"ㄤ","/":"ㄥ",
-            "=":"ㄦ","3":"ˇ","4":"ˋ","7":"˙","6":"ˊ", " ":" ", "Enter":"↵", "<": "，"
+            "=":"ㄦ","3":"ˇ","4":"ˋ","7":"˙","6":"ˊ", " ":" ", "Enter":"↵","，":"，"
         }
 
 
@@ -767,14 +767,14 @@
 
             const stage = FindStage(stageId)
 
-            //計算花了幾秒（現在時間 - 開始時間，單位毫秒，除以1000換成秒）
+            //計算花了幾秒
             const timeUsed = (Date.now() - startTime) / 1000
 
-            //WPM 計算：(打對的注音數 / 每個中文字平均3個注音) / (花費時間 / 60秒)
+            //WPM
             const wpm = Math.ceil((target_get / 3) / (timeUsed / 60))
 
-            //準確率：1 - (打錯次數 / 總按鍵次數)
-            //總按鍵次數 = 打對 + 打錯
+            //準確率
+            //總按鍵次數 對+錯
             const acc = target_get > 0
                 ? Math.round((1 - wrong_key_times / (target_get + wrong_key_times)) * 100)
                 : 0
@@ -787,8 +787,19 @@
 
             //顯示結果畫面
             document.getElementById("game_result").classList.add("show")
-            document.getElementById("game_result").style.boxShadow = "0px 0px 15px #c9a84c"
-            document.getElementById("game_result").style.border = "2px solid #c9a84c"
+            if(wpm > 89){
+                document.getElementById("game_result").style.boxShadow = "0px 0px 15px #c9a84c"
+                document.getElementById("game_result").style.border = "2px solid #c9a84c"
+                //過關標記 沒拿到就給空字串
+                let progress = JSON.parse(localStorage.getItem("stage_progress")) || {} 
+                progress[stageId] = true
+                localStorage.setItem("stage_progress", JSON.stringify(progress))
+            }
+            else{
+                document.getElementById("game_result").style.boxShadow = "0px 0px 20px red"
+                document.getElementById("game_result").style.border = "3px solid red"
+
+            }
 
 
             //隱藏next btn
@@ -814,8 +825,9 @@
                 nextBtn.style.display = "none"
             }
 
-
-            if(stage.id === "1-2-1"){
+            
+            
+            if(stage.id === "1-2-1" || stage.id === "2-1-1"){   //顯示結果說明
                 console.log("1-2-1")
                 intro_overlay = document.getElementById("tutorial_popup")
                 intro_overlay.style.display = "block"
@@ -823,10 +835,24 @@
             }
         }
 
+
+        //按下enter自動跳關
+        document.addEventListener("keydown", function(event){
+            if(event.key === "Enter"){
+                const next_btn = document.querySelector(".next_game_btn")
+
+                if(next_btn && next_btn.style.display === "block"){
+                    event.preventDefault()
+                    Find_next_game(stageId)
+
+                }
+            }
+            
+        })
+
         function Find_next_game(currentId){
 
             
-
             const current_stage = FindStage(stageId)
             console.log("目前stage: ", current_stage)
 
@@ -868,7 +894,16 @@
             // 如果已經打完全部（current 超出範圍），忽略
             if (current >= target.length && !wrong_input) return
 
-            const key = event.key  // 取得按下的按鍵名稱
+            let key = event.key  // 取得按下的按鍵名稱
+
+            if(key === ","){
+                if(target[current] === "，"){
+                    key = "，"
+                }
+                else{
+                    key = ","
+                }
+            }
 
             // 空白鍵預設會讓頁面捲動，這裡阻止這個預設行為
             if (key === " ") event.preventDefault()

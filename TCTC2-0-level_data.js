@@ -159,9 +159,13 @@ function render_stage(difficulty, chapter){             //渲染關卡
         console.log("找不到該難度的關卡 難度：", difficulty)
         return
     }
+    //讀檔json
+    const progress = JSON.parse(localStorage.getItem("stage_progress")) || {}
+
 
     chapter.stage.forEach(function(stage){
         const div = document.createElement("div")
+
         div.classList.add("main_lobby_map_stage")
         div.innerHTML = `
                 <div class="main_lobby_map_stage_text1">${stage.id}</div>
@@ -170,10 +174,41 @@ function render_stage(difficulty, chapter){             //渲染關卡
                         -${stage.name}<span class="main_lobby_map_stage_text2-2">${stage.name2}</span>
                     </p>
                 </div>
-                <div class="main_lobby_map_stage_text3">注音練習</div>
+                <div class="main_lobby_map_stage_text3">${stage.type}</div>
                 <div class="main_lobby_map_stage_difficulty_star">${stage.level}</div>
                 `
 
+        
+        
+        
+        if(progress[stage.id] === true){
+            div.innerHTML = `
+                <div class="main_lobby_map_stage_text1">${stage.id}</div>
+                <div class="main_lobby_map_stage_text2">
+                    <p class="main_lobby_map_stage_text2-1">
+                        -${stage.name}<span class="main_lobby_map_stage_text2-2">${stage.name2}</span>
+                    </p>
+                </div>
+                <div class="main_lobby_map_stage_text3">${stage.type}</div>
+                <div class="main_lobby_map_stage_difficulty_star">${stage.level}</div>
+                
+                <div style="
+                position: absolute;
+
+                padding: 4px 6px;
+                right: 7px;
+                bottom: 6px;
+
+                font-size: 0.9rem;
+                color: #c9a84c;
+                
+                border: 1px solid #c9a84c;
+                border-radius: 3px;
+                ">已完成</div>
+                `
+                div.style.backgroundColor = "rgba(220, 245, 220, 0.1)";
+                div.style.borderLeft = "2px solid #c9a84c"
+        }
         div.addEventListener("click", function(){
             window.location.href = `game.html?stage=${stage.id}`
         })
