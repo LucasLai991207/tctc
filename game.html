@@ -861,10 +861,8 @@
 
 
 
-        // ===== 鍵盤事件：每次按下按鍵都會觸發 =====
         document.addEventListener("keydown", function(event) {
 
-            // 如果沒有練習內容，或方框還沒建好，直接忽略
             if (target === "" || boxes.length === 0) return
 
             // 如果已經打完全部（current 超出範圍），忽略
@@ -906,22 +904,19 @@
             // 按的鍵不在注音對照表裡，忽略（例如 Shift、Ctrl 等）
             if (bopomofo[key] === undefined) return
 
-            // 第一次按注音鍵才開始計時
             if (!isRunning) {
                 isRunning = true
-                startTime = Date.now()  // 記錄開始時間（毫秒）
+                startTime = Date.now()  //記錄開始
             }
-
-            // 目前卡在打錯狀態，不接受新輸入
             if (wrong_input) return
 
-            // ---- 判斷對錯 ----
+            // 判斷對錯 
             if (target[current] === bopomofo[key]) {
-                // 打對了
-                boxes[current].classList.remove("current", "wrong")  // 移除金框和紅框
-                boxes[current].classList.add("correct")               // 加上綠框
-                target_get++   // 打對數量 +1
-                current++      // 移到下一格
+                //對了
+                boxes[current].classList.remove("current", "wrong")  //移除金框紅框
+                boxes[current].classList.add("correct")               //加上綠框
+                target_get++   //打對數量 +1
+                current++      //移到下一格
 
                 if (current < boxes.length) {
                     // 還有下一格，把金框移過去
@@ -931,16 +926,16 @@
                     ShowResult()
                 }
             } else {
-                // 打錯了
-                wrong_key_times++   // 錯誤次數 +1
-                wrong_input = true  // 設為卡住狀態
-                boxes[current].classList.remove("current")  // 移除金框
-                boxes[current].classList.add("wrong")       // 加上紅框
+                //打錯
+                wrong_key_times++   //錯誤次數 +1
+                wrong_input = true  //設為卡住
+                boxes[current].classList.remove("current")  //移除金框
+                boxes[current].classList.add("wrong")       //紅框
             }
         })
 
 
-        // 頁面載入後立刻執行 Init，把畫面建好
+        // nit初始化建畫面＃＃＃
         Init()
     
     </script>
