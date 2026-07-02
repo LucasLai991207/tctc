@@ -784,10 +784,12 @@
             document.getElementById("result_acc").textContent = acc + "%"
             document.getElementById("result_chars").textContent = target_get
             document.getElementById("result_errors").textContent = wrong_key_times
+            document.getElementById("game_result").style.boxShadow = "0px 0px 15px #c9a84c"
+            document.getElementById("game_result").style.border = "2px solid #c9a84c"
 
             //顯示結果畫面
             document.getElementById("game_result").classList.add("show")
-            if(wpm > 89){
+            if(acc > 89){
                 document.getElementById("game_result").style.boxShadow = "0px 0px 15px #c9a84c"
                 document.getElementById("game_result").style.border = "2px solid #c9a84c"
                 //過關標記 沒拿到就給空字串
