@@ -381,18 +381,27 @@
         <!--1-2-1打字前輸入法提示-->
         <div id="ime_warning_popup" style="
             display: none;
+
             position: fixed;
-            top: 40%;
+            top: 50%;
             left: 50%;
+
             transform: translate(-50%, -50%);
             background-color: var(--darker-blue);
+
             border: 1px solid #c9a84c;
             border-radius: 12px;
+
             padding: 2rem 2.5rem;
+
             z-index: 9999;
-            width: 26rem;
+
+            width: 50rem;
             box-shadow: 0px 0px 10px #c9a84c;
+
             text-align: center;
+
+            opacity: 0.9;
         ">
             <div style="font-size: 5rem; margin-bottom: 1rem;">⌨️</div>
 
@@ -406,14 +415,17 @@
                 border-radius: 6px;
                 padding: 0.8rem 1.2rem;
                 text-align: left;
+
                 margin: 1rem 0 1.5rem 0;
+
                 line-height: 2rem;
+
                 font-size: 0.9rem;
                 color: #ddd;
             ">
                 1. 請切換至<b style="color: #c9a84c;">英文輸入法</b><br>
                 2. 確認 <b style="color: #c9a84c;">Caps Lock 未開啟</b><br>
-                3. 如果打錯字（框框變成紅色） <b style="color: #c9a84c;">使用‘刪除鍵’刪除後便可繼續進行</b>
+                3. 如果打錯字（框框變成紅色） <b style="color: #c9a84c;">使用鍵盤右上角‘刪除鍵’刪除後便可繼續進行</b>
             </div>
 
             <button onclick="
@@ -421,15 +433,23 @@
                 document.getElementById('black_overlay').style.display='none';
             " style="
                 background-color: #c9a84c;
+
                 border: none;
+
                 padding: 0.6rem 2rem;
                 border-radius: 4px;
-                cursor: pointer;
+
+
                 font-family: 'Noto Serif TC', serif;
                 font-size: 0.95rem;
+
                 letter-spacing: 2px;
+
                 color: var(--dark-blue);
+                
                 transition: all 200ms ease;
+                cursor: pointer;
+
             "
             onmouseover="this.style.backgroundColor='#fff'; this.style.boxShadow='0 0 10px #c9a84c';"
             onmouseout="this.style.backgroundColor='#c9a84c'; this.style.boxShadow='none';"
