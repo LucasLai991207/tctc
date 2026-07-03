@@ -821,6 +821,22 @@
                 ? Math.round((1 - wrong_key_times / (target_get + wrong_key_times)) * 100)
                 : 0
 
+            //wpm counter
+            let acc_sum = Number(localStorage.getItem("acc_sum")) || 0;
+            let acc_times = Number(localStorage.getItem("acc_times")) || 0;
+
+            if(stage.name === "章節驗收" || stage.name === "精熟度測試"){
+                acc_sum += acc;
+                acc_times += 1;
+                localStorage.setItem("acc_sum", acc_sum)
+                localStorage.setItem("wpm_times", acc_times)
+                
+                let average_acc = acc_times > 0 ? Math.round(acc_sum / acc_times) : 0;
+
+                console.log(average_acc, "平均acc")
+                localStorage.setItem("average_acc", average_acc)
+                console.log("成功將average acc存到localstorage")
+            }
             //把數字填進對應元素
             document.getElementById("result_wpm").innerHTML = wpm + '<span>WPM</span>'
             document.getElementById("result_acc").textContent = acc + "%"

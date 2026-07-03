@@ -103,3 +103,12 @@ if(average_wpm){
     document.querySelector("#profile_history_average_wpm").textContent = `${average_wpm} WPM`
 }
 
+
+average_acc = localStorage.getItem("average_acc") ?
+    localStorage.getItem("average_acc") 
+    : 0;
+
+if(average_acc){
+    console.log("[local] average acc: ", average_acc);
+    document.querySelector("#profile_history_average_acc").textContent = `${average_acc} %`
+}

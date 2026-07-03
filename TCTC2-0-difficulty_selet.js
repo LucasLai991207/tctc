@@ -20,6 +20,21 @@ const easy_mode_btn = document.querySelector('#mode_select_easy_btn')
 const medium_mode_btn = document.querySelector('#mode_select_medium_btn')
 const hard_mode_btn = document.querySelector('#mode_select_hard_btn')
 
+
+// 主畫面平均wpm
+const main_lobby_average_wpm = document.getElementById("main_lobby_main_frame_wpm")
+if(main_lobby_average_wpm && localStorage.getItem("average_wpm")){
+    console.log("[main lobby]成功獲取average wpm")
+    main_lobby_average_wpm.textContent = localStorage.getItem("average_wpm")
+}
+// 主畫面平均acc
+const main_lobby_average_acc = document.getElementById("main_lobby_main_frame_acc")
+if(main_lobby_average_acc && localStorage.getItem("average_acc")){
+    console.log("[main lobby]成功獲取average acc")
+    main_lobby_average_acc.textContent = localStorage.getItem("average_acc") + "%";
+}
+
+
 /*彈出主視窗*/
 const mode_selector_window = document.getElementById("main_lobby_mode_select_window")
 

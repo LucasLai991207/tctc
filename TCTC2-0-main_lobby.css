@@ -148,15 +148,20 @@
 /*    profile    */
 
 .main_lobby_main_frame_profileblock{
+    position: relative;
+
     margin-top: 10vh;    
     padding-left: 2vw;
-    width: 60vw;
+
+    width: 67vw;
     max-width: 1050px;
+
     height: 16vh;
     background-color:var(--light-blue);
 
     border-radius: 10px;
     border: 1px solid rgba(201, 168, 76, 0.5);
+
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -171,6 +176,32 @@
 
     border-radius: 50%;
     border: 2px solid var(--champagne-gold);
+
+}
+.main_lobby_main_frame_profileblock_wpm{
+    position: absolute;
+    top: 25%;
+    right: 5%;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    width: 3.5rem;
+    height: 4.5rem;
+
+}
+.main_lobby_main_frame_profileblock_acc{
+    position: absolute;
+    top: 25%;
+    right: 13%;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    width: 4rem;
+    height: 4.5rem;
 
 }
 .main_lobby_main_frame_player_profile{
@@ -703,7 +734,7 @@
 
     border-radius: 50%;        
     object-fit: cover;
-            
+
     background-color: #888888;         
     margin-bottom: 4px;        
 }        
