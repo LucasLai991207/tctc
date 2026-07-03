@@ -63,6 +63,7 @@
         </button>
     `;
 
+    
     const append = () => {
         document.body.appendChild(overlay);
 
