@@ -331,7 +331,7 @@
             <div>登入</div>
             <div>排行榜</div>
             <div onclick="window.location.href='index.html'">關於我們</div>
-            <div>個人資訊</div>
+            <div onclick="window.location.href='TCTC2-0-profile.html'">個人空間</div>
         </div>
     </nav>
 
@@ -785,8 +785,8 @@
         }
 
         //wpm counter
-        let wpm_sum = localStorage.getItem("wpm_sum") ? localStorage.getItem("wpm_sum") : 0;
-        let wpm_times = localStorage.getItem("wpm_times") ? localStorage.getItem("wpm_times") : 0;
+        let wpm_sum = Number(localStorage.getItem("wpm_sum")) || 0;
+        let wpm_times = Number(localStorage.getItem("wpm_times")) || 0;
 
         //ShowResult
         function ShowResult() {
@@ -807,8 +807,10 @@
                 localStorage.setItem("wpm_sum", wpm_sum)
                 localStorage.setItem("wpm_times", wpm_times)
                 
-                let average_wpm = wpm_times > 0 ? Math.round(localStorage.getItem("wpm_sum") / localStorage.getItem("wpm_times")) : 0;
+                let average_wpm = wpm_times > 0 ? Math.round(wpm_sum / wpm_times) : 0;
                 console.log(average_wpm, "平均wpm")
+                localStorage.setItem("average_wpm", average_wpm)
+                console.log("成功將average wpm存到localstorage")
             }
             
             

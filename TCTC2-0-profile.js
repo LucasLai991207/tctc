@@ -92,3 +92,14 @@ function Update_profile(){
 }
 
 
+//讀取個資
+
+average_wpm = localStorage.getItem("average_wpm") ?
+    localStorage.getItem("average_wpm") 
+    : 0;
+
+if(average_wpm){
+    console.log("[local] average wpm: ", average_wpm);
+    document.querySelector("#profile_history_average_wpm").textContent = `${average_wpm} WPM`
+}
+
