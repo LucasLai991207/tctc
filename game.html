@@ -303,7 +303,7 @@
             margin-top: 3rem;
             padding: 0.2rem 1rem;
 
-            width: 55vw;
+            width: 70vw;
             height: 14vh;
 
             background-color: var(--light-blue);
@@ -446,7 +446,7 @@
                 letter-spacing: 2px;
 
                 color: var(--dark-blue);
-                
+
                 transition: all 200ms ease;
                 cursor: pointer;
 
@@ -525,7 +525,7 @@
             "8":"ㄚ","i":"ㄛ","k":"ㄜ",",":"ㄝ",
             "9":"ㄞ","o":"ㄟ","l":"ㄠ",".":"ㄡ",
             "0":"ㄢ","p":"ㄣ",";":"ㄤ","/":"ㄥ",
-            "=":"ㄦ","3":"ˇ","4":"ˋ","7":"˙","6":"ˊ", " ":" ", "Enter":"↵","，":"，"
+            "-":"ㄦ","3":"ˇ","4":"ˋ","7":"˙","6":"ˊ", " ":" ", "Enter":"↵","，":"，"
         }
 
 
@@ -581,9 +581,10 @@
                 return
             }
             if(!stage.name3){
-                document.getElementById("game_stage_name3").remove()
+                document.getElementById("game_stage_name3").style.display = "none";
             }
             else{
+                document.getElementById("game_stage_name3").style.display = "flex";
                 document.getElementById("game_stage_name3").textContent = stage.name3
 
             }
@@ -702,8 +703,8 @@
                                 <b style="color: #c9a84c; font-size: 1.1rem;">✋ 雙手手指正確分工：</b><br>
                                 <span style="color: #c9a84c; font-size: 1rem;">1. 左手四指（由外往內）：</span> <br>
                                  • 小指專管：<b style="font-size: 1.2rem">ㄅ ㄆ ㄇ ㄈ</b><br>
-                                 • 無名指管：<b style="font-size: 1.2rem">ㄉ ㄊ ㄋ ㄌ</b><br>
-                                 • 中指專管：<b style="font-size: 1.2rem"> ˇ ㄍ ㄎ </b><br>
+                                 • 無名指管：<b style="font-size: 1.2rem">ㄉ ㄊ ㄋ</b><br>
+                                 • 中指專管：<b style="font-size: 1.2rem"> ˇ ㄍ ㄎ ㄌ</b><br>
                                  • 食指管轄：<b style="font-size: 1.2rem">4 ㄐ ㄑ ㄏ 5 ㄔ ㄕ ㄒ 6</b><br>
                                 <span style="color: #c9a84c; font-size: 1rem;">2. 右手四指（由內往外）：</span> <br>
                                  • 食指管轄：<b style="font-size: 1.2rem">7 ㄗ ㄘ ㄖ ˙ ㄧ ㄨ ㄙ ㄩ</b><br>
@@ -786,6 +787,7 @@
         function ShowResult() {
 
             const stage = FindStage(stageId)
+            console.log(stage)
 
             //計算花了幾秒
             const timeUsed = (Date.now() - startTime) / 1000
