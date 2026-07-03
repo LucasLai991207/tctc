@@ -263,7 +263,7 @@
             font-family: "Noto Serif TC", serif;
             letter-spacing: 3px;
 
-            border: none;
+            border: 1px solid transparent;
             border-radius: 5px;
 
             cursor: pointer;
@@ -282,7 +282,7 @@
             font-family: "Noto Serif TC", serif;
             letter-spacing: 3px;
 
-            border: none;
+            border: 1px solid transparent;
             border-radius: 5px;
 
             cursor: pointer;
@@ -290,8 +290,11 @@
             transition: all 300ms ease;
         }
         .game_retry_btn:hover {
+            box-sizing: border-box;
+
             background-color: var(--dark-blue);
             color: var(--champagne-gold);
+
             border: 1px solid var(--champagne-gold);
         }
         .next_game_btn:hover {
@@ -345,7 +348,7 @@
         <div class="game_char_container" id="game_char_container"></div>
 
         <div class="game_input_hint">--真正的高手打字從不看鍵盤--</div>
-
+        <button class="game_retry_btn" onclick="Init()">再試一次</button>
         <div class="game_result" id="game_result" style="z-index: 9999;">
             <div class="game_result_title">RESULT</div>
             <div class="game_result_wpm" id="result_wpm">0<span>WPM</span></div>
@@ -363,7 +366,6 @@
                     <div class="game_result_stat_label">錯誤次數</div>
                 </div>
             </div>
-            <button class="game_retry_btn" onclick="Init()">再試一次</button>
             <button class="next_game_btn" onclick="Find_next_game(stageId)">下一關</button>
         </div>
         <!-- tuturial overlay-->
@@ -575,7 +577,7 @@
             // 用 FindStage 找到這關的資料
             const stage = FindStage(stageId)
 
-            // 找不到就顯示錯誤訊息，停止執行
+            //找不到就顯示錯誤訊息，停止執行
             if (!stage) {
                 document.getElementById("game_stage_name").textContent = "找不到關卡：" + stageId
                 return
@@ -589,7 +591,7 @@
 
             }
 
-            // 把關卡 id 和名稱顯示在畫面上
+            //關卡id和名稱顯示在畫面上
             document.getElementById("game_stage_id").textContent = stage.id
             document.getElementById("game_stage_name").textContent = stage.name + (stage.name2 ? " " + stage.name2 : "")
 
@@ -597,7 +599,7 @@
             // 如果 stage.target 是空的，就用空字串
             target = stage.target || ""
 
-            // 重置所有遊戲狀態
+            //重置狀態
             current = 0
             wrong_input = false
             wrong_key_times = 0
@@ -605,7 +607,7 @@
             isRunning = false
             startTime = null
 
-            // 隱藏結果畫面（移除 show class）
+            //隱藏結果畫面（移除 show class）
             document.getElementById("game_result").classList.remove("show")
 
             // 清空方框區，準備重建
@@ -782,8 +784,11 @@
                 
         }
 
+        //wpm counter
+        let wpm_sum = localStorage.getItem("wpm_sum") ? localStorage.getItem("wpm_sum") : 0;
+        let wpm_times = localStorage.getItem("wpm_times") ? localStorage.getItem("wpm_times") : 0;
 
-        //===== ShowResult：打完後計算並顯示結果 =====
+        //ShowResult
         function ShowResult() {
 
             const stage = FindStage(stageId)
@@ -794,6 +799,19 @@
 
             //WPM
             const wpm = Math.ceil((target_get / 3) / (timeUsed / 60))
+            
+            //如果是章節訓練或中級 平均wpm
+            if(stage.name === "章節驗收" || stage.name === "精熟度測試"){
+                wpm_sum += wpm;
+                wpm_times += 1;
+                localStorage.setItem("wpm_sum", wpm_sum)
+                localStorage.setItem("wpm_times", wpm_times)
+                
+                let average_wpm = wpm_times > 0 ? Math.round(localStorage.getItem("wpm_sum") / localStorage.getItem("wpm_times")) : 0;
+                console.log(average_wpm, "平均wpm")
+            }
+            
+            
 
             //準確率
             //總按鍵次數 對+錯
