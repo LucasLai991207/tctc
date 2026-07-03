@@ -1,4 +1,4 @@
-name: Deploy GitHub Pages from repo root
+name: Deploy to GitHub Pages via gh-pages branch
 
 permissions:
   contents: read
@@ -21,16 +21,17 @@ jobs:
         run: |
           echo "===== repo root listing ====="
           ls -la
-          echo "Check index.html exists:"
           if [ -f index.html ]; then echo "index.html found"; else echo "index.html NOT found"; fi
 
-      - name: Configure Pages
-        uses: actions/configure-pages@v2
+      - name: Create .nojekyll to skip Jekyll processing
+        run: |
+          touch .nojekyll
+          ls -la .nojekyll
 
-      - name: Upload Pages artifact (repo root)
-        uses: actions/upload-pages-artifact@v2
+      - name: Deploy to gh-pages branch
+        uses: peaceiris/actions-gh-pages@v3
         with:
-          path: .   # 上傳整個 repo 根目錄（含 index.html）
-
-      - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v1
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: .   # 若你的網站在 ./build，改成 ./build
+          user_name: github-actions[bot]
+          user_email: 41898282+github-actions[bot]@users.noreply.github.com
