@@ -28,7 +28,7 @@ jobs:
         uses: actions/configure-pages@v2
 
       - name: Upload Pages artifact (repo root)
-        uses: actions/upload-pages-artifact@v1
+        uses: actions/upload-pages-artifact@v2
         with:
           path: .   # 上傳整個 repo 根目錄（含 index.html）
 
