@@ -1,0 +1,36 @@
+name: Deploy GitHub Pages from repo root
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Show repo root (debug)
+        run: |
+          echo "===== repo root listing ====="
+          ls -la
+          echo "Check index.html exists:"
+          if [ -f index.html ]; then echo "index.html found"; else echo "index.html NOT found"; fi
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v3
+
+      - name: Upload Pages artifact (repo root)
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: .   # 上傳整個 repo 根目錄（含 index.html）
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v1
