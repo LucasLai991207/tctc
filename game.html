@@ -733,7 +733,31 @@
                             </button>
                         </div>`
                 }
-            }else if(stage.type === "注音練習"){
+            }
+            else if(stage.name === "章節驗收" && stage.type === "注音練習"){
+                target.split("").forEach(function(char, i) {
+
+                    const container = document.getElementById("game_char_container")
+                    if(container){
+                        container.style.gap = "0.4rem";
+                    }
+
+                    const box = document.createElement("div")   // 建一個 div
+                    box.classList.add("game_char_box");           // 加上方框樣式
+                    box.style.width = "3rem";
+                    box.style.height = "3rem";
+                    box.style.fontSize = "2rem";
+                    box.style.paddingLeft = "2px";
+
+                    box.textContent = char;                       // 把注音字放進去
+                    if (i === 0) box.classList.add("current")   // 第一個格子加上金框（當前位置）
+                    container.appendChild(box);                // 把 div 放進畫面
+                    boxes.push(box);                              // 同時存進 boxes 陣列
+
+                    
+                })
+            }
+            else if(stage.type === "注音練習"){
                 target.split("").forEach(function(char, i) {
                     const box = document.createElement("div")   // 建一個 div
                     box.classList.add("game_char_box")           // 加上方框樣式
