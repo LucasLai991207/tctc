@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+    <head>
+        <meta charset="UTF-8">
+        <title>google-signin</title>
+    </head>
+    <body>
+        <h1>google sign-in test web</h1>
+        <div id="user_data" hidden>
+            <img id="avatar" alt="something went wrong">
+
+            <p id="name"></p>
+            
+            <p id="email"></p>
+        </div>
+
+        <button id="sign_in_btn">
+            sign in with google
+        </button>
+
+        <hr>
+        <input id="user_score_input" placeholder="input your score">
+        <button id="save_btn">儲存資料</button>
+        <button id="load_btn">載入資料</button>
+
+        <p id="cloud_score">雲端分數:尚未載入</p>
+        <footer>
+
+        </footer>
+        <script src="google_sign-in.js" type="module"></script>
+    </body>
+</html>
