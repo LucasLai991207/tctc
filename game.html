@@ -111,6 +111,8 @@
         .gmae_stage_name3{
             color: var(--champagne-gold);
             text-shadow: 0px 0px 2px var(--champagne-gold);
+
+            margin-top: 2rem;
         }
         .gmae_stage_name3::after{
             content: " **";
@@ -527,7 +529,8 @@
             "8":"ㄚ","i":"ㄛ","k":"ㄜ",",":"ㄝ",
             "9":"ㄞ","o":"ㄟ","l":"ㄠ",".":"ㄡ",
             "0":"ㄢ","p":"ㄣ",";":"ㄤ","/":"ㄥ",
-            "-":"ㄦ","3":"ˇ","4":"ˋ","7":"˙","6":"ˊ", " ":" ", "Enter":"↵","，":"，"
+            "-":"ㄦ","3":"ˇ","4":"ˋ","7":"˙","6":"ˊ", " ":" ", "Enter":"↵","<":"，","(":"（", ")":"）",
+            "[":"「", "]":"」","\\":"、", ":":"：", ">":"。"
         }
 
 
@@ -577,6 +580,10 @@
             // 用 FindStage 找到這關的資料
             const stage = FindStage(stageId)
 
+            const game_retry_btn = document.querySelector(".game_retry_btn");
+            game_retry_btn.display = "block";
+
+
             //找不到就顯示錯誤訊息，停止執行
             if (!stage) {
                 document.getElementById("game_stage_name").textContent = "找不到關卡：" + stageId
@@ -623,7 +630,10 @@
             //介紹部分拆出來
             if(stage.type === "基本介紹"){
                 const hint = document.querySelector(".game_input_hint")
-                hint.style.display = "none"
+                hint.style.display = "none";
+                
+                game_retry_btn.style.display = "none";
+
                 if(stage.id === "1-1-1"){
                     game_char_container.innerHTML = `
                     <div style="text-align: left; max-width: 900px; margin: 0 auto; font-family: 'Noto Serif TC', serif;color: white;font-weight: 150;position: relative;font-size: 0.9rem">
@@ -746,6 +756,29 @@
                     box.classList.add("game_char_box");           // 加上方框樣式
                     box.style.width = "3rem";
                     box.style.height = "3rem";
+                    box.style.fontSize = "2rem";
+                    box.style.paddingLeft = "2px";
+
+                    box.textContent = char;                       // 把注音字放進去
+                    if (i === 0) box.classList.add("current")   // 第一個格子加上金框（當前位置）
+                    container.appendChild(box);                // 把 div 放進畫面
+                    boxes.push(box);                              // 同時存進 boxes 陣列
+
+                    
+                })
+            }
+            else if(stage.name === "階段驗收" && stage.type === "注音練習"){
+                target.split("").forEach(function(char, i) {
+
+                    const container = document.getElementById("game_char_container")
+                    if(container){
+                        container.style.gap = "0.3rem";
+                    }
+
+                    const box = document.createElement("div")   // 建一個 div
+                    box.classList.add("game_char_box");           // 加上方框樣式
+                    box.style.width = "3.2rem";
+                    box.style.height = "3.2rem";
                     box.style.fontSize = "2rem";
                     box.style.paddingLeft = "2px";
 
