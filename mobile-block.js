@@ -63,7 +63,7 @@
         </button>
     `;
 
-    
+
     const append = () => {
         document.body.appendChild(overlay);
 
@@ -75,6 +75,7 @@
         btn.style.color = "#c9a84c";       
         });
 
+        
         btn.addEventListener("mouseleave", function () {
         btn.style.borderColor = "#555";    
         btn.style.color = "#777";          
