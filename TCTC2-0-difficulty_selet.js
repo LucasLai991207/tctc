@@ -81,6 +81,7 @@ function Save_and_HighLight(difficulty){
         easy_mode_btn.classList.add("main_lobby_mode_golden_shadow")
         easy_mode_btn_tag.classList.add("main_lobby_mode_tag")
 
+
     }
     if(difficulty == "medium"){
         medium_mode_btn.classList.add("main_lobby_mode_golden_shadow")
@@ -178,3 +179,4 @@ const username = document.querySelector(".main_lobby_main_frame_player_profile_l
 if(localStorage.getItem("username")){
     username.textContent = localStorage.getItem("username")
 }
+

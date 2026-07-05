@@ -530,7 +530,7 @@
             "9":"ㄞ","o":"ㄟ","l":"ㄠ",".":"ㄡ",
             "0":"ㄢ","p":"ㄣ",";":"ㄤ","/":"ㄥ",
             "-":"ㄦ","3":"ˇ","4":"ˋ","7":"˙","6":"ˊ", " ":" ", "Enter":"↵","<":"，","(":"（", ")":"）",
-            "[":"「", "]":"」","\\":"、", ":":"：", ">":"。"
+            "[":"「", "]":"」","\\":"、", ":":"：", ">":"。","!":"！"
         }
 
 
@@ -664,7 +664,11 @@
                                 onmouseout="this.style.backgroundColor='#c9a84c'; this.style.boxShadow='none';"
                                 onclick="window.location.href='game.html?stage=1-1-2'">
                             下一頁 →
-                        </button>                    </div>`
+                        </button>                    
+                        </div>`
+                    let progress = JSON.parse(localStorage.getItem("stage_progress")) || {} 
+                    progress[stageId] = true
+                    localStorage.setItem("stage_progress", JSON.stringify(progress))
                 }
                 else if(stage.id === "1-1-2"){
                     game_char_container.innerHTML = `
@@ -699,6 +703,9 @@
                                 下一頁 →
                             </button>
                         </div>`
+                    let progress = JSON.parse(localStorage.getItem("stage_progress")) || {} 
+                    progress[stageId] = true
+                    localStorage.setItem("stage_progress", JSON.stringify(progress))
                 }
                 else if(stage.id === "1-1-3"){
                     game_char_container.innerHTML = `
@@ -742,6 +749,21 @@
                                 進入實戰練習 →
                             </button>
                         </div>`
+                    let progress = JSON.parse(localStorage.getItem("stage_progress")) || {} 
+
+                    const is_first_time_clear = progress[stageId] !== true;
+
+                    if(is_first_time_clear){
+                       increase_stage_count(get_difficulty_by_stageid(stage.id))
+
+                        progress[stageId] = true
+                        localStorage.setItem("stage_progress", JSON.stringify(progress))
+                    }
+
+                    
+
+
+                    
                 }
             }
             else if(stage.name === "章節驗收" && stage.type === "注音練習"){
