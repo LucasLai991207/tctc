@@ -94,7 +94,7 @@ const Level_Data = {
                 name : "1-7 小拇指",
                 stage:[
                     {id:"1-7-1", name:"基礎注音", name2:" ㄇ ㄤ" , name3:"", type:"注音練習", level:"☆☆☆☆☆☆★", target:"ㄇ ㄤ ㄇㄇㄤ ㄤㄤㄇ ㄇㄤㄇㄤ ㄤㄇㄤㄇ ㄤㄤㄇ ㄇㄤㄤ ㄇㄤ ㄇㄤˊ ㄇㄤˇ ㄇㄤˋ↵"},
-                    {id:"1-7-2", name:"階段驗收", name2:" ㄇ ㄤ" , name3:"", type:"注音練習", level:"☆☆☆☆☆☆★", target:"ㄇㄇㄇㄇㄇㄇㄇㄇㄇㄇㄇㄇㄇㄇㄇㄤㄤㄤㄤㄤㄤㄤㄤㄤㄤㄤㄤㄤㄤㄤ↵↵↵↵↵↵↵↵↵↵↵↵↵ㄇㄤ"},
+                    {id:"1-7-2", name:"階段驗收", name2:" ㄇ ㄤ" , name3:"", type:"注音練習", level:"☆☆☆☆☆☆☆", target:"ㄇㄇㄇㄇㄇㄇㄇㄇㄇㄇㄇㄇㄇㄇㄇㄇㄇㄇㄤㄤㄤㄤㄤㄤㄤㄤㄤㄤㄤㄤㄤㄤㄤㄤㄤㄤ↵↵↵↵↵↵↵↵↵↵↵↵↵↵↵↵↵↵"},
                     {id:"1-7-3", name:"基礎注音", name2:" ㄆ ㄣ" , name3:"", type:"注音練習", level:"☆☆☆☆☆☆★", target:"ㄆ ㄣ ㄆㄣ ㄣㄆ ㄆㄆㄣ ㄣㄆㄆ ㄆㄣ ㄆㄣˊ ㄆㄣˇ ㄆㄣˋ ㄆㄣ˙ ㄆㄣㄆㄣ ㄣㄆ↵"},
                     {id:"1-7-4", name:"階段驗收", name2:" ㄇ ㄤ ㄆ ㄣ" , name3:"", type:"注音練習", level:"☆☆☆☆☆★★", target:"ㄇ ㄤ ㄆ ㄣ  ㄇㄣ ㄤㄇ ㄣㄆ ㄇㄇㄤ ㄤㄠㄣ ㄣㄣㄆ ㄆㄣ ㄇㄤˊ ㄆㄤˇ ㄇㄣˋ↵"},
                     {id:"1-7-5", name:"基礎注音", name2:" ㄅ ㄦ" , name3:"", type:"注音練習", level:"☆☆☆☆☆☆★", target:"ㄅ ㄦ ㄅㄦ ㄅㄦ ㄅㄦㄦ ㄦㄅㄅ ㄦㄅㄦㄅ ㄅㄦㄅㄦ ㄦ ㄦˊ ㄦˇ ㄦˋ ㄅㄦ ㄦㄅㄑ↵"},
@@ -134,8 +134,8 @@ const Level_Data = {
                 name :"綜合練習-1",
                 stage: [
                     {id:"2-1-1", name : "精熟度測試", name2:"", name3:"", type:"綜合練習", level:"☆☆☆★★★★", target1:"歡迎來到中級難度，相信在這之前你已經有了紮實的基本功，指法也相當熟悉，假如你這篇練習結果連三十都沒有，那麼說明這難度並不適合你，請回到初級重新練習", target:"ㄏㄨㄢ ㄧㄥˊㄌㄞˊㄉㄠˋㄓㄨㄥ ㄐㄧˊㄋㄢˊㄉㄨˋ，ㄒㄧㄤ ㄒㄧㄣˋㄗㄞˋㄓㄜˋㄓ ㄑㄧㄢˊㄋㄧˇㄧˇㄐㄧㄥ ㄧㄡˇㄌㄜ˙ㄓㄚˊㄕˊㄉㄜ˙ㄐㄧ ㄅㄣˇㄍㄨㄥ ，ㄓˇㄈㄚˇㄧㄝˇㄒㄧㄤ ㄉㄤ ㄕㄡˊㄒㄧ ，ㄐㄧㄚˇㄖㄨˊㄋㄧˇㄓㄜˋㄆㄧㄢ ㄌㄧㄢˋㄒㄧˊㄐㄧㄝˊㄍㄨㄛˇㄌㄧㄢˊㄙㄢ ㄕˊㄉㄡ ㄇㄟˊㄧㄡˇ，ㄋㄚˋㄇㄛ˙ㄕㄨㄛ ㄇㄧㄥˊㄓㄜˋㄋㄢˊㄉㄨˋㄅㄧㄥˋㄅㄨˊㄕˋㄏㄜˊㄋㄧˇ，ㄑㄧㄥˇㄏㄨㄟˊㄉㄠˋㄔㄨ ㄐㄧˊㄔㄨㄥˊㄒㄧㄣ ㄌㄧㄢˋㄒㄧˊ"},
-                    {id:"2-1-2", name : "精熟度測試", name2:"", name3:"", type:"綜合練習", level:"☆☆☆★★★★"},
-                    {id:"2-1-3", name : "精熟度測試", name2:"", name3:"", type:"綜合練習", level:"☆☆☆★★★★"},
+                    {id:"2-1-2", name : "精熟度測試", name2:"", name3:"", type:"綜合練習", level:"☆☆☆★★★★", target1:"厲害喔！看來你沒有被趕回初級班。既然指法已經難不倒你，第三關我們要開始測試你的「肌肉記憶」。這部分的文本會出現更多不常見的字母組合，專門專治手指打結。", target:"ㄌㄧˋㄏㄞˋㄛ ！ㄎㄢˋㄌㄞˊㄋㄧˇㄇㄟˊㄧㄡˇㄅㄟˋㄍㄢˇㄏㄨㄟˊㄔㄨ ㄐㄧˊㄅㄢ 。ㄐㄧˋㄖㄢˊㄓˇㄈㄚˇㄧˇㄐㄧㄥ ㄋㄢˊㄅㄨˊㄉㄠˇㄋㄧˇ，ㄉㄧˋㄙㄢ ㄍㄨㄢ ㄨㄛˇㄇㄣ˙ㄧㄠˋㄎㄞ ㄕˇㄘㄜˋㄕˋㄋㄧˇㄉㄜ˙「ㄐㄧ ㄖㄡˋㄐㄧˋㄧˋ」。ㄓㄜˋㄅㄨˋㄈㄣ ㄨㄣˊㄅㄣˇㄏㄨㄟˋㄔㄨ ㄒㄧㄢˋㄍㄥˋㄉㄨㄛ ㄅㄨˊㄔㄤˊㄐㄧㄢˋㄗˋㄇㄨˇㄗㄨˇㄏㄜˊ，ㄓㄨㄢ ㄇㄣˊㄓㄨㄢ ㄓˋㄕㄡˇㄓˇㄉㄚˇㄐㄧㄝˊ。"},
+                    {id:"2-1-3", name : "精熟度測試", name2:"", name3:"", type:"綜合練習", level:"☆☆☆★★★★", target1:"恭喜你來到第三關！別擔心，我們不打算逼死你。這一關的重點是「不要偷看鍵盤」。只要你相信手指的記憶，穩穩地打完，速度自然會提升。這次的目標是三十五字，只要保持平常心，你絕對可以輕鬆過關！", target:"ㄍㄨㄥ ㄒㄧˇㄋㄧˇㄌㄞˊㄉㄠˋㄉㄧˋㄙㄢ ㄍㄨㄢ ！ㄅㄧㄝˊㄉㄢ ㄒㄧㄣ ，ㄨㄛˇㄇㄣ˙ㄅㄨˋㄉㄚˇㄙㄨㄢˋㄅㄧ ㄙˇㄋㄧˇ。ㄓㄜˋㄧˋㄍㄨㄢ ㄉㄜ˙ㄓㄨㄥˋㄉㄧㄢˇㄕˋ「ㄅㄨˊㄧㄠˋㄊㄡ ㄎㄢˋㄐㄧㄢˊㄆㄢˊ」。ㄓˇㄧㄠˋㄋㄧˇㄒㄧㄤ ㄒㄧㄣˋㄕㄡˇㄓˇㄉㄜ˙ㄐㄧˋㄧˋ，ㄨㄣˇㄨㄣˇㄉㄜ˙ㄉㄚˇㄨㄢˊ，ㄙㄨˋㄉㄨˋㄗˋㄖㄢˊㄏㄨㄟˋㄊㄧˊㄕㄥ 。ㄓㄜˋㄘˋㄉㄜ˙ㄇㄨˋㄅㄧㄠ ㄕˋㄙㄢ ㄕˊㄨˇㄗˋ，ㄓˇㄧㄠˋㄅㄠˇㄔˊㄆㄧㄥˊㄔㄤˊㄒㄧㄣ ，ㄋㄧˇㄐㄩㄝˊㄉㄨㄟˋㄎㄜˇㄧˇㄑㄧㄥ ㄙㄨㄥ ㄍㄨㄛˋㄍㄨㄢ ！"},
                     {id:"2-1-4", name : "精熟度測試", name2:"", name3:"", type:"綜合練習", level:"☆☆☆★★★★"},
                     {id:"2-1-5", name : "精熟度測試", name2:"", name3:"", type:"綜合練習", level:"☆☆☆★★★★"},
 
@@ -250,4 +250,41 @@ function render_stage(difficulty, chapter){             //渲染關卡
         })
         single_container.appendChild(div)
     })
+}
+
+function get_difficulty_by_stageid(stage_id){
+    const first_number = String(stage_id).charAt(0);
+
+    if(first_number === "1"){return "easy"}
+    if(first_number === "2"){return "medium"}
+    if(first_number === "3"){return "hard"}
+
+    return null;
+}
+
+function increase_stage_count(difficulty){
+
+    const easy_btn = document.getElementById("mode_select_easy_btn")
+    const medium_btn = document.getElementById("mode_select_medium_btn")
+    const hard_btn = document.getElementById("mode_select_hard_btn")
+
+
+    if(difficulty === "easy"){
+        let easy_clear_stage_counter = Number(localStorage.getItem("easy_stage_counter")) || 0
+        easy_clear_stage_counter += 1;
+        localStorage.setItem("easy_stage_counter", easy_clear_stage_counter)
+
+        if(Number(easy_clear_stage_counter) >= 60){
+            const easy_btn = document.getElementById("mode_select_easy_btn");
+            if (easy_btn){
+                easy_btn.style.backgroundColor = "white";
+            }
+        }
+    }
+    else if(difficulty === "medium"){
+        
+    }
+    else if(difficulty === "hard"){
+
+    }
 }
