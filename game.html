@@ -308,8 +308,11 @@
             margin-top: 3rem;
             padding: 0.2rem 1rem;
 
+            font-size: 1.2rem;
+            line-height: 2rem;
+
             width: 70vw;
-            height: 14vh;
+            min-height: 14vh;
 
             background-color: var(--light-blue);
             color: #ffffff;
@@ -333,7 +336,6 @@
             <div>登入</div>
             <div>排行榜</div>
             <div onclick="window.location.href='index.html'">關於我們</div>
-            <div onclick="window.location.href='TCTC2-0-profile.html'">個人空間</div>
         </div>
     </nav>
 
@@ -344,7 +346,17 @@
             <div class="game_stage_id" id="game_stage_id">—</div>
             <div class="game_stage_name" id="game_stage_name">載入中...</div>
             <div class="gmae_stage_name3" id="game_stage_name3">無提示詞</div>
-            <div class="game_stage_target1" id="game_stage_target1" style="display: none;">嗨嗨嗨</div>
+            <div class="game_stage_target1" id="game_stage_target1" style="display: none;">
+                目標文字
+            </div>
+            <img src="tctc-typing_mec_img.png" id="typing_img_1" style="display: none;
+            max-width: 70vw;
+            max-height: 50;
+            margin: 1rem auto 0 auto; 
+            border-radius: 14px;
+            box-shadow: 0px 3px 3px rgba(0, 0, 0, 0.3);
+            opacity: 0.8;
+            ">
         </div>
 
         <div class="game_char_container" id="game_char_container"></div>
@@ -829,6 +841,16 @@
 
             }
             else if(stage.type === "綜合練習"){
+                const typing_img_1 = document.getElementById("typing_img_1")
+                const game_stage_target1 = document.getElementById("game_stage_target1");
+
+                if(stage.id === "2-2-5"){
+                    game_stage_target1.style.display = "block";
+                    typing_img_1.style.display = "block"
+                }
+                else{
+                    typing_img_1.style.display = "none"
+                }
                 target.split("").forEach(function(char, i) {
 
                     const container = document.getElementById("game_char_container")
