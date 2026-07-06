@@ -805,3 +805,131 @@
 .main_lobby_main_frame_player_profile_left_div_username{
     font-size: 2rem;
 }
+/* .main_achievement{
+    top: 2.5rem;
+
+    height: 3rem;
+    width: 8rem;
+    background-color: rgba(245, 245, 243, 0.9);
+    display: none;
+
+    border-left: 1px solid var(--champagne-gold);
+    border-right: 1px solid var(--champagne-gold);
+
+}
+.main_lobby_more_detil_div:hover .main_achievement{
+    position: absolute;
+    display: block;
+
+    display: flex;
+    align-items: center;
+    
+    padding-left: 1rem;
+}
+.main_lobby_more_detil_div{
+    position: relative;
+    transition: all 200ms ease;
+}
+.main_ranking{
+    top: 5rem;
+
+    height: 3rem;
+    width: 8rem;
+    background-color: rgba(245, 245, 243, 0.9);
+    display: none;
+
+    border-left: 1px solid var(--champagne-gold);
+    border-right: 1px solid var(--champagne-gold);
+
+}
+.main_lobby_more_detil_div:hover .main_ranking{
+    position: absolute;
+    display: block;
+
+    display: flex;
+    align-items: center;
+    
+    padding-left: 1rem;
+
+    margin-left: 0.2rem;
+} */
+
+.main_lobby_more_detil_div {
+    position: relative;
+    cursor: pointer;
+
+    color: #0a0808;
+    font-weight: 100;
+}
+
+/* --- 共同樣式設定 (初始狀態：完全透明、隱藏、縮回上方) --- */
+.main_achievement,
+.main_ranking,
+.main_profile {
+    color: #0a0808;
+    font-weight: 100;
+
+    position: absolute;
+
+    width: 8rem;
+    height: 3rem;
+
+    background-color: rgba(245, 245, 243, 0.9); 
+
+    border-left: 1px solid var(--champagne-gold);
+    border-right: 1px solid var(--champagne-gold);
+
+    padding-left: 1rem;
+    
+    display: flex;
+    align-items: center;
+
+    /*初始*/
+
+    opacity: 0;
+    visibility: hidden;
+    
+    box-shadow: -2px 1px 5px rgba(0, 0, 0, 0.2);
+    top: 0; 
+    
+    transition: opacity 0.3s ease, top 0.3s ease, visibility 0.3s ease;
+}
+
+.main_ranking {
+    margin-left: 0.2rem; 
+}
+
+.main_profile{
+    margin-left: 0.4rem;
+}
+.main_lobby_more_detil_div:hover .main_achievement {
+    opacity: 0.9;            
+    visibility: visible;
+    top: 2rem;             
+    transition-delay: 0s;    
+}
+
+.main_lobby_more_detil_div:hover .main_ranking {
+    opacity: 0.85;            
+    visibility: visible;
+    top: 4.6rem;            
+    transition-delay: 0.05s; 
+}
+.main_lobby_more_detil_div:hover .main_profile {
+    opacity: 0.8;            
+    visibility: visible;
+    top: 7.2rem;            
+    transition-delay: 0.1s; 
+}
+
+
+.main_lobby_more_detil_div .main_achievement {
+    transition-delay: 0.1s;
+}
+
+.main_lobby_more_detil_div .main_ranking {
+    transition-delay: 0.05s;    
+}
+.main_lobby_more_detil_div .main_profile {
+    transition-delay: 0s;    
+}
