@@ -358,17 +358,39 @@
             <div class="game_stage_id" id="game_stage_id">—</div>
             <div class="game_stage_name" id="game_stage_name">載入中...</div>
             <div class="gmae_stage_name3" id="game_stage_name3">無提示詞</div>
+
+
+            <!--中級圖片-->
+            <img src="keyboard-computer-keys-white.avif" id="typing_img_2" style="
+            display: none;
+
+            width: 600px;
+            height: 200px;
+
+            object-fit: cover; 
+            object-position: center;
+            margin: 1rem auto 0 auto; 
+            opacity: 0.8;
+            border-radius: 14px;
+            box-shadow: 0px 3px 10px rgba(0, 0, 0, 0.3);
+            ">
+
+
+
             <div class="game_stage_target1" id="game_stage_target1" style="display: none;">
                 目標文字
             </div>
-            <img src="tctc-typing_mec_img.png" id="typing_img_1" style="display: none;
+
+            <!--中級圖片-->
+            <img src="tctc-typing_mec_img.png" id="typing_img_1" style="
+            display: none;
             max-width: 70vw;
-            max-height: 50;
             margin: 1rem auto 0 auto; 
             border-radius: 14px;
             box-shadow: 0px 3px 3px rgba(0, 0, 0, 0.3);
             opacity: 0.8;
             ">
+            
         </div>
 
         <div class="game_char_container" id="game_char_container"></div>
@@ -854,6 +876,7 @@
             }
             else if(stage.type === "綜合練習"){
                 const typing_img_1 = document.getElementById("typing_img_1")
+                const typing_img_2 = document.getElementById("typing_img_2")
                 const game_stage_target1 = document.getElementById("game_stage_target1");
 
                 if(stage.id === "2-2-5"){
@@ -862,6 +885,14 @@
                 }
                 else{
                     typing_img_1.style.display = "none"
+                }
+
+                if(stage.id === "2-3-1"){
+                    game_stage_target1.style.display = "block";
+                    typing_img_2.style.display = "block"
+                }
+                else{
+                    typing_img_2.style.display = "none"
                 }
                 target.split("").forEach(function(char, i) {
 

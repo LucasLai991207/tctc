@@ -210,7 +210,7 @@ const Level_Data = {
                         id:"2-3-1", 
                         name :"QWERTY 鍵盤的效率迷思", 
                         name2:"", 
-                        name3:"邊學打字，邊學歷史 一舉兩得", 
+                        name3:"你現在手中的鍵盤正是柯蒂鍵盤", 
                         type:"綜合練習", 
                         level:"☆☆☆★★★★", 
                         target1:"我們現在常用的英文鍵盤，左上角的前六個字母按鍵常被稱為標準排列。這種排列是由美國發明家肖爾斯在西元一八七三年設計的。當時為了配合最早的機械打字機，這種設計刻意打亂了字母順序，並非為了提高打字速度。相反地，它是為了配合當時粗糙的機械連動結構，限制打字員的手速。", 
@@ -421,6 +421,7 @@ const Level_Data = {
     } 
 }
 function render_chapter(difficulty){
+
     const container = document.getElementById("chapter_list")
     const container_stage = document.getElementById("main_lobby_level_container")
 
@@ -433,6 +434,8 @@ function render_chapter(difficulty){
 
     Level_Data[difficulty].chapter.forEach(function(chapter){   //迴圈式建div
         const div = document.createElement("div")
+        
+        div.id = `chapter-${chapter.id}`;
         div.classList.add("chapter_frame")
         div.textContent = chapter.name
 
@@ -443,18 +446,62 @@ function render_chapter(difficulty){
         })
 
         container.appendChild(div)
+
+        tag_completed_chapter()
+
     })
 }
 function select_chapter(div){             //切章節 視覺部分
     const main_container = document.querySelectorAll(".chapter_frame")
+
     main_container.forEach(function(frame){
         frame.classList.remove("chapter_selected")
     })
 
     div.classList.add("chapter_selected")
 
+    
+
 
 }
+
+// function tag_completed_chapter(){
+//     const progress = JSON.parse(localStorage.getItem("stage_progress")) || {}
+
+//     const stage_all_completed_easy = Level_Data.easy.chapter.stage.
+//     if(progress["1-1-1"] === true && progress["1-1-2"] === true && progress["1-1-3"]){
+//         console.log("1-1通過")
+//     }
+
+// }
+
+// tag_completed_chapter()
+
+
+function tag_completed_chapter() {
+    const progress = JSON.parse(localStorage.getItem("stage_progress")) || {};
+
+    const allChapters = Level_Data.easy.chapter;
+
+    allChapters.forEach(chapter => {
+        
+        const isChapterAllCompleted = chapter.stage.every(stage => progress[stage.id] === true);
+
+        if (isChapterAllCompleted) {
+            console.log(`${chapter.name} 完全通過`);
+            
+            const current_stage = document.getElementById(`chapter-${chapter.id}`)
+
+            if(!current_stage) return;
+            console.log(current_stage)
+            current_stage.classList.add("chapter_frame_completed")
+        } else {
+            console.log(`${chapter.name} 未通過。`);
+        }
+    });
+}
+
+
 
 function render_stage(difficulty, chapter){             //渲染關卡
     const single_container = document.getElementById("main_lobby_level_container")
@@ -471,6 +518,7 @@ function render_stage(difficulty, chapter){             //渲染關卡
     chapter.stage.forEach(function(stage){
         const div = document.createElement("div")
 
+        div.id = `stage-${stage.id}` //標記上ｉｄ
         div.classList.add("main_lobby_map_stage")
         div.innerHTML = `
                 <div class="main_lobby_map_stage_text1">${stage.id}</div>
