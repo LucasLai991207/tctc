@@ -20,6 +20,7 @@
 
 
     <link rel="stylesheet" href="TCTC2-0-intro_lobby.css">
+    <link rel="stylesheet" href="TCTC2-0-main_lobby.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@200;300;400;500;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
@@ -96,7 +97,11 @@
             align-items: center;
             gap: 2rem;
         }
-        .game_stage_info { text-align: center; }
+        .game_stage_info { 
+            display: flex;
+            flex-direction: column;
+            text-align: center; 
+        }
         .game_stage_id {
             color: var(--champagne-gold);
             font-size: 0.9rem;
@@ -109,6 +114,8 @@
             margin-top: 0.3rem;
         }
         .gmae_stage_name3{
+            margin: auto;
+
             color: var(--champagne-gold);
             text-shadow: 0px 0px 2px var(--champagne-gold);
 
@@ -334,8 +341,13 @@
         <img src="TCTC2.0 logo.png" class="logo_style" onclick="window.location.href='TCTC2-0-main.html'">
         <div class="nav_css">
             <div>登入</div>
-            <div>排行榜</div>
+            <div >排行榜</div>
             <div onclick="window.location.href='index.html'">關於我們</div>
+            <div class="main_lobby_more_detil_div">更多 ≡
+                <div class="main_achievement">成就</div>
+                <div class="main_ranking" onclick="window.location.href='TCTC2-0-ranking.html'">排行榜</div>
+                <div class="main_profile" onclick="window.location.href='TCTC2-0-profile.html'">設定</div>
+            </div>
         </div>
     </nav>
 
@@ -690,7 +702,7 @@
                             </p>
                             
                             <p style="margin-bottom: 1.2rem; color: #ffffff; font-weight: 100; line-height: 1.8rem;">
-                                大千式排列是由大千公司設計、後來成為台灣國家標準（CNS 2690）的注音輸入法鍵盤排列方式。<br>市面上99%的鍵盤佈局都為此種形式，掌握他的排列規則，能有效提升字速度。                            </p>
+                                大千式排列是由大千公司設計、後來成為台灣國家標準（CNS 2690）的注音輸入法鍵盤排列方式。<br>市面上99%的鍵盤佈局都為此種形式，掌握他的排列規則，能有效提升打字速度。                            </p>
 
                             <div style="background-color: rgba(14, 36, 62, 0.6); padding: 1.2rem; border-radius: 8px; border-left: 4px solid #c9a84c; margin-bottom: 1.5rem; line-height: 1.8rem;">
                                 <b style="color: #c9a84c; font-size: 1.1rem;">．三大排列隱藏規則：</b><br>
