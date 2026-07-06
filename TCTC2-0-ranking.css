@@ -1,0 +1,19 @@
+html{
+    scroll-behavior: smooth;
+}
+.ranking_main_style{
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+}
+.ranking_first_sec{
+    background-color: whitesmoke;
+
+    margin-top: 4rem;
+
+    width: 95vw;
+    min-height: 10rem;
+}
+.ranking_first_sec_ul1{
+    padding-left: 3rem;
+}
