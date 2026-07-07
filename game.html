@@ -575,8 +575,8 @@
             "8":"ㄚ","i":"ㄛ","k":"ㄜ",",":"ㄝ",
             "9":"ㄞ","o":"ㄟ","l":"ㄠ",".":"ㄡ",
             "0":"ㄢ","p":"ㄣ",";":"ㄤ","/":"ㄥ",
-            "-":"ㄦ","3":"ˇ","4":"ˋ","7":"˙","6":"ˊ", " ":" ", "Enter":"↵","<":"，","(":"（", ")":"）",
-            "[":"「", "]":"」","\\":"、", ":":"：", ">":"。","!":"！"
+            "-":"ㄦ","3":"ˇ","4":"ˋ","7":"˙","6":"ˊ", " ":" ", "Enter":"↵","(":"（", ")":"）",
+            "[":"「", "]":"」","\\":"、", ":":"：", ">":"。","!":"！","，":"，"          
         }
 
 
@@ -614,7 +614,6 @@
         // ===== Init：初始化畫面，每次「再試一次」也會呼叫這裡 （渲染關卡）=====
 
         function Init() {
-            // Find_next_game()
             // if(next_stage_is_exists){
             //     document.querySelector(".next_game_btn").style.display = "block";
 
@@ -662,6 +661,7 @@
 
             //隱藏結果畫面（移除 show class）
             document.getElementById("game_result").classList.remove("show")
+            document.querySelector(".next_game_btn").style.display = "none"
 
             // 清空方框區，準備重建
             const container = document.getElementById("game_char_container")
@@ -1044,8 +1044,9 @@
         document.addEventListener("keydown", function(event){
             if(event.key === "Enter"){
                 const next_btn = document.querySelector(".next_game_btn")
+                const result_showing = document.getElementById("game_result").classList.contains("show")
 
-                if(next_btn && next_btn.style.display === "block"){
+                if(result_showing && next_btn && next_btn.style.display === "block"){
                     event.preventDefault()
                     Find_next_game(stageId)
 
@@ -1095,12 +1096,14 @@
 
             if (target === "" || boxes.length === 0) return
 
-            // 如果已經打完全部（current 超出範圍），忽略
+            // 如果已經打完全部（current 超出範圍）忽略
             if (current >= target.length && !wrong_input) return
 
             let key = event.key  // 取得按下的按鍵名稱
 
-            if(key === ","){
+
+            //例外處理 重複字元
+            if(event.code === "Comma"){
                 if(target[current] === "，"){
                     key = "，"
                 }
@@ -1108,6 +1111,7 @@
                     key = ","
                 }
             }
+
 
             // 空白鍵預設會讓頁面捲動，這裡阻止這個預設行為
             if (key === " ") event.preventDefault()
@@ -1121,6 +1125,7 @@
                     boxes[current].classList.add("current")
                     return
                 }
+                
                 // 沒有打錯：往前退一格
                 if (current <= 0) return  // 已經在第一格，不能再退
 
