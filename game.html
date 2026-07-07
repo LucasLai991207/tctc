@@ -142,6 +142,9 @@
             border-radius: 12px;
             border: 1px solid rgba(201,168,76,0.2);
 
+            overflow: var(--box-overflow, hidden);
+            max-height: var(--container-max-height, none);
+
         }
         .game_char_box {
             width: 4rem;
@@ -627,6 +630,9 @@
             const game_retry_btn = document.querySelector(".game_retry_btn");
             game_retry_btn.display = "block";
 
+            const container_init = document.getElementById("game_char_container")
+            container_init.scrollBy({ top: -10000, behavior: "smooth" })
+
 
             //找不到就顯示錯誤訊息，停止執行
             if (!stage) {
@@ -835,6 +841,12 @@
                 })
             }
             else if(stage.name === "階段驗收" && stage.type === "注音練習"){
+
+                const game_container = document.querySelector(".game_char_container")
+                game_container.style.setProperty('--box-overflow', 'auto')
+                game_container.style.setProperty('--container-max-height', '30vh')
+
+
                 target.split("").forEach(function(char, i) {
 
                     const container = document.getElementById("game_char_container")
@@ -877,6 +889,12 @@
                 const typing_img_1 = document.getElementById("typing_img_1")
                 const typing_img_2 = document.getElementById("typing_img_2")
                 const game_stage_target1 = document.getElementById("game_stage_target1");
+
+
+                const game_container = document.querySelector(".game_char_container")
+                game_container.style.setProperty('--box-overflow', 'auto')
+                game_container.style.setProperty('--container-max-height', '30vh')
+
 
                 if(stage.id === "2-2-5"){
                     game_stage_target1.style.display = "block";
@@ -1155,6 +1173,9 @@
 
             // 判斷對錯 
             if (target[current] === bopomofo[key]) {
+
+                const current_top = boxes[current].offsetTop
+
                 //對了
                 boxes[current].classList.remove("current", "wrong")  //移除金框紅框
                 boxes[current].classList.add("correct")               //加上綠框
@@ -1164,6 +1185,19 @@
                 if (current < boxes.length) {
                     // 還有下一格，把金框移過去
                     boxes[current].classList.add("current")
+
+                    const next_top = boxes[current].offsetTop //下個的高度
+
+                    if (next_top !== current_top) {
+                        const container = document.getElementById("game_char_container")
+                        const scrool_distance = Math.abs(current_top - next_top)
+
+
+                        container.scrollBy({ top: scrool_distance, behavior: "smooth" })
+                        
+                                            
+                    }
+
                 } else {
                     // 已經是最後一格，顯示結果
                     ShowResult()
