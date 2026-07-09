@@ -325,7 +325,7 @@
             line-height: 2rem;
 
             width: 70vw;
-            min-height: 14vh;
+            min-height: 10vh;
 
             background-color: var(--light-blue);
             color: #ffffff;
@@ -614,11 +614,29 @@
                     }
                 }
             }
-            return null  // 找不到就回傳 null
+            return null  
+        }
+
+        //時時比對目標和輸入一致性 包括所有輸入模式
+        function check_input_and_target1(input_value){
+
+            const stage = FindStage(stageId)
+
+            const game_input_target1 = stage.target1
+
+            if(game_input_target1 === input_value){
+                console.log("比對完成 target1 === input_value")
+            }
+            else{
+                console.log("比對未完成 target1 != input_value")
+            }
+
         }
 
 
-        // ===== Init：初始化畫面，每次「再試一次」也會呼叫這裡 （渲染關卡）=====
+        
+
+        //初始化畫面 每次「再試一次」也會呼叫
 
         function Init() {
             // if(next_stage_is_exists){
@@ -905,7 +923,10 @@
                 game_container_input.type = "text"
                 game_container_input.id = "game_container_input_id"
 
-                game_container_input.value = stage.target1
+                const game_stage_target1 = document.getElementById("game_stage_target1");
+                game_stage_target1.textContent = stage.target1
+                game_container_input.placeholder = "請輸入目標"
+
 
                 game_container.appendChild(game_container_input)
 
@@ -919,15 +940,17 @@
                 game_container_input.style.border = "none"
 
                 game_container_input.style.fontSize = "2rem"
-                game_container_input.font
+                game_container_input.style.color = "#fff"
 
-                game_container_input.style.outlineColor = "var(--champagne-gold)"
-                game_container_input.style.outlineStyle = "solid"
-                game_container_input.style.outlineWidth = "thin"
+                game_container_input.style.padding = "0 1rem 0.3rem 1rem"                
+
+
+                game_container_input.addEventListener("input", check_input_and_target1())
 
                 
 
-
+                
+                
             }
             else if(stage.type === "綜合練習"){
                 const typing_img_1 = document.getElementById("typing_img_1")

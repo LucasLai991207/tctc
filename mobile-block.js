@@ -69,7 +69,7 @@
 
         const btn = document.getElementById("skip-btn");
 
-        // 原因：按鈕是 inline style 寫的，無法直接用 CSS :hover 選到它
+        //按鈕是 inline寫的 無法直接用 CSS :hover
         btn.addEventListener("mouseenter", function () {
         btn.style.borderColor = "#c9a84c"; 
         btn.style.color = "#c9a84c";       
