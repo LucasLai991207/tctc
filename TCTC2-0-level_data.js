@@ -131,6 +131,19 @@ const Level_Data = {
                 ]
 
                 
+            },
+            {
+                id: "1-9",
+                name:"1-9 選字輸入練習",
+                stage:[
+                    {id:"1-9-1", name:"基礎符號", name2:" ，。" , name3:"", type:"基礎輸入", level:"☆☆☆☆☆☆★", target1:"test"},
+                    {id:"1-9-2", name:"基礎符號", name2:" ，。" , name3:"", type:"基礎輸入", level:"☆☆☆☆☆☆★", target1:""},
+                    {id:"1-9-3", name:"基礎符號", name2:" ，。" , name3:"", type:"基礎輸入", level:"☆☆☆☆☆☆★", target1:""},
+                    {id:"1-9-4", name:"基礎符號", name2:" ，。" , name3:"", type:"基礎輸入", level:"☆☆☆☆☆☆★", target1:""},
+                    {id:"1-9-5", name:"基礎符號", name2:" ，。" , name3:"", type:"基礎輸入", level:"☆☆☆☆☆☆★", target1:""},
+                    {id:"1-9-6", name:"基礎符號", name2:" ，。" , name3:"", type:"基礎輸入", level:"☆☆☆☆☆☆★", target1:""},
+
+                ]
             }
         ]
     },
