@@ -89,6 +89,28 @@
             background-color: var(--champagne-gold);
             color: var(--dark-blue);
         }
+        .game_timer {
+            position: fixed;
+            top: 5rem;
+            right: 2rem;
+            height: 2.3rem;
+            
+            padding: 0 1rem;
+            background-color: var(--dark-blue);
+            border: 1px solid rgba(201,168,76,0.6);
+            border-radius: 0.1rem;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            font-family: "Helvetica Neue", Arial, sans-serif;
+            font-size: 1.3rem;
+            letter-spacing: 2px;
+            color: var(--champagne-gold);
+
+            z-index: 100;
+        }
         .game_main {
             margin-top: 50px;
             width: 70vw;
@@ -131,13 +153,14 @@
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
+            align-items: center;
             gap: 0.5rem;
 
             width: 120%;
             max-width: 1200px;
             min-height: 3rem;
 
-            padding: 1rem 0.6rem;
+            padding: 1rem 0rem 0.6rem 0.6rem;
 
             background-color: var(--darker-blue);
             border-radius: 12px;
@@ -359,6 +382,7 @@
     </nav>
 
     <div class="game_back_btn" onclick="window.location.href='TCTC2-0-main.html'">←</div>
+    <div class="game_timer" id="game_timer">00:00</div>
 
     <main class="game_main">
         <div class="game_stage_info">
@@ -588,14 +612,48 @@
 
 
         // ===== 遊戲狀態變數 =====
-        let target = ""          // 這關要打的字串，例如 "ㄑㄨㄑㄨ"
+        let target = ""          // 這關要打的字串
         let current = 0          // 目前指到第幾個字（從 0 開始）
         let wrong_input = false  // 目前是否處於打錯卡住的狀態
         let wrong_key_times = 0  // 總共打錯幾次
         let target_get = 0       // 總共打對幾個字
         let isRunning = false    // 計時是否已經開始
-        let startTime = null     // 開始的時間點（毫秒）
-        let boxes = []           // 存所有方框 div 的陣列，方便用 boxes[0] boxes[1] 取得
+        let startTime = null     // 開始的時間點（毫秒
+        let boxes = []           // 存所有方框 div的陣列 方便用 boxes[0] boxes[1]取得
+        let timerInterval = null // 右上角計時器的 interval id
+
+        // ===== 右上角計時器 =====
+        function Format_Timer(seconds){
+            const m = Math.floor(seconds / 60)
+            const s = Math.floor(seconds % 60)
+            return String(m).padStart(2, "0") + "：" + String(s).padStart(2, "0")
+        }
+
+        function Update_Timer_Display(){
+            const timerEl = document.getElementById("game_timer")
+            if(!timerEl || !startTime) return
+            const elapsed = (Date.now() - startTime) / 1000
+            timerEl.textContent = Format_Timer(elapsed)
+        }
+
+        function Start_Timer(){
+            Stop_Timer() // 避免重複啟動
+            Update_Timer_Display()
+            timerInterval = setInterval(Update_Timer_Display, 1000)
+        }
+
+        function Stop_Timer(){
+            if(timerInterval){
+                clearInterval(timerInterval)
+                timerInterval = null
+            }
+        }
+
+        function Reset_Timer_Display(){
+            Stop_Timer()
+            const timerEl = document.getElementById("game_timer")
+            if(timerEl) timerEl.textContent = "00：00"
+        }
 
 
 
@@ -617,20 +675,48 @@
             return null  
         }
 
-        //時時比對目標和輸入一致性 包括所有輸入模式
-        function check_input_and_target1(input_value){
+        // ===== 「選字輸入」關卡（type: 基礎輸入）的比對邏輯 =====
+        // 這個模式跟其他關卡不一樣的地方：
+        // 其他關卡是「一個按鍵 → 一個注音符號」直接比對，可以逐字判斷對錯。
+        // 但這裡玩家是用「輸入法選字」打出完整的中文字（例如打「ㄋㄧˇ ㄏㄠˇ」選出「你好」），
+        // 選字的過程中會觸發很多次瀏覽器的 input 事件（這叫做 IME 組字/composition），
+        // 沒辦法像其他關卡一樣「按一鍵就知道對不對」，只能等玩家打完，
+        // 直接比對「整個輸入框的內容」跟「這關的目標句子（target1）」是否完全一樣。
+        function Check_Text_Input_Match(){
 
+            // 每次使用者打字都會重新呼叫這個函式，所以要重新抓一次最新的 stage 資料
             const stage = FindStage(stageId)
+            const input_el = document.getElementById("game_container_input_id")
 
-            const game_input_target1 = stage.target1
+            // 防呆：如果讀不到關卡資料或輸入框（例如頁面還沒渲染完），直接跳出
+            if(!stage || !input_el) return
 
-            if(game_input_target1 === input_value){
-                console.log("比對完成 target1 === input_value")
+            // 玩家打下第一個字時才開始計時（跟其他關卡的邏輯一致）
+            if(!isRunning){
+                isRunning = true
+                startTime = Date.now()
+                Start_Timer()
             }
-            else{
-                console.log("比對未完成 target1 != input_value")
-            }
 
+            // trim() 去掉頭尾空白：避免玩家不小心多打一個空格，導致永遠比對不到、卡關
+            const is_match = input_el.value.trim() === stage.target1.trim()
+
+            if(is_match){
+                // 打對了！因為這個模式沒有「逐字算對錯」，
+                // 所以直接把「正確字數」設成目標句子的長度，讓 ShowResult() 可以正常算 WPM
+                target_get = stage.target1.trim().length
+
+                // 鎖住輸入框：disabled 設成 true 之後，這個 <input> 就不能再被打字或聚焦，
+                // 避免玩家在結果畫面出現「再試一次」按鈕之前，還能繼續改輸入框內容。
+                // 之所以不用擔心「怎麼解鎖」：因為按下「再試一次」會呼叫 Init()，
+                // Init() 每次都會把 game_char_container 整個清空重建（container.innerHTML = ""），
+                // 重建出來的是一個全新的 <input>，預設本來就是沒有 disabled 的狀態。
+                input_el.disabled = true
+
+                ShowResult()   // 直接結束關卡、跳出成績畫面
+            }
+            // 沒對上 → 什麼都不做。函式結束後，關卡就是「還沒過」，
+            // 玩家可以繼續修改輸入框內容，這樣就達成「不對就永遠不結束」的需求
         }
 
 
@@ -686,6 +772,7 @@
             target_get = 0
             isRunning = false
             startTime = null
+            Reset_Timer_Display()
 
             //隱藏結果畫面（移除 show class）
             document.getElementById("game_result").classList.remove("show")
@@ -695,6 +782,15 @@
             const container = document.getElementById("game_char_container")
             container.innerHTML = ""
             boxes = []
+
+            // 這裡是我額外補上的小修正（不影響你這次要的功能，但會影響穩定性）：
+            // 「基礎輸入」「綜合練習」這兩種關卡類型會把 game_stage_target1 這塊
+            // 設成 display:flex/block，但沒有任何地方會把它「設回 none」。
+            // 如果玩家打完「基礎輸入」關卡後，下一關是「注音練習」，
+            // 這塊目標文字就會一直卡在畫面上不會消失。
+            // 所以每次 Init() 一開始，先統一重置成隱藏，該顯示的分支再自己打開它就好。
+            const reset_target_box = document.getElementById("game_stage_target1")
+            if(reset_target_box) reset_target_box.style.display = "none"
 
 
 
@@ -926,6 +1022,7 @@
                 const game_stage_target1 = document.getElementById("game_stage_target1");
                 game_stage_target1.textContent = stage.target1
                 game_container_input.placeholder = "請輸入目標"
+                game_container_input.setAttribute("autocomplete", "off")
 
 
                 game_container.appendChild(game_container_input)
@@ -939,15 +1036,32 @@
                 game_container_input.style.backgroundColor = "var(--darker-blue)"
                 game_container_input.style.border = "none"
 
-                game_container_input.style.fontSize = "2rem"
+                game_container_input.style.fontSize = "1.5rem"
                 game_container_input.style.color = "#fff"
 
                 game_container_input.style.padding = "0 1rem 0.3rem 1rem"                
 
 
-                game_container_input.addEventListener("input", check_input_and_target1())
+                // ★ 原本的 bug：check_input_and_target1() 後面多打了一組括號，
+                // 這樣會讓瀏覽器「馬上執行」這個函式一次，
+                // 然後把它「執行完的回傳值（undefined）」拿去當作事件處理器 —— 等於根本沒有綁定成功。
+                // addEventListener 要傳的是「函式本身（一個參考）」，不能加括號呼叫它。
+                // 錯誤寫法：addEventListener("input", myFunc())   ← 馬上執行 myFunc，綁定失敗
+                // 正確寫法：addEventListener("input", myFunc)     ← 把 myFunc 這個函式交給瀏覽器保管，
+                //                                                     以後每次 input 事件發生，瀏覽器才會呼叫它
+                game_container_input.addEventListener("input", Check_Text_Input_Match)
 
-                
+                // 每次按下退格鍵（Backspace）視為一次「修正錯誤」，用來計算這關的正確率
+                // 這裡特地綁在 input 元素自己身上（而不是 document 整頁），
+                // 這樣才不會跟下面偵測注音鍵盤的 document.addEventListener("keydown", ...) 互相干擾
+                game_container_input.addEventListener("keydown", function(event){
+                    if(event.key === "Backspace"){
+                        wrong_key_times++
+                    }
+                })
+
+                // 頁面一載入就把游標放進輸入框，玩家不用自己點一下就能直接開始打字
+                game_container_input.focus()
 
                 
                 
@@ -1023,6 +1137,8 @@
         //ShowResult
         function ShowResult() {
 
+            Stop_Timer() // 關卡結束，停止右上角計時器
+
             const stage = FindStage(stageId)
             console.log(stage)
 
@@ -1030,9 +1146,14 @@
             const timeUsed = (Date.now() - startTime) / 1000
 
             //WPM
-            const wpm = Math.ceil((target_get / 3) / (timeUsed / 60))
+            let wpm = Math.ceil((target_get / 3) / (timeUsed / 60))
+
+            //如果是輸入的 就乘以三
+            if(stage.type === "基礎輸入"){
+                wpm = Math.ceil(wpm * 3);
+            }
             
-            //如果是章節訓練或中級 平均wpm
+            //如果是章節訓練或中級就採計到 平均wpm
             if(stage.name === "章節驗收" || stage.name === "精熟度測試"){
                 wpm_sum += wpm;
                 wpm_times += 1;
@@ -1049,19 +1170,34 @@
 
             //準確率
             //總按鍵次數 對+錯
-            const acc = target_get > 0
+            let acc = target_get > 0
                 ? Math.round((1 - wrong_key_times / (target_get + wrong_key_times)) * 100)
                 : 0
+            
+            //如果是基礎輸入 就直接讓acc 變100%
+            if(stage.type === "基礎輸入"){
+                acc = 100;
+            }
 
             //wpm counter
             let acc_sum = Number(localStorage.getItem("acc_sum")) || 0;
             let acc_times = Number(localStorage.getItem("acc_times")) || 0;
 
             if(stage.name === "章節驗收" || stage.name === "精熟度測試"){
+                //===記到平均區===
+                
+                //基礎輸入就跳過
+                if(stage.type === "基礎輸入") return;
+
+
+
+
+
+
                 acc_sum += acc;
                 acc_times += 1;
                 localStorage.setItem("acc_sum", acc_sum)
-                localStorage.setItem("wpm_times", acc_times)
+                localStorage.setItem("acc_times", acc_times)
                 
                 let average_acc = acc_times > 0 ? Math.round(acc_sum / acc_times) : 0;
 
@@ -1256,6 +1392,7 @@
             if (!isRunning) {
                 isRunning = true
                 startTime = Date.now()  //記錄開始
+                Start_Timer()
             }
             if (wrong_input) return
 
