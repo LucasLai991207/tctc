@@ -2,7 +2,7 @@
 <html lang="zh_TW">
 <head>
     <meta charset="UTF-8">
-    <title>TCTC 繁體中文打字練習中心 | 最適合初學者的打字網站</title>
+    <title>TCTC 繁體中文打字 | 最適合初學者的打字網站</title>
     <meta name="description" content="TCTC 提供最流暢的繁體中文打字練習環境！專為'學生與打字初學者'設計，具備錯字即時分析、精準 WPM 速度統計，快來挑戰你的打字極限！">
     <meta name="keywords" content="打字練習, 中文打字, 繁體中文打字, 練打字, WPM, TCTC, 打字測試, 打字, 打字網站, 練習打字, 初學者打字, tctc, typing club, 中文, 繁體中文, 繁中打字, 繁體中文打字網站">
     <meta name="robots" content="index, follow">
@@ -261,6 +261,54 @@
     <script src="TCTC2-0.js"></script>
     <script src="TCTC2-0-difficulty_selet.js"></script>
     <script src="TCTC2-0-level_data.js"></script>
+    <script>
+        // ===== 【新增】記憶功能：回到大廳時，自動定位到上次退出的關卡 =====
+        // 【找到真正的成因】TCTC2-0-difficulty_selet.js 裡的
+        // Difficulty_Choose_Easy/Medium/Hard() 內部固定寫死：
+        //     render_stage(difficulty, Level_Data[difficulty].chapter[0])
+        // 也就是每次選難度（包含開頁時用 tctc2.0-saved_difficulty 自動重選）
+        // 都會強制渲染「第一章」，這就是「回大廳一定跳回 1-1」的真正原因。
+        //
+        // 【解法邏輯】render_chapter() / render_stage() 都是同步的 DOM 操作
+        // （單純 forEach + createElement + appendChild，沒有非同步等待），
+        // 所以不需要用 MutationObserver。真正的關鍵是「執行順序」：
+        // difficulty_selet.js 也註冊了一個 DOMContentLoaded 監聽器，
+        // 監聽器會依「註冊順序」依序執行——我們的 <script> 標籤排在它後面，
+        // 所以只要一樣用 DOMContentLoaded 註冊，就保證會在它「跳回 1-1」
+        // 的邏輯跑完之後才執行，正好可以用來覆寫成正確的章節與關卡。
+        document.addEventListener("DOMContentLoaded", function () {
+            const lastStage = localStorage.getItem("tctc_last_stage") // 例如 "1-5-2"
+            if (!lastStage) return // 玩家還沒玩過任何關卡，getItem 找不到會回傳 null
+
+            const difficulty = get_difficulty_by_stageid(lastStage) // "easy" / "medium" / "hard"
+            if (!difficulty) return
+
+            const chapterKey = lastStage.split("-").slice(0, 2).join("-") // "1-5-2" -> "1-5"
+
+            // 用「上次關卡所屬的難度」重新選一次難度，
+            // 確保 chapter_list 渲染的章節跟 tctc_last_stage 是同一個難度
+            // （tctc2.0-saved_difficulty 記錄的難度不一定跟上次玩的關卡難度相同）
+            if (difficulty === "easy") Difficulty_Choose_Easy()
+            else if (difficulty === "medium") Difficulty_Choose_Medium()
+            else if (difficulty === "hard") Difficulty_Choose_Hard()
+
+            // 執行到這裡，render_chapter() 已經同步跑完，章節元素一定在 DOM 裡了
+            const chapterEl = document.getElementById(`chapter-${chapterKey}`)
+            if (!chapterEl) return
+
+            // 觸發原本綁定在章節上的 click 監聽器
+            // （裡面會呼叫 select_chapter() + render_stage(difficulty, 正確的章節)，
+            // 覆蓋掉 Difficulty_Choose_X() 預設渲染的 chapter[0]）
+            chapterEl.click()
+
+            const stageEl = document.getElementById(`stage-${lastStage}`)
+            if (!stageEl) return
+
+            stageEl.scrollIntoView({ behavior: "smooth", block: "center" })
+            stageEl.style.outline = "2px solid #c9a84c"
+            stageEl.style.boxShadow = "0 0 10px rgba(201,168,76,0.6)"
+        })
+    </script>
     <script defer src="https://cloud.umami.is/script.js" data-website-id="070df494-4361-4dce-ad65-a25b404811e9"></script>
         
 </body>

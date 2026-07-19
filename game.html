@@ -16,7 +16,7 @@
     <meta property="og:image" content="https://lucaslai991207.github.io/tctc/os_image.png">
 
     <!--分享時顯示的title-->
-    <meta property="og:title" content="TCTC 繁體中文打字中心">
+    <meta property="og:title" content="TCTC 中文打字速度測試">
 
 
     <link rel="stylesheet" href="TCTC2-0-intro_lobby.css">
@@ -340,6 +340,57 @@
             color: var(--champagne-gold);
             border: 1px solid var(--champagne-gold);
         }
+        /* ===== 中級專用：輸入模式切換 ===== */
+        .mode_toggle_wrap {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 0.8rem;
+
+            margin-top: 1.2rem;
+        }
+        .mode_toggle_wrap.show { display: flex; }
+        .mode_toggle_label {
+            color: gray;
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            white-space: nowrap;
+        }
+        .mode_toggle_switch {
+            display: flex;
+            background-color: var(--darker-blue);
+            border: 1px solid rgba(201,168,76,0.3);
+            border-radius: 999px;
+            padding: 0.25rem;
+            gap: 0.25rem;
+            box-shadow: inset 0 1px 4px rgba(0,0,0,0.5);
+        }
+        .mode_toggle_btn {
+            box-sizing: border-box;
+
+            padding: 0.45rem 1.1rem;
+            border-radius: 999px;
+
+            font-family: "Noto Serif TC", serif;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+
+            color: #9aa3b0;
+            background: transparent;
+            border: none;
+
+            cursor: pointer;
+            transition: all 220ms ease;
+        }
+        .mode_toggle_btn:hover:not(.active) {
+            color: #fff;
+        }
+        .mode_toggle_btn.active {
+            background-color: var(--champagne-gold);
+            color: var(--dark-blue);
+            font-weight: 500;
+            box-shadow: 0 0 8px rgba(201,168,76,0.5);
+        }
         .game_stage_target1{
             margin-top: 3rem;
             padding: 0.2rem 1rem;
@@ -364,6 +415,36 @@
             letter-spacing: 4px;
 
             box-shadow: 0px 3px 10px rgba(0,0,0,0.4);
+
+            flex-wrap: wrap;
+        }
+        /* ===== 【新增】直接輸入模式：目標句子逐字即時比對顯示 ===== */
+        /* 一般可打的字（不含括號注音提示） */
+        .target1_char {
+            transition: color 150ms ease, background-color 150ms ease, outline 150ms ease;
+            border-radius: 3px;
+            padding: 0 1px;
+            padding-left: 4px;
+        }
+        /* 已經打過、而且打對的字：綠色 */
+        .target1_char.correct {
+            color: rgb(140,220,140);
+            background-color: rgba(80,180,100,0.25);
+        }
+        /* 已經打過、但是打錯的字：紅色（讓玩家馬上發現打錯在哪） */
+        .target1_char.wrong {
+            color: #fff;
+            background-color: rgba(200,60,60,0.65);
+        }
+        /* 玩家目前該打的下一個字：金框提示位置 */
+        .target1_char.current {
+            outline: 2px solid var(--champagne-gold);
+            background-color: rgba(201,168,76,0.15);
+        }
+        /* 括號注音提示（例如：他摒（ㄅㄧㄥˋ）棄了...）：不用打，維持灰色不參與比對 */
+        .target1_annotation {
+            color: gray;
+            font-size: 0.8em;
         }
     </style>
 </head>
@@ -390,6 +471,8 @@
             <div class="game_stage_name" id="game_stage_name">載入中...</div>
             <div class="gmae_stage_name3" id="game_stage_name3">無提示詞</div>
 
+            <!--中級專用：輸入模式切換（逐字注音 / 直接輸入）-->
+            <div class="mode_toggle_wrap" id="input_mode_toggle"></div>
 
             <!--中級圖片-->
             <img src="keyboard-computer-keys-white.avif" id="typing_img_2" style="
@@ -590,6 +673,15 @@
 
         const stageId = params.get("stage")  //***********************
 
+        // ===== 【新增】記憶功能：記錄「最後一次進入的關卡」 =====
+        // 只要這個關卡頁面有成功載入(stageId 不是 null)，就立刻存進 localStorage。
+        // 這樣不管玩家是打完自然跳回、還是按左上角「←」中途退出，
+        // 都會在「離開前的當下」就已經存好最新的關卡編號，
+        // 不需要另外攔截每一個「返回大廳」的按鈕。
+        if (stageId) {
+            localStorage.setItem("tctc_last_stage", stageId)
+        }
+
         //檢查是否存在下一關卡得flag
         let next_stage_is_exists = true
 
@@ -621,6 +713,22 @@
         let startTime = null     // 開始的時間點（毫秒
         let boxes = []           // 存所有方框 div的陣列 方便用 boxes[0] boxes[1]取得
         let timerInterval = null // 右上角計時器的 interval id
+
+        // ===== 【新增】中級專用：輸入模式 =====
+        // "normal"：逐字打注音符號（原本綜合練習的玩法）
+        // "box"   ：像基礎輸入一樣，直接用輸入法打出整句中文字
+        // 存進 localStorage，讓玩家的選擇可以記住，下次進中級關卡時維持一樣的模式
+        let medium_input_mode = localStorage.getItem("tctc_medium_input_mode") || "normal"
+
+        // 判斷這個關卡「現在」是不是要用輸入框模式來玩
+        // 基礎輸入關卡本來就是輸入框，一定回傳 true
+        // 綜合練習關卡（中級關卡）則要看玩家目前選擇的 medium_input_mode
+        function Is_Box_Input_Stage(stage){
+            if(!stage) return false
+            if(stage.type === "基礎輸入") return true
+            if(stage.type === "綜合練習" && medium_input_mode === "box") return true
+            return false
+        }
 
         // ===== 右上角計時器 =====
         function Format_Timer(seconds){
@@ -675,6 +783,96 @@
             return null  
         }
 
+        // ===== 【新增】清除 target1 裡「純注音提示」的括號 =====
+        // 有些關卡會在句子裡用括號加注音提示某個字的發音，
+        // 例如："他摒(ㄅㄧㄥˋ)棄了..."、"風靡（ㄇㄧˇ）全球"
+        // 這種括號玩家不需要打（對應的 target 逐字注音欄位裡也沒有這段），
+        // 但像 "公司（藍色巨人）推出" 這種括號內是「真正的中文字」，
+        // 是句子本身的一部分，玩家還是要打。
+        // 判斷方式：只清掉「括號內從頭到尾都是注音符號/聲調符號」的狀況，
+        // 中文字（漢字）不在注音符號的 Unicode 範圍內，不會被誤清掉。
+        function Clean_Target1_For_Typing(text){
+            if(!text) return ""
+            return text.replace(/[\(（][\u3105-\u312Fˊˇˋ˙]+[\)）]/g, "")
+        }
+
+        // ===== 【新增】把「原始目標句子」拆成一格一格的 span，方便逐字上色 =====
+        // 因為畫面上顯示的 stage.target1 可能含有括號注音提示（玩家不用打），
+        // 但拿來跟輸入框比對的是「清掉括號後」的文字（Clean_Target1_For_Typing 的結果），
+        // 兩者字數不一樣，所以不能直接用同一個 index 對應。
+        // 這裡逐字掃過原始文字，凡是落在括號注音提示範圍內的字，
+        // 只負責顯示（class = target1_annotation，不參與比對），
+        // 其餘「真正需要打」的字，才給一個 data-idx（對應到清乾淨後文字的第幾個字），
+        // 之後 Update_Target1_Highlight() 才能用同一套 index 去對應、上色。
+        function Escape_Html(str){
+            return str
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+        }
+
+        function Build_Target1_Spans_Html(raw_text){
+            if(!raw_text) return ""
+
+            // 先找出所有「括號注音提示」在原始字串中的範圍（起訖 index）
+            const annotation_regex = /[\(（][\u3105-\u312Fˊˇˋ˙]+[\)）]/g
+            const ranges = []
+            let match
+            while((match = annotation_regex.exec(raw_text)) !== null){
+                ranges.push({ start: match.index, end: match.index + match[0].length })
+            }
+
+            let html = ""
+            let typable_idx = 0 // 對應到 Clean_Target1_For_Typing() 之後文字的第幾個字
+
+            for(let i = 0; i < raw_text.length; i++){
+                const ch = raw_text[i]
+                const in_annotation = ranges.some(r => i >= r.start && i < r.end)
+
+                if(in_annotation){
+                    html += `<span class="target1_annotation">${Escape_Html(ch)}</span>`
+                }
+                else{
+                    html += `<span class="target1_char" data-idx="${typable_idx}">${Escape_Html(ch)}</span>`
+                    typable_idx++
+                }
+            }
+            return html
+        }
+
+        // ===== 【新增】即時比對：玩家每打一個字，就把 target1 對應那一格上色 =====
+        // typed_text：目前輸入框裡的內容
+        // target_text：這關「清掉括號注音提示後」真正要打的目標文字
+        // 規則：
+        //   已經打過、打對 → 綠色 (correct)
+        //   已經打過、打錯 → 紅色 (wrong)，玩家可以馬上看到自己在哪個字打錯
+        //   還沒打到、但是「下一個要打的字」 → 金框提示 (current)
+        //   還沒打到、且不是下一個字 → 維持原色，不特別標記
+        function Update_Target1_Highlight(typed_text, target_text){
+            const target_box = document.getElementById("game_stage_target1")
+            if(!target_box) return
+
+            const spans = target_box.querySelectorAll(".target1_char")
+
+            spans.forEach(function(span){
+                const idx = parseInt(span.dataset.idx, 10)
+                span.classList.remove("correct", "wrong", "current")
+
+                if(idx < typed_text.length){
+                    if(typed_text[idx] === target_text[idx]){
+                        span.classList.add("correct")
+                    }
+                    else{
+                        span.classList.add("wrong")
+                    }
+                }
+                else if(idx === typed_text.length){
+                    span.classList.add("current")
+                }
+            })
+        }
+
         // ===== 「選字輸入」關卡（type: 基礎輸入）的比對邏輯 =====
         // 這個模式跟其他關卡不一樣的地方：
         // 其他關卡是「一個按鍵 → 一個注音符號」直接比對，可以逐字判斷對錯。
@@ -682,7 +880,7 @@
         // 選字的過程中會觸發很多次瀏覽器的 input 事件（這叫做 IME 組字/composition），
         // 沒辦法像其他關卡一樣「按一鍵就知道對不對」，只能等玩家打完，
         // 直接比對「整個輸入框的內容」跟「這關的目標句子（target1）」是否完全一樣。
-        function Check_Text_Input_Match(){
+        function Check_Text_Input_Match(event){
 
             // 每次使用者打字都會重新呼叫這個函式，所以要重新抓一次最新的 stage 資料
             const stage = FindStage(stageId)
@@ -699,12 +897,40 @@
             }
 
             // trim() 去掉頭尾空白：避免玩家不小心多打一個空格，導致永遠比對不到、卡關
-            const is_match = input_el.value.trim() === stage.target1.trim()
+            // 【修改】比對前先把括號注音提示清掉，玩家不用打那段，才不會永遠對不上
+            const target_text = Clean_Target1_For_Typing(stage.target1).trim()
+            const typed_text = input_el.value
 
-            if(is_match){
-                // 打對了！因為這個模式沒有「逐字算對錯」，
-                // 所以直接把「正確字數」設成目標句子的長度，讓 ShowResult() 可以正常算 WPM
-                target_get = stage.target1.trim().length
+            // 【新增】即時逐字比對：每打一個字就馬上把上面的目標句子對應那一格上色，
+            // 打對變綠色、打錯變紅色，玩家不用等打完整句才知道哪裡打錯
+            Update_Target1_Highlight(typed_text, target_text)
+
+            // 【新增】還在用輸入法組字（選字視窗還沒關閉）時，
+            // input.value 裡的內容還不是最終選定的字，這時候只更新上色即可，
+            // 不能拿來判斷「打完了沒」，不然選字選到一半可能就被誤判為完成、直接鎖住輸入框。
+            if(event && event.isComposing) return
+
+            // 【修改】原本一定要「一字不差」才會結束關卡，玩家打錯就永遠卡住。
+            // 現在改成：只要「打的字數已經到達目標字數」，不管對不對，都視為玩家打完了，
+            // 直接結束關卡、顯示成績——只是正確率會反映出真正打對幾個字，
+            // 而且如果沒有全對，就不會被視為「過關」，也不會被採計進 wpm / acc 的平均值
+            // （這兩件事分別在 ShowResult() 裡處理：acc > 89 才算過關、才計入平均）。
+            // 【修正】加上 target_text.length > 0 這個條件：
+            // 有些關卡（例如 1-9-4 / 1-9-5 / 1-9-6）target1 目前還是空字串，還沒有內容，
+            // 如果沒有這個條件，target_text.length 會是 0，玩家只要打「第一個字」，
+            // typed_text.length(1) >= target_text.length(0) 就會成立，
+            // 結果變成一打字就秒結束關卡。加上這個條件後，這種還沒有內容的關卡
+            // 就會維持「打了也不會結束」，等之後補上 target1 內容再說。
+            if(target_text.length > 0 && typed_text.length >= target_text.length){
+
+                // 逐字比對，算出「真正」打對幾個字、打錯幾個字
+                let correct_count = 0
+                for(let i = 0; i < target_text.length; i++){
+                    if(typed_text[i] === target_text[i]) correct_count++
+                }
+
+                // 正確字數：用來算 WPM，也顯示在結果畫面的「正確字數」欄位
+                target_get = correct_count
 
                 // 鎖住輸入框：disabled 設成 true 之後，這個 <input> 就不能再被打字或聚焦，
                 // 避免玩家在結果畫面出現「再試一次」按鈕之前，還能繼續改輸入框內容。
@@ -713,14 +939,131 @@
                 // 重建出來的是一個全新的 <input>，預設本來就是沒有 disabled 的狀態。
                 input_el.disabled = true
 
-                ShowResult()   // 直接結束關卡、跳出成績畫面
+                ShowResult()   // 結束關卡、跳出成績畫面（對錯都會跳出，只是正確率不同）
             }
-            // 沒對上 → 什麼都不做。函式結束後，關卡就是「還沒過」，
-            // 玩家可以繼續修改輸入框內容，這樣就達成「不對就永遠不結束」的需求
+            // 字數還沒打滿 → 什麼都不做，繼續讓玩家打
         }
 
 
-        
+        // ===== 【新增】渲染中級專用的輸入模式切換按鈕 =====
+        // 只有「中級」（stage id 開頭是 2）且類型是「綜合練習」的關卡才會顯示
+        // 其他關卡（初級、高級、基礎輸入...）一律隱藏
+        function Render_Input_Mode_Toggle(stage){
+            const wrap = document.getElementById("input_mode_toggle")
+            if(!wrap) return
+
+            const is_medium = get_difficulty_by_stageid(stage.id) === "medium"
+
+            if(!is_medium || stage.type !== "綜合練習"){
+                wrap.classList.remove("show")
+                wrap.innerHTML = ""
+                return
+            }
+
+            wrap.classList.add("show")
+            wrap.innerHTML = `
+                <span class="mode_toggle_label">輸入模式</span>
+                <div class="mode_toggle_switch">
+                    <button type="button" class="mode_toggle_btn${medium_input_mode === "normal" ? " active" : ""}" id="mode_btn_normal">逐字注音</button>
+                    <button type="button" class="mode_toggle_btn${medium_input_mode === "box" ? " active" : ""}" id="mode_btn_box">直接輸入</button>
+                </div>
+            `
+
+            document.getElementById("mode_btn_normal").addEventListener("click", function(){
+                if(medium_input_mode !== "normal"){
+                    medium_input_mode = "normal"
+                    localStorage.setItem("tctc_medium_input_mode", "normal")
+                    Init()
+                }
+            })
+            document.getElementById("mode_btn_box").addEventListener("click", function(){
+                if(medium_input_mode !== "box"){
+                    medium_input_mode = "box"
+                    localStorage.setItem("tctc_medium_input_mode", "box")
+                    Init()
+                }
+            })
+        }
+
+        // ===== 【新增】把「輸入框模式」的畫面建出來 =====
+        // 原本只有「基礎輸入」關卡會用到這段畫面，
+        // 現在中級關卡選了「直接輸入」模式時，也會共用同一套邏輯
+        function Render_Text_Input_Stage(stage){
+            const game_container = document.querySelector(".game_char_container")
+
+            game_container.style.setProperty("--container-box-shadow", 'inset 0px 2px 9px')
+            const target_box = document.getElementById("game_stage_target1")
+
+            if(target_box){
+                target_box.style.display = "flex";
+            }
+
+            //把target1抓進game container input
+            const game_container_input = document.createElement("input")
+            game_container_input.type = "text"
+            game_container_input.id = "game_container_input_id"
+
+            const game_stage_target1 = document.getElementById("game_stage_target1");
+            // 【修改】不再直接塞純文字，改成拆成一格一格的 span，
+            // 這樣玩家打字時才能逐字上色（見 Build_Target1_Spans_Html / Update_Target1_Highlight）
+            game_stage_target1.innerHTML = Build_Target1_Spans_Html(stage.target1)
+            // 一開始就把第一個要打的字標成金框，跟其他關卡的「current」提示邏輯一致
+            Update_Target1_Highlight("", Clean_Target1_For_Typing(stage.target1).trim())
+            game_container_input.placeholder = "請輸入目標"
+            game_container_input.setAttribute("autocomplete", "off")
+
+            game_container.appendChild(game_container_input)
+
+            target_box.style.justifyContent = "center";
+            target_box.style.alignItems = "center";
+
+            game_container.style.backgroundColor = "none"
+
+            game_container_input.style.width = "100%"
+            game_container_input.style.backgroundColor = "var(--darker-blue)"
+            game_container_input.style.border = "none"
+
+            game_container_input.style.fontSize = "1.5rem"
+            game_container_input.style.color = "#fff"
+
+            game_container_input.style.padding = "0 1rem 0.3rem 1rem"
+
+            game_container_input.addEventListener("input", Check_Text_Input_Match)
+            // 【新增】IME 選字結束（compositionend）時也重新檢查一次，
+            // 確保「還在組字中」被跳過的完成判斷，能在選字結束後補上
+            game_container_input.addEventListener("compositionend", Check_Text_Input_Match)
+
+            // 【新增】禁止在輸入框內貼上文字，防止玩家直接複製題目貼上作弊
+            // paste 事件：不管玩家是按 Ctrl+V、用滑鼠右鍵選單「貼上」，
+            // 還是用觸控裝置長按選「貼上」，只要是「貼上」動作都會觸發這個事件。
+            // event.preventDefault() 會阻止這個動作真的執行，
+            // 所以輸入框的內容完全不會被貼上的文字改變，玩家只能一個字一個字自己打。
+            game_container_input.addEventListener("paste", function(event){
+                event.preventDefault()
+                alert("作弊得來的成績真的有意義嗎?")
+            })
+
+            // 【新增，可選】同樣道理，防止玩家用「拖曳文字」的方式把題目拖進輸入框
+            // 例如選取題目文字後直接拖到輸入框放開
+            game_container_input.addEventListener("drop", function(event){
+                event.preventDefault()
+                alert("看來你想得很周全 但可惜我想的更甚於你")
+            })
+
+            // 每次按下退格鍵（Backspace）視為一次「修正錯誤」，用來計算這關的正確率
+            // 【說明】選字階段（IME composition）本來就只能「換字」不能「刪字」，
+            // 所以只要玩家按了 Backspace，不管是不是還在組字階段，
+            // 都代表他真的打錯注音符號、要刪掉重打，是真正的錯誤，
+            // 因此不需要用 event.isComposing 排除任何情況，每次 Backspace 都算數。
+            game_container_input.addEventListener("keydown", function(event){
+                if(event.key === "Backspace"){
+                    wrong_key_times++
+                }
+            })
+
+            // 頁面一載入就把游標放進輸入框，玩家不用自己點一下就能直接開始打字
+            game_container_input.focus()
+        }
 
         //初始化畫面 每次「再試一次」也會呼叫
 
@@ -761,6 +1104,9 @@
             document.getElementById("game_stage_id").textContent = stage.id
             document.getElementById("game_stage_name").textContent = stage.name + (stage.name2 ? " " + stage.name2 : "")
 
+            // 【新增】中級專用：渲染輸入模式切換按鈕（非中級關卡會自動隱藏）
+            Render_Input_Mode_Toggle(stage)
+
             // 把 target 設成這關的練習字串
             // 如果 stage.target 是空的，就用空字串
             target = stage.target || ""
@@ -783,12 +1129,7 @@
             container.innerHTML = ""
             boxes = []
 
-            // 這裡是我額外補上的小修正（不影響你這次要的功能，但會影響穩定性）：
-            // 「基礎輸入」「綜合練習」這兩種關卡類型會把 game_stage_target1 這塊
-            // 設成 display:flex/block，但沒有任何地方會把它「設回 none」。
-            // 如果玩家打完「基礎輸入」關卡後，下一關是「注音練習」，
-            // 這塊目標文字就會一直卡在畫面上不會消失。
-            // 所以每次 Init() 一開始，先統一重置成隱藏，該顯示的分支再自己打開它就好。
+
             const reset_target_box = document.getElementById("game_stage_target1")
             if(reset_target_box) reset_target_box.style.display = "none"
 
@@ -797,8 +1138,8 @@
             // 把target字串拆成每個字 每個字建一個方框 div
             // split("") 把字串拆成陣列，例如 "ㄑㄨ" → ["ㄑ","ㄨ"]
 
-            //介紹部分拆出來
-            if(stage.type === "基本介紹"){
+        
+            if(stage.type === "基本介紹" || stage.id === "1-9-1"){
                 const hint = document.querySelector(".game_input_hint")
                 hint.style.display = "none";
                 
@@ -935,6 +1276,71 @@
 
                     
                 }
+                else if(stage.id === "1-9-1"){
+                    game_char_container.innerHTML = `
+                        <div style="text-align: left; max-width: 900px; margin: 0 auto; font-family: 'Noto Serif TC', serif; color: white; font-weight: 150; position: relative; font-size: 0.9rem">
+                            <p style="font-size: 1.4rem; color: #c9a84c; text-align: center; margin-bottom: 1.5rem; font-weight: 500;">
+                                注音「選字」流暢度教學：手不離鍵盤的關鍵訣竅
+                            </p>
+                            
+                            <p style="margin-bottom: 1.2rem; color: #ffffff; font-weight: 100; line-height: 1.8rem;">
+                                打注音要快，核心原則就是：「絕對不要用滑鼠去點選字視窗」。以下是從選字、改字到記憶字詞的必學操作。
+                            </p>
+
+                            <div style="background-color: rgba(14, 36, 62, 0.6); padding: 1.2rem; border-radius: 8px; border-left: 4px solid #c9a84c; margin-bottom: 1.5rem; line-height: 1.9rem;">
+                                <div style="color: #c9a84c; font-size: 1.1rem;padding-bottom: 0.3rem;">選字輸入法的秘訣：</div>
+                                <span style="color: #c9a84c; font-size: 1rem;">1.快速叫出選字視窗 ：</span> <br>
+                                    <b> 當你打完一串注音，發現系統自動選的字是錯的：</b><br>
+                                        • 微軟注音 (Windows)：按 ↓ (方向鍵下) 或者是 Space (空白鍵)，就會直接彈出選字清單。<br>
+                                        • Mac 內建注音：按 Space (空白鍵)，就會彈出選字清單。<br><br>
+                                        
+                                <span style="color: #c9a84c; font-size: 1rem;">2.新手地雷－滑鼠挑字：</span> <br>
+                                    <b> 選字清單有很多頁、很多字時，請用以下鍵盤按鍵來選：</b><br>
+                                        • 看下一頁 / 上一頁：按 Page Down / Page Up，或是按 ↓ / ↑ 一行一行找。<br>
+                                        • 直接按數字選字：選字清單的字旁邊都有編號，直接按鍵盤最上方的數字鍵，就會自動填入。<br><br>
+                                
+                                <span style="color: #c9a84c; font-size: 1rem;">3.其中一個字選錯了怎麼改：</span> <br>
+                                    <b> 很多人打了一長串字，發現中間有一個字錯了，就全部刪掉重打，這樣超慢..</b><br>
+                                    <p>正確做法：<br>
+                                        • 先不要按 Enter，字底下還有虛線時。<br>
+                                        • 用 ← 或 → (左右方向鍵)，把游標移動到那個錯字後面。<br>
+                                        • 按 ↓ (方向鍵下) 叫出該字的選字窗。<br>
+                                        • 按數字鍵選對的字，修正完後，再把游標移到最後面繼續打。<br><br>
+
+                                <span style="color: #c9a84c; font-size: 1rem;">4.一定要照注音順序打嗎(重要！！)：</span> <br>
+                                    <b> 傳統打「強」字（ㄑㄧㄤˊ），手指必須強制順序：左手按 ㄑ ➔ 右手按 ㄧ ➔ 右手按 ㄤˊ</b><br>
+                                    <p>偷吃步做法：<br>
+                                        • 你可以兩隻手同時一起按下去。即使你先按了 ㄤ，再按 ㄧ，最後才按 ㄑ（鍵盤顯示 ㄤㄧㄑ），只要你在這三個符號後面直接按空白鍵或接著打下一個字，輸入法會自動在後台「重新排列組合」，100% 精準自動選出「強」這個字。<br>
+                                        
+                                
+
+                            </div>
+
+        
+
+                            <p style="color: gray; font-size: 1.5rem; text-align: center; margin-top: 2rem;">
+                                切記，正確率大於速度!！正確率大於速度!！正確率大於速度!！
+                            </p>
+                            
+                            <button style="width: 10rem; height: 3rem; margin: auto; margin-top: 1.5rem; background-color: #c9a84c; display: flex; justify-content: center; align-items: center; color: var(--dark-blue); font-family: 'Noto Serif TC', serif; font-size: 1rem; letter-spacing: 2px; border: none; border-radius: 4px; cursor: pointer; transition: all 200ms ease;" 
+                                    onmouseover="this.style.backgroundColor='#fff'; this.style.boxShadow='0 0 10px #c9a84c';" 
+                                    onmouseout="this.style.backgroundColor='#c9a84c'; this.style.boxShadow='none';"
+                                    onclick="window.location.href='game.html?stage=1-9-2'">
+                                進入輸入練習 →
+                            </button>
+                        </div>`
+                    let progress = JSON.parse(localStorage.getItem("stage_progress")) || {} 
+
+                    const is_first_time_clear = progress[stageId] !== true;                  
+
+                    if(is_first_time_clear){
+                       increase_stage_count(get_difficulty_by_stageid(stage.id))
+
+                        progress[stageId] = true
+                        localStorage.setItem("stage_progress", JSON.stringify(progress))
+                    }
+                    
+                }
             }
             else if(stage.name === "章節驗收" && stage.type === "注音練習"){
                 target.split("").forEach(function(char, i) {
@@ -1005,66 +1411,8 @@
 
             }
             else if(stage.type === "基礎輸入"){
-                const game_container = document.querySelector(".game_char_container")
 
-                game_container.style.setProperty("--container-box-shadow", 'inset 0px 2px 9px')
-                const target_box = document.getElementById("game_stage_target1")
-
-                if(target_box){
-                    target_box.style.display = "flex";
-                }
-
-                //把target1抓進game container input
-                const game_container_input = document.createElement("input")
-                game_container_input.type = "text"
-                game_container_input.id = "game_container_input_id"
-
-                const game_stage_target1 = document.getElementById("game_stage_target1");
-                game_stage_target1.textContent = stage.target1
-                game_container_input.placeholder = "請輸入目標"
-                game_container_input.setAttribute("autocomplete", "off")
-
-
-                game_container.appendChild(game_container_input)
-
-                target_box.style.justifyContent = "center";
-                target_box.style.alignItems = "center";
-
-                game_container.style.backgroundColor = "none"
-
-                game_container_input.style.width = "100%"
-                game_container_input.style.backgroundColor = "var(--darker-blue)"
-                game_container_input.style.border = "none"
-
-                game_container_input.style.fontSize = "1.5rem"
-                game_container_input.style.color = "#fff"
-
-                game_container_input.style.padding = "0 1rem 0.3rem 1rem"                
-
-
-                // ★ 原本的 bug：check_input_and_target1() 後面多打了一組括號，
-                // 這樣會讓瀏覽器「馬上執行」這個函式一次，
-                // 然後把它「執行完的回傳值（undefined）」拿去當作事件處理器 —— 等於根本沒有綁定成功。
-                // addEventListener 要傳的是「函式本身（一個參考）」，不能加括號呼叫它。
-                // 錯誤寫法：addEventListener("input", myFunc())   ← 馬上執行 myFunc，綁定失敗
-                // 正確寫法：addEventListener("input", myFunc)     ← 把 myFunc 這個函式交給瀏覽器保管，
-                //                                                     以後每次 input 事件發生，瀏覽器才會呼叫它
-                game_container_input.addEventListener("input", Check_Text_Input_Match)
-
-                // 每次按下退格鍵（Backspace）視為一次「修正錯誤」，用來計算這關的正確率
-                // 這裡特地綁在 input 元素自己身上（而不是 document 整頁），
-                // 這樣才不會跟下面偵測注音鍵盤的 document.addEventListener("keydown", ...) 互相干擾
-                game_container_input.addEventListener("keydown", function(event){
-                    if(event.key === "Backspace"){
-                        wrong_key_times++
-                    }
-                })
-
-                // 頁面一載入就把游標放進輸入框，玩家不用自己點一下就能直接開始打字
-                game_container_input.focus()
-
-                
-                
+                Render_Text_Input_Stage(stage)
             }
             else if(stage.type === "綜合練習"){
                 const typing_img_1 = document.getElementById("typing_img_1")
@@ -1094,38 +1442,45 @@
                     typing_img_2.style.display = "none"
                 }
 
+                // 【新增】中級輸入模式分岔：
+                // "box"    → 直接輸入模式：跟基礎輸入一樣，用輸入法直接打出整句中文字
+                // "normal"（預設）→ 逐字注音模式：維持原本一個按鍵對應一個注音符號的玩法
+                if(medium_input_mode === "box"){
+                    Render_Text_Input_Stage(stage)
+                }
+                else{
+                    target.split("").forEach(function(char, i) {
 
-                target.split("").forEach(function(char, i) {
+                        const container = document.getElementById("game_char_container")
+                        if(container){
+                            container.style.gap = "0.2rem";
+                        }
 
-                    const container = document.getElementById("game_char_container")
-                    if(container){
-                        container.style.gap = "0.2rem";
-                    }
-
-                    //target1
-                    const target_box = document.getElementById("game_stage_target1")
-                    if(target_box){
-                        target_box.style.display = "flex";
-                    }
-                    target_box.textContent = stage.target1
-                    target_box.style.justifyContent = "center";
-                    target_box.style.alignItems = "center";
+                        //target1
+                        const target_box = document.getElementById("game_stage_target1")
+                        if(target_box){
+                            target_box.style.display = "flex";
+                        }
+                        target_box.textContent = stage.target1
+                        target_box.style.justifyContent = "center";
+                        target_box.style.alignItems = "center";
 
 
-                    const box = document.createElement("div")   // 建一個 div
-                    box.classList.add("game_char_box");           // 加上方框樣式
-                    box.style.width = "2.6rem";
-                    box.style.height = "2.4rem";
-                    box.style.fontSize = "1.8rem";
-                    box.style.paddingLeft = "2px";
+                        const box = document.createElement("div")   // 建一個 div
+                        box.classList.add("game_char_box");           // 加上方框樣式
+                        box.style.width = "2.6rem";
+                        box.style.height = "2.4rem";
+                        box.style.fontSize = "1.8rem";
+                        box.style.paddingLeft = "2px";
 
-                    box.textContent = char                       // 把注音字放進去
-                    if (i === 0) box.classList.add("current")   // 第一個格子加上金框（當前位置）
-                    container.appendChild(box);                // 把 div 放進畫面
-                    boxes.push(box);                              // 同時存進 boxes 陣列
+                        box.textContent = char                       // 把注音字放進去
+                        if (i === 0) box.classList.add("current")   // 第一個格子加上金框（當前位置）
+                        container.appendChild(box);                // 把 div 放進畫面
+                        boxes.push(box);                              // 同時存進 boxes 陣列
 
-                    
-                })
+                        
+                    })
+                }
             }
                 
         }
@@ -1148,13 +1503,34 @@
             //WPM
             let wpm = Math.ceil((target_get / 3) / (timeUsed / 60))
 
-            //如果是輸入的 就乘以三
-            if(stage.type === "基礎輸入"){
+            //如果是輸入的（基礎輸入 或 中級「直接輸入」模式）就乘以三
+            if(Is_Box_Input_Stage(stage)){
                 wpm = Math.ceil(wpm * 3);
             }
-            
-            //如果是章節訓練或中級就採計到 平均wpm
-            if(stage.name === "章節驗收" || stage.name === "精熟度測試"){
+
+            //準確率
+            //總按鍵次數 對+錯
+            let acc = target_get > 0
+                ? Math.round((1 - wrong_key_times / (target_get + wrong_key_times)) * 100)
+                : 0
+
+            // 【修改】輸入框模式（基礎輸入 / 中級「直接輸入」）原本直接把 acc 設成 100%，
+            // 因為以前一定要「一字不差」才會跳出結果畫面。
+            // 現在 Check_Text_Input_Match() 改成「字數打滿就結束」，就算整句都打錯也會進到這裡，
+            // 所以這裡要換成「真正的逐字正確率」：打對字數 ÷ 目標句子總字數。
+            // target_get 在 Check_Text_Input_Match() 裡已經被設成「真正打對的字數」了。
+            if(Is_Box_Input_Stage(stage)){
+                const target_text_for_acc = Clean_Target1_For_Typing(stage.target1).trim()
+                acc = target_text_for_acc.length > 0
+                    ? Math.round((target_get / target_text_for_acc.length) * 100)
+                    : 0
+            }
+
+
+            const stage_is_passed = acc > 89
+
+            //如果是 章節訓練 或 中級 或 基礎輸入 就採計到 平均wpm
+            if((stage.name === "章節驗收" || stage.name === "精熟度測試" || stage.type === "基礎輸入") && (!Is_Box_Input_Stage(stage) || stage_is_passed)){
                 wpm_sum += wpm;
                 wpm_times += 1;
                 localStorage.setItem("wpm_sum", wpm_sum)
@@ -1165,57 +1541,52 @@
                 localStorage.setItem("average_wpm", average_wpm)
                 console.log("成功將average wpm存到localstorage")
             }
-            
-            
-
-            //準確率
-            //總按鍵次數 對+錯
-            let acc = target_get > 0
-                ? Math.round((1 - wrong_key_times / (target_get + wrong_key_times)) * 100)
-                : 0
-            
-            //如果是基礎輸入 就直接讓acc 變100%
-            if(stage.type === "基礎輸入"){
-                acc = 100;
-            }
 
             //wpm counter
             let acc_sum = Number(localStorage.getItem("acc_sum")) || 0;
             let acc_times = Number(localStorage.getItem("acc_times")) || 0;
 
-            if(stage.name === "章節驗收" || stage.name === "精熟度測試"){
+            if(stage.name === "章節驗收" || stage.name === "精熟度測試" || stage.type === "基礎輸入"){
                 //===記到平均區===
-                
-                //基礎輸入就跳過
-                if(stage.type === "基礎輸入") return;
 
 
+                if(!Is_Box_Input_Stage(stage) || stage_is_passed){
+                    acc_sum += acc;
+                    acc_times += 1;
+                    localStorage.setItem("acc_sum", acc_sum)
+                    localStorage.setItem("acc_times", acc_times)
 
+                    let average_acc = acc_times > 0 ? Math.round(acc_sum / acc_times) : 0;
 
-
-
-                acc_sum += acc;
-                acc_times += 1;
-                localStorage.setItem("acc_sum", acc_sum)
-                localStorage.setItem("acc_times", acc_times)
-                
-                let average_acc = acc_times > 0 ? Math.round(acc_sum / acc_times) : 0;
-
-                console.log(average_acc, "平均acc")
-                localStorage.setItem("average_acc", average_acc)
-                console.log("成功將average acc存到localstorage")
+                    console.log(average_acc, "平均acc")
+                    localStorage.setItem("average_acc", average_acc)
+                    console.log("成功將average acc存到localstorage")
+                }
             }
             //把數字填進對應元素
             document.getElementById("result_wpm").innerHTML = wpm + '<span>WPM</span>'
             document.getElementById("result_acc").textContent = acc + "%"
             document.getElementById("result_chars").textContent = target_get
             document.getElementById("result_errors").textContent = wrong_key_times
+
+            // 【新增】直接輸入模式（輸入法選字）的 backspace 次數，
+            // 不等於「真正打錯」，可能只是選字選錯又修正而已，
+            // 所以這裡不算進準確率，但畫面上的文字標籤也要跟著換，
+            // 避免玩家看到「準確率100% / 錯誤次數5」覺得互相矛盾。
+            // querySelector 用 CSS 選擇器語法：
+            // "#result_errors ~ .game_result_stat_label" 意思是
+            // 「找到 id 為 result_errors 的元素，再找它後面（同層級）第一個 class 為
+            // game_result_stat_label 的元素」，也就是它旁邊那個文字標籤。
+            const errors_label = document.querySelector("#result_errors ~ .game_result_stat_label")
+            if(errors_label){
+                errors_label.textContent = Is_Box_Input_Stage(stage) ? "修正次數" : "錯誤次數"
+            }
             document.getElementById("game_result").style.boxShadow = "0px 0px 15px #c9a84c"
             document.getElementById("game_result").style.border = "2px solid #c9a84c"
 
             //顯示結果畫面
             document.getElementById("game_result").classList.add("show")
-            if(acc > 89){
+            if(stage_is_passed){
                 document.getElementById("game_result").style.boxShadow = "0px 0px 15px #c9a84c"
                 document.getElementById("game_result").style.border = "2px solid #c9a84c"
                 //過關標記 沒拿到就給空字串
