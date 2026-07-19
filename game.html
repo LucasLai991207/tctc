@@ -446,6 +446,34 @@
             color: gray;
             font-size: 0.8em;
         }
+
+        /* ===== 【新增】中級「逐字注音」模式：輸入框樣式化 ===== */
+        /* 外層容器：長得跟「直接輸入」模式的 <input> 一模一樣（同樣的背景色、字級、留白），
+           讓玩家不管選哪種輸入模式，畫面上的「輸入框」看起來都是同一種東西 */
+        #bopomofo_input_bar {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        /* 逐字打的注音符號：沿用跟 target1_char 一樣的配色邏輯（正確綠、錯誤紅、當前金框），
+           但用 inline 文字呈現，不再是一格一格分開的方框，視覺上更像輸入框裡的文字 */
+        .bopomofo_char {
+            transition: color 150ms ease, background-color 150ms ease, outline 150ms ease;
+            border-radius: 3px;
+            padding: 0 1px;
+            padding-left: 4px;
+        }
+        .bopomofo_char.correct {
+            color: rgb(140,220,140);
+            background-color: rgba(80,180,100,0.25);
+        }
+        .bopomofo_char.wrong {
+            color: #fff;
+            background-color: rgba(200,60,60,0.65);
+        }
+        .bopomofo_char.current {
+            outline: 2px solid var(--champagne-gold);
+            background-color: rgba(201,168,76,0.15);
+        }
     </style>
 </head>
 <body>
@@ -713,6 +741,8 @@
         let startTime = null     // 開始的時間點（毫秒
         let boxes = []           // 存所有方框 div的陣列 方便用 boxes[0] boxes[1]取得
         let timerInterval = null // 右上角計時器的 interval id
+        let box_to_char_idx = [] // 【新增】中級「逐字注音」模式專用：注音鍵位 index → 目標句子(target1)第幾個字
+        let target1_highlight_valid = false // 【新增】box_to_char_idx 是否跟目標句子字數對得起來（防呆用，見 Init() 內的檢查）
 
         // ===== 【新增】中級專用：輸入模式 =====
         // "normal"：逐字打注音符號（原本綜合練習的玩法）
@@ -869,6 +899,81 @@
                 }
                 else if(idx === typed_text.length){
                     span.classList.add("current")
+                }
+            })
+        }
+
+        // ===== 【新增】中級「逐字注音」模式專用：把「注音鍵位序列」切回「目標句子每個字」 =====
+        // target（例如 "ㄗㄞˋㄍㄨˇ..."）是整句話的注音鍵位序列，
+        // 但玩家是一個「按鍵」一個「按鍵」打的，不是一個「中文字」一個「中文字」打的，
+        // 一個中文字通常對應 1~4 個注音鍵位（聲母＋介音＋韻母＋聲調）。
+        // 這裡把 target 切回一組一組「屬於同一個中文字」的鍵位，
+        // 才能知道玩家現在打到的注音鍵位，對應到目標句子（target1）的第幾個字，
+        // 進而讓上面的句子也能跟著即時上色。
+        // 切割規則（符合注音輸入法的實際打法）：
+        //   聲調符號（ˊˇˋ˙）或空白鍵（一聲不用標調，靠空白鍵結尾）→ 代表這個字打完了，切一組
+        //   標點符號（，。「」、：！（）等）本身就是獨立一個字，自己一組
+        //   其餘（聲母／介音／韻母）→ 還沒打完，繼續累加進同一組
+        function Split_Bopomofo_Into_Char_Groups(target_str){
+            const ZHUYIN = /[\u3105-\u312F]/
+            const TONE_OR_SPACE = /[ˊˇˋ˙ ]/
+
+            const groups = []
+            let current_group = []
+
+            for(let i = 0; i < target_str.length; i++){
+                const ch = target_str[i]
+
+                if(ZHUYIN.test(ch)){
+                    current_group.push(i)
+                    continue
+                }
+                if(TONE_OR_SPACE.test(ch)){
+                    current_group.push(i)
+                    groups.push(current_group)
+                    current_group = []
+                    continue
+                }
+                // 其餘一律視為獨立一組（標點符號等，本身就是一個完整的字）
+                if(current_group.length > 0){
+                    groups.push(current_group)
+                    current_group = []
+                }
+                groups.push([i])
+            }
+            if(current_group.length > 0) groups.push(current_group)
+
+            return groups
+        }
+
+        // ===== 【新增】中級「逐字注音」模式：即時把上面的目標句子（target1）逐字上色 =====
+        // 邏輯跟 Update_Target1_Highlight() 一致（打對綠色、打錯紅色、目前這格金框），
+        // 差別只在於這裡是靠 box_to_char_idx 把「注音鍵位進度（current）」換算成「句子字數進度」
+        function Update_Normal_Mode_Target1_Highlight(){
+            if(!target1_highlight_valid) return // 防呆：這關的 target（注音）跟 target1（句子）字數對不起來，就不上色，避免上色跑版
+
+            const target_box = document.getElementById("game_stage_target1")
+            if(!target_box) return
+
+            const spans = target_box.querySelectorAll(".target1_char")
+            if(spans.length === 0) return
+
+            const char_idx_of_current = box_to_char_idx[current] // 打完全部時會是 undefined
+
+            spans.forEach(function(span){
+                const idx = parseInt(span.dataset.idx, 10)
+                span.classList.remove("correct", "wrong", "current")
+
+                if(char_idx_of_current === undefined){
+                    // 整句都打完了，全部標成打對
+                    span.classList.add("correct")
+                }
+                else if(idx < char_idx_of_current){
+                    span.classList.add("correct")
+                }
+                else if(idx === char_idx_of_current){
+                    // 這個字正在打：如果卡在打錯的狀態就顯示紅色，不然顯示金框提示
+                    span.classList.add(wrong_input ? "wrong" : "current")
                 }
             })
         }
@@ -1128,6 +1233,8 @@
             const container = document.getElementById("game_char_container")
             container.innerHTML = ""
             boxes = []
+            box_to_char_idx = []
+            target1_highlight_valid = false
 
 
             const reset_target_box = document.getElementById("game_stage_target1")
@@ -1449,37 +1556,66 @@
                     Render_Text_Input_Stage(stage)
                 }
                 else{
-                    target.split("").forEach(function(char, i) {
+                    // 【修改】「逐字注音」模式的輸入畫面，改成跟「直接輸入」模式的
+                    // <input> 輸入框長得一模一樣：外層一樣是 game_char_container 那張深色卡片，
+                    // 裡面不再是一格一格分開的方框，而是像輸入框一樣連續一整排的文字，
+                    // 每個注音符號用 span 呈現，靠 current / correct / wrong 狀態上色。
+                    const container = document.getElementById("game_char_container")
+                    if(container){
+                        container.style.gap = "0";
+                    }
 
-                        const container = document.getElementById("game_char_container")
-                        if(container){
-                            container.style.gap = "0.2rem";
-                        }
-
-                        //target1
-                        const target_box = document.getElementById("game_stage_target1")
-                        if(target_box){
-                            target_box.style.display = "flex";
-                        }
-                        target_box.textContent = stage.target1
+                    //target1：目標句子也比照「直接輸入」模式，拆成一格一格的 span，
+                    //這樣打注音符號的同時，上面的句子也能逐字即時上色
+                    const target_box = document.getElementById("game_stage_target1")
+                    if(target_box){
+                        target_box.style.display = "flex";
+                        target_box.innerHTML = Build_Target1_Spans_Html(stage.target1)
                         target_box.style.justifyContent = "center";
                         target_box.style.alignItems = "center";
+                    }
 
-
-                        const box = document.createElement("div")   // 建一個 div
-                        box.classList.add("game_char_box");           // 加上方框樣式
-                        box.style.width = "2.6rem";
-                        box.style.height = "2.4rem";
-                        box.style.fontSize = "1.8rem";
-                        box.style.paddingLeft = "2px";
-
-                        box.textContent = char                       // 把注音字放進去
-                        if (i === 0) box.classList.add("current")   // 第一個格子加上金框（當前位置）
-                        container.appendChild(box);                // 把 div 放進畫面
-                        boxes.push(box);                              // 同時存進 boxes 陣列
-
-                        
+                    // 建立「注音鍵位 → 目標句子第幾個字」的對照表（見 Split_Bopomofo_Into_Char_Groups），
+                    // 這樣玩家打注音符號時，才能同步知道現在打到目標句子的哪一個字
+                    box_to_char_idx = []
+                    const char_groups = Split_Bopomofo_Into_Char_Groups(target)
+                    char_groups.forEach(function(group, group_idx){
+                        group.forEach(function(pos){
+                            box_to_char_idx[pos] = group_idx
+                        })
                     })
+                    // 【防呆】少數關卡的 target（注音鍵位）跟 target1（句子）字數對不上
+                    // （關卡資料本身的既有問題），這種情況下不要硬套即時上色，
+                    // 避免上色跑版誤導玩家，退回成單純顯示句子（不影響逐字注音本身的玩法）
+                    const expected_char_count = Clean_Target1_For_Typing(stage.target1).trim().length
+                    target1_highlight_valid = (char_groups.length === expected_char_count)
+
+                    // 建立一個外觀完全比照「直接輸入」<input> 的容器，
+                    // 讓兩種輸入模式的「輸入框」視覺上一模一樣
+                    const input_style_bar = document.createElement("div")
+                    input_style_bar.id = "bopomofo_input_bar"
+                    input_style_bar.style.width = "100%"
+                    input_style_bar.style.backgroundColor = "var(--darker-blue)"
+                    input_style_bar.style.border = "none"
+                    input_style_bar.style.fontSize = "1.5rem"
+                    input_style_bar.style.color = "#fff"
+                    input_style_bar.style.padding = "0 1rem 0.3rem 1rem"
+                    input_style_bar.style.lineHeight = "2.2rem"
+                    input_style_bar.style.letterSpacing = "2px"
+                    input_style_bar.style.wordBreak = "break-all"
+                    container.appendChild(input_style_bar)
+
+                    target.split("").forEach(function(char, i) {
+                        const box = document.createElement("span")  // 【修改】不用方框 div，改用文字 span
+                        box.classList.add("bopomofo_char");           // 輸入框文字樣式（跟 target1_char 同一套配色邏輯）
+                        box.textContent = char                        // 把注音字放進去
+                        if (i === 0) box.classList.add("current")   // 第一個字加上金框（當前位置）
+                        input_style_bar.appendChild(box);           // 把 span 放進輸入框樣式的容器
+                        boxes.push(box);                              // 同時存進 boxes 陣列，鍵盤事件邏輯完全不用改
+                    })
+
+                    // 一開始就把目標句子第一個字標成金框，邏輯跟直接輸入模式一致
+                    Update_Normal_Mode_Target1_Highlight()
                 }
             }
                 
@@ -1735,6 +1871,7 @@
                     wrong_input = false
                     boxes[current].classList.remove("wrong")
                     boxes[current].classList.add("current")
+                    Update_Normal_Mode_Target1_Highlight()
                     return
                 }
                 
@@ -1748,6 +1885,7 @@
                 
                 boxes[current].classList.remove("correct")
                 boxes[current].classList.add("current")
+                Update_Normal_Mode_Target1_Highlight()
                 return
             }
 
@@ -1796,14 +1934,18 @@
 
                 } else {
                     // 已經是最後一格，顯示結果
+                    Update_Normal_Mode_Target1_Highlight()
                     ShowResult()
+                    return
                 }
+                Update_Normal_Mode_Target1_Highlight()
             } else {
                 //打錯
                 wrong_key_times++   //錯誤次數 +1
                 wrong_input = true  //設為卡住
                 boxes[current].classList.remove("current")  //移除金框
                 boxes[current].classList.add("wrong")       //紅框
+                Update_Normal_Mode_Target1_Highlight()
             }
         })
 
