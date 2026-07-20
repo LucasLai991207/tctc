@@ -1030,6 +1030,29 @@
 
             // 直接輸入模式要鎖住 input，避免玩家在結果畫面跳出的瞬間還打字
             const input_el = document.getElementById("game_container_input_id")
+
+            // 【新增】修正「超時直接顯示 0 WPM」的問題：
+            // target_get 在「直接輸入」類型的關卡（例如高級的速度挑戰）裡，
+            // 原本只有玩家「打滿全部目標字數」時，Check_Text_Input_Match() 才會去計算它，
+            // 所以如果玩家還沒打完就被倒數計時器打斷（超時），target_get 會停留在
+            // Init() 設定的初始值 0，導致 ShowResult() 算出來的 WPM 直接變成 0，
+            // 即使玩家其實已經打對了不少字。
+            // 這裡在鎖住輸入框之前，先用「玩家目前已經打出來的內容」跟目標句子逐字比對，
+            // 把 target_get 更新成「時間到那一刻，真正打對的字數」，
+            // 這樣 ShowResult() 算出來的 WPM 才會反映玩家超時當下的真實速度。
+            const stage = FindStage(stageId)
+            if(input_el && Is_Box_Input_Stage(stage)){
+                const target_text = Clean_Target1_For_Typing(stage.target1).trim()
+                const typed_text = input_el.value
+                let correct_count = 0
+                // 只比對到「玩家目前實際打出的長度」為止，打多少算多少，
+                // 不像 Check_Text_Input_Match 那樣一定要打滿全部字數才計算。
+                for(let i = 0; i < typed_text.length && i < target_text.length; i++){
+                    if(typed_text[i] === target_text[i]) correct_count++
+                }
+                target_get = correct_count
+            }
+
             if(input_el) input_el.disabled = true
 
             ShowResult()   // 沿用既有邏輯：acc > 89 才算過關，acc < 90 自動變紅框
