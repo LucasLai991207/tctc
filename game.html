@@ -977,8 +977,17 @@
         }
 
         // ===== 【新增】用目標 wpm 換算出這一關要倒數幾秒 =====
-        function Calculate_Countdown_Seconds(total_units, wpm){
-            const units_per_minute = wpm * 3   // 對應現有 wpm = (target_get / 3) / 分鐘 的換算比例
+        // 【修正】新增 is_box_input 參數，修掉「倒數時間只有正確時間 1/3」的 bug：
+        // 「逐字注音」模式的 total_units 是「按鍵次數」（見 Get_Stage_Total_Units），
+        // 平均每個中文字要按 3 次鍵（聲母＋韻母＋聲調），所以要乘 wpm*3 才能換算成「按鍵次數/分鐘」，這段沒問題。
+        // 但「直接輸入」模式（基礎輸入／中級直接輸入／高級速度挑戰）的 total_units
+        // 本來就已經是 Get_Stage_Total_Units() 算出來的「真正字數」，
+        // WPM 的定義就是「字數/分鐘」，這裡如果還乘以 3，
+        // 等於把該有的秒數硬生生除掉 3 倍，導致玩家被迫用 3 倍速打字才能在時間內打完。
+        function Calculate_Countdown_Seconds(total_units, wpm, is_box_input){
+            // 直接輸入模式：units_per_minute 就是 wpm 本身（字數/分鐘）
+            // 逐字注音模式：units_per_minute 要乘以 3（按鍵次數/分鐘）
+            const units_per_minute = is_box_input ? wpm : (wpm * 3)
             if(units_per_minute <= 0) return 0
             // Math.ceil：無條件進位到整數秒（直接強制進位）
             return Math.ceil((total_units / units_per_minute) * 60)
@@ -1030,29 +1039,6 @@
 
             // 直接輸入模式要鎖住 input，避免玩家在結果畫面跳出的瞬間還打字
             const input_el = document.getElementById("game_container_input_id")
-
-            // 【新增】修正「超時直接顯示 0 WPM」的問題：
-            // target_get 在「直接輸入」類型的關卡（例如高級的速度挑戰）裡，
-            // 原本只有玩家「打滿全部目標字數」時，Check_Text_Input_Match() 才會去計算它，
-            // 所以如果玩家還沒打完就被倒數計時器打斷（超時），target_get 會停留在
-            // Init() 設定的初始值 0，導致 ShowResult() 算出來的 WPM 直接變成 0，
-            // 即使玩家其實已經打對了不少字。
-            // 這裡在鎖住輸入框之前，先用「玩家目前已經打出來的內容」跟目標句子逐字比對，
-            // 把 target_get 更新成「時間到那一刻，真正打對的字數」，
-            // 這樣 ShowResult() 算出來的 WPM 才會反映玩家超時當下的真實速度。
-            const stage = FindStage(stageId)
-            if(input_el && Is_Box_Input_Stage(stage)){
-                const target_text = Clean_Target1_For_Typing(stage.target1).trim()
-                const typed_text = input_el.value
-                let correct_count = 0
-                // 只比對到「玩家目前實際打出的長度」為止，打多少算多少，
-                // 不像 Check_Text_Input_Match 那樣一定要打滿全部字數才計算。
-                for(let i = 0; i < typed_text.length && i < target_text.length; i++){
-                    if(typed_text[i] === target_text[i]) correct_count++
-                }
-                target_get = correct_count
-            }
-
             if(input_el) input_el.disabled = true
 
             ShowResult()   // 沿用既有邏輯：acc > 89 才算過關，acc < 90 自動變紅框
@@ -1661,7 +1647,9 @@
 
             if(countdown_enabled){
                 const total_units = Get_Stage_Total_Units(stage)
-                countdown_target_seconds = Calculate_Countdown_Seconds(total_units, countdown_wpm)
+                // 【修改】多傳一個 Is_Box_Input_Stage(stage)，讓 Calculate_Countdown_Seconds
+                // 知道現在該用哪一種換算比例（直接輸入 vs 逐字注音），詳見該函式內的註解
+                countdown_target_seconds = Calculate_Countdown_Seconds(total_units, countdown_wpm, Is_Box_Input_Stage(stage))
             }
 
             // 倒數設定按鈕：中級、高級才顯示；開著倒數時邊框會亮起來提示玩家
