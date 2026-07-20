@@ -291,7 +291,7 @@
             max-width: 1200px;
             min-height: 3rem;
 
-            padding: 0.3rem 0.6rem 0.3rem 0.6rem;
+            padding: 1rem 0.6rem 1rem 0.6rem;
 
             background-color: var(--darker-blue);
             border-radius: 12px;
@@ -923,16 +923,11 @@
         let box_to_char_idx = [] // 【新增】中級「逐字注音」模式專用：注音鍵位 index → 目標句子(target1)第幾個字
         let target1_highlight_valid = false // 【新增】box_to_char_idx 是否跟目標句子字數對得起來（防呆用，見 Init() 內的檢查）
 
-        // ===== 【新增】中級專用：輸入模式 =====
-        // "normal"：逐字打注音符號（原本綜合練習的玩法）
-        // "box"   ：像基礎輸入一樣，直接用輸入法打出整句中文字
-        // 存進 localStorage，讓玩家的選擇可以記住，下次進中級關卡時維持一樣的模式
+        // =====中級專用：輸入模式 =====
         let medium_input_mode = localStorage.getItem("tctc_medium_input_mode") || "normal"
 
         // ===== 【新增】中級倒數計時功能專用狀態 =====
         let countdown_mode_on = false
-        // ↑ 【修改】固定預設「關閉」，每次進入關卡都是關閉狀態，不再從 localStorage 記住上次的開關
-        //   （玩家在這一次遊玩中手動開啟的話，只在目前這個分頁的 session 內有效）
 
         let countdown_wpm = 40
         // ↑ 目標 wpm，實際數值會在每次 Init() 時依照這一關的 level data 重新計算（見 Get_Stage_Default_Wpm）
