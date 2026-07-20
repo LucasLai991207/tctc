@@ -291,7 +291,7 @@
             max-width: 1200px;
             min-height: 3rem;
 
-            padding: 1rem 0rem 0.6rem 0.6rem;
+            padding: 0.3rem 0.6rem 0.3rem 0.6rem;
 
             background-color: var(--darker-blue);
             border-radius: 12px;
@@ -522,6 +522,15 @@
             font-weight: 500;
             box-shadow: 0 0 8px rgba(201,168,76,0.5);
         }
+        .mode_toggle_btn:disabled,
+        .mode_toggle_btn.mode_toggle_btn_locked {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+        .mode_toggle_btn:disabled:hover,
+        .mode_toggle_btn.mode_toggle_btn_locked:hover {
+            color: #9aa3b0;
+        }
         .game_stage_target1{
             margin-top: 3rem;
             padding: 0.2rem 1rem;
@@ -540,8 +549,9 @@
             border-top: 3px solid var(--champagne-gold);
 
             display: flex;
-            justify-content: center;
+            justify-content: flex-start;
             align-items: center;
+            text-align: left;
 
             letter-spacing: 4px;
 
@@ -928,17 +938,20 @@
         // ↑ 目標 wpm，實際數值會在每次 Init() 時依照這一關的 level data 重新計算（見 Get_Stage_Default_Wpm）
         //   這裡先給一個保險預設值，避免還沒進到 Init() 前就被其他程式碼讀到 undefined
 
-        let countdown_enabled = false        // 這一關「實際上」有沒有套用倒數（需同時滿足：開關開著 + 是中級關卡）
+        let countdown_enabled = false        // 這一關「實際上」有沒有套用倒數（需同時滿足：開關開著 + 是中級/高級關卡）
         let countdown_target_seconds = 0     // 這一關算出來的倒數總秒數
         let time_up = false                  // 倒數是否已經歸零；用來鎖住輸入，避免時間到後還能繼續打字
         let countdown_wpm_stage_id = null    // 【新增】記錄「countdown_wpm 目前是套用哪一關的預設值」，換關才重算，避免蓋掉玩家手動調整的數值
+        let countdown_forced = false         // 【新增】這一關是否「強制」倒數（高級關卡一律強制開啟，玩家無法關閉）
 
         // 判斷這個關卡「現在」是不是要用輸入框模式來玩
         // 基礎輸入關卡本來就是輸入框，一定回傳 true
+        // 速度挑戰關卡（高級關卡）也一律是輸入框，沒有逐字注音選項，一定回傳 true
         // 綜合練習關卡（中級關卡）則要看玩家目前選擇的 medium_input_mode
         function Is_Box_Input_Stage(stage){
             if(!stage) return false
             if(stage.type === "基礎輸入") return true
+            if(stage.type === "速度挑戰") return true
             if(stage.type === "綜合練習" && medium_input_mode === "box") return true
             return false
         }
@@ -1039,7 +1052,9 @@
             Stop_Timer()
             const timerEl = document.getElementById("game_timer")
             if(timerEl){
-                timerEl.textContent = "00：00"
+                // 【修改】倒數模式開啟時，還沒開始打字也要直接顯示這一關要倒數的秒數（例如 02：30），
+                // 而不是先顯示 00：00、等打下第一個字才跳成正確數字
+                timerEl.textContent = countdown_enabled ? Format_Timer(countdown_target_seconds) : "00：00"
                 timerEl.classList.remove("countdown_warning")
             }
         }
@@ -1353,13 +1368,25 @@
 
             off_btn.classList.toggle("active", !countdown_mode_on)
             on_btn.classList.toggle("active", countdown_mode_on)
+
+            // 【新增】高級關卡強制倒數：開關鎖死，「關閉」按鈕不能點
+            off_btn.disabled = countdown_forced
+            off_btn.classList.toggle("mode_toggle_btn_locked", countdown_forced)
+
             wpm_input.value = countdown_wpm
+
+            // 【新增】這一關能設定的最低 WPM（有 wpm_min 就用它，沒有就是系統預設 40）
+            // 同時設定 input 的 min 屬性，讓瀏覽器內建的上下箭頭/驗證也會擋住過低的數字
+            const min_wpm = Get_Stage_Default_Wpm(stage)
+            wpm_input.min = min_wpm
 
             if(hint){
                 // 用 innerHTML + <br> 拆成兩行呈現，右對齊時比較不會擠成一整塊
-                hint.innerHTML = countdown_enabled
+                const base_hint = countdown_enabled
                     ? `這一關約需 ${Get_Stage_Total_Units(stage)} 個按鍵單位<br>將倒數 ${countdown_target_seconds} 秒`
                     : "倒數模式關閉時<br>計時器只會正常往上累計，不會強制結算"
+                const forced_hint = countdown_forced ? "<br>⚠ 高級關卡強制倒數，無法關閉" : ""
+                hint.innerHTML = base_hint + `<br>本關最低可設定 ${min_wpm} WPM` + forced_hint
             }
         }
 
@@ -1390,14 +1417,21 @@
             })
 
             document.getElementById("countdown_off_btn").addEventListener("click", function(){
+                if(countdown_forced) return   // 高級關卡強制倒數，忽略關閉的點擊
                 if(countdown_mode_on) Set_Countdown_Mode(false)
             })
             document.getElementById("countdown_on_btn").addEventListener("click", function(){
                 if(!countdown_mode_on) Set_Countdown_Mode(true)
             })
             document.getElementById("countdown_wpm_input").addEventListener("change", function(event){
-                const val = parseInt(event.target.value) || 40
-                countdown_wpm = Math.max(1, val)   // 防呆：不能設定 0 或負數 wpm
+                const stage = FindStage(stageId)
+                const min_wpm = Get_Stage_Default_Wpm(stage)   // 這一關的最低 wpm 門檻（level data 的 wpm_min，沒設定就是 40）
+
+                let val = parseInt(event.target.value) || min_wpm
+                if(val < min_wpm) val = min_wpm   // 防呆：不能設定得比這一關的最低速度要求還低
+
+                countdown_wpm = val
+                event.target.value = countdown_wpm   // 把被拉回的數字同步顯示回輸入框，避免畫面跟實際值不一致
                 Init()   // 重新整理這一關，讓新的 wpm 立刻套用（視窗維持開啟）
             })
         }
@@ -1415,23 +1449,28 @@
                 target_box.style.display = "flex";
             }
 
-            //把target1抓進game container input
-            const game_container_input = document.createElement("input")
-            game_container_input.type = "text"
+            const game_container_input = document.createElement("textarea")
             game_container_input.id = "game_container_input_id"
+            // rows = 1：一開始只顯示一行的高度，視覺上跟原本的 <input> 一樣，
+            // 之後高度完全交給下面的 Auto_Grow_Textarea() 動態計算，這裡只是給個起始值。
+            game_container_input.rows = 1
 
             const game_stage_target1 = document.getElementById("game_stage_target1");
-            // 【修改】不再直接塞純文字，改成拆成一格一格的 span，
-            // 這樣玩家打字時才能逐字上色（見 Build_Target1_Spans_Html / Update_Target1_Highlight）
+
+
             game_stage_target1.innerHTML = Build_Target1_Spans_Html(stage.target1)
             // 一開始就把第一個要打的字標成金框，跟其他關卡的「current」提示邏輯一致
             Update_Target1_Highlight("", Clean_Target1_For_Typing(stage.target1).trim())
-            game_container_input.placeholder = "請輸入目標"
+            game_container_input.placeholder = "請輸入目標文字"
             game_container_input.setAttribute("autocomplete", "off")
+            // 【新增】textarea 預設右下角會有一個可以讓玩家手動拖曳縮放的三角形把手，
+            // spellcheck 則是瀏覽器內建的紅色波浪底線拼字檢查（中文用不到，關掉比較乾淨）。
+            game_container_input.setAttribute("spellcheck", "false")
 
             game_container.appendChild(game_container_input)
 
-            target_box.style.justifyContent = "center";
+
+            target_box.style.justifyContent = "flex-start";
             target_box.style.alignItems = "center";
 
             game_container.style.backgroundColor = "none"
@@ -1445,10 +1484,40 @@
 
             game_container_input.style.padding = "0 1rem 0.3rem 1rem"
 
+            // ===== 【新增】讓 textarea 長得像原本的單行 input，並且關掉手動拖曳縮放 =====
+            game_container_input.style.resize = "none"          // 拿掉右下角可拖曳縮放的把手，高度只能由 JS 控制
+            game_container_input.style.overflow = "hidden"       // 內容還沒觸發長高之前，超出的部分先隱藏，避免出現內建捲軸
+            game_container_input.style.lineHeight = "2rem"       // 固定行高，Auto_Grow 才能準確用 scrollHeight 算出正確行數
+            game_container_input.style.fontFamily = "inherit"    // textarea 預設字體跟頁面不同，讓它繼承外層字體
+            game_container_input.style.boxSizing = "border-box"  // 讓 padding 算進寬高，避免長高時寬度跑版
+
+            // ===== 【新增】核心邏輯：自動長高 function =====
+            // 原理：textarea 的 scrollHeight 代表「把 height 設成 auto 時，
+            // 為了完整顯示所有內容（含換行後的多行文字）所需要的真實高度」。
+            // 所以每次內容變動，就先把 height 歸零重算，再把 height 設成 scrollHeight，
+            // 這樣「沒換行」就維持一行高度，「換行了」就自動變成兩行、三行高度。
+            function Auto_Grow_Textarea(){
+                game_container_input.style.height = "auto"                          // 先歸零，讓 scrollHeight 重新量測
+                game_container_input.style.height = game_container_input.scrollHeight + "px"  // 再設成量出來的真實高度
+            }
+
             game_container_input.addEventListener("input", Check_Text_Input_Match)
+            game_container_input.addEventListener("input", Auto_Grow_Textarea)          // 【新增】每次打字都重新量高度
             // 【新增】IME 選字結束（compositionend）時也重新檢查一次，
             // 確保「還在組字中」被跳過的完成判斷，能在選字結束後補上
             game_container_input.addEventListener("compositionend", Check_Text_Input_Match)
+            game_container_input.addEventListener("compositionend", Auto_Grow_Textarea) // 【新增】中文選字結束後也要重新量一次
+                                                                                          // （選字完成瞬間文字量可能大幅變動，例如注音選字選出一整串詞）
+
+            // 【新增】textarea 預設按 Enter 會直接換行（插入 \n），
+            // 但這一關的目標句子（stage.target1）本來就不包含換行符號，
+            // 如果讓玩家真的打出換行，Check_Text_Input_Match 拿去跟 target_text 逐字比對時一定會對不上、卡關。
+            // 所以攔截 Enter，阻止預設的換行行為，行為維持跟原本 <input> 一樣（按 Enter 不會輸入任何字元）。
+            game_container_input.addEventListener("keydown", function(event){
+                if(event.key === "Enter"){
+                    event.preventDefault()
+                }
+            })
 
             // 【新增】禁止在輸入框內貼上文字，防止玩家直接複製題目貼上作弊
             // paste 事件：不管玩家是按 Ctrl+V、用滑鼠右鍵選單「貼上」，
@@ -1486,6 +1555,8 @@
                 .classList.contains("show")
             if(!countdown_modal_is_open){
                 game_container_input.focus()
+                Auto_Grow_Textarea()   // 【新增】頁面剛渲染、輸入框還是空的時候，也要先執行一次，
+                                        // 確保高度從一開始就是正確的一行高，不用等玩家打第一個字才校正。
             }
         }
 
@@ -1545,31 +1616,41 @@
             time_up = false   // 【新增】每次重打/換關都要重置，不然時間到鎖住的狀態會延續到下一關
 
             // ===== 【新增】判斷這一關是否要套用倒數模式 =====
-            const is_medium_stage = get_difficulty_by_stageid(stage.id) === "medium"
+            // 中級、高級關卡都支援倒數模式；初級跟基礎輸入關卡不支援
+            const stage_difficulty = get_difficulty_by_stageid(stage.id)
+            const supports_countdown = stage_difficulty === "medium" || stage_difficulty === "hard"
+
+            // 【新增】高級關卡強制開啟倒數，玩家不能關掉；中級維持原本可自由開關的行為
+            countdown_forced = stage_difficulty === "hard"
+            if(countdown_forced){
+                countdown_mode_on = true
+            }
 
             // 【修正】只有「切換到不同關卡」時，才用這關 level data 的 wpm_min 覆蓋 countdown_wpm。
             // 如果只是同一關內「調整WPM設定」或「按再試一次」而重跑 Init()，
             // 就不能再覆蓋，不然玩家剛调好的自訂數值會立刻被蓋回預設值 40（這是上一版的 bug）。
-            if(is_medium_stage && stage.id !== countdown_wpm_stage_id){
+            if(supports_countdown && stage.id !== countdown_wpm_stage_id){
                 countdown_wpm = Get_Stage_Default_Wpm(stage)
                 countdown_wpm_stage_id = stage.id
             }
 
-            countdown_enabled = countdown_mode_on && is_medium_stage
+            countdown_enabled = countdown_mode_on && supports_countdown
 
             if(countdown_enabled){
                 const total_units = Get_Stage_Total_Units(stage)
                 countdown_target_seconds = Calculate_Countdown_Seconds(total_units, countdown_wpm)
             }
 
-            // 倒數設定按鈕：只有中級才顯示；開著倒數時邊框會亮起來提示玩家
+            // 倒數設定按鈕：中級、高級才顯示；開著倒數時邊框會亮起來提示玩家
             const countdown_btn = document.getElementById("countdown_settings_btn")
-            countdown_btn.style.display = is_medium_stage ? "flex" : "none"
+            countdown_btn.style.display = supports_countdown ? "flex" : "none"
             countdown_btn.classList.toggle("is_active", countdown_enabled)
 
             // 把目前狀態同步進彈出視窗的欄位（視窗本身開著或關著都不受影響）
             Sync_Countdown_Modal_Fields(stage)
 
+            // 【修改】倒數模式開啟時，一進關卡（或剛調整完 wpm）就直接顯示這一關要倒數的秒數，
+            // 不用等玩家打下第一個字，計時器才不會從 00：00 跳到正確數字
             Reset_Timer_Display()
 
             //隱藏結果畫面（移除 show class）
@@ -1864,11 +1945,11 @@
                     
 
             }
-            else if(stage.type === "基礎輸入"){
+            else if(stage.type === "基礎輸入" || stage.type === "速度挑戰"){            // 高級：一律直接輸入模式，沒有逐字注音選項
 
                 Render_Text_Input_Stage(stage)
             }
-            else if(stage.type === "綜合練習"){
+            else if(stage.type === "綜合練習"){                                         // 中級
                 const typing_img_1 = document.getElementById("typing_img_1")
                 const typing_img_2 = document.getElementById("typing_img_2")
                 const game_stage_target1 = document.getElementById("game_stage_target1");
@@ -1903,10 +1984,7 @@
                     Render_Text_Input_Stage(stage)
                 }
                 else{
-                    // 【修改】「逐字注音」模式的輸入畫面，改成跟「直接輸入」模式的
-                    // <input> 輸入框長得一模一樣：外層一樣是 game_char_container 那張深色卡片，
-                    // 裡面不再是一格一格分開的方框，而是像輸入框一樣連續一整排的文字，
-                    // 每個注音符號用 span 呈現，靠 current / correct / wrong 狀態上色。
+
                     const container = document.getElementById("game_char_container")
                     if(container){
                         container.style.gap = "0";
@@ -2010,10 +2088,15 @@
             }
 
 
-            const stage_is_passed = acc > 89
+            // 【新增】高級關卡（超級/超極/究極...速度挑戰）不是單看正確率過關，
+            // 而是要同時達到這一關設定的最低速度（wpm_min）跟最低正確率（acc_min）才算過關，
+            // 對應 level data 裡每一關卡的 wpm_min / acc_min 設定。
+            const stage_is_passed = get_difficulty_by_stageid(stage.id) === "hard"
+                ? (wpm >= Get_Stage_Default_Wpm(stage) && acc >= (typeof stage.acc_min === "number" && stage.acc_min > 0 ? stage.acc_min : 90))
+                : acc > 89
 
-            //如果是 章節訓練 或 中級 或 基礎輸入 就採計到 平均wpm
-            if((stage.name === "章節驗收" || stage.name === "精熟度測試" || stage.type === "基礎輸入") && (!Is_Box_Input_Stage(stage) || stage_is_passed)){
+            //如果是 章節訓練 或 中級 或 基礎輸入 或 高級 就採計到 平均wpm
+            if((stage.name === "章節驗收" || stage.name === "精熟度測試" || stage.type === "基礎輸入" || stage.type === "速度挑戰") && (!Is_Box_Input_Stage(stage) || stage_is_passed)){
                 wpm_sum += wpm;
                 wpm_times += 1;
                 localStorage.setItem("wpm_sum", wpm_sum)
@@ -2029,7 +2112,7 @@
             let acc_sum = Number(localStorage.getItem("acc_sum")) || 0;
             let acc_times = Number(localStorage.getItem("acc_times")) || 0;
 
-            if(stage.name === "章節驗收" || stage.name === "精熟度測試" || stage.type === "基礎輸入"){
+            if(stage.name === "章節驗收" || stage.name === "精熟度測試" || stage.type === "基礎輸入" || stage.type === "速度挑戰"){
                 //===記到平均區===
 
 
