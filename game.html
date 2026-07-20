@@ -89,16 +89,24 @@
             background-color: var(--champagne-gold);
             color: var(--dark-blue);
         }
-        .game_timer {
+        /* ===== 【新增】外層容器：讓按鈕跟計時器水平並排、固定在畫面右上角 ===== */
+        /* 位置跟原本 .game_timer 單獨使用 position:fixed 時完全一樣，只是現在多包一層 */
+        .game_timer_wrap {
             position: fixed;
             top: 5rem;
             right: 2rem;
+            display: flex;
+            align-items: center;   /* 兩個圓形物體垂直置中，就會自然同高對齊 */
+            gap: 0.6rem;
+            z-index: 100;
+        }
+        .game_timer {
             height: 2.3rem;
-            
+
             padding: 0 1rem;
             background-color: var(--dark-blue);
             border: 1px solid rgba(201,168,76,0.6);
-            border-radius: 0.1rem;
+            border-radius: 10rem;
 
             display: flex;
             align-items: center;
@@ -108,8 +116,131 @@
             font-size: 1.3rem;
             letter-spacing: 2px;
             color: var(--champagne-gold);
+        }
+        /* 剩最後 5 秒的警示樣式：文字變紅、微微放大提醒（幅度縮小，避免太搶眼）*/
+        .game_timer.countdown_warning {
+            color: #ff5c5c;
+            animation: countdown_pulse 700ms ease-in-out infinite;
+        }
+        @keyframes countdown_pulse {
+            0%, 100% { transform: scale(1); }
+            50%      { transform: scale(1.03); }
+        }
+        /* ===== 【新增】倒數設定按鈕：跟計時器同高、並排在左邊 ===== */
+        .countdown_settings_btn {
+            display: none; /* 只有中級關卡才由 JS 切成 flex 顯示 */
+            width: 2.3rem;
+            height: 2.3rem;   /* 跟 .game_timer 的 height 一致，兩個圓形物體才會同高 */
+            flex-shrink: 0;
+            align-items: center;
+            justify-content: center;
 
-            z-index: 100;
+            background-color: var(--dark-blue);
+            border: 1px solid rgba(201,168,76,0.6);
+            border-radius: 50%;
+            color: var(--champagne-gold);
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: transform 200ms ease, border-color 200ms ease;
+        }
+        .countdown_settings_btn:hover {
+            transform: scale(1.08);
+            border-color: var(--champagne-gold);
+        }
+        /* 開關開啟時，按鈕邊框亮一點，讓玩家一眼看出目前有沒有套用倒數 */
+        .countdown_settings_btn.is_active {
+            border-color: var(--champagne-gold);
+            box-shadow: 0 0 8px rgba(201,168,76,0.5);
+        }
+
+        /* ===== 【新增】倒數設定彈出視窗 ===== */
+        .countdown_modal_overlay {
+            display: none;               /* 由 JS 加上 .show 才會出現 */
+            position: fixed;
+            inset: 0;                    /* 等同 top:0; right:0; bottom:0; left:0; */
+            background-color: rgba(0,0,0,0.55);
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+        }
+        .countdown_modal_overlay.show {
+            display: flex;
+        }
+        .countdown_modal {
+            width: min(23rem, 90vw);
+            background-color: var(--dark-blue);
+            border: 1px solid rgba(201,168,76,0.5);
+            border-radius: 14px;
+            padding: 1.5rem 1.6rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+        }
+        .countdown_modal_header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+        .countdown_modal_title {
+            color: var(--champagne-gold);
+            font-size: 1.05rem;
+            letter-spacing: 1px;
+        }
+        .countdown_modal_close {
+            background: none;
+            border: none;
+            color: gray;
+            font-size: 1.4rem;
+            line-height: 1;
+            cursor: pointer;
+        }
+        .countdown_modal_close:hover { color: #fff; }
+        .countdown_modal_desc {
+            color: #cfcfcf;
+            font-size: 0.82rem;
+            line-height: 1.7;
+            margin: 0 0 1.3rem 0;
+        }
+        .countdown_modal_desc strong { color: var(--champagne-gold); }
+        .countdown_modal_row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.9rem;
+            margin-bottom: 1.1rem;
+        }
+        .countdown_modal_hint {
+            margin: 1rem 0 0 0;
+            padding-top: 0.8rem;
+            border-top: 1px solid rgba(201,168,76,0.2); /* 跟上面的設定列做出區隔，不會擠在一起 */
+            font-size: 0.78rem;
+            line-height: 1.6;
+            color: gray;
+            text-align: right;
+        }
+        .countdown_panel_label {
+            color: gray;
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            white-space: nowrap;
+        }
+        .countdown_wpm_input {
+            width: 4rem;
+            padding: 0.35rem 0.5rem;
+            background-color: var(--darker-blue);
+            border: 1px solid rgba(201,168,76,0.3);
+            border-radius: 6px;
+            color: #fff;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+        .countdown_wpm_input:focus {
+            outline: none;
+            border-color: var(--champagne-gold);
+        }
+        .countdown_panel_unit {
+            color: var(--champagne-gold);
+            font-size: 0.8rem;
+            letter-spacing: 1px;
         }
         .game_main {
             margin-top: 50px;
@@ -491,7 +622,45 @@
     </nav>
 
     <div class="game_back_btn" onclick="window.location.href='TCTC2-0-main.html'">←</div>
-    <div class="game_timer" id="game_timer">00:00</div>
+
+    <!--外層容器：讓「倒數設定按鈕」跟「計時器」水平並排、同高對齊，整組固定在原本計時器的位置-->
+    <div class="game_timer_wrap">
+        <!--中級專用：倒數設定小按鈕，點開才會跳出設定視窗，平常不佔畫面空間-->
+        <button type="button" class="countdown_settings_btn" id="countdown_settings_btn" title="倒數模式設定">⏱</button>
+
+        <div class="game_timer" id="game_timer">00：00</div>
+    </div>
+
+    <!--倒數設定彈出視窗，預設隱藏（display:none 由 CSS 的 .show 控制）-->
+    <div class="countdown_modal_overlay" id="countdown_modal_overlay">
+        <div class="countdown_modal">
+            <div class="countdown_modal_header">
+                <span class="countdown_modal_title">倒數模式設定</span>
+                <button type="button" class="countdown_modal_close" id="countdown_modal_close">&times;</button>
+            </div>
+
+            <p class="countdown_modal_desc">
+                這裡的 <strong>WPM</strong>（Word Per Minute）定義為：<br>
+                每 <strong>3</strong> 次按鍵（含注音、聲調、符號、空白）＝ <strong>1 word</strong>。
+            </p>
+
+            <div class="countdown_modal_row">
+                <span class="countdown_panel_label">倒數模式</span>
+                <div class="mode_toggle_switch">
+                    <button type="button" class="mode_toggle_btn" id="countdown_off_btn">關閉</button>
+                    <button type="button" class="mode_toggle_btn" id="countdown_on_btn">開啟</button>
+                </div>
+            </div>
+
+            <div class="countdown_modal_row">
+                <span class="countdown_panel_label">目標 WPM</span>
+                <input type="number" id="countdown_wpm_input" class="countdown_wpm_input" min="30" max="300">
+                <span class="countdown_panel_unit">WPM</span>
+            </div>
+
+            <p class="countdown_modal_hint" id="countdown_modal_hint"></p>
+        </div>
+    </div>
 
     <main class="game_main">
         <div class="game_stage_info">
@@ -750,6 +919,20 @@
         // 存進 localStorage，讓玩家的選擇可以記住，下次進中級關卡時維持一樣的模式
         let medium_input_mode = localStorage.getItem("tctc_medium_input_mode") || "normal"
 
+        // ===== 【新增】中級倒數計時功能專用狀態 =====
+        let countdown_mode_on = false
+        // ↑ 【修改】固定預設「關閉」，每次進入關卡都是關閉狀態，不再從 localStorage 記住上次的開關
+        //   （玩家在這一次遊玩中手動開啟的話，只在目前這個分頁的 session 內有效）
+
+        let countdown_wpm = 40
+        // ↑ 目標 wpm，實際數值會在每次 Init() 時依照這一關的 level data 重新計算（見 Get_Stage_Default_Wpm）
+        //   這裡先給一個保險預設值，避免還沒進到 Init() 前就被其他程式碼讀到 undefined
+
+        let countdown_enabled = false        // 這一關「實際上」有沒有套用倒數（需同時滿足：開關開著 + 是中級關卡）
+        let countdown_target_seconds = 0     // 這一關算出來的倒數總秒數
+        let time_up = false                  // 倒數是否已經歸零；用來鎖住輸入，避免時間到後還能繼續打字
+        let countdown_wpm_stage_id = null    // 【新增】記錄「countdown_wpm 目前是套用哪一關的預設值」，換關才重算，避免蓋掉玩家手動調整的數值
+
         // 判斷這個關卡「現在」是不是要用輸入框模式來玩
         // 基礎輸入關卡本來就是輸入框，一定回傳 true
         // 綜合練習關卡（中級關卡）則要看玩家目前選擇的 medium_input_mode
@@ -758,6 +941,34 @@
             if(stage.type === "基礎輸入") return true
             if(stage.type === "綜合練習" && medium_input_mode === "box") return true
             return false
+        }
+
+        // ===== 【新增】取得這一關的預設 WPM =====
+        // level data 裡如果有設定 stage.wpm_min，就用它當這一關的預設值；
+        // 沒有設定的話，就套用系統預設值 40
+        function Get_Stage_Default_Wpm(stage){
+            const has_valid_min = typeof stage.wpm_min === "number" && stage.wpm_min > 0
+            return has_valid_min ? stage.wpm_min : 40
+        }
+
+        // ===== 【新增】算出這一關「總按鍵/總字數」，跟 WPM 計算的基準保持一致 =====
+        function Get_Stage_Total_Units(stage){
+            // 直接輸入模式（IME 選字）：target_get 算的是「真正字數」，
+            // 所以這裡也要用清理過的目標句子字數，才能對齊
+            if(Is_Box_Input_Stage(stage)){
+                return Clean_Target1_For_Typing(stage.target1).trim().length
+            }
+            // 逐字注音模式：target_get 是每個按鍵按對就 +1，
+            // 所以這裡直接用 target 字串長度（已經包含注音、聲調、空白、Enter符號）
+            return (stage.target || "").length
+        }
+
+        // ===== 【新增】用目標 wpm 換算出這一關要倒數幾秒 =====
+        function Calculate_Countdown_Seconds(total_units, wpm){
+            const units_per_minute = wpm * 3   // 對應現有 wpm = (target_get / 3) / 分鐘 的換算比例
+            if(units_per_minute <= 0) return 0
+            // Math.ceil：無條件進位到整數秒（直接強制進位）
+            return Math.ceil((total_units / units_per_minute) * 60)
         }
 
         // ===== 右上角計時器 =====
@@ -770,8 +981,45 @@
         function Update_Timer_Display(){
             const timerEl = document.getElementById("game_timer")
             if(!timerEl || !startTime) return
+
             const elapsed = (Date.now() - startTime) / 1000
-            timerEl.textContent = Format_Timer(elapsed)
+
+            if(countdown_enabled){
+                // 【修正】這裡改用 Math.ceil 而不是直接把小數丟給 Format_Timer。
+                // 原因：Format_Timer 內部是用 Math.floor 取秒數，如果直接傳小數進去，
+                // 一開始 elapsed 只要大於 0（哪怕只有 0.01 秒），remaining 就會變成
+                // 「略小於」倒數總秒數的小數，floor 會直接把它砍成少 1 秒，
+                // 導致計時器一開始顯示的數字就已經比實際設定的秒數少了 1～2 秒。
+                // 用 Math.ceil 無條件進位成整數後再丟進去，才會讓「剛開始那一秒」完整顯示滿。
+                const remaining = Math.ceil(countdown_target_seconds - elapsed)
+
+                if(remaining <= 0){
+                    timerEl.textContent = "00：00"
+                    Time_Up()   // 時間到！強制結算
+                    return
+                }
+
+                timerEl.textContent = Format_Timer(remaining)
+
+                // 【美觀】剩最後 5 秒時，文字變紅、微微放大提醒
+                timerEl.classList.toggle("countdown_warning", remaining <= 5)
+            }
+            else{
+                timerEl.textContent = Format_Timer(elapsed)
+            }
+        }
+
+        // ===== 【新增】倒數歸零時，強制結束這一關 =====
+        function Time_Up(){
+            if(time_up) return   // 防止重複觸發（例如 interval 剛好卡在邊界多跑一次）
+            time_up = true
+            Stop_Timer()
+
+            // 直接輸入模式要鎖住 input，避免玩家在結果畫面跳出的瞬間還打字
+            const input_el = document.getElementById("game_container_input_id")
+            if(input_el) input_el.disabled = true
+
+            ShowResult()   // 沿用既有邏輯：acc > 89 才算過關，acc < 90 自動變紅框
         }
 
         function Start_Timer(){
@@ -790,7 +1038,10 @@
         function Reset_Timer_Display(){
             Stop_Timer()
             const timerEl = document.getElementById("game_timer")
-            if(timerEl) timerEl.textContent = "00：00"
+            if(timerEl){
+                timerEl.textContent = "00：00"
+                timerEl.classList.remove("countdown_warning")
+            }
         }
 
 
@@ -987,6 +1238,8 @@
         // 直接比對「整個輸入框的內容」跟「這關的目標句子（target1）」是否完全一樣。
         function Check_Text_Input_Match(event){
 
+            if(time_up) return   // 【新增】時間到了，忽略後續輸入事件
+
             // 每次使用者打字都會重新呼叫這個函式，所以要重新抓一次最新的 stage 資料
             const stage = FindStage(stageId)
             const input_el = document.getElementById("game_container_input_id")
@@ -1090,6 +1343,65 @@
             })
         }
 
+        // ===== 【新增】把目前狀態同步進彈出視窗的 UI（不會主動打開視窗）=====
+        function Sync_Countdown_Modal_Fields(stage){
+            const off_btn = document.getElementById("countdown_off_btn")
+            const on_btn = document.getElementById("countdown_on_btn")
+            const wpm_input = document.getElementById("countdown_wpm_input")
+            const hint = document.getElementById("countdown_modal_hint")
+            if(!off_btn || !on_btn || !wpm_input) return
+
+            off_btn.classList.toggle("active", !countdown_mode_on)
+            on_btn.classList.toggle("active", countdown_mode_on)
+            wpm_input.value = countdown_wpm
+
+            if(hint){
+                // 用 innerHTML + <br> 拆成兩行呈現，右對齊時比較不會擠成一整塊
+                hint.innerHTML = countdown_enabled
+                    ? `這一關約需 ${Get_Stage_Total_Units(stage)} 個按鍵單位<br>將倒數 ${countdown_target_seconds} 秒`
+                    : "倒數模式關閉時<br>計時器只會正常往上累計，不會強制結算"
+            }
+        }
+
+        // ===== 【新增】開啟/關閉彈出視窗 =====
+        function Open_Countdown_Modal(){
+            document.getElementById("countdown_modal_overlay").classList.add("show")
+        }
+        function Close_Countdown_Modal(){
+            document.getElementById("countdown_modal_overlay").classList.remove("show")
+        }
+
+        // ===== 【新增】切換倒數模式的全域開關（只在這次 session 有效，不寫入 localStorage）=====
+        function Set_Countdown_Mode(on){
+            countdown_mode_on = on
+            Init()   // Init() 內部會重新呼叫 Sync_Countdown_Modal_Fields()，視窗保持開啟不受影響
+        }
+
+        // ===== 【新增】綁定彈出視窗相關的事件 =====
+        // 這些元素是寫死在 HTML 裡的固定節點（不像 mode_toggle 是用 innerHTML 動態重建），
+        // 所以事件監聽器只需要在頁面載入時綁定「一次」就好，不用每次 Init() 都重綁
+        function Bind_Countdown_Modal_Events(){
+            document.getElementById("countdown_settings_btn").addEventListener("click", Open_Countdown_Modal)
+            document.getElementById("countdown_modal_close").addEventListener("click", Close_Countdown_Modal)
+
+            // 點擊半透明背景（而不是視窗本體）時，也讓使用者可以關閉視窗
+            document.getElementById("countdown_modal_overlay").addEventListener("click", function(event){
+                if(event.target.id === "countdown_modal_overlay") Close_Countdown_Modal()
+            })
+
+            document.getElementById("countdown_off_btn").addEventListener("click", function(){
+                if(countdown_mode_on) Set_Countdown_Mode(false)
+            })
+            document.getElementById("countdown_on_btn").addEventListener("click", function(){
+                if(!countdown_mode_on) Set_Countdown_Mode(true)
+            })
+            document.getElementById("countdown_wpm_input").addEventListener("change", function(event){
+                const val = parseInt(event.target.value) || 40
+                countdown_wpm = Math.max(1, val)   // 防呆：不能設定 0 或負數 wpm
+                Init()   // 重新整理這一關，讓新的 wpm 立刻套用（視窗維持開啟）
+            })
+        }
+
         // ===== 【新增】把「輸入框模式」的畫面建出來 =====
         // 原本只有「基礎輸入」關卡會用到這段畫面，
         // 現在中級關卡選了「直接輸入」模式時，也會共用同一套邏輯
@@ -1167,7 +1479,14 @@
             })
 
             // 頁面一載入就把游標放進輸入框，玩家不用自己點一下就能直接開始打字
-            game_container_input.focus()
+            // 【修正】但如果倒數設定視窗正開著（玩家正在視窗裡調整WPM），
+            // 就不要搶走焦點，不然玩家打字打到一半的數字會被強制跳走、輸入框又立刻失焦
+            const countdown_modal_is_open = document
+                .getElementById("countdown_modal_overlay")
+                .classList.contains("show")
+            if(!countdown_modal_is_open){
+                game_container_input.focus()
+            }
         }
 
         //初始化畫面 每次「再試一次」也會呼叫
@@ -1223,6 +1542,34 @@
             target_get = 0
             isRunning = false
             startTime = null
+            time_up = false   // 【新增】每次重打/換關都要重置，不然時間到鎖住的狀態會延續到下一關
+
+            // ===== 【新增】判斷這一關是否要套用倒數模式 =====
+            const is_medium_stage = get_difficulty_by_stageid(stage.id) === "medium"
+
+            // 【修正】只有「切換到不同關卡」時，才用這關 level data 的 wpm_min 覆蓋 countdown_wpm。
+            // 如果只是同一關內「調整WPM設定」或「按再試一次」而重跑 Init()，
+            // 就不能再覆蓋，不然玩家剛调好的自訂數值會立刻被蓋回預設值 40（這是上一版的 bug）。
+            if(is_medium_stage && stage.id !== countdown_wpm_stage_id){
+                countdown_wpm = Get_Stage_Default_Wpm(stage)
+                countdown_wpm_stage_id = stage.id
+            }
+
+            countdown_enabled = countdown_mode_on && is_medium_stage
+
+            if(countdown_enabled){
+                const total_units = Get_Stage_Total_Units(stage)
+                countdown_target_seconds = Calculate_Countdown_Seconds(total_units, countdown_wpm)
+            }
+
+            // 倒數設定按鈕：只有中級才顯示；開著倒數時邊框會亮起來提示玩家
+            const countdown_btn = document.getElementById("countdown_settings_btn")
+            countdown_btn.style.display = is_medium_stage ? "flex" : "none"
+            countdown_btn.classList.toggle("is_active", countdown_enabled)
+
+            // 把目前狀態同步進彈出視窗的欄位（視窗本身開著或關著都不受影響）
+            Sync_Countdown_Modal_Fields(stage)
+
             Reset_Timer_Display()
 
             //隱藏結果畫面（移除 show class）
@@ -1834,6 +2181,8 @@
 
         document.addEventListener("keydown", function(event) {
 
+            if(time_up) return   // 【新增】時間到了，忽略所有按鍵輸入
+
             if (target === "" || boxes.length === 0) return
 
             // 如果已經打完全部（current 超出範圍）忽略
@@ -1949,6 +2298,9 @@
             }
         })
 
+
+        // 綁定倒數設定彈出視窗的事件（只需要綁一次）
+        Bind_Countdown_Modal_Events()
 
         // nit初始化建畫面＃＃＃
         Init()

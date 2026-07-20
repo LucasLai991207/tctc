@@ -4,6 +4,17 @@
 //  tctc2.0-saved_difficulty            選擇難度
 //  username, email, intro
 
+//各項參數
+//id        關卡id
+//name      關卡名
+//name2     關卡副標題
+//name3     關卡內提示詞
+//type      關卡型別
+//level     關卡難度
+//wpm_min   中高級難度計時器最小wpm
+//target    注音目標
+//target1   對應target 或是 獨立的關卡目標
+
 
 const Level_Data = {
     easy : {
@@ -155,7 +166,7 @@ const Level_Data = {
                 id : "2-1",
                 name :"2-1 中級門檻測試",
                 stage: [
-                    {id:"2-1-1", name : "精熟度測試", name2:"", name3:"", type:"綜合練習", level:"☆☆☆★★★★", target1:"歡迎來到中級難度，相信在這之前你已經有了紮實的基本功，指法也相當熟悉，假如你這篇練習結果連三十都沒有，那麼說明這難度並不適合你，請回到初級重新練習", target:"ㄏㄨㄢ ㄧㄥˊㄌㄞˊㄉㄠˋㄓㄨㄥ ㄐㄧˊㄋㄢˊㄉㄨˋ，ㄒㄧㄤ ㄒㄧㄣˋㄗㄞˋㄓㄜˋㄓ ㄑㄧㄢˊㄋㄧˇㄧˇㄐㄧㄥ ㄧㄡˇㄌㄜ˙ㄓㄚˊㄕˊㄉㄜ˙ㄐㄧ ㄅㄣˇㄍㄨㄥ ，ㄓˇㄈㄚˇㄧㄝˇㄒㄧㄤ ㄉㄤ ㄕㄡˊㄒㄧ ，ㄐㄧㄚˇㄖㄨˊㄋㄧˇㄓㄜˋㄆㄧㄢ ㄌㄧㄢˋㄒㄧˊㄐㄧㄝˊㄍㄨㄛˇㄌㄧㄢˊㄙㄢ ㄕˊㄉㄡ ㄇㄟˊㄧㄡˇ，ㄋㄚˋㄇㄛ˙ㄕㄨㄛ ㄇㄧㄥˊㄓㄜˋㄋㄢˊㄉㄨˋㄅㄧㄥˋㄅㄨˊㄕˋㄏㄜˊㄋㄧˇ，ㄑㄧㄥˇㄏㄨㄟˊㄉㄠˋㄔㄨ ㄐㄧˊㄔㄨㄥˊㄒㄧㄣ ㄌㄧㄢˋㄒㄧˊ"},
+                    {id:"2-1-1", name : "精熟度測試", name2:"", name3:"「逗號、句號」的打法： windows: ctrl + ㄝ / Mac: shift + ㄝ", type:"綜合練習", level:"☆☆☆★★★★", target1:"歡迎來到中級難度，相信在這之前你已經有了紮實的基本功，指法也相當熟悉，假如你這篇練習結果連三十都沒有，那麼說明這難度並不適合你，請回到初級重新練習", target:"ㄏㄨㄢ ㄧㄥˊㄌㄞˊㄉㄠˋㄓㄨㄥ ㄐㄧˊㄋㄢˊㄉㄨˋ，ㄒㄧㄤ ㄒㄧㄣˋㄗㄞˋㄓㄜˋㄓ ㄑㄧㄢˊㄋㄧˇㄧˇㄐㄧㄥ ㄧㄡˇㄌㄜ˙ㄓㄚˊㄕˊㄉㄜ˙ㄐㄧ ㄅㄣˇㄍㄨㄥ ，ㄓˇㄈㄚˇㄧㄝˇㄒㄧㄤ ㄉㄤ ㄕㄡˊㄒㄧ ，ㄐㄧㄚˇㄖㄨˊㄋㄧˇㄓㄜˋㄆㄧㄢ ㄌㄧㄢˋㄒㄧˊㄐㄧㄝˊㄍㄨㄛˇㄌㄧㄢˊㄙㄢ ㄕˊㄉㄡ ㄇㄟˊㄧㄡˇ，ㄋㄚˋㄇㄛ˙ㄕㄨㄛ ㄇㄧㄥˊㄓㄜˋㄋㄢˊㄉㄨˋㄅㄧㄥˋㄅㄨˊㄕˋㄏㄜˊㄋㄧˇ，ㄑㄧㄥˇㄏㄨㄟˊㄉㄠˋㄔㄨ ㄐㄧˊㄔㄨㄥˊㄒㄧㄣ ㄌㄧㄢˋㄒㄧˊ"},
                     {id:"2-1-2", name : "精熟度測試", name2:"", name3:"", type:"綜合練習", level:"☆☆☆★★★★", target1:"厲害喔！看來你沒有被趕回初級班。既然指法已經難不倒你，第三關我們要開始測試你的「肌肉記憶」。這部分的文本會出現更多不常見的字母組合，專門專治手指打結。", target:"ㄌㄧˋㄏㄞˋㄛ ！ㄎㄢˋㄌㄞˊㄋㄧˇㄇㄟˊㄧㄡˇㄅㄟˋㄍㄢˇㄏㄨㄟˊㄔㄨ ㄐㄧˊㄅㄢ 。ㄐㄧˋㄖㄢˊㄓˇㄈㄚˇㄧˇㄐㄧㄥ ㄋㄢˊㄅㄨˋㄉㄠˇㄋㄧˇ，ㄉㄧˋㄙㄢ ㄍㄨㄢ ㄨㄛˇㄇㄣ˙ㄧㄠˋㄎㄞ ㄕˇㄘㄜˋㄕˋㄋㄧˇㄉㄜ˙「ㄐㄧ ㄖㄡˋㄐㄧˋㄧˋ」。ㄓㄜˋㄅㄨˋㄈㄣˋㄨㄣˊㄅㄣˇㄏㄨㄟˋㄔㄨ ㄒㄧㄢˋㄍㄥˋㄉㄨㄛ ㄅㄨˋㄔㄤˊㄐㄧㄢˋㄗˋㄇㄨˇㄗㄨˇㄏㄜˊ，ㄓㄨㄢ ㄇㄣˊㄓㄨㄢ ㄓˋㄕㄡˇㄓˇㄉㄚˇㄐㄧㄝˊ。"},
                     {id:"2-1-3", name : "精熟度測試", name2:"", name3:"", type:"綜合練習", level:"☆☆☆★★★★", target1:"恭喜你來到第三關！別擔心，我們不打算逼死你。這一關的重點是「不要偷看鍵盤」。只要你相信手指的記憶，穩穩地打完，速度自然會提升。這次的目標是三十五字，只要保持平常心，你絕對可以輕鬆過關！", target:"ㄍㄨㄥ ㄒㄧˇㄋㄧˇㄌㄞˊㄉㄠˋㄉㄧˋㄙㄢ ㄍㄨㄢ ！ㄅㄧㄝˊㄉㄢ ㄒㄧㄣ ，ㄨㄛˇㄇㄣ˙ㄅㄨˋㄉㄚˇㄙㄨㄢˋㄅㄧ ㄙˇㄋㄧˇ。ㄓㄜˋㄧˋㄍㄨㄢ ㄉㄜ˙ㄓㄨㄥˋㄉㄧㄢˇㄕˋ「ㄅㄨˊㄧㄠˋㄊㄡ ㄎㄢˋㄐㄧㄢˋㄆㄢˊ」。ㄓˇㄧㄠˋㄋㄧˇㄒㄧㄤ ㄒㄧㄣˋㄕㄡˇㄓˇㄉㄜ˙ㄐㄧˋㄧˋ，ㄨㄣˇㄨㄣˇㄉㄜ˙ㄉㄚˇㄨㄢˊ，ㄙㄨˋㄉㄨˋㄗˋㄖㄢˊㄏㄨㄟˋㄊㄧˊㄕㄥ 。ㄓㄜˋㄘˋㄉㄜ˙ㄇㄨˋㄅㄧㄠ ㄕˋㄙㄢ ㄕˊㄨˇㄗˋ，ㄓˇㄧㄠˋㄅㄠˇㄔˊㄆㄧㄥˊㄔㄤˊㄒㄧㄣ ，ㄋㄧˇㄐㄩㄝˊㄉㄨㄟˋㄎㄜˇㄧˇㄑㄧㄥ ㄙㄨㄥ ㄍㄨㄛˋㄍㄨㄢ ！"}
 
@@ -560,49 +571,413 @@ const Level_Data = {
                         target: "ㄇㄤˊㄉㄚˇㄐㄧˋㄕㄨˋㄕˋㄕㄨˋㄨㄟˋㄕˊㄉㄞˋㄓㄨㄥ ㄧˊㄒㄧㄤˋㄕˊㄩㄥˋㄉㄜ˙ㄘㄠ ㄗㄨㄛˋㄐㄧˋㄋㄥˊ。ㄓㄜˋㄓㄨㄥˇㄧ依 ㄎㄠˋㄨㄟˊㄒㄧㄠˇㄧㄥˋㄊㄧˇㄕㄜˋㄐㄧˋㄌㄞˊㄧㄣˇㄉㄠˇㄔㄨˋㄐㄩㄝˊㄉㄜ˙ㄉㄧㄥˋㄨㄟˋㄈㄤ ㄕˋ，ㄔㄥˊㄍㄨㄥ ㄖㄤˋㄕˇㄩㄥˋㄓㄜˇㄕㄥ ㄑㄩˋㄌㄜ˙ㄕˋㄐㄩㄝˊㄑㄩㄝˋㄖㄣˋㄉㄜ˙ㄅㄨˋㄗㄡˋ，ㄧㄡˇㄒㄧㄠˋㄊㄧˊㄕㄥ ㄌㄜ˙ㄗㄌㄧㄠˋㄕㄨ ㄖㄨˋㄉㄜ˙ㄓㄥˇㄊㄧˇㄒㄧㄠˋㄌㄩˋ。"
                     }
                 ]
-            },
-            {
-                id: "2-3",
-                name :"我們被制約的雙手",
-                stage: [
-                    {
-                        id:"2-3-1",
-                        name:"",
-                        name2:"",
-                        name3:"",
-                        type: "綜合練習",
-                        level:"☆☆☆★★★★",
-                        target1:"",
-                        target:""
-                    },
-                    {
-                        id:"2-3-1",
-                        name:"",
-                        name2:"",
-                        name3:"",
-                        type: "綜合練習",
-                        level:"☆☆☆★★★★",
-                        target1:"",
-                        target:""
-                    },
-                    {
-                        id:"2-3-1",
-                        name:"",
-                        name2:"",
-                        name3:"",
-                        type: "綜合練習",
-                        level:"☆☆☆★★★★",
-                        target1:"",
-                        target:""
-                    }
-                ]
-
             }
         ]
     },
     hard : {
         chapter:[
-            {id : "3-1", name :"速度挑戰-1"}
+            {
+            id : "3-1",
+            name :"3-1 超級速度挑戰-嬰兒",
+            stage:[
+                {
+                    id:"3-1-1",
+                    name:"超級速度挑戰",
+                    name2:"-1",
+                    name3:"哈哈不會吧 連中級都沒打熟就想來挑戰高級😂",
+                    type:"",
+                    level:"☆☆★★★★★",
+                    wpm_min:50,
+                    acc_min:90,
+                    target1:""
+                },
+                {
+                    id:"3-1-2",
+                    name:"超級速度挑戰",
+                    name2:"-2",
+                    name3:"",
+                    type:"",
+                    level:"☆☆★★★★★",
+                    wpm_min:54,
+                    acc_min:90,
+                    target1:""
+                },
+                {
+                    id:"3-1-3",
+                    name:"超級速度挑戰",
+                    name2:"-3",
+                    name3:"",
+                    type:"",
+                    level:"☆☆★★★★★",
+                    wpm_min:58,
+                    acc_min:90,
+                    target1:""
+                },
+                {
+                    id:"3-1-4",
+                    name:"超級速度挑戰",
+                    name2:"-4",
+                    name3:"",
+                    type:"",
+                    level:"☆☆★★★★★",
+                    wpm_min:62,
+                    acc_min:90,
+                    target1:""
+                },
+            ]
+            },
+            {
+                id : "3-2",
+                name :"3-2 超亟速度挑戰-細胞",
+                stage:[
+                    {
+                        id:"3-2-1",
+                        name:"超亟速度挑戰",
+                        name2:"-1",
+                        name3:"",
+                        type:"",
+                        level:"☆★★★★★★",
+                        wpm_min:66,
+                        acc_min:91,
+                        target1:""
+                    },
+                    {
+                        id:"3-2-2",
+                        name:"超亟速度挑戰",
+                        name2:"-2",
+                        name3:"",
+                        type:"",
+                        level:"☆★★★★★★",
+                        wpm_min:70,
+                        acc_min:91,
+                        target1:""
+                    },
+                    {
+                        id:"3-2-3",
+                        name:"超亟速度挑戰",
+                        name2:"-3",
+                        name3:"",
+                        type:"",
+                        level:"☆★★★★★★",
+                        wpm_min:74,
+                        acc_min:91,
+                        target1:""
+                    },
+                    {
+                        id:"3-2-4",
+                        name:"超亟速度挑戰",
+                        name2:"-4",
+                        name3:"",
+                        type:"",
+                        level:"☆★★★★★★",
+                        wpm_min:78,
+                        acc_min:91,
+                        target1:""
+                    }
+                ]
+            },
+            {
+                id : "3-3",
+                name :"3-3 超急速度挑戰-分子",
+                stage:[
+                    {
+                        id:"3-3-1",
+                        name:"超急速度挑戰",
+                        name2:"-1",
+                        name3:"",
+                        type:"",
+                        level:"☆★★★★★★",
+                        wpm_min:82,
+                        acc_min:92,
+                        target1:""
+                    },
+                    {
+                        id:"3-3-2",
+                        name:"超急速度挑戰",
+                        name2:"-2",
+                        name3:"",
+                        type:"",
+                        level:"☆★★★★★★",
+                        wpm_min:86,
+                        acc_min:92,
+                        target1:""
+                    },
+                    {
+                        id:"3-3-3",
+                        name:"超急速度挑戰",
+                        name2:"-3",
+                        name3:"",
+                        type:"",
+                        level:"☆★★★★★★",
+                        wpm_min:90,
+                        acc_min:92,
+                        target1:""
+                    },
+                    {
+                        id:"3-3-4",
+                        name:"超急速度挑戰",
+                        name2:"-4",
+                        name3:"",
+                        type:"",
+                        level:"☆★★★★★★",
+                        wpm_min:94,
+                        acc_min:92,
+                        target1:""
+                    }
+                ]
+            },
+            {
+                id : "3-4",
+                name :"3-4 超極速度挑戰-原子",
+                stage:[
+                    {
+                        id:"3-4-1",
+                        name:"超極速度挑戰",
+                        name2:"-1",
+                        name3:"",
+                        type:"",
+                        level:"★★★★★★★",
+                        wpm_min:98,
+                        acc_min:93,
+                        target1:""
+                    },
+                    {
+                        id:"3-4-2",
+                        name:"超極速度挑戰",
+                        name2:"-2",
+                        name3:"",
+                        type:"",
+                        level:"★★★★★★★",
+                        wpm_min:102,
+                        acc_min:93,
+                        target1:""
+                    },
+                    {
+                        id:"3-4-3",
+                        name:"超極速度挑戰",
+                        name2:"-3",
+                        name3:"",
+                        type:"",
+                        level:"★★★★★★★",
+                        wpm_min:106,
+                        acc_min:93,
+                        target1:""
+                    },
+                    {
+                        id:"3-4-4",
+                        name:"超極速度挑戰",
+                        name2:"-4",
+                        name3:"",
+                        type:"",
+                        level:"★★★★★★★",
+                        wpm_min:110,
+                        acc_min:93,
+                        target1:""
+                    }
+                ]
+            },
+            {
+                id : "3-5",
+                name :"3-5 超棘速度挑戰-量子",
+                stage:[
+                    {
+                        id:"3-5-1",
+                        name:"超棘速度挑戰",
+                        name2:"-1",
+                        name3:"",
+                        type:"",
+                        level:"✧✧✧✧✧",
+                        wpm_min:114,
+                        acc_min:94,
+                        target1:""
+                    },
+                    {
+                        id:"3-5-2",
+                        name:"超棘速度挑戰",
+                        name2:"-2",
+                        name3:"",
+                        type:"",
+                        level:"✧✧✧✧✧",
+                        wpm_min:118,
+                        acc_min:94,
+                        target1:""
+                    },
+                    {
+                        id:"3-5-3",
+                        name:"超棘速度挑戰",
+                        name2:"-3",
+                        name3:"",
+                        type:"",
+                        level:"✧✧✧✧✧",
+                        wpm_min:122,
+                        acc_min:94,
+                        target1:""
+                    },
+                    {
+                        id:"3-5-4",
+                        name:"超棘速度挑戰",
+                        name2:"-4",
+                        name3:"",
+                        type:"",
+                        level:"✧✧✧✧✧",
+                        wpm_min:126,
+                        acc_min:94,
+                        target1:""
+                    }
+                ]
+            },
+            {
+                id : "3-6",
+                name :"3-6 究極速度挑戰-基本粒子",
+                stage:[
+                    {
+                        id:"3-6-1",
+                        name:"究極速度挑戰",
+                        name2:"-1",
+                        name3:"",
+                        type:"",
+                        level:"✧✧✧✧✦",
+                        wpm_min:130,
+                        acc_min:95,
+                        target1:""
+                    },
+                    {
+                        id:"3-6-2",
+                        name:"究極速度挑戰",
+                        name2:"-2",
+                        name3:"",
+                        type:"",
+                        level:"✧✧✧✧✦",
+                        wpm_min:134,
+                        acc_min:95,
+                        target1:""
+                    },
+                    {
+                        id:"3-6-3",
+                        name:"究極速度挑戰",
+                        name2:"-3",
+                        name3:"",
+                        type:"",
+                        level:"✧✧✧✧✦",
+                        wpm_min:138,
+                        acc_min:95,
+                        target1:""
+                    },
+                    {
+                        id:"3-6-4",
+                        name:"究極速度挑戰",
+                        name2:"-4",
+                        name3:"",
+                        type:"",
+                        level:"✧✧✧✦✦",
+                        wpm_min:142,
+                        acc_min:95,
+                        target1:""
+                    }
+                ]
+            },
+            {
+                id : "3-7",
+                name :"3-7 究殛速度挑戰-弦",
+                stage:[
+                    {
+                        id:"3-7-1",
+                        name:"究殛速度挑戰",
+                        name2:"-1",
+                        name3:"",
+                        type:"",
+                        level:"✧✧✧✦✦",
+                        wpm_min:150,
+                        acc_min:96,
+                        target1:""
+                    },
+                    {
+                        id:"3-7-2",
+                        name:"究殛速度挑戰",
+                        name2:"-2",
+                        name3:"",
+                        type:"",
+                        level:"✧✧✧✦✦",
+                        wpm_min:155,
+                        acc_min:97,
+                        target1:""
+                    },
+                    {
+                        id:"3-7-3",
+                        name:"究殛速度挑戰",
+                        name2:"-3",
+                        name3:"",
+                        type:"",
+                        level:"✧✧✧✦✦",
+                        wpm_min:160,
+                        acc_min:97,
+                        target1:""
+                    },
+                    {
+                        id:"3-7-4",
+                        name:"究殛速度挑戰",
+                        name2:"-4",
+                        name3:"",
+                        type:"",
+                        level:"✧✧✧✦✦",
+                        wpm_min:165,
+                        acc_min:97,
+                        target1:""
+                    }
+                ]
+            },
+            {
+                id : "3-8",
+                name :"3-8 究寂速度挑戰-虛無",
+                stage:[
+                    {
+                        id:"3-8-1",
+                        name:"究寂速度挑戰",
+                        name2:"-1",
+                        name3:"",
+                        type:"",
+                        level:"✧✦✦✦✦",
+                        wpm_min:170,
+                        acc_min:97,
+                        target1:""
+                    },
+                    {
+                        id:"3-8-2",
+                        name:"究寂速度挑戰",
+                        name2:"-2",
+                        name3:"",
+                        type:"",
+                        level:"✦✦✦✦✦",
+                        wpm_min:180,
+                        acc_min:97,
+                        target1:""
+                    },
+                    {
+                        id:"3-8-3",
+                        name:"究寂速度挑戰",
+                        name2:"-3",
+                        name3:"",
+                        type:"",
+                        level:"☉☉☉",
+                        wpm_min:190,
+                        acc_min:98,
+                        target1:""
+                    },
+                    {
+                        id:"3-8-4",
+                        name:"究寂速度挑戰",
+                        name2:"-4",
+                        name3:"",
+                        type:"",
+                        level:"☉☉☉",
+                        wpm_min:200,
+                        acc_min:98,
+                        target1:""
+                    }
+                ]
+            },
+            
+
 
         ]
     } 
@@ -704,7 +1079,6 @@ function render_stage(difficulty, chapter){             //渲染關卡
 
     chapter.stage.forEach(function(stage){
         const div = document.createElement("div")
-
         div.id = `stage-${stage.id}` //標記上ｉｄ
         div.classList.add("main_lobby_map_stage")
         div.innerHTML = `
@@ -718,7 +1092,10 @@ function render_stage(difficulty, chapter){             //渲染關卡
                 <div class="main_lobby_map_stage_difficulty_star">${stage.level}</div>
                 `
 
-        
+        if(difficulty === "hard"){
+            div.innerHTML += `<div class="main_lobby_stage_limit">最低速度 ${stage.wpm_min}wpm 最低正確率&nbsp${stage.acc_min}%</div>
+                `
+        }
         
         
         if(progress[stage.id] === true){
