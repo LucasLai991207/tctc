@@ -595,7 +595,7 @@ const Level_Data = {
                     id:"3-1-2",
                     name:"人類敗給大鳥的戰爭",
                     name2:"",
-                    name3:"鴯鶓：ㄦˊㄇㄧㄠ",
+                    name3:"鴯鶓：ㄦˊㄇㄧㄠˊ",
                     type:"速度挑戰",
                     level:"☆☆★★★★★",
                     wpm_min:54,
