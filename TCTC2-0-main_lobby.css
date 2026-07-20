@@ -49,7 +49,7 @@
     position: relative;
 
     width: 95%;
-    height: 5.5rem;
+    min-height: 5.5rem;
 
     background-color: var(--darker-blue);
 
@@ -59,9 +59,16 @@
     cursor: pointer;
     transition: all 200ms ease-in-out;
 
-    padding-left: 0.6rem;
-    padding-top: 1rem;
-    padding-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+
+    padding: 0.9rem 3.2rem 0.7rem 0.6rem; /* 右邊多留空間給星星/已完成標籤，避免疊字 */
+    box-sizing: border-box;
+}
+/* 高級關卡：多了一排 wpm / acc 門檻小標籤，box 要留高一點才不會擠 */
+.main_lobby_map_stage.has_limit{
+    min-height: 7rem;
+    padding-bottom: 0.6rem;
 }
 .main_lobby_map_stage:hover{
     transform: translateY(-4px);
@@ -100,24 +107,67 @@
 
 
 }
-.main_lobby_map_stage_difficulty_star{
+/* 右上角固定區：星星難度 + 已完成標籤 疊在一起，用 flex column 排，彼此才不會互相蓋住 */
+.main_lobby_map_stage_top_right{
     position: absolute;
-    top: 2%;
-    right: 1%;
+    top: 0.6rem;
+    right: 0.7rem;
+
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.35rem;
 }
 .main_lobby_map_stage_difficulty_star{
     font-size: 1rem;
     color: var(--champagne-gold);
     text-shadow: 0px 0px 2px var(--champagne-gold);
+    white-space: nowrap;
+}
+.main_lobby_stage_completed_tag{
+    position: absolute;
+    bottom: 0.6rem;
+    right: 0.6rem;
+    padding: 2px 6px;
+    margin-top: 1rem;
+
+    font-size: 1rem;
+    color: #c9a84c;
+
+    border: 1px solid #c9a84c;
+    border-radius: 3px;
+
+    white-space: nowrap;
+}
+.main_lobby_map_stage.main_lobby_map_stage_completed{
+    background-color: rgba(220, 245, 220, 0.1);
+    border-left: 2px solid #c9a84c;
 }
 
+/* wpm / acc 門檻：改成一排小藥丸徽章，貼在卡片底部，不再跟其他文字疊在一起 */
 .main_lobby_stage_limit{
-    position: absolute;
-    font-size: 0.8rem;
-    left: 1rem;
-    bottom: 1.3rem;
-    color: rgb(228, 52, 52);
-    text-shadow: 0 0 1px rgb(245, 82, 82);
+    margin-top: auto;
+    padding-top: 0.6rem;
+
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+.main_lobby_stage_limit_chip{
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+
+    padding: 0.15rem 0.6rem;
+
+    font-size: 0.72rem;
+    white-space: nowrap;
+
+    color: rgb(245, 130, 130);
+    background-color: rgba(228, 52, 52, 0.08);
+
+    border: 1px solid rgba(228, 52, 52, 0.4);
+    border-radius: 999px;
 }
 /*返回按鈕*/
 
