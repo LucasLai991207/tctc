@@ -296,12 +296,14 @@
             background-color: var(--darker-blue);
             border-radius: 12px;
             border: 1px solid rgba(201,168,76,0.2);
+            border-bottom: 2px solid #1d3450;
 
             box-shadow: var(--container-box-shadow, inset 0 -15px 90px rgba(0,0,0,0.8));
 
             overflow: var(--box-overflow, hidden);
             max-height: var(--container-max-height, none);
             
+
         }
         .game_char_box {
             width: 4rem;
@@ -621,10 +623,10 @@
     <nav id="nav">
         <img src="TCTC2.0 logo.png" class="logo_style" onclick="window.location.href='TCTC2-0-main.html'">
         <div class="nav_css">
-            <div>登入</div>
+            <!-- <div>登入</div> -->
             <div onclick="window.location.href='index.html'">關於我們</div>
             <div class="main_lobby_more_detil_div">更多 ≡
-                <div class="main_achievement">成就</div>
+                <!-- <div class="main_achievement">成就</div> -->
                 <div class="main_ranking" onclick="window.location.href='TCTC2-0-ranking.html'">排行榜</div>
                 <div class="main_profile" onclick="window.location.href='TCTC2-0-profile.html'">設定</div>
             </div>
@@ -1032,9 +1034,29 @@
             time_up = true
             Stop_Timer()
 
-            // 直接輸入模式要鎖住 input，避免玩家在結果畫面跳出的瞬間還打字
+            // 【修正】直接輸入模式（基礎輸入／速度挑戰／中級box模式）的 target_get，
+            // 原本只有在 Check_Text_Input_Match() 判斷「玩家已經打滿全部字數」時才會被寫入，
+            // 也就是說如果玩家還沒打完整句就被倒數計時中斷，target_get 會維持初始值 0，
+            // 導致 ShowResult() 算出來的 WPM 直接變成 0——即使玩家其實已經打了不少字。
+            // 這裡在鎖住輸入框之前，先比照 Check_Text_Input_Match() 的邏輯，
+            // 用「輸入框目前已經打的內容」跟目標句子逐字比對，把「真正打對的字數」補算進 target_get，
+            // 這樣超時結算出來的 WPM / 正確字數才會反映玩家實際打出來的進度。
+            const stage = FindStage(stageId)
             const input_el = document.getElementById("game_container_input_id")
-            if(input_el) input_el.disabled = true
+            if(input_el){
+                if(Is_Box_Input_Stage(stage)){
+                    const target_text = Clean_Target1_For_Typing(stage.target1).trim()
+                    const typed_text = input_el.value
+                    let correct_count = 0
+                    const compare_len = Math.min(typed_text.length, target_text.length)
+                    for(let i = 0; i < compare_len; i++){
+                        if(typed_text[i] === target_text[i]) correct_count++
+                    }
+                    target_get = correct_count
+                }
+                // 直接輸入模式要鎖住 input，避免玩家在結果畫面跳出的瞬間還打字
+                input_el.disabled = true
+            }
 
             ShowResult()   // 沿用既有邏輯：acc > 89 才算過關，acc < 90 自動變紅框
         }
@@ -1173,17 +1195,7 @@
             })
         }
 
-        // ===== 【新增】中級「逐字注音」模式專用：把「注音鍵位序列」切回「目標句子每個字」 =====
-        // target（例如 "ㄗㄞˋㄍㄨˇ..."）是整句話的注音鍵位序列，
-        // 但玩家是一個「按鍵」一個「按鍵」打的，不是一個「中文字」一個「中文字」打的，
-        // 一個中文字通常對應 1~4 個注音鍵位（聲母＋介音＋韻母＋聲調）。
-        // 這裡把 target 切回一組一組「屬於同一個中文字」的鍵位，
-        // 才能知道玩家現在打到的注音鍵位，對應到目標句子（target1）的第幾個字，
-        // 進而讓上面的句子也能跟著即時上色。
-        // 切割規則（符合注音輸入法的實際打法）：
-        //   聲調符號（ˊˇˋ˙）或空白鍵（一聲不用標調，靠空白鍵結尾）→ 代表這個字打完了，切一組
-        //   標點符號（，。「」、：！（）等）本身就是獨立一個字，自己一組
-        //   其餘（聲母／介音／韻母）→ 還沒打完，繼續累加進同一組
+
         function Split_Bopomofo_Into_Char_Groups(target_str){
             const ZHUYIN = /[\u3105-\u312F]/
             const TONE_OR_SPACE = /[ˊˇˋ˙ ]/
@@ -1679,8 +1691,10 @@
             // 把target字串拆成每個字 每個字建一個方框 div
             // split("") 把字串拆成陣列，例如 "ㄑㄨ" → ["ㄑ","ㄨ"]
 
+
+            //教學關
         
-            if(stage.type === "基本介紹" || stage.id === "1-9-1"){
+            if(stage.type === "基本介紹" || stage.id === "1-9-1" || stage.id === "2-1-0"){
                 const hint = document.querySelector(".game_input_hint")
                 hint.style.display = "none";
                 
@@ -1882,7 +1896,74 @@
                     }
                     
                 }
+                else if(stage.id === "2-1-0"){
+                    game_char_container.innerHTML = `
+                        <div style="text-align: left; max-width: 900px; margin: 0 auto; font-family: 'Noto Serif TC', serif; color: white; font-weight: 150; position: relative; font-size: 0.9rem">
+                            <p style="font-size: 1.4rem; color: #c9a84c; text-align: center; margin-bottom: 1.5rem; font-weight: 500;">
+                                標點符號輸入教學（重要‼️）
+                            </p>
+                            
+                            <p style="margin-bottom: 1.2rem; color: #ffffff; font-weight: 100; line-height: 1.8rem;">
+                                如果你是Windows用戶，那麼你一定有遇過「」打不出來 然後要上網查的困擾，以下是常用字符的教學，這些用法在以後的模式也常會用到 請務必詳讀：<br>
+                                (以下教學皆為全形符號)
+                            </p>
+
+                            <div style="background-color: rgba(14, 36, 62, 0.6); padding: 1.2rem; border-radius: 8px; border-left: 4px solid #c9a84c; margin-bottom: 1.5rem; line-height: 1.9rem;">
+                                <div style="color: #c9a84c; font-size: 1.1rem;padding-bottom: 0.3rem;">各種符號輸入的指法：</div><br>
+                                <span style="color: #c9a84c; font-size: 1rem;"> 引號「」：</span> <br>
+                                        • Windows ：Ctrl + [ + ↓選擇 ，就會直接彈出選字清單。(持續按住ctrl 點一下 [ 之後使用方向鍵調整至需要的符號)<br>
+                                        • Mac ：直接按下鍵盤右上角的符號即可打出<br><br>
+                                        
+                                <span style="color: #c9a84c; font-size: 1rem;">頓號、：</span> <br>
+                                        •  Windows ：Ctrl + '（'為上引號，在Enter鍵左邊）。<br>
+                                        •  Mac ：直接按下鍵盤右上角的符號即可打出<br><br>
+                                
+                                <span style="color: #c9a84c; font-size: 1rem;">冒號：：</span> <br>
+                                        •  Windows ：Ctrl + shift + ; （;為注音ㄤ的按鍵）<br>
+                                        •  Mac ：shift + ;<br><br>
+
+                                <span style="color: #c9a84c; font-size: 1rem;">問號？：</span> <br>
+                                        •  Windows ：Ctrl + shift + / （/為注音ㄥ的按鍵）<br>
+                                        •  Mac ：shift + /<br><br>
+                                <span style="color: #c9a84c; font-size: 1rem;">驚嘆號！：</span> <br>
+                                        •  Windows ：Ctrl + shift + 1 （1為注音ㄅ的按鍵）<br>
+                                        •  Mac ：shift + 1<br><br>
+                                <span style="color: #c9a84c; font-size: 1rem;">逗號，：</span> <br>
+                                        •  Windows ：Ctrl + ,（,為注音ㄝ的按鍵）<br>
+                                        •  Mac ：shift + ,<br><br>
+                                <span style="color: #c9a84c; font-size: 1rem;">句號。：</span> <br>
+                                        •  Windows ：Ctrl + . （1為注音ㄡ的按鍵）<br>
+                                        •  Mac ：shift + .<br><br>
+
+                            </div>
+
+        
+
+                            <p style="color: gray; font-size: 1.5rem; text-align: center; margin-top: 2rem;">
+                                以上符號在之後的關卡都會陸續接觸，請務必熟記！!！
+                            </p>
+                            
+                            <button style="width: 10rem; height: 3rem; margin: auto; margin-top: 1.5rem; background-color: #c9a84c; display: flex; justify-content: center; align-items: center; color: var(--dark-blue); font-family: 'Noto Serif TC', serif; font-size: 1rem; letter-spacing: 2px; border: none; border-radius: 4px; cursor: pointer; transition: all 200ms ease;" 
+                                    onmouseover="this.style.backgroundColor='#fff'; this.style.boxShadow='0 0 10px #c9a84c';" 
+                                    onmouseout="this.style.backgroundColor='#c9a84c'; this.style.boxShadow='none';"
+                                    onclick="window.location.href='game.html?stage=1-9-2'">
+                                進入輸入練習 →
+                            </button>
+                        </div>`
+                    let progress = JSON.parse(localStorage.getItem("stage_progress")) || {} 
+
+                    const is_first_time_clear = progress[stageId] !== true;                  
+
+                    if(is_first_time_clear){
+                       increase_stage_count(get_difficulty_by_stageid(stage.id))
+
+                        progress[stageId] = true
+                        localStorage.setItem("stage_progress", JSON.stringify(progress))
+                    }
+                    
+                }
             }
+            
             else if(stage.name === "章節驗收" && stage.type === "注音練習"){
                 target.split("").forEach(function(char, i) {
 

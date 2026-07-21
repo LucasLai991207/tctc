@@ -62,8 +62,9 @@
     display: flex;
     flex-direction: column;
 
-    padding: 0.9rem 3.2rem 0.7rem 0.6rem; /* 右邊多留空間給星星/已完成標籤，避免疊字 */
+    padding: 0.9rem 3.2rem 1rem 0.6rem; /* 右邊多留空間給星星/已完成標籤，避免疊字 */
     box-sizing: border-box;
+
 }
 /* 高級關卡：多了一排 wpm / acc 門檻小標籤，box 要留高一點才不會擠 */
 .main_lobby_map_stage.has_limit{
@@ -195,6 +196,8 @@
     
     cursor: pointer;
     transition: all 250ms ease-in-out;
+
+    z-index: 9000;
 
 }
 .main_lobby_back_to_intro_button:hover{
@@ -965,7 +968,7 @@
     position: absolute;
 
     width: 8rem;
-    height: 3rem;
+    height: 2.7rem;
 
     background-color: rgba(245, 245, 243, 0.9); 
 
@@ -988,13 +991,9 @@
     transition: opacity 0.3s ease, top 0.3s ease, visibility 0.3s ease;
 }
 
-.main_ranking {
-    margin-left: 0.2rem; 
-}
 
-.main_profile{
-    margin-left: 0.4rem;
-}
+
+
 .main_lobby_more_detil_div:hover .main_achievement {
     opacity: 0.9;            
     visibility: visible;
@@ -1005,13 +1004,13 @@
 .main_lobby_more_detil_div:hover .main_ranking {
     opacity: 0.85;            
     visibility: visible;
-    top: 4.6rem;            
+    top: 2.5rem;            
     transition-delay: 0.05s; 
 }
 .main_lobby_more_detil_div:hover .main_profile {
     opacity: 0.8;            
     visibility: visible;
-    top: 7.2rem;            
+    top: 5rem;            
     transition-delay: 0.1s; 
 }
 
