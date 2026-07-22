@@ -66,13 +66,12 @@
     box-sizing: border-box;
 
 }
-/* 高級關卡：多了一排 wpm / acc 門檻小標籤，box 要留高一點才不會擠 */
 .main_lobby_map_stage.has_limit{
     min-height: 7rem;
     padding-bottom: 0.6rem;
 }
 .main_lobby_map_stage:hover{
-    transform: translateY(-4px);
+    transform: translateY(-1px);
 
     outline: 2px solid rgba(201, 168, 76, 0.5);
     border-left: 3px solid var(--champagne-gold);
@@ -220,7 +219,7 @@
     height: 16vh;
     background-color:var(--light-blue);
 
-    border-radius: 10px;
+    border-radius: 8px;
     border: 1px solid rgba(201, 168, 76, 0.5);
 
     display: flex;
@@ -328,7 +327,7 @@
     background-color: var(--light-blue);
 
     border: 1px solid rgba(201, 168, 76, 0.6);
-    border-radius: 10px;
+    border-radius:8px;
 }
 /**/
 .main_lobby_main_frame_mode_selector_intro{
@@ -383,7 +382,7 @@
     gap: 20px;
     background-color: var(--light-blue);
 
-    border-radius: 10px;
+    border-radius: 8px;
     border: 1px solid rgba(201, 168, 76, 0.5);
 
     box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.8);
@@ -525,15 +524,12 @@
 }
 
 .main_lobby_mode_beginner:hover{
-    transform: translateY(-3px);
     box-shadow: 0px 0px 4px var(--champagne-gold);
 }
 .main_lobby_mode_medium:hover{
-    transform: translateY(-3px);
     box-shadow: 0px 0px 4px var(--champagne-gold);
 }
 .main_lobby_mode_master:hover{
-    transform: translateY(-3px);
     box-shadow: 0px 0px 4px var(--champagne-gold);
 }
 .main_lobby_mode_beginner_complete{
