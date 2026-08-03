@@ -1,64 +1,224 @@
-html{
-    scroll-behavior: smooth;
+:root{
+    --darker-blue : #0b1a37;
+    --dark-blue : #0B1E36;
+    --light-blue : #0e243e;
+    --champagne-gold : #c9a84c;
 }
+
 .ranking_main_style{
-    display: flex;
-    justify-content: center;
-    flex-direction: column;
-}
-.ranking_first_sec{
-    background-color: whitesmoke;
-
-    margin-top: 4rem;
-
-    width: 95vw;
-    min-height: 10rem;
-}
-.ranking_first_sec_ul1{
-    padding-left: 3rem;
-    padding-top: 1rem;
-    font-size: 1.2rem;
-
-    line-height: 3rem;
-}
-.ranking_main_li{
-    margin-top: 2rem;
-}
-.ranking_main_container{
-    display: flex;
-    flex-direction: row;
-    gap: 1rem;
-
-    justify-content: space-between;
-
-    padding-left: 7%;
-    padding-right: 7%;
-
-}
-.ranking_block1{
-    width: 23vw;
-
-    margin: 2%;
-    padding: 2rem;
-
-    background-color: lightgray;
-
-    border-radius: 10px;
-}
-.ranking_main_block{
-    min-width: 27vw;
+    background-color: var(--darker-blue);
     min-height: 100vh;
 
-    margin-top: 3rem;
-
-    border-radius: 5px;
-    border: 1px solid rgba(201, 168, 76, 0.2);
-
-    background-color: rgb(200, 200, 200);
-
     display: flex;
+    justify-content: center;
 
-    justify-content: space-between;
-
-    position: relative;
+    padding-bottom: 4rem;
 }
+
+.ranking_first_section{
+    width: 100%;
+}
+
+.ranking_container{
+    max-width: 46rem;
+    margin: 3rem auto 0;
+    padding: 0 1.2rem;
+}
+
+.ranking_header{
+    text-align: center;
+    margin-bottom: 1.8rem;
+}
+/* ===== 【新增】網站總瀏覽次數 =====
+   刻意用比較低調的淺灰色（不是搶眼的金色），因為這只是背景資訊，
+   不該搶走「Top 50 排行榜」標題的視覺焦點 */
+.ranking_total_views{
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    margin: 0 0 0.8rem;
+}
+.ranking_title{
+    color: whitesmoke;
+    font-size: 2.4rem;
+    letter-spacing: 4px;
+    margin-bottom: 2.5rem;
+    font-weight: 400;
+}
+.ranking_subtitle{
+    color: var(--champagne-gold);
+    font-size: 1rem;
+    letter-spacing: 2px;
+}
+.ranking_subtitle2{
+    margin-top: 1.5rem;
+    color: lightgray;
+    font-size: 0.8rem;
+    letter-spacing: 2px;
+}
+
+.ranking_mode_tabs{
+    display: flex;
+    justify-content: center;
+    gap: 0.6rem;
+
+    margin-bottom: 1.4rem;
+}
+.ranking_mode_tab{
+    background-color: transparent;
+    color: rgb(170, 170, 170);
+
+    border: 1px solid rgba(201, 168, 76, 0.3);
+    border-radius: 5px;
+
+    padding: 0.5rem 1.4rem;
+
+    font-size: 0.9rem;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+    letter-spacing: 2px;
+
+    cursor: pointer;
+    transition: all 200ms ease;
+}
+
+.ranking_mode_tab.ranking_mode_tab_active{
+    background-color: var(--champagne-gold);
+    color: var(--darker-blue);
+    border-color: var(--champagne-gold);
+    font-weight: 500;
+}
+
+/* ===== 【新增】玩家總榜的指標切換按鈕（平均WPM／平均正確率／在線時長）選中狀態 =====
+   配色跟 .ranking_mode_tab_active 一致，但這裡套用在 <button class="ranking_select"> 上，
+   所以另外開一個 class，不直接沿用 .ranking_mode_tab_active
+   （那個選擇器寫死要同時有 .ranking_mode_tab，這裡的按鈕沒有那個 class，套不到）*/
+.ranking_select.ranking_select_active{
+    background-color: var(--champagne-gold);
+    color: var(--darker-blue);
+    border-color: var(--champagne-gold);
+    font-weight: 500;
+}
+
+.ranking_selector_row{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem;
+    justify-content: center;
+
+    margin-bottom: 2rem;
+}
+.ranking_select{
+    background-color: var(--dark-blue);
+    color: whitesmoke;
+
+    border: 1px solid rgba(201, 168, 76, 0.4);
+    border-radius: 5px;
+
+    padding: 0.6rem 0.9rem;
+
+    font-size: 0.9rem;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+    letter-spacing: 1px;
+
+    cursor: pointer;
+    max-width: 16rem;
+}
+.ranking_select:focus{
+    outline: none;
+    border-color: var(--champagne-gold);
+}
+
+.ranking_list_wrap{
+    background-color: var(--dark-blue);
+    border: 1px solid rgba(201, 168, 76, 0.25);
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+
+
+    overflow: hidden;
+}
+
+.ranking_list_header,
+.ranking_row{
+    display: grid;
+    grid-template-columns: 4.5rem 1fr 10rem 6rem;
+    align-items: center;
+
+    padding: 0.8rem 1.2rem;
+}
+
+.ranking_list_header{
+    background-color: rgba(201, 168, 76, 0.08);
+    color: #fff;
+
+    font-size: 0.8rem;
+    letter-spacing: 2px;
+}
+
+.ranking_row{
+    color: whitesmoke;
+    font-size: 0.95rem;
+
+    border-top: 1px solid rgba(201, 168, 76, 0.12);
+
+    transition: background-color 150ms ease;
+}
+.ranking_row:hover{
+    background-color: rgba(201, 168, 76, 0.06);
+}
+.ranking_row_top3{
+    color: var(--champagne-gold);
+    font-weight: 500;
+}
+
+/* ===== 【新增】標記「這一列是我自己」，金色外框 + 淡金色底，跟 top3 的純文字變色做出區隔 ===== */
+.ranking_row_self{
+    background-color: rgba(201, 168, 76, 0.12);
+    box-shadow: inset 0 0 0 1px var(--champagne-gold);
+}
+.ranking_row_self:hover{
+    background-color: rgba(201, 168, 76, 0.18);
+}
+.ranking_self_tag{
+    display: inline-block;
+    background-color: var(--champagne-gold);
+    color: var(--darker-blue);
+
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+
+    padding: 0.05rem 0.4rem;
+    border-radius: 3px;
+
+    margin-left: 0.4rem;
+    vertical-align: middle;
+}
+
+.rank_col_rank{
+    text-align: center;
+    font-size: 1.1rem;
+}
+.rank_col_name{
+    padding-left: 0.5rem;
+    word-break: break-all;
+}
+.rank_col_wpm,
+.rank_col_acc{
+    text-align: center;
+}
+
+.ranking_empty_msg,
+.ranking_loading_msg{
+    text-align: center;
+    color: rgb(170, 170, 170);
+
+    padding: 2.5rem 1rem;
+    font-size: 0.95rem;
+    letter-spacing: 1px;
+}
+
+.is_hidden{
+    display: none !important;
+}
+

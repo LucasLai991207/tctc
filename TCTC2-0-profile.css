@@ -1,120 +1,418 @@
-/**/
 :root{
     --darker-blue : #0b1a37;
     --dark-blue : #0B1E36;
     --light-blue : #0e243e;
     --champagne-gold : #c9a84c;
-    /*    border: 1px solid rgba(201, 168, 76, alpha);*/
+    --error-red : #c0392b;
 }
+
 .profile_main_style{
     background-color: var(--darker-blue);
-
-    display: flex;
-    justify-content: center;
-}
-.profile_main_block{
-    min-width: 85vw;
-    height: 70vh;
-
-    margin-top: 3rem;
-
-    border-radius: 5px;
-    border: 1px solid rgba(201, 168, 76, 0.2);
-
-    background-color: rgb(200, 200, 200);
+    min-height: 100vh;
 
     display: flex;
     justify-content: center;
 
-    position: relative;
-}
-.profile_main_container{
-    display: flex;
-    flex-direction: column;
-    
-    justify-content: center;
-    align-items: center;
-
-    padding: 1%;
-}
-.profile_block1{
-    width: 93%;
-
-    margin: 2%;
-    padding: 2%;
-
-    background-color: lightgray;
-
-
-
-    border-radius: 10px;
-}
-.profile_block1-1{
-
-    font-size: 2rem;
-}
-.profile_block1-2{
-    margin-top: 1rem;
+    padding-bottom: 4rem;
 }
 
-.profile_block1_input1{
-    margin-bottom: 1rem;
-
-    background-color: rgb(229, 228, 228);
-
-    width: 13rem;
-    height: 1.5rem;
-
-    border: 1px solid rgba(0, 0, 0, 0.3);
-    border-radius: 2px;
-
-    transition: all 300ms ease-in-out;
-
-    font-size: 1rem;
+.profile_first_section{
+    width: 100%;
 }
-.profile_block1_input2{
-    margin-bottom: 1rem;
 
-    background-color: rgb(229, 228, 228);
+/* ===== 頁首 ===== */
+.profile_page_header{
+    max-width: 60rem;
+    margin: 3rem auto 2rem;
+    padding: 0 1.2rem;
 
-    width: 17rem;
-    height: 6rem;
-
-    border: 1px solid rgba(0, 0, 0, 0.3);
-    border-radius: 2px;
-
-    transition: all 300ms ease-in-out;
-
-    font-size: 1rem;
-
-    vertical-align: top; /*改為頂部對其！*/
+    text-align: center;
 }
-.profile_block1_input1:focus{
-    border: 1px solid var(--dark-blue);
-    border-radius: 2px;
-
-    outline: none;
-
-}
-.profile_update_btn{
-    width: 5rem;
-    height: 2rem;
-
-    font-size: 1rem;
+.profile_page_title{
+    color: whitesmoke;
+    font-size: 2.2rem;
     font-weight: 500;
+    letter-spacing: 3px;
+
+    margin: 0 0 0.6rem;
+}
+.profile_page_subtitle{
+    color: var(--champagne-gold);
+    font-size: 0.9rem;
+    letter-spacing: 2px;
+    margin: 0;
+}
+
+/* ===== 卡片排版 =====
+   桌機兩欄（帳號資料在左、個人資訊在右），成就卡片獨佔一整列；
+   窄螢幕改單欄堆疊，順序：帳號資料 → 個人資訊 → 成就 */
+.profile_main_container{
+    max-width: 60rem;
+    margin: 0 auto;
+    padding: 0 1.2rem;
+
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    grid-template-areas:
+        "edit   stats"
+        "achievement achievement";
+    gap: 1.5rem;
+}
+.profile_card_edit{ grid-area: edit; }
+.profile_card_stats{ grid-area: stats; }
+.profile_card_achievement{ grid-area: achievement; }
+
+@media (max-width: 46rem){
+    .profile_main_container{
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "edit"
+            "stats"
+            "achievement";
+    }
+}
+
+.profile_card{
+    background-color: var(--dark-blue);
+    border: 1px solid rgba(201, 168, 76, 0.25);
+    border-radius: 8px;
+
+    padding: 1.8rem 1.6rem;
+}
+.profile_card_title{
+    color: whitesmoke;
+    font-size: 1.25rem;
+    font-weight: 500;
+    letter-spacing: 2px;
+
+    margin: 0 0 1.4rem;
+    padding-bottom: 0.8rem;
+
+    border-bottom: 1px solid rgba(201, 168, 76, 0.2);
+}
+
+/* ===== 【新增】自訂頭像 ===== */
+.profile_avatar_row{
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+
+    margin: 0 0 1.6rem;
+}
+
+/* 圓形預覽框：沒有頭像時顯示「尚未設定」文字，有頭像時顯示裁切成正方形的 <img>。
+   overflow:hidden 讓 <img> 就算比框大也會被圓形邊界裁掉，不會爆出去 */
+.profile_avatar_preview{
+    position: relative;
+    flex-shrink: 0;
+
+    width: 4.5rem;
+    height: 4.5rem;
+    border-radius: 50%;
+
+    background-color: var(--darker-blue);
+    border: 1px solid rgba(201, 168, 76, 0.4);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+#profile_avatar_placeholder{
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+    text-align: center;
+}
+#profile_avatar_img{
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* 圖片是正方形縮圖，這裡其實用不太到裁切，保留是為了保險 */
+}
+
+.profile_avatar_actions{
+    flex: 1;
+
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+/* label 偽裝成按鈕：因為原生 <input type="file"> 長相很醜、各瀏覽器不一致，
+   常見做法是把 input 藏起來（display:none），改用綁著 for 屬性的 <label>
+   當作看起來一致的按鈕，點 label 一樣會觸發那個被藏起來的 input 打開檔案選擇視窗 */
+.profile_avatar_upload_btn{
+    padding: 0.45rem 1rem;
+
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
 
     background-color: var(--champagne-gold);
     color: var(--darker-blue);
 
-    border: 1.4px solid var(--dark-blue);
-    border-radius: 3px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 150ms ease;
+}
 
-    transition: all 130ms ease-in-out;
+.profile_avatar_remove_btn{
+    padding: 0.45rem 1rem;
+
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+
+    background-color: transparent;
+    color: rgb(190, 190, 190);
+
+    border: 1px solid rgba(201, 168, 76, 0.3);
+    border-radius: 5px;
+
+    cursor: pointer;
+    transition: all 150ms ease;
+}
+.profile_avatar_remove_btn:hover{
+    border-color: var(--error-red);
+    color: var(--error-red);
+}
+
+.profile_avatar_hint{
+    width: 100%;
+    margin: 0;
+
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 0.75rem;
+    line-height: 1.5;
+}
+
+/* ===== 表單欄位 ===== */
+.profile_field_label{
+    display: block;
+
+    color: rgb(190, 190, 190);
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+
+    margin-bottom: 0.5rem;
+}
+.profile_input,
+.profile_textarea{
+    width: 100%;
+    box-sizing: border-box;
+
+    background-color: var(--darker-blue);
+    color: whitesmoke;
+
+    border: 1px solid rgba(201, 168, 76, 0.4);
+    border-radius: 5px;
+
+    padding: 0.6rem 0.8rem;
+
+    font-size: 0.95rem;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+
+    transition: all 50ms ease;
+}
+.profile_input:focus,
+.profile_textarea:focus{
+    outline: none;
+    background-color: var(--light-blue);
+}
+.profile_input{
+    margin-bottom: 0;
+}
+.profile_textarea{
+    height: 6rem;
+    resize: none;
+    margin: 0 0 1.4rem;
+}
+
+.profile_username_warning{
+    min-height: 1.1rem;
+
+    margin: 0.4rem 0 1.2rem;
+
+    color: var(--error-red);
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+}
+
+.profile_update_btn{
+    padding: 0.65rem 1.6rem;
+
+    font-size: 0.95rem;
+    font-weight: 500;
+    letter-spacing: 1px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+
+    background-color: var(--champagne-gold);
+    color: var(--darker-blue);
+
+    border: 1px solid var(--champagne-gold);
+    border-radius: 5px;
+
+    cursor: pointer;
+    transition: all 150ms ease;
 }
 .profile_update_btn:hover{
-    background-color: var(--light-blue);
-    color: white;
-    border: 1.4px solid var(--champagne-gold);
+    background-color: transparent;
+    color: var(--champagne-gold);
+}
+.profile_update_btn:disabled{
+    opacity: 0.6;
+    cursor: default;
+}
 
-    font-weight: 200;
+/* ===== 【新增】排行榜顯示開關 ===== */
+.profile_toggle_row{
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+
+    margin: 0 0 1.4rem;
+}
+.profile_toggle_text{
+    flex: 1;
+}
+.profile_toggle_hint{
+    margin: 0.35rem 0 0;
+
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.78rem;
+    line-height: 1.5;
+}
+
+/* ===== 開關本體：用「隱藏原生 checkbox + 自訂 span 當視覺呈現」的常見做法 =====
+   checkbox 本身還在 DOM 裡（只是 opacity:0、寬高縮成 0），所以 Tab 鍵聚焦、
+   空白鍵切換這些原生無障礙操作都還能用，不是整個換成純視覺的 div。
+   靠 CSS 的相鄰選擇器 `input:checked + .profile_toggle_slider` 判斷開/關狀態，
+   不需要額外寫 JS 去切換 class。 */
+.profile_toggle_switch{
+    position: relative;
+    display: inline-block;
+    flex-shrink: 0;
+
+    width: 3rem;
+    height: 1.6rem;
+}
+.profile_toggle_switch input{
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.profile_toggle_slider{
+    position: absolute;
+    inset: 0;
+    cursor: pointer;
+
+    background-color: var(--darker-blue);
+    border: 1px solid rgba(201, 168, 76, 0.4);
+    border-radius: 1rem;
+
+    transition: background-color 150ms ease;
+}
+/* 圓形滑塊本體，用 ::before 畫出來，靠 transform: translateX 移動位置來表現「切換」 */
+.profile_toggle_slider::before{
+    content: "";
+    position: absolute;
+    top: 0.15rem;
+    left: 0.15rem;
+
+    width: 1.15rem;
+    height: 1.15rem;
+    border-radius: 50%;
+
+    background-color: rgba(255, 255, 255, 0.6);
+    transition: transform 150ms ease, background-color 150ms ease;
+}
+.profile_toggle_switch input:checked + .profile_toggle_slider{
+    background-color: var(--champagne-gold);
+    border-color: var(--champagne-gold);
+}
+.profile_toggle_switch input:checked + .profile_toggle_slider::before{
+    transform: translateX(1.4rem);
+    background-color: var(--darker-blue);
+}
+/* 資料還沒從雲端讀回來、開關暫時被鎖住時的樣式，讓玩家看得出來這是「還不能點」 */
+.profile_toggle_switch input:disabled + .profile_toggle_slider{
+    opacity: 0.5;
+    cursor: default;
+}
+
+/* ===== 個人資訊（唯讀統計）===== */
+.profile_stat_list{
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+.profile_stat_row{
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+
+    padding-bottom: 0.9rem;
+    border-bottom: 1px solid rgba(201, 168, 76, 0.12);
+}
+.profile_stat_row:last-child{
+    border-bottom: none;
+    padding-bottom: 0;
+}
+.profile_stat_label{
+    color: rgb(180, 180, 180);
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+}
+.profile_stat_value{
+    color: var(--champagne-gold);
+    font-size: 1.05rem;
+    font-weight: 500;
+}
+
+/* ===== 成就（先放佔位內容，之後功能做出來再換掉） ===== */
+.profile_achievement_empty{
+    color: rgb(150, 150, 150);
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+    text-align: center;
+
+    padding: 1.6rem 0;
+    margin: 0;
+}
+
+/* ===== 【新增】更新資料的成功/失敗提示 =====
+   固定貼在畫面底部置中——跟 ranking.css 當初規劃「自己名次浮窗」的定位邏輯一致
+   （fixed + 置中 + 淡入淡出），維持全站提示訊息的風格統一。 */
+.profile_toast{
+    position: fixed;
+    left: 50%;
+    bottom: 2rem;
+    transform: translateX(-50%) translateY(0.6rem);
+
+    background-color: var(--dark-blue);
+    color: whitesmoke;
+
+    border: 1px solid var(--champagne-gold);
+    border-radius: 2px;
+
+    padding: 0.7rem 1.4rem;
+
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+
+    opacity: 0;
+    pointer-events: none;
+
+    transition: opacity 220ms ease, transform 220ms ease;
+
+    z-index: 500;
+}
+.profile_toast.profile_toast_show{
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+.profile_toast.profile_toast_error{
+    border-color: var(--error-red);
 }

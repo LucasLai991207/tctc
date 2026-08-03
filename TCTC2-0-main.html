@@ -33,7 +33,8 @@
         <img src="TCTC2.0 logo.png" class="logo_style" onclick="window.location.href='TCTC2-0-main.html'">
         <div class="nav_css">
             <!-- <div>登入</div> -->
-            <div onclick="window.location.href='index.html'">關於我們</div>
+            <div onclick="window.location.href='TCTC2-0-details.html'">常見問題</div>
+            <div class="cm_nav_btn" onclick="window.location.href='TCTC2-0-challenge_lobby.html'">挑戰模式</div>
             <div class="main_lobby_more_detil_div">更多 ≡
                 <!-- <div class="main_achievement">成就</div> -->
                 <div class="main_ranking" onclick="window.location.href='TCTC2-0-ranking.html'">排行榜</div>
@@ -85,7 +86,7 @@
 
                     </div>
                     <div class="main_lobby_mode_medium" id="mode_select_medium_btn">
-                        <p class="main_lobby_mode_beginner_text1-0">Level II</p>
+                        <p class="main_lobby_mode_beginner_text1-0">LEVEL II</p>
                         <h3 class="main_lobby_mode_beginner_text1-1">
                             中級
                         </h3>
@@ -94,7 +95,7 @@
 
                     </div>
                     <div class="main_lobby_mode_master" id="mode_select_hard_btn">
-                        <p class="main_lobby_mode_beginner_text1-0">Level III</p>
+                        <p class="main_lobby_mode_beginner_text1-0">LEVEL III</p>
                         <h3 class="main_lobby_mode_beginner_text1-1">
                             高級
                         </h3>
@@ -239,25 +240,35 @@
             </div>
         </section>
     </main>
+
+
     <footer class="intro_footer">
         <div class="footer_div">
-            <div style="display: flex;justify-content: flex-start;;flex-direction: column;gap: 0.7rem;">
-                <p style="margin: 0;font-size: larger;">關於我們</p>    
+            <div class="footer_col">
+                <p class="footer_col_title">回報問題</p>
+                <a class="footer_link" href="https://forms.gle/xJcvq3AZ4PeNd3eq5" target="_blank" rel="noopener">遇到Bug？點我回報</a>
             </div>
-            <div style="display: flex;justify-content: flex-start;;flex-direction: column;gap: 0.7rem;">
-                <p style="margin: 0;font-size: larger;">聯絡我們</p>
-                <a style="font-size: 0.8rem;">✉ tctc.official.tw@gmail.com</a>   
+            <div class="footer_col">
+                <p class="footer_col_title">聯絡我們</p>
+                <a class="footer_link" href="mailto:tctc.official.tw@gmail.com">✉ tctc.official.tw@gmail.com</a>   
             </div>
-            <div style="display: flex;justify-content: flex-start;flex-direction: column;gap: 0.7rem;">
-                <p style="margin: 0;font-size: larger;">平台連結</p>
-                <a style="font-size: 0.8rem;" href="https://www.youtube.com/channel/UCIA5fwMrvGpvcQbG0ZX2ZLA">Youtube</a>   
+            <div class="footer_col">
+                <p class="footer_col_title">平台連結</p>
+                <a class="footer_link" href="https://www.youtube.com/channel/UCIA5fwMrvGpvcQbG0ZX2ZLA" target="_blank" rel="noopener">Youtube</a>   
             </div>
         </div>
         
-        <div style="margin-top: 2rem; font-size: 0.8rem; color: #555; letter-spacing: 1px;">
-            &copy; 2026 TCTC2.0 繁體中文打字中心. All Rights Reserved.
+        <div class="footer_copyright">
+            &copy; 2026 TCTC2.0 繁中打字中心. All Rights Reserved.
         </div>
-        </footer>
+    </footer>
+    <!-- 【新增】在線時長追蹤（全站共用，每個頁面都要載入）
+         這個頁面沒有載入 Firebase，時間只會先記在本機，
+         等下次去 game.html / TCTC2-0-challenge.html / TCTC2-0-ranking.html
+         其中一個頁面時才會被補交上雲端。 -->
+    <script src="TCTC2-0-online_time.js"></script>
+    <!-- 【新增】把玩家在設定頁面上傳的頭像顯示在這裡的頭像框裡（只讀 localStorage，不碰 Firebase） -->
+    <script src="TCTC2-0-avatar_display.js"></script>
     <script src="TCTC2-0.js"></script>
     <script src="TCTC2-0-difficulty_selet.js"></script>
     <script src="TCTC2-0-level_data.js"></script>

@@ -1,9 +1,9 @@
 *{
     margin: 0;
     padding: 0;
-    font-family: "Noto Serif TC", serif;  /*宋體*/
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
 }
-
+/*    font-family: "Noto Serif TC", serif; */
 :root{
     --darker-blue : #0b1a37;
     --dark-blue : #0B1E36;
@@ -21,7 +21,7 @@ html {
 @keyframes fadeInUp{
     from{
         opacity: 0;
-        transform: translateY(0px);
+        transform: translateY(18px);
     }
     to{
         opacity: 1;
@@ -45,7 +45,6 @@ nav {
     background-color: rgba(245, 243, 243, 0.85);
     padding: 0.1rem;
     border-bottom: 2px solid #C9A84C;
-    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.7);
     opacity: 0.9;
     height: 58px;
     z-index: 9999;
@@ -58,17 +57,13 @@ nav {
 }
 .nav_css div{
     font-size: 1.1rem;
-    color: rgb(34, 18, 48);
     margin-right: 30px;
     cursor: pointer;
     /*手指*/
     transition: 200ms ease;
     /*過渡動畫*/
 }
-.nav_css div:hover{
-    color: #C9A84C;
-    text-shadow: 0px 1px 1px #1c0e1f;
-}
+
 .logo_style {
     margin-left: 10px;
     cursor: pointer;
@@ -102,27 +97,27 @@ nav {
 .intro_first_section_text1_and_img > div:nth-child(4){ animation-delay: 0.42s; }
 .intro_first_section_text1_and_img > div:nth-child(5){ animation-delay: 0.50s; }
 .intro_first_section_text1_and_img > div:nth-child(6){ animation-delay: 0.58s; }
+
+
 .intro_first_section_text0-0{
     color: #C9A84C;
 
-    text-shadow: 0px 0px 2px var(--champagne-gold);
     margin-top: 90px;
     margin-bottom: 2px;
 
     letter-spacing: 6px;
 
     font-family: "Noto Serif TC", serif;  /*宋體*/
-    font-size: small;
 
 }
 .intro_first_section_text0-1{
     text-align: center;
-    text-shadow: 0px 0px 2px var(--champagne-gold);
 
     font-family: "Noto Serif TC", serif;  /*宋體*/
 
     color: #a38941;
     font-size: small;
+    margin-top: 0.3rem;
 
 }
 .intro_first_section_text1{
@@ -132,40 +127,42 @@ nav {
 .intro_first_section_text1-1{
     color: whitesmoke;
     font-family: "Noto Serif TC", serif;  /*宋體*/
-    font-size: clamp(1rem, 5vw, 5.6rem);
+    /* 原本 clamp(2.6rem, 7vw, 5.6rem) 是給「切成兩行、每行7~9字」的短句用的，
+       現在改成單行 11 個字，同一個字級會直接撐爆版面、換行換得亂七八糟。
+       整體等比縮小，讓 11 個字在正常桌機寬度下能維持單行不換行。 */
+    font-size: clamp(1.8rem, 7vw, 4.2rem);
 
     font-weight: 200;
     letter-spacing: -1px;
-    line-height: 0.86;
-
-    margin-top: 3rem;
+    line-height: 1.3;
 }
 .intro_first_section_text1-2{
-    color: lightgray;
-    font-size: clamp(2.6rem, 5vw, 5.6rem);
+    color: var(--champagne-gold);
+    font-size: clamp(1.8rem, 5.2vw, 4.2rem);
     font-weight: 280;
-    
 }
-.intro_first_section_text2-1{
-        color: whitesmoke;
-    font-family: "Noto Serif TC", serif;  /*宋體*/
 
-    text-shadow: 0px 0px 2px var(--champagne-gold);
-
-    font-size: clamp(2.6rem, 5vw, 5.6rem);
-    font-weight: 200;
-    letter-spacing: -2px;
+/* ===== 標語結尾的閃爍游標，呼應「打字」這個主題 =====
+   用一個實色矩形模擬打字游標的樣子，不用陰影/光暈，純平面色塊 */
+@keyframes cursorBlink{
+    0%, 50%{ opacity: 1; }
+    50.01%, 100%{ opacity: 0; }
 }
-.intro_first_section_text2-1_穩定{
-    color: #C9A84C;
-    font-family: "Noto Serif TC", serif;  /*宋體*/
-    font-size: clamp(2.65rem, 5vw, 5.7rem);
-    font-weight: 280;
-    margin-bottom: 20px;
+.intro_first_section_cursor{
+    display: inline-block;
+    width: 0.03em;
+    height: 0.8em;
+    margin-left: 0.18em;
+    vertical-align: -0.05em;
 
-    text-shadow: 0px 0px 2px var(--champagne-gold);
+    background-color: #fff;
 
+    animation: cursorBlink 1s step-end infinite;
 }
+/* 【已移除】.intro_first_section_text2-1 / .intro_first_section_text2-1_穩定
+   這兩個 class 原本是給第二行標語（更是穩定和專注的結合）用的樣式，
+   HTML 那段已經合併成一行新標語，這兩個 class 目前沒有任何元素在用，
+   直接刪掉避免之後維護時看到一堆用不到的死程式碼 */
 .intro_first_section_text3-1{
     width: 10rem;
     height: 1px;
@@ -173,10 +170,11 @@ nav {
     margin-bottom: 60px;
 }
 .intro_first_section_text4-1{
-    font-size: larger;
+    
     color: rgb(190, 181, 181);
     font-family: "Noto Serif TC", serif;  /*宋體*/
-    margin-bottom: 100px;
+    margin-top: 2rem;
+    margin-bottom: 7rem;
     font-weight: 500;
 }
 @keyframes ctaGlow{
@@ -206,23 +204,7 @@ nav {
     animation: ctaGlow 3s ease-in-out infinite;
 
 }
-.intro_first_section_text5_button:hover{
 
-    padding: 1rem 2.3rem;
-
-    color: var(--champagne-gold);
-
-    background-color: #0B1E36;
-
-    border-color: var(--champagne-gold);
-    border-width: 1px;
-    border-radius: 5px;
-
-    box-shadow: 0px 0px 5px #C9A84C;
-    cursor: pointer;
-
-    animation-play-state: paused;
-}
 
 /*intro_second_section-----------------------*/
 
@@ -306,6 +288,7 @@ nav {
     width: 100vw;
     padding: 2.2rem 0 1.6rem;
     box-shadow: 0px -1px 15px rgba(0, 0, 0, 0.5);
+    color: black
 }
 
 .footer_div{
@@ -317,16 +300,12 @@ nav {
 .footer_div div{
     margin-top: 40px;
 }
-.footer_div div:hover{
-    cursor: pointer;
-    transition: 400ms ease;
-    text-shadow: 0px 1px 1px #1c0e1f;
-}
 
 .footer_col{
     display: flex;
     flex-direction: column;
     gap: 0.7rem;
+    font-weight: 200;
 }
 .footer_col_title{
     margin: 0;
@@ -355,12 +334,7 @@ nav {
     background-color: var(--champagne-gold);
     transition: width 300ms ease;
 }
-.footer_link:hover{
-    color: var(--champagne-gold);
-}
-.footer_link:hover::after{
-    width: 100%;
-}
+
 .footer_copyright{
     margin-top: 2rem;
     font-size: 0.8rem;
@@ -425,14 +399,13 @@ letter-spacing: 4px;
 border: 1px solid var(--champagne-gold);
 border-radius: 2px;
 box-shadow: 0px 0px 4px rgba(0, 0, 0, 0.5);
-transition: all 400ms ease;
+transition: all 300ms ease;
 cursor: pointer;
 }
 
 .si-scroll-cta:hover {
 background-color: #C9A84C;
 color: #0B1E36;
-box-shadow: 0px 0px 8px #C9A84C;
 }
 
 /* ===== 新章節：核心功能（獨立 section，不跟介紹文字混在一起）===== */
@@ -470,9 +443,8 @@ cursor: default;
 
 
 .si-feature_card:hover {
-transform: translateY(-8px);
 border-color: var(--champagne-gold);
-box-shadow: 0px 8px 25px rgba(201, 168, 76, 0.25);
+box-shadow: 0px 0px 2px rgba(201, 168, 76, 0.25);
 }
 
 
@@ -544,10 +516,7 @@ cursor: pointer;
 }
 
 .si-difficulty_card:hover {
-transform: translateY(-1px);
 border-color: var(--champagne-gold);
-box-shadow: 0px 10px 30px rgba(201, 168, 76, 0.3);
-background-color: var(--light-blue);
 }
 
 .si-difficulty_level {
@@ -563,7 +532,7 @@ margin-bottom: 10px;
 color: whitesmoke;
 
 font-size: 1.8rem;
-font-weight: 300;
+font-weight: 400;
 
 margin-bottom: 20px;
 }
