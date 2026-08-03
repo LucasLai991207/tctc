@@ -36,7 +36,7 @@
         <img src="TCTC2.0 logo.png" class="logo_style" onclick="window.location.href='TCTC2-0-main.html'">
         <div class="nav_css">
             <!-- <div>登入</div> -->
-            <div onclick="window.location.href='index.html'">關於我們</div>
+            <div onclick="window.location.href='TCTC2-0-details.html'">常見問題</div>
             <div class="main_lobby_more_detil_div">更多 ≡
                 <!-- <div class="main_achievement">成就</div> -->
                 <div class="main_ranking" onclick="window.location.href='TCTC2-0-ranking.html'">排行榜</div>
@@ -52,82 +52,160 @@
                         ←
                     </div>
                 </div>
-                <!--大白塊-->
-                <div class="profile_main_container"> <!--flex display-->
-                    <div class="profile_main_block">
-                        <div class="profile_block1">
-                            <p class="profile_block1-1">帳號資料</p>
 
-                            <p class="profile_block1-2">用戶姓名
-                                <input id="profile_username_input_block"type="text" name="username" class="profile_block1_input1" placeholder=" 輸入您想要更改的姓名" maxlength="16"> 
-                            </p>
-
-                            <p class="profile_block1-3">聯絡信箱
-                            <input id="profile_email_input_block"type="email" name="email" class="profile_block1_input1" placeholder="  xxxxx@gmail.com" maxlength="30"> 
-                            </p>
-
-                            <p class="profile_block1-3">個人簡介
-                            <textarea id="profile_intro_input_block"type="text" name="username" class="profile_block1_input2" placeholder=" 試著輸入點什麼..." style="resize: none;"></textarea>
-                            </p>
-
-                            <button class="profile_update_btn" onclick="Update_profile()">更新資料</button>
-                        </div>
-                    </div>
-                    <div id="profile_history_block"class="profile_main_block">
-                        <div class="profile_block1">
-                            <p class="profile_block1-1">個人資訊</p>
-                            <div style="display: flex; flex-direction: column;gap: 1rem;">
-                            <p class="profile_block1-2">用戶姓名&nbsp
-                                <span id="profile_history_default_name">玩家</span>
-                            </p>
-
-                            <p class="profile_block1-3">最高段位&nbsp
-                                <span id="profile_history_highest_rank">初學者</span>
-
-                            </p>
-                            <p class="profile_block1-3">目前段位&nbsp
-                                <span id="profile_history_current_rank">初學者</span>
-
-                            </p>
-                            <p class="profile_block1-3">平均wpm&nbsp
-                                <span id="profile_history_average_wpm">0 WPM</span>
-
-                            </p>
-                            <p class="profile_block1-3">平均正確率&nbsp
-                                <span id="profile_history_average_acc">0%</span>
-
-                            </p>
-
-                        </div>                    </div>
-                    <div class="profile_achievement_block">
-
-                    </div>
+                <div class="profile_page_header">
+                    <h1 class="profile_page_title">個人設定</h1>
+                    <p class="profile_page_subtitle">管理你的暱稱、簡介與檢視你的資料</p>
                 </div>
 
+                <div class="profile_main_container">
+                    <div class="profile_card profile_card_edit">
+                        <p class="profile_card_title">帳號資料</p>
+
+                        <!-- ===== 【新增】自訂頭像 =====
+                             刻意「只存在這台裝置的瀏覽器本機」（localStorage），完全不經過
+                             Firebase：換裝置、換瀏覽器、清除瀏覽器資料都會讓頭像消失，
+                             也因為這樣，這張圖片天生就不會出現在排行榜或任何其他玩家看得到
+                             的地方——不是靠額外的權限檢查擋住，而是架構上根本沒有上傳到
+                             任何共用的地方。 -->
+                        <div class="profile_avatar_row">
+                            <div class="profile_avatar_preview" id="profile_avatar_preview">
+                                <span id="profile_avatar_placeholder">未設定</span>
+                                <img id="profile_avatar_img" alt="頭像預覽" style="display:none;">
+                            </div>
+                            <div class="profile_avatar_actions">
+                                <label class="profile_avatar_upload_btn" for="profile_avatar_input">上傳頭像</label>
+                                <input type="file" id="profile_avatar_input" accept="image/*" style="display:none;">
+                                <button type="button" class="profile_avatar_remove_btn" id="profile_avatar_remove_btn">移除頭像</button>
+                                <p class="profile_avatar_hint">只會儲存在這台裝置的瀏覽器裡而且只有你自己看得到，換裝置或清除瀏覽器資料就消失</p>
+                            </div>
+                        </div>
+
+                        <label class="profile_field_label" for="profile_username_input_block">用戶姓名</label>
+                        <input id="profile_username_input_block" type="text" name="username" class="profile_input" placeholder="輸入您想要更改的姓名" maxlength="13">
+                        <p id="profile_username_warning" class="profile_username_warning"></p>
+
+                        <label class="profile_field_label" for="profile_intro_input_block">個人簡介</label>
+                        <textarea id="profile_intro_input_block" name="intro" class="profile_textarea" placeholder="試著輸入點什麼..."></textarea>
+
+                        <!-- ===== 【新增】排行榜顯示開關 =====
+                             刻意做成「切換就立刻生效」，不需要按下面的「更新資料」按鈕，
+                             因為這是隱私設定，語意上比較接近「開關」而不是「表單欄位」，
+                             玩家會預期滑一下馬上有效，不是要另外送出才算數。
+                             初始狀態給 checked（預設顯示）+ disabled（先鎖住），
+                             等 TCTC2-0-profile.js 讀到雲端目前真正的設定值後，
+                             才會解鎖並校正成正確的開/關狀態，避免資料還沒讀回來時
+                             玩家就搶先亂點，把舊的（可能是錯的）狀態寫回雲端。 -->
+                        <div class="profile_toggle_row">
+                            <div class="profile_toggle_text">
+                                <span class="profile_field_label" style="margin-bottom:0.2rem;">在排行榜上顯示我的成績</span>
+                                <p class="profile_toggle_hint">
+                                    關閉後，你的成績跟統計數字不會出現在任何排行榜（單一關卡榜、挑戰模式榜、玩家總榜）上，
+                                    但不影響你自己在這個頁面看到的統計數字。
+                                </p>
+                            </div>
+                            <label class="profile_toggle_switch">
+                                <input type="checkbox" id="profile_leaderboard_toggle" checked disabled onchange="Toggle_Leaderboard_Visibility(this.checked)">
+                                <span class="profile_toggle_slider"></span>
+                            </label>
+                        </div>
+
+                        <button class="profile_update_btn" id="profile_update_btn" onclick="Update_profile()">更新資料</button>
+                    </div>
+
+                    <div id="profile_history_block" class="profile_card profile_card_stats">
+                        <p class="profile_card_title">個人資訊</p>
+                        <div class="profile_stat_list">
+                            <div class="profile_stat_row">
+                                <span class="profile_stat_label">用戶姓名</span>
+                                <span class="profile_stat_value" id="profile_history_default_name">玩家</span>
+                            </div>
+                            <div class="profile_stat_row">
+                                <span class="profile_stat_label">最高段位</span>
+                                <span class="profile_stat_value" id="profile_history_highest_rank">初學者</span>
+                            </div>
+                            <div class="profile_stat_row">
+                                <span class="profile_stat_label">目前段位</span>
+                                <span class="profile_stat_value" id="profile_history_current_rank">初學者</span>
+                            </div>
+                            <!-- 【修改】原本這裡只有一組「平均WPM／平均正確率」，混合了主線關卡跟挑戰模式的成績。
+                                 兩種模式的關卡難度、計分方式都不一樣，混在一起平均沒有參考價值，
+                                 所以拆成主線／挑戰各一組，各自對應獨立的 localStorage 鏡像值。 -->
+                            <div class="profile_stat_row">
+                                <span class="profile_stat_label">主線平均WPM</span>
+                                <span class="profile_stat_value" id="profile_history_main_wpm">0 WPM</span>
+                            </div>
+                            <div class="profile_stat_row">
+                                <span class="profile_stat_label">主線平均正確率</span>
+                                <span class="profile_stat_value" id="profile_history_main_acc">0%</span>
+                            </div>
+                            <div class="profile_stat_row">
+                                <span class="profile_stat_label">挑戰平均WPM</span>
+                                <span class="profile_stat_value" id="profile_history_challenge_wpm">0 WPM</span>
+                            </div>
+                            <div class="profile_stat_row">
+                                <span class="profile_stat_label">挑戰平均正確率</span>
+                                <span class="profile_stat_value" id="profile_history_challenge_acc">0%</span>
+                            </div>
+                            <!-- 【新增】以下三項只存在 Firebase 雲端（player_stats/{anon_id}），
+                                 不是單純的 localStorage 鏡像，初始文字先給「載入中...」，
+                                 等 TCTC2-0-profile.js 呼叫 Get_Own_Player_Stats() 拿到雲端資料後才會被換掉。 -->
+                            <div class="profile_stat_row">
+                                <span class="profile_stat_label">在線時長</span>
+                                <span class="profile_stat_value" id="profile_history_online_time">載入中...</span>
+                            </div>
+                            <div class="profile_stat_row">
+                                <span class="profile_stat_label">累積積分</span>
+                                <span class="profile_stat_value" id="profile_history_total_points">載入中...</span>
+                            </div>
+                            <div class="profile_stat_row">
+                                <span class="profile_stat_label">瀏覽次數</span>
+                                <span class="profile_stat_value" id="profile_history_page_views">載入中...</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="profile_card profile_card_achievement">
+                        <p class="profile_card_title">成就</p>
+                        <p class="profile_achievement_empty">成就系統還沒開發完</p>
+                    </div>
                 </div>
             </section>
         </main>
 
-        <<footer class="intro_footer">
+        <!-- ===== 【新增】更新資料的成功/失敗提示（固定貼底部置中） ===== -->
+        <div id="profile_toast" class="profile_toast"></div>
+
+        <footer class="intro_footer">
         <div class="footer_div">
-            <div style="display: flex;justify-content: flex-start;;flex-direction: column;gap: 0.7rem;">
-                <p style="margin: 0;font-size: larger;">關於我們</p>    
+            <div class="footer_col">
+                <p class="footer_col_title">回報問題</p>
+                <a class="footer_link" href="https://forms.gle/xJcvq3AZ4PeNd3eq5" target="_blank" rel="noopener">遇到Bug？點我回報</a>
             </div>
-            <div style="display: flex;justify-content: flex-start;;flex-direction: column;gap: 0.7rem;">
-                <p style="margin: 0;font-size: larger;">聯絡我們</p>
-                <a style="font-size: 0.8rem;">✉ tctc.official.tw@gmail.com</a>   
+            <div class="footer_col">
+                <p class="footer_col_title">聯絡我們</p>
+                <a class="footer_link" href="mailto:tctc.official.tw@gmail.com">✉ tctc.official.tw@gmail.com</a>   
             </div>
-            <div style="display: flex;justify-content: flex-start;flex-direction: column;gap: 0.7rem;">
-                <p style="margin: 0;font-size: larger;">平台連結</p>
-                <a style="font-size: 0.8rem;" href="https://www.youtube.com/channel/UCIA5fwMrvGpvcQbG0ZX2ZLA">Youtube</a>   
+            <div class="footer_col">
+                <p class="footer_col_title">平台連結</p>
+                <a class="footer_link" href="https://www.youtube.com/channel/UCIA5fwMrvGpvcQbG0ZX2ZLA" target="_blank" rel="noopener">Youtube</a>   
             </div>
         </div>
         
-        <div style="margin-top: 2rem; font-size: 0.8rem; color: #555; letter-spacing: 1px;">
+        <div class="footer_copyright">
             &copy; 2026 TCTC2.0 繁中打字中心. All Rights Reserved.
         </div>
-        </footer>
+    </footer>
 
+        <!-- 【新增】改名字需要用到 Claim_Username()（檢查名字全站有沒有重複），
+             所以這個頁面現在也要載入 Firebase，跟其他頁面一致。 -->
+        <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+        <script src="TCTC2-0-firebase.js?v=2"></script>
+
+        <!-- 【新增】在線時長追蹤（全站共用，每個頁面都要載入） -->
+        <script src="TCTC2-0-online_time.js"></script>
         <script src="TCTC2-0-profile.js"></script>
         <script defer src="https://cloud.umami.is/script.js" data-website-id="070df494-4361-4dce-ad65-a25b404811e9"></script>
     </body>

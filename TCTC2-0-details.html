@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TCTC 查看更多</title>
+
+    <meta charset="UTF-8">
+    <title>查看更多 | TCTC 繁體中文打字中心</title>
+    <meta name="robots" content="noindex, nofollow">
+
+    <!--瀏覽器分頁小圖-->
+    <link rel="icon" href="favicon-32x32.png" type="image/png" sizes="32x32">
+
+    <!-- 社群分享預覽圖-->
+    <meta property="og:image" content="https://lucaslai991207.github.io/tctc/os_image.png">
+
+    <!--分享時顯示的title-->
+    <meta property="og:title" content="TCTC 繁體中文打字中心">
+
+    <link rel="stylesheet" href="TCTC2-0-intro_lobby.css">
+    <link rel="stylesheet" href="TCTC2-0-main_lobby.css">
+    <link rel="stylesheet" href="TCTC2-0-profile.css">
+
+
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@200;300;400;500;700&display=swap" rel="stylesheet">
+
+
+    <style>
+        :root{
+            --darker-blue : #0b1a37;
+            --dark-blue : #0B1E36;
+            --light-blue : #0e243e;
+            --champagne-gold : #c9a84c;
+            --light-gray : lightgray;
+            --gold-soft : rgba(201, 168, 76, 0.15);
+            --gold-line : rgba(201, 168, 76, 0.35);
+        }
+        body h1{
+            color: #ffffff;
+        }
+        body{
+            color: #fff;
+            font-size: small;
+        }
+        .detail_main_box{
+            padding: 7.5vw;
+        }
+        .detail_ans{
+            color:  var(--light-gray);
+            margin-bottom: 5rem;
+            margin-left: 1rem;
+            width: 70vw;
+        }
+        .detail_h2{
+            color: var(--champagne-gold);
+            margin-bottom: 2rem;
+            font-size: 1.2rem;
+        }
+
+        
+
+        /* details 標籤本身：負責包住一整個分類（標題 + 底下所有 QA） */
+        .faq_category{
+            margin-bottom: 1rem;
+        }
+
+        /* summary = 可點擊的大標題列，取代原本的 h2 */
+        .faq_category summary{
+            color: var(--champagne-gold);
+            margin-bottom: 2rem;
+            cursor: pointer;         
+            list-style: none;        
+            user-select: none;       
+        }
+
+        /* Chrome / Safari 會額外生成一個 ::-webkit-details-marker 三角形，
+           跟上面的 list-style: none 是兩個不同瀏覽器引擎各自的預設樣式，
+           兩個都要關掉才能真正拿掉箭頭圖示 */
+        .faq_category summary::-webkit-details-marker{
+            display: none;
+        }
+
+        /* 自己畫一個簡單的文字箭頭圖示，讓使用者知道現在是收合還是展開狀態 */
+        .faq_category summary::before{
+            content: "▶ ";     /* 收合時預設顯示的箭頭符號 */
+            font-size: 0.9rem;
+            display: inline-block;
+        }
+
+        /* details[open] 是「屬性選擇器」的寫法：
+           當瀏覽器幫 <details> 加上 open 這個屬性時（也就是展開狀態），
+           就套用這條規則，把箭頭換成朝下的樣子。
+           因為沒有 transition，這裡是「瞬間切換」，沒有旋轉動畫。 */
+        .faq_category[open] summary::before{
+            content: " ▼ ";
+        }
+        </style>
+</head>
+<body>
+    <nav id="nav">
+        <img src="TCTC2.0 logo.png" class="logo_style" onclick="window.location.href='TCTC2-0-main.html'">
+        <div class="nav_css">
+            <!-- <div>登入</div> -->
+            <div onclick="window.location.href='TCTC2-0-details.html'" style="color: black;">常見問題</div>
+            <div class="main_lobby_more_detil_div">更多 ≡
+                <!-- <div class="main_achievement">成就</div> -->
+                <div class="main_ranking" onclick="window.location.href='TCTC2-0-ranking.html'">排行榜</div>
+                <div class="main_profile" onclick="window.location.href='TCTC2-0-profile.html'">設定</div>
+            </div>
+        </div>
+    </nav>
+        <main class="profile_main_style">   
+            <section class="profile_first_section">
+                <!--箭頭-->
+               <div class="main_lobby_main_frame"> 
+                    <div class="main_lobby_back_to_intro_button" onclick="window.location.href='TCTC2-0-main.html'">
+                        ←
+                    </div>
+                </div>
+    <div class="detail_main_box">
+        <h1 class="detail_h1">常見問題 Q&A</h1><br><br><br>
+
+        <!--
+          每一個分類都改成 <details> + <summary> 的結構：
+          - <details> 取代原本「單獨存在」的區塊，變成整個分類的容器
+          - <summary> 放原本 h2 的文字，瀏覽器會自動幫它綁定點擊事件，
+            使用者點一下就會自動切換展開/收合，不需要寫 onclick
+          - 底下所有 QA 內容直接放在 <details> 裡面即可，
+            details 沒有 open 屬性 = 預設收合狀態
+        -->
+        <details class="faq_category">
+        <summary class="detail_h2">-技術方面</summary>
+
+        <h3>Q: 為什麼打字到一半打錯字就卡住？</h3><br>
+        <h4 class="detail_ans">如果打錯字（字變成紅色），系統會暫時卡在當前目標，按下鍵盤右上角「刪除鍵」刪除之後即可繼續往前。</h4>
+
+        <h3>Q: 為什麼打字打不出來、沒反應？</h3><br>
+        <h4 class="detail_ans">如果在逐字輸入式模式中，需要切換成英文輸入法才能夠被系通偵測；直接輸入模式則不需要。用自己順手的輸入法即可。</h4>
+        
+        
+        <h3>Q: 為什麼速度很快卻沒有通關？為什麼我打完了初級關卡之後主畫面的正確率以及速度統計沒有改變？</h3><br>
+        <h4 class="detail_ans">因為主畫面的統計只採計正確率 > 89％ 的初級的階段驗收、章節驗收以及中高級關卡，普通的初級關卡因為平衡性問題所以並不會影響到統計。</h4>
+
+        <h3>Q: 為什麼關卡打完了，但是卻沒有在主畫面標記過關</h3><br>
+        <h4 class="detail_ans">因為如果正確率低於90％，將不會被系統採計，更不會標記為過關。。</h4>
+        </details>
+
+
+
+
+        <details class="faq_category">
+        <summary class="detail_h2">-開始使用</summary>
+
+        <h3>Q: TCTC 是什麼</h3><br>
+        <h4 class="detail_ans">TCTC（Traditional Chinese Typing Center）是專為繁體中文使用者設計的打字練習平台，從零開始學習注音打字，到提升中文輸入速度。</h4>
+
+        <h3>Q: 需要下載軟體嗎？</h3><br>
+        <h4 class="detail_ans">不需要，只要打開瀏覽器即可開始練習。</h4>
+
+        <h3>Q: 需要登入嗎？</h3><br>
+        <h4 class="detail_ans">大部分功能可直接使用，登入後可同步個人資料、紀錄與排行榜。（如果未來有登入）</h4>
+
+        <h3>Q: 支援哪些裝置？</h3><br>
+        <h4 class="detail_ans">建議使用電腦與實體鍵盤，以獲得最佳體驗。</h4>
+
+        <h3>Q: 可以使用倉頡、拼音嗎？</h3><br>
+        <h4 class="detail_ans">可以，但是主要支援注音輸入。</h4>
+
+        <h3>Q: 一定要盲打嗎？</h3><br>
+        <h4 class="detail_ans">不需要，但課程會逐步引導你建立正確指法。</h4>
+        </details>
+
+
+
+
+        <details class="faq_category">
+        <summary class="detail_h2">-課程使用</summary>
+
+        <h3>Q: 一定要按照順序學嗎？</h3><br>
+        <h4 class="detail_ans">不一定需要。只要根據使用者程度練習即可。</h4>
+
+        <h3>Q: 如果打不過怎麼辦？</h3><br>
+        <h4 class="detail_ans">可以重複挑戰，每次完成都能提升速度與準確率。</h4>
+
+        <h3>Q: 需要登入嗎？</h3><br>
+        <h4 class="detail_ans">大部分功能可直接使用，登入後可同步個人資料、紀錄與排行榜。（如果未來有登入）</h4>
+
+        <h3>Q: 有速度要求嗎？</h3><br>
+        <h4 class="detail_ans">初級沒有、中級建議50WPM、高級建議100WPM以上，並且皆要正確率90％賞上才能過關。</h4>
+        </details>
+
+
+
+        
+
+        <details class="faq_category">
+        <summary class="detail_h2">-成績計算</summary>
+
+        <h3>Q: WPM</h3><br>
+        <h4 class="detail_ans">WPM（Words Per Minute）代表每分鐘輸入速度，是衡量打字效率的重要指標。本網站以「每敲擊三下鍵盤」為一個字（Word）</h4>
+
+        <h3>Q: 正確率怎麼計算？</h3><br>
+        <h4 class="detail_ans">依照輸入內容是否正確計算，錯誤越少，正確率越高。</h4>
+
+        <h3>Q: 我的紀錄會保存嗎？</h3><br>
+        <h4 class="detail_ans">會，瀏覽器會保存你的練習進度與個人成績。（若有登入則可跨裝置同步）</h4>
+
+        <h3>Q: 如果有人作弊怎麼辦？</h3><br>
+        <h4 class="detail_ans">若發現異常成績，我們會進行檢查，強制移除該筆排行榜紀錄，並持續改善排行榜的驗證機制。</h4>
+        </details>
+
+
+
+
+        <details class="faq_category">
+        <summary class="detail_h2">-排行榜</summary>
+
+        <h3>Q: 排行榜怎麼更新？</h3><br>
+        <h4 class="detail_ans">完成符合條件(acc > 90)的挑戰並「重新整理頁面」後，成績會自動更新。</h4>
+
+        <h3>Q: 為什麼我的成績沒有出現？</h3><br>
+        <h4 class="detail_ans">可能是速度不夠快、未達排行榜條件(前五十名)、開啟了無痕模式，或成績仍在系統更新、同步中。</h4>
+        </details>
+
+
+        <details class="faq_category">
+        <summary class="detail_h2">-段位系統</summary>
+
+        <h3>Q: 段位系統是什麼？</h3><br>
+        <h4 class="detail_ans">目前仍在開發當中..</h4>
+
+        <h3>Q: 段位具體怎麼分類？</h3><br>
+        <h4 class="detail_ans">以下為對應段位以及wpm要求：<br><br>
+初學&nbsp;&nbsp;&nbsp;
+0–20<br>
+入門&nbsp;&nbsp;&nbsp;
+21–40<br>
+進階&nbsp;&nbsp;&nbsp;
+41–60<br>
+熟練&nbsp;&nbsp;&nbsp;
+61–80<br>
+精通&nbsp;&nbsp;&nbsp;
+81–120<br>
+大師&nbsp;&nbsp;&nbsp;
+121–150<br>
+宗師&nbsp;&nbsp;&nbsp;
+151–170<br>
+傳說&nbsp;&nbsp;&nbsp;
+171–200<br>
+???&nbsp;&nbsp;&nbsp;
+200以上<br>
+
+</h4>
+        </details>
+
+    <details class="faq_category">
+        <summary class="detail_h2">-畫面問題</summary>
+
+        <h3>Q: 主畫面的LV 代表著什麼？</h3><br>
+        <h4 class="detail_ans">目前仍在開發當中..</h4>
+
+        <h3>Q: 主畫面的頭像不能自訂嗎？</h3><br>
+        <h4 class="detail_ans">目前仍在開發當中..</h4>
+
+        <h3>Q: 主畫面的正確率, WPM如何計算？</h3><br>
+        <h4 class="detail_ans">初級難度的階段驗收、章節練習、中高級所有關卡，在正確率指少90％的情況下的平均值</h4>
+        </details>
+
+
+
+
+        <details class="faq_category">
+        <summary class="detail_h2">-隱私</summary>
+
+        <h3>Q: 會收集我的資料？</h3><br>
+        <h4 class="detail_ans">TCTC 僅收集提供服務所需的基本資料，例如使用者名稱、登入資訊（頭像、名字）及練習成績。我們沒有權力收集與打字練習無關的個人資料，而且純千端網頁也沒辦法獲取。</h4>
+
+        <h3>Q: 我的成績是公開的嗎？</h3><br>
+        <h4 class="detail_ans">若參與排行榜，你的使用者名稱與成績可能會公開顯示於排行榜中。除了排行榜所需資訊外，不會公開其他個人資料。</h4>
+
+        <h3>Q: 可以隱藏排行榜嗎？</h3><br>
+        <h4 class="detail_ans">此功能正在規劃中，未來將提供是否公開排行榜的選項。</h4>
+        </details>
+
+
+
+
+        <details class="faq_category">
+        <summary class="detail_h2">-難度分級</summary>
+
+        <h3>Q: 關卡字卡裡面的☆★代表什麼？</h3><br>
+        <h4 class="detail_ans">代表關卡難度 分級如下：<br><br>
+            <p style="color: var(--light-gray);line-height: 30px;">
+                無級別 &nbsp;☆☆☆☆☆☆☆ 毫無難度<br>
+                新生級 &nbsp;☆☆☆☆☆☆★ 初學者可輕易上手<br>
+                暖身級 &nbsp;☆☆☆☆☆★★ 打過字就能通關<br>
+                寶寶級 &nbsp;☆☆☆☆★★★ 有手就行<br>
+                幼幼級 &nbsp;☆☆☆★★★★ 眼睛睜開就能過<br>
+                細胞級 &nbsp;☆☆★★★★★ 我阿嬤都比你快<br>
+                原子級 &nbsp;☆★★★★★★ 閉著眼都能打<br>
+                夸克級 &nbsp;★★★★★★★ 暖身結束而已<br>
+                神話級 &nbsp;✧✧✧✧✧&nbsp;&nbsp;  連鍵盤都不用熱機<br>
+                傳說級 &nbsp;✧✧✧✧✦&nbsp;&nbsp;  手指還在睡覺<br>
+                史詩級 &nbsp;✧✧✧✦✦&nbsp;&nbsp;  建議單手挑戰<br>
+                終極級 &nbsp;✧✧✦✦✦&nbsp;&nbsp;  打得比我講話快<br>
+                大神級 &nbsp;✧✦✦✦✦&nbsp;&nbsp; 好像有點實力<br>
+                虛無級 &nbsp;✦✦✦✦✦&nbsp;&nbsp; 打字猶如呼吸<br>
+                ??? &nbsp;&nbsp;&nbsp;&nbsp;◎◎◎&nbsp;&nbsp;&nbsp; 還沒開始就結束了<br>
+            </p>
+        </h4>
+        </details>
+        
+
+
+        <details class="faq_category">
+        <summary class="detail_h2">-其他</summary>
+
+        <h3>Q: 我有辦法給你們建議或是聯絡你們嗎？</h3><br>
+        <h4 class="detail_ans">當然可以，非常歡迎。直接使用gmail聯絡即可：✉ tctc.official.tw@gmail.com</h4>
+
+        <h3>Q: 可以自己建立題目嗎？</h3><br>
+        <h4 class="detail_ans">目前仍在開發當中..</h4>
+
+        <h3>Q: 可以投稿文章嗎？</h3><br>
+        <h4 class="detail_ans">當然可以，非常歡迎。直接使用gmail聯絡即可：✉ tctc.official.tw@gmail.com</h4>
+
+        <h3>Q: 網站多久更新一次？</h3><br>
+        <h4 class="detail_ans">目前期間維持不定時高頻率更新，最少每週1~2次。</h4>
+        </details>
+
+    </div>
+
+    <footer class="intro_footer">
+        <div class="footer_div">
+            <div class="footer_col">
+                <p class="footer_col_title">回報問題</p>
+                <a class="footer_link" href="https://forms.gle/xJcvq3AZ4PeNd3eq5" target="_blank" rel="noopener">遇到Bug？點我回報</a>
+            </div>
+            <div class="footer_col">
+                <p class="footer_col_title">聯絡我們</p>
+                <a class="footer_link" href="mailto:tctc.official.tw@gmail.com">✉ tctc.official.tw@gmail.com</a>   
+            </div>
+            <div class="footer_col">
+                <p class="footer_col_title">平台連結</p>
+                <a class="footer_link" href="https://www.youtube.com/channel/UCIA5fwMrvGpvcQbG0ZX2ZLA" target="_blank" rel="noopener">Youtube</a>   
+            </div>
+        </div>
+        
+        <div class="footer_copyright">
+            &copy; 2026 TCTC2.0 繁中打字中心. All Rights Reserved.
+        </div>
+    </footer>
+
+    
+
+
+    <!-- 【新增】在線時長追蹤（全站共用，每個頁面都要載入）
+         這個頁面沒有載入 Firebase，時間會先記在本機，等下次造訪
+         game.html / TCTC2-0-challenge.html / TCTC2-0-ranking.html 時補交上雲端。 -->
+    <script src="TCTC2-0-online_time.js"></script>
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="070df494-4361-4dce-ad65-a25b404811e9"></script>
+
+</body>
+
+</html>

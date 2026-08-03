@@ -9,7 +9,7 @@
     position: relative;
 
     width: 100vw;
-    background-color: var(--dark-blue);
+    background-color: var(--darker-blue);
     display: flex;
     align-items: center;
     flex-direction: column;
@@ -42,7 +42,7 @@
     gap: 1rem;
     
 
-    box-shadow: inset 0px 0px 9px rgba(0, 0, 0, 0.8);
+    box-shadow: inset 0px 0px 9px rgba(0, 0, 0, 0.1);
 }
 
 .main_lobby_map_stage{
@@ -57,13 +57,15 @@
     border: 1px solid rgba(201, 168, 76, 0.3);
 
     cursor: pointer;
-    transition: all 200ms ease-in-out;
+    transition: all 100ms ease-in-out;
 
     display: flex;
     flex-direction: column;
 
-    padding: 0.9rem 3.2rem 1rem 0.6rem; /* 右邊多留空間給星星/已完成標籤，避免疊字 */
+    padding: 0.9rem 3.2rem 1.2rem 0.6rem; /* 右邊多留空間給星星/已完成標籤，避免疊字 */
     box-sizing: border-box;
+
+    font-weight: 400;
 
 }
 .main_lobby_map_stage.has_limit{
@@ -71,10 +73,7 @@
     padding-bottom: 0.6rem;
 }
 .main_lobby_map_stage:hover{
-    transform: translateY(-1px);
-
-    outline: 2px solid rgba(201, 168, 76, 0.5);
-    border-left: 3px solid var(--champagne-gold);
+    background-color: var(--light-blue);
 }
 .main_lobby_map_stage_row{
     display: flex;
@@ -89,7 +88,8 @@
     margin-left: 0.5rem;
 }
 .main_lobby_map_stage_text2{
-    margin-top: 1%;
+    margin: 0.4rem 0;
+
 }
 .main_lobby_map_stage_text2-1{
     color: #ffffff;
@@ -98,7 +98,7 @@
 }
 .main_lobby_map_stage_text2-2{
     color: #ffffff;
-    font-size: 1.5rem;
+    font-size: 1rem;
 }
 .main_lobby_map_stage_text3{
     color: var(--champagne-gold);
@@ -144,6 +144,7 @@
     border-left: 2px solid #c9a84c;
 }
 
+
 /* wpm / acc 門檻：改成一排小藥丸徽章，貼在卡片底部，不再跟其他文字疊在一起 */
 .main_lobby_stage_limit{
     margin-top: auto;
@@ -151,7 +152,7 @@
 
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: 0.4rem;
 }
 .main_lobby_stage_limit_chip{
     display: inline-flex;
@@ -160,7 +161,7 @@
 
     padding: 0.15rem 0.6rem;
 
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     white-space: nowrap;
 
     color: rgb(245, 130, 130);
@@ -227,7 +228,8 @@
     align-items: center;
     justify-content: space-between;
 
-    box-shadow: 0px 1px 5px rgba(0, 0, 0, 0.8);
+
+    margin-bottom: 30px;
 }
 .main_lobby_main_frame_player_avatar{
     width: 8rem;
@@ -374,8 +376,7 @@
     max-width: 900px;
     
 
-    margin-top: 30px;
-    margin-bottom: 10px;
+    margin-bottom: 20px;
 
     display: flex;
     justify-content: space-between;
@@ -385,7 +386,6 @@
     border-radius: 8px;
     border: 1px solid rgba(201, 168, 76, 0.5);
 
-    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.8);
 
     box-sizing: border-box;
 }
@@ -413,7 +413,7 @@
     flex-direction: column;
     align-items: center;
 
-    box-shadow: inset 0px 0px 8px rgba(0, 0, 0, 0.8);
+    box-shadow: inset 0px 0px 8px rgba(0, 0, 0, 0.1);
 }
 .main_lobby_chapter_selector_text1{
     position: absolute;
@@ -432,6 +432,7 @@
 
     box-sizing: border-box;
     padding-left: 1rem;
+    font-weight: 400;
 
     border-top: 1px solid rgba(201, 168, 76, 0.4);
     background-color: var(--dark-blue);
@@ -472,15 +473,12 @@
     
 
     width: 102%;
-    transform: translateY(-6px);
     transform: translatex(10px);
 
 
     background-color: rgba(42, 38, 62, 1);
 
-    border-top: 3px solid rgba(201, 168, 76, 0.6);
-    border-top-left-radius: 3px;
-    border-top-right-radius: 3px;
+    border-top: 2px solid rgba(201, 168, 76, 0.6);
     border-left: transparent;
     border-right: transparent;
 
@@ -505,15 +503,12 @@
 }
 .chapter_selected{
     width: 103%;
-    transform: translateY(-6px);
 
     background-color: rgba(50, 39, 63, 1);
 
     border-top: 2px solid rgba(201, 168, 76, 0.6);
-    border-radius: 3px;
 
 
-    box-shadow: 0px 3px 7px rgba(0, 0, 0, 0.34);
 }
 .easy_chapter_name{
     color: #ffffff;
@@ -524,13 +519,13 @@
 }
 
 .main_lobby_mode_beginner:hover{
-    box-shadow: 0px 0px 4px var(--champagne-gold);
+    background-color: var(--light-blue);
 }
 .main_lobby_mode_medium:hover{
-    box-shadow: 0px 0px 4px var(--champagne-gold);
+    background-color: var(--light-blue);
 }
 .main_lobby_mode_master:hover{
-    box-shadow: 0px 0px 4px var(--champagne-gold);
+    background-color: var(--light-blue);
 }
 .main_lobby_mode_beginner_complete{
     position: relative;
@@ -594,7 +589,9 @@
     max-width: 300px;
 
     padding-bottom: 1rem;
-    padding-left: 1%;
+    padding-left: 1.6%;
+    padding-top: 0.5rem;
+
     background-color:  var(--dark-blue);
     
     border-radius: 6px;
@@ -612,6 +609,8 @@
 
     padding-bottom: 1rem;
     padding-left: 1%;
+    padding-top: 0.5rem;
+
     background-color: var(--dark-blue);
 
     border-radius: 6px;
@@ -629,6 +628,7 @@
 
     padding-left: 1%;
     padding-bottom: 1rem;
+    padding-top: 0.5rem;
     background-color: var(--dark-blue);
 
     border-radius: 6px;
@@ -834,23 +834,22 @@
     border-top: 4px solid #C9A84C;
 }
 .main_lobby_mode_beginner_text1-0{
-    color: rgba(201, 168, 76, 0.8);
-    font-size: 1.2rem;
-    letter-spacing: 1px;
-    
-    margin-top: 2%;
+    color: var(--champagne-gold);
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    margin-top: 0.3rem;
 
 }
 .main_lobby_mode_beginner_text1-1{
     margin-top: 2%;
 
     color: white;
-    font-weight: 300;
-    font-size: 1.1rem;
+    font-weight: 500;
+    font-size: 1.5rem;
 
 }
 .main_lobby_mode_beginner_text1-2{
-    margin-top: 2%;
+    margin-top: 4%;
 
     font-size: 0.8rem;
     color: gray;
@@ -862,7 +861,7 @@
 
     border-radius: 50%;     
     object-fit: cover;           
-    border: 4px solid #c9a84c;    
+    border: 2px solid #5b5b5b;    
 
     background-color: #e0e0e0;         
     
@@ -894,8 +893,19 @@
     
     background-color: #888888;       
 }
+
+/* ===== 【新增】玩家自訂頭像（由 TCTC2-0-avatar_display.js 動態插入）=====
+   容器 .profile_avatar_container 本身已經是圓形（border-radius:50%）+
+   overflow:hidden，這裡只要讓圖片撐滿整個容器、用 object-fit:cover
+   避免圖片變形即可，圓形裁切交給容器處理，不用在這裡重複寫 border-radius */
+.profile_avatar_container_img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
 .main_lobby_main_frame_player_profile_left_div_username{
     font-size: 2rem;
+    font-weight: 500;
 }
 /* .main_achievement{
     top: 2.5rem;
@@ -950,8 +960,8 @@
     position: relative;
     cursor: pointer;
 
-    color: #0a0808;
-    font-weight: 100;
+    font-width: 1.1rem;
+    color: black;
 }
 
 /* --- 共同樣式設定 (初始狀態：完全透明、隱藏、縮回上方) --- */
@@ -959,7 +969,7 @@
 .main_ranking,
 .main_profile {
     color: #0a0808;
-    font-weight: 100;
+    font-weight: 300;
 
     position: absolute;
 
