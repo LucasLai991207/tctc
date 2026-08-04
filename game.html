@@ -426,6 +426,39 @@
             background-color: rgba(200,60,60,0.5);
             outline: 2px solid rgba(200,60,60,0.7);
         }
+        /* ===== 【新增】打錯的那個字：從格子上方「跳出來」淡入淡出 =====
+           玩家打錯的當下，把「他實際按出來的注音符號」用一個小字浮出來，
+           往上飄一小段再淡出，讓玩家清楚看到「你剛剛打的是這個字，不對」。
+           .game_char_box / .bopomofo_char 需要 position: relative 當定位基準，
+           每次打錯都會「新增一個」這種 span（不是重複用同一個），
+           這樣就算連續打錯，也會一顆一顆往上冒出來，而不是疊在一起沒有變化。
+           【修改】原本打錯之後這格會被鎖住，需要一個「卡住震動」動畫提醒玩家；
+           新邏輯下打錯直接跳到下一格（最後一格則直接結束遊戲），不會再卡住，
+           所以原本的 box_shake 震動動畫已經不需要了，這裡移除。 */
+        .game_char_box,
+        .bopomofo_char {
+            position: relative;
+        }
+        .wrong_char_popup {
+            position: absolute;
+            left: 50%;
+            top: -1;
+            transform: translate(-50%, 0);
+            pointer-events: none;
+            color: rgb(251, 25, 25);
+            font-weight: bold;
+            text-shadow: 0 0 6px rgba(200,60,60,0.9), 0 0 2px rgba(0,0,0,0.6);
+            white-space: nowrap;
+            z-index: 6;
+            animation: wrong_char_popup_fade 550ms ease forwards;
+        }
+        @keyframes wrong_char_popup_fade {
+            /* 淡入（微微放大）→ 停留一下 → 邊往上飄邊淡出 */
+            0%   { opacity: 0; transform: translate(-50%, 4px) scale(0.8); }
+            18%  { opacity: 1; transform: translate(-50%, -14px) scale(1.05); }
+            70%  { opacity: 1; transform: translate(-50%, -24px) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -36px) scale(0.9); }
+        }
         .game_input_hint {
             color: gray;
             font-size: 0.9rem;
@@ -969,7 +1002,7 @@
             ">
                 1. 請切換至<b style="color: #c9a84c;">英文輸入法</b><br>
                 2. 確認 <b style="color: #c9a84c;">Caps Lock 未開啟</b><br>
-                3. 如果打錯字（框框變成紅色） <b style="color: #c9a84c;">使用鍵盤右上角‘刪除鍵’刪除後便可繼續進行</b>
+                3. 如果打錯字（框框變成紅色） <b style="color: #c9a84c;">會自動跳到下一格繼續進行</b>
             </div>
 
             <button onclick="
@@ -1090,7 +1123,6 @@
         // ===== 遊戲狀態變數 =====
         let target = ""          // 這關要打的字串
         let current = 0          // 目前指到第幾個字（從 0 開始）
-        let wrong_input = false  // 目前是否處於打錯卡住的狀態
         let wrong_key_times = 0  // 總共打錯幾次
         let target_get = 0       // 總共打對幾個字
         let isRunning = false    // 計時是否已經開始
@@ -1460,8 +1492,8 @@
                     span.classList.add("correct")
                 }
                 else if(idx === char_idx_of_current){
-                    // 這個字正在打：如果卡在打錯的狀態就顯示紅色，不然顯示金框提示
-                    span.classList.add(wrong_input ? "wrong" : "current")
+                    // 這個字正在打：一律顯示金框提示（打錯不再卡住，所以這裡不會停留在紅色狀態）
+                    span.classList.add("current")
                     current_span = span // 【新增】
                 }
             })
@@ -1914,7 +1946,6 @@
 
             //重置狀態
             current = 0
-            wrong_input = false
             wrong_key_times = 0
             target_get = 0
             isRunning = false
@@ -2724,6 +2755,28 @@
 
 
 
+        // ===== 【新增】讓「打錯的那個字」從格子上方跳出來、淡入淡出 =====
+        // 這裡「每次呼叫」都會新增一個獨立的 span，
+        // 不是重複用同一個 class 觸發動畫。這樣如果玩家卡住之後還一直亂按，
+        // 每一下都會各自彈出一個字、各自淡出，而不是後面的按鍵把前一個動畫打斷、
+        // 看起來像沒反應。動畫結束（或保底的 setTimeout）就把這個 span 移除，
+        // 避免玩家狂按時 DOM 裡越疊越多殘留節點。
+        function Show_Wrong_Char_Popup(box, wrong_char){
+            if(!box || !wrong_char) return
+
+            const popup = document.createElement("span")
+            popup.className = "wrong_char_popup"
+            popup.textContent = wrong_char
+            box.appendChild(popup)
+
+            popup.addEventListener("animationend", function(){
+                popup.remove()
+            }, { once: true })
+            // 保底：極少數情況（例如切分頁到背景）animationend 不會觸發，
+            // 用 setTimeout 確保這個 span 一定會被清掉。
+            setTimeout(function(){ popup.remove() }, 700)
+        }
+
         document.addEventListener("keydown", function(event) {
 
             if(time_up) return   // 【新增】時間到了，忽略所有按鍵輸入
@@ -2731,7 +2784,7 @@
             if (target === "" || boxes.length === 0) return
 
             // 如果已經打完全部（current 超出範圍）忽略
-            if (current >= target.length && !wrong_input) return
+            if (current >= target.length) return
 
             let key = event.key  // 取得按下的按鍵名稱
 
@@ -2759,25 +2812,23 @@
             if (key === " ") event.preventDefault()
 
             // ---- 處理 Backspace（退格）----
+            // 【修改】新邏輯下，打錯字不會再卡住、游標會直接往前跳，
+            // 所以「打錯之後按 Backspace 清除紅框」這個分支已經不需要了。
+            // Backspace 現在單純只做一件事：往回退一格，讓玩家可以回頭重打
+            // 剛剛跳過的那一格（不管那格原本是綠框 correct 還是紅框 wrong）。
             if (key === "Backspace"){
-                if (wrong_input) {
-                    // 目前打錯卡住：清除錯誤狀態，恢復金框
-                    wrong_input = false
-                    boxes[current].classList.remove("wrong")
-                    boxes[current].classList.add("current")
-                    Update_Normal_Mode_Target1_Highlight()
-                    return
-                }
-                
-                // 沒有打錯：往前退一格
                 if (current <= 0) return  // 已經在第一格，不能再退
 
                 boxes[current].classList.remove("current")
 
                 current--
-                target_get--
-                
-                boxes[current].classList.remove("correct")
+
+                // 只有「退回去的那格」原本是打對（correct）時，才需要把 target_get 扣回來；
+                // 如果那格是打錯被跳過的（wrong），本來就沒有算進 target_get，不能重複扣。
+                const was_correct = boxes[current].classList.contains("correct")
+                if (was_correct) target_get--
+
+                boxes[current].classList.remove("correct", "wrong")
                 boxes[current].classList.add("current")
                 Update_Normal_Mode_Target1_Highlight()
                 return
@@ -2797,8 +2848,6 @@
                 startTime = Date.now()  //記錄開始
                 Start_Timer()
             }
-            if (wrong_input) return
-
             // 判斷對錯 
             if (target[current] === bopomofo[key]) {
 
@@ -2836,9 +2885,38 @@
             } else {
                 //打錯
                 wrong_key_times++   //錯誤次數 +1
-                wrong_input = true  //設為卡住
-                boxes[current].classList.remove("current")  //移除金框
-                boxes[current].classList.add("wrong")       //紅框
+
+                // 不管是不是最後一格，都先在「剛打錯的這一格」跳出玩家實際打出來的字，淡入淡出
+                Show_Wrong_Char_Popup(boxes[current], bopomofo[key])
+
+                if (current === boxes.length - 1) {
+                    // 【新增】這格已經是最後一格，沒有下一格可以跳了：
+                    // 打錯就直接結束遊戲，不用管這格要標紅還是留金框。
+                    boxes[current].classList.remove("current")
+                    boxes[current].classList.add("wrong")
+                    Update_Normal_Mode_Target1_Highlight()
+                    ShowResult()
+                    return
+                }
+
+                // 不是最後一格：這格直接標成紅框（wrong），不鎖住，
+                // 游標直接跳到下一格（變金框 current），跟「打對」時的捲動邏輯一致。
+                const current_top = boxes[current].offsetTop
+
+                boxes[current].classList.remove("current")
+                boxes[current].classList.add("wrong")
+                current++
+                boxes[current].classList.add("current")
+
+                const next_top = boxes[current].offsetTop
+
+                if (next_top !== current_top) {
+                    const container = document.getElementById("game_char_container")
+                    const scrool_distance = Math.abs(current_top - next_top)
+
+                    container.scrollBy({ top: scrool_distance, behavior: "smooth" })
+                }
+
                 Update_Normal_Mode_Target1_Highlight()
             }
         })
