@@ -969,7 +969,7 @@
 .main_ranking,
 .main_profile {
     color: #0a0808;
-    font-weight: 300;
+    font-weight: 400;
 
     position: absolute;
 
@@ -1010,13 +1010,13 @@
 .main_lobby_more_detil_div:hover .main_ranking {
     opacity: 0.85;            
     visibility: visible;
-    top: 2.5rem;            
+    top: 2rem;            
     transition-delay: 0.05s; 
 }
 .main_lobby_more_detil_div:hover .main_profile {
     opacity: 0.8;            
     visibility: visible;
-    top: 5rem;            
+    top: 4.5rem;            
     transition-delay: 0.1s; 
 }
 
