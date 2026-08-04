@@ -85,6 +85,38 @@ function Escape_Html(text) {
 //======= 渲染排行榜列表（兩種模式共用）=======
 const medal_by_rank = { 1: "🥇", 2: "🥈", 3: "🥉" }
 
+// ===== 【新增】標準競賽排名（Standard Competition Ranking，俗稱 1224 制）=====
+// 規則：分數相同 → 名次相同；下一個「不同分數」的名次，直接跳到「目前總共有幾筆資料排在他前面（含自己）」，
+// 也就是同分的人會把底下的名次「佔位」擠掉，例如：100 100 90 80 → 名次是 1 1 3 4（不是 1 1 2 3）。
+//
+// 參數：
+//   list      —— 已經「由大到小排序好」的原始榜單陣列（這個函式不負責排序，只負責『在排好的順序上』標名次）
+//   get_value —— 一個函式，傳入單筆 entry，回傳「用來判斷同分與否」的那個數值
+//                （stage/challenge 模式用 wpm；玩家總榜依目前選的指標可能是 avg_wpm / avg_acc / online_seconds 等）
+//
+// 回傳：一個長度跟 list 一樣的陣列，ranks[i] 就是 list[i] 這筆資料對應的名次數字。
+//
+// 【重要前提】這個函式假設 list 已經是「依 get_value 由大到小排序」的狀態
+// （也就是 Firebase 那邊 orderBy 出來的順序）。如果傳進來的陣列本身順序不對，算出來的名次也會跟著錯，
+// 因為這裡完全不做排序，只單純比較「跟上一筆是不是同分」。
+function Compute_Competition_Ranks(list, get_value) {
+    const ranks = new Array(list.length)
+
+    list.forEach(function (entry, index) {
+        if (index > 0 && get_value(entry) === get_value(list[index - 1])) {
+            // 跟前一筆同分 → 直接沿用前一筆的名次，不要 +1
+            ranks[index] = ranks[index - 1]
+        } else {
+            // 跟前一筆不同分（或是第一筆）→ 名次 = 目前排在他前面的總筆數 + 1
+            // 這一步就是「跳號」的關鍵：即使前面有好幾筆同分，index 仍然是連續遞增的，
+            // 所以只要分數一改變，名次就會直接跳到正確的位置，中間的名次自動被同分的人佔掉了。
+            ranks[index] = index + 1
+        }
+    })
+
+    return ranks
+}
+
 // 【修改】回傳一個布林值：這份榜單裡有沒有出現「自己」。
 // 呼叫端會用這個布林值決定要不要另外去查「自己排第幾名」、顯示底部浮窗。
 function Render_Leaderboard(list) {
@@ -98,10 +130,16 @@ function Render_Leaderboard(list) {
 
     let self_found_in_list = false
 
+    // 【修改】這份榜單排名的依據是 wpm（跟 Firebase 端 orderBy("wpm") 的排序欄位保持一致）。
+    // 用 Compute_Competition_Ranks 算出「考慮同分」的正確名次陣列，取代原本單純的 index + 1。
+    const ranks = Compute_Competition_Ranks(list, function (entry) { return entry.wpm })
+
     list.forEach(function (entry, index) {
-        const rank = index + 1
+        const rank = ranks[index]
         const row = document.createElement("div")
         row.className = "ranking_row"
+        // 用「名次」而不是「陣列索引」判斷要不要套用前三名的金色樣式，
+        // 這樣如果第 2 名同分有兩個人，兩個人都還是會被標成前三名（因為他們的名次真的是 2）
         if (rank <= 3) row.classList.add("ranking_row_top3")
         // 【新增】比對這筆資料是不是「我自己」上傳的（用 anon_id 判斷），是的話特別標記出來
         const is_self = typeof Get_Anon_Id === "function" && entry._anon_id === Get_Anon_Id()
@@ -442,6 +480,17 @@ function Format_Online_Seconds(total_seconds) {
     return `${minutes} 分 ${seconds} 秒`
 }
 
+// ===== 【新增】依「目前選的玩家總榜指標」，回傳這筆 entry 用來排名/判斷同分的數值 =====
+// 一定要跟 Load_Player_Leaderboard() 裡呼叫的 Get_Top_Players_By_XXX（Firebase 端 orderBy 的欄位）對應，
+// 不然畫面上顯示的名次會跟 Firebase 排序出來的順序對不起來。
+function Get_Player_Metric_Value(entry) {
+    if (player_metric === "avg_wpm") return entry.avg_wpm ?? 0
+    if (player_metric === "avg_acc") return entry.avg_acc ?? 0
+    if (player_metric === "total_points") return entry.total_points ?? 0
+    if (player_metric === "page_views") return entry.page_views ?? 0
+    return entry.online_seconds ?? 0 // 預設：在線時長榜
+}
+
 // 依目前選的指標，把「名次之後的兩欄」渲染成對應的內容
 // 【修改】跟 Render_Leaderboard 一樣，回傳「自己有沒有出現在這份榜單裡」
 function Render_Player_Leaderboard(list) {
@@ -455,8 +504,11 @@ function Render_Player_Leaderboard(list) {
 
     let self_found_in_list = false
 
+    // 【修改】用目前選中的指標（avg_wpm／avg_acc／online_seconds／total_points／page_views）當作同分判斷依據
+    const ranks = Compute_Competition_Ranks(list, Get_Player_Metric_Value)
+
     list.forEach(function (entry, index) {
-        const rank = index + 1
+        const rank = ranks[index]
         const row = document.createElement("div")
         row.className = "ranking_row"
         if (rank <= 3) row.classList.add("ranking_row_top3")
