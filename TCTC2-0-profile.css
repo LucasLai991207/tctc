@@ -265,6 +265,94 @@
     cursor: default;
 }
 
+/* ===== 【新增】刪除所有資料 =====
+   刻意跟上面「更新資料」的金色按鈕拉開視覺距離：獨立一個區塊、
+   用紅色系（--error-red），讓玩家一眼就看得出這是「危險操作」，
+   跟一般的表單送出動作區分開來，降低手滑誤觸的機率。 */
+.profile_danger_zone{
+    margin-top: 1.4rem;
+    padding-top: 1.4rem;
+
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+.profile_danger_btn{
+    padding: 0.8rem 1.2rem;
+
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+
+    background-color: transparent;
+    color: var(--error-red);
+
+    border: 1px solid var(--error-red);
+    border-radius: 2px;
+
+    cursor: pointer;
+    transition: all 150ms ease;
+}
+.profile_danger_btn:hover{
+    background-color: var(--error-red);
+    color: whitesmoke;
+}
+
+.profile_danger_confirm{
+    margin-top: 1rem;
+    padding: 1rem 1.1rem;
+
+    background-color: rgba(192, 57, 43, 0.08);
+    border: 1px solid rgba(192, 57, 43, 0.4);
+    border-radius: 6px;
+}
+.profile_danger_confirm_text{
+    margin: 0 0 1rem;
+
+    color: rgb(220, 200, 200);
+    font-size: 0.85rem;
+    line-height: 1.7;
+    letter-spacing: 0.5px;
+}
+.profile_danger_confirm_actions{
+    display: flex;
+    gap: 0.7rem;
+}
+.profile_danger_btn_cancel{
+    padding: 0.5rem 1.1rem;
+
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+
+    background-color: transparent;
+    color: rgb(190, 190, 190);
+
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 2px;
+
+    cursor: pointer;
+}
+.profile_danger_btn_confirm{
+    padding: 0.5rem 1.1rem;
+
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: 1px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+
+    background-color: var(--error-red);
+    color: whitesmoke;
+
+    border: 1px solid var(--error-red);
+    border-radius: 2px;
+
+    cursor: pointer;
+    transition: opacity 150ms ease;
+}
+.profile_danger_btn_confirm:disabled{
+    opacity: 0.6;
+    cursor: default;
+}
+
 /* ===== 【新增】排行榜顯示開關 ===== */
 .profile_toggle_row{
     display: flex;

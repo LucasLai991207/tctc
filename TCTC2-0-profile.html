@@ -111,6 +111,25 @@
                         </div>
 
                         <button class="profile_update_btn" id="profile_update_btn" onclick="Update_profile()">更新資料</button>
+
+                        <!-- ===== 【新增】刪除所有資料 =====
+                             刻意做成「兩段式」：先按一次只會出現確認區塊，真的要刪除
+                             要再按一次紅色的「確認刪除」，避免手滑誤觸就把資料刪光。
+                             確認區塊預設是隱藏的（is_hidden），按下第一顆按鈕才會展開。 -->
+                        <div class="profile_danger_zone">
+                            <button type="button" class="profile_danger_btn" id="profile_delete_btn" onclick="Show_Delete_Confirm()">刪除所有資料</button>
+
+                            <div class="profile_danger_confirm is_hidden" id="profile_delete_confirm">
+                                <p class="profile_danger_confirm_text">
+                                    這會清除你的暱稱、簡介、頭像、主線／挑戰模式的所有排行榜成績、平均WPM／正確率、在線時長、累積積分，
+                                    且無法復原。<b>只有瀏覽次數不會被刪除</b>。確定要繼續嗎？
+                                </p>
+                                <div class="profile_danger_confirm_actions">
+                                    <button type="button" class="profile_danger_btn_cancel" onclick="Hide_Delete_Confirm()">取消</button>
+                                    <button type="button" class="profile_danger_btn_confirm" id="profile_delete_confirm_btn" onclick="Delete_All_Data_Clicked()">確認刪除</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div id="profile_history_block" class="profile_card profile_card_stats">
@@ -167,7 +186,7 @@
 
                     <div class="profile_card profile_card_achievement">
                         <p class="profile_card_title">成就</p>
-                        <p class="profile_achievement_empty">成就系統還沒開發完（其實根本沒開發😩）</p>
+                        <p class="profile_achievement_empty">成就系統還沒開發完</p>
                     </div>
                 </div>
             </section>
@@ -197,12 +216,16 @@
         </div>
     </footer>
 
+        <!-- 【新增】刪除資料功能需要 Level_Data 才能列舉出主線每一關的 id，
+             拿去清除 leaderboard/{關卡id}/{anon_id} 這些節點 -->
+        <script src="TCTC2-0-level_data.js"></script>
+
         <!-- 【新增】改名字需要用到 Claim_Username()（檢查名字全站有沒有重複），
              所以這個頁面現在也要載入 Firebase，跟其他頁面一致。 -->
         <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
         <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
-        <script src="TCTC2-0-firebase.js?v=2"></script>
+        <script src="TCTC2-0-firebase.js?v=3"></script>
 
         <!-- 【新增】在線時長追蹤（全站共用，每個頁面都要載入） -->
         <script src="TCTC2-0-online_time.js"></script>
