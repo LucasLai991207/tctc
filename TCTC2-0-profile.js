@@ -265,6 +265,92 @@ function Toggle_Leaderboard_Visibility(is_visible){
     })
 }
 
+/* ============================================================
+   【新增】刪除所有資料：兩段式確認流程
+   ------------------------------------------------------------
+   Show_Delete_Confirm()：按下「刪除所有資料」，展開確認區塊（不會馬上刪）。
+   Hide_Delete_Confirm()：按「取消」，收合確認區塊，什麼事都不會發生。
+   Delete_All_Data_Clicked()：按確認區塊裡的「確認刪除」，這裡才會真的
+   呼叫 TCTC2-0-firebase.js 的 Delete_All_Player_Data() 去清雲端資料。
+   ============================================================ */
+function Show_Delete_Confirm(){
+    const confirmEl = document.getElementById("profile_delete_confirm")
+    if(confirmEl) confirmEl.classList.remove("is_hidden")
+}
+
+function Hide_Delete_Confirm(){
+    const confirmEl = document.getElementById("profile_delete_confirm")
+    if(confirmEl) confirmEl.classList.add("is_hidden")
+}
+
+// 除了雲端那些之外，本機 localStorage 裡跟「這個玩家的成績/身分」有關的
+// key 也要一起清掉，不然畫面重新整理後，還是會從本機讀到舊資料顯示出來。
+// 刻意「不」清除的 key：
+// - tctc_anon_id：這個瀏覽器的識別碼本身要留著繼續用（雲端資料已經照著
+//   這組 id 清過了，沒必要換一組新的 id，換了反而等於變成另一個訪客）
+// - tctc2.0-pending_page_views／tctc2.0-pending_online_seconds：
+//   還沒同步上雲端的「待補交」暫存量，跟本次清除的「已經同步上去的
+//   累積總量」是兩回事，清掉反而會讓這段時間的紀錄真的憑空消失
+function Clear_Local_Player_Data(){
+    const KEYS_TO_REMOVE = [
+        "username", "intro",
+        "wpm_sum", "wpm_times", "average_wpm",
+        "acc_sum", "acc_times", "average_acc",
+        "average_challenge_wpm", "average_challenge_acc",
+        "tctc2.0-saved_difficulty",
+        "tctc2.0-saved_challenge_difficulty",
+        "tctc2.0-saved_challenge_seconds",
+        "tctc2.0-saved_challenge_stage",
+        "tctc2.0-challenge_history",
+        "tctc2.0-challenge_total_points",
+        "tctc2.0-profile_avatar"
+        // tctc_guest_number 已經在 Delete_All_Player_Data() 裡面清過了，
+        // 不用在這裡重複寫一次
+    ]
+    KEYS_TO_REMOVE.forEach(function(key){
+        localStorage.removeItem(key)
+    })
+}
+
+function Delete_All_Data_Clicked(){
+    const confirmBtnEl = document.getElementById("profile_delete_confirm_btn")
+
+    if(typeof Delete_All_Player_Data !== "function"){
+        console.log("[delete] Firebase 尚未載入，無法刪除資料")
+        Show_Profile_Toast("系統暫時無法刪除資料，請重新整理頁面再試一次", true)
+        return
+    }
+
+    // 按下去馬上鎖住按鈕、換文字，避免手滑連點好幾次、
+    // 同時觸發好幾個刪除請求互相打架
+    if(confirmBtnEl){
+        confirmBtnEl.disabled = true
+        confirmBtnEl.textContent = "刪除中..."
+    }
+
+    Delete_All_Player_Data(function(success){
+        if(!success){
+            console.log("[delete] 刪除資料失敗")
+            Show_Profile_Toast("刪除失敗，請稍後再試一次", true)
+            if(confirmBtnEl){
+                confirmBtnEl.disabled = false
+                confirmBtnEl.textContent = "確認刪除"
+            }
+            return
+        }
+
+        Clear_Local_Player_Data()
+        Show_Profile_Toast("資料已全部刪除", false)
+
+        // 直接重新整理頁面：讓所有欄位（暱稱輸入框、統計數字、頭像預覽、
+        // 排行榜開關⋯）都回到「全新訪客」該有的初始狀態，
+        // 比自己一個個手動重置每個 UI 元素、更不容易漏掉某個角落沒清乾淨
+        setTimeout(function(){
+            window.location.reload()
+        }, 900) // 留一點時間讓玩家看到上面那句 toast 提示，再重新整理
+    })
+}
+
 // ===== 【新增】等 DOMContentLoaded 才呼叫 Load_Cloud_Player_Stats() =====
 // 原因：TCTC2-0-online_time.js 會在 DOMContentLoaded 時，把這個瀏覽器
 // 本機暫存的「在線秒數」跟「瀏覽次數」補交上雲端（Sync_Pending_Online_Time /

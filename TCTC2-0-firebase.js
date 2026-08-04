@@ -1077,3 +1077,108 @@ function Set_Own_Leaderboard_Visibility(hide, callback) {
             if (callback) callback(false)
         })
 }
+
+/* ============================================================
+   【新增】刪除這個瀏覽器（anon_id）在雲端留下的所有資料
+   ------------------------------------------------------------
+   刻意「不」刪除的東西：
+   - player_stats/{anon_id}/page_views：個人瀏覽次數，跟 site_meta/total_page_views
+     （網站總瀏覽次數）是兩個獨立的東西，玩家清空自己的資料不代表要抹掉
+     「這台裝置造訪過幾次」這個統計，兩者語意上不衝突，所以保留。
+   - site_meta/total_page_views：本來就不是這個玩家專屬的資料，不會被動到。
+   - guest_counter：全站共用的流水號計數器，不能因為單一玩家刪資料就往回退，
+     不然會跟其他已經分配出去的訪客編號打架。
+
+   會刪除的東西：
+   - player_stats/{anon_id} 底下除了 page_views 以外的所有欄位
+   - guest_numbers/{anon_id}（下次需要顯示訪客編號時，會重新分配一個新的）
+   - usernames/{key}：只有在「這個名字目前真的是被自己佔用」時才釋放，
+     用 transaction 做這層確認，避免刪到別人手上的資料
+   - leaderboard/{stageId}/{anon_id}：主線每一關，路徑用 Level_Data 現場列舉
+     （所以這個頁面要記得載入 TCTC2-0-level_data.js，不然這段會直接跳過）
+   - challenge_leaderboard/{comboId}/{anon_id}：挑戰模式固定 40 種組合
+     （4 難度 × 2 模式 × 5 時間長度），直接寫死列舉，不需要額外資料
+
+   全部用同一個 multi-path update() 一次送出，Firebase 會把它當成一次
+   atomic 的寫入──要嘛全部成功、要嘛全部失敗，不會發生「刪到一半斷掉，
+   有些欄位刪了、有些沒刪」這種資料半殘的狀態。
+   ============================================================ */
+function Delete_All_Player_Data(callback) {
+    const anon_id = Get_Anon_Id()
+    const updates = {}
+
+    // ----- player_stats：除了 page_views，其餘全部清成 null（等同刪除該欄位）-----
+    ;[
+        "name", "wpm_sum", "wpm_count", "avg_wpm",
+        "acc_sum", "acc_count", "avg_acc",
+        "online_seconds", "total_points", "hide_from_leaderboard"
+    ].forEach(function (field) {
+        updates[`player_stats/${anon_id}/${field}`] = null
+    })
+
+    // ----- 訪客編號：連本機快取一起清，才不會畫面顯示舊號碼、雲端卻查無此號 -----
+    updates[`guest_numbers/${anon_id}`] = null
+    localStorage.removeItem("tctc_guest_number")
+
+    // ----- 挑戰模式排行榜：40 種組合固定列舉 -----
+    const CHALLENGE_DIFFICULTIES = ["easy", "medium", "hard", "extreme"]
+    const CHALLENGE_STAGES = ["article", "word"]
+    const CHALLENGE_SECONDS = [30, 60, 180, 300, 600]
+    CHALLENGE_DIFFICULTIES.forEach(function (diff) {
+        CHALLENGE_STAGES.forEach(function (stage) {
+            CHALLENGE_SECONDS.forEach(function (seconds) {
+                updates[`challenge_leaderboard/${diff}-${stage}-${seconds}/${anon_id}`] = null
+            })
+        })
+    })
+
+    // ----- 主線排行榜：走訪 Level_Data 拿到每一關的 id -----
+    // Level_Data 定義在 TCTC2-0-level_data.js，如果呼叫這支函式的頁面沒有載入
+    // 那支檔案（例如目前的 profile.html），typeof 會是 "undefined"，
+    // 這段就整段跳過──不會報錯中斷，只是主線榜這部分刪不到，
+    // 其餘 player_stats／guest_numbers／usernames／挑戰榜還是會正常執行。
+    if (typeof Level_Data === "object" && Level_Data) {
+        Object.keys(Level_Data).forEach(function (difficultyKey) {
+            const chapters = (Level_Data[difficultyKey] && Level_Data[difficultyKey].chapter) || []
+            chapters.forEach(function (chapter) {
+                const stages = chapter.stage || []
+                stages.forEach(function (stage) {
+                    if (stage && stage.id) {
+                        updates[`leaderboard/${stage.id}/${anon_id}`] = null
+                    }
+                })
+            })
+        })
+    } else {
+        console.log("[delete] 這個頁面沒有載入 Level_Data，主線關卡榜的資料這次不會被清除")
+    }
+
+    // ----- 使用者名稱：只釋放「確定是自己佔的」那一筆 -----
+    const saved_username = (localStorage.getItem("username") || "").trim()
+    const username_key = saved_username ? _Username_To_Key(saved_username) : null
+
+    function Finish_Delete() {
+        tctc_db.ref().update(updates)
+            .then(function () {
+                callback(true)
+            })
+            .catch(function (error) {
+                console.log("[delete] 清除雲端資料失敗：", error)
+                callback(false)
+            })
+    }
+
+    if (username_key) {
+        tctc_db.ref(`usernames/${username_key}`).transaction(function (current) {
+            // 只有現在存的值確實是自己的 anon_id，才清掉；
+            // 如果不是（例如中途被別人搶走、或本機記錄跟雲端不一致），保留原樣不動
+            return (current === anon_id) ? null : current
+        }, function () {
+            // 不管這步 transaction 結果如何（成功、被拒絕、甚至出錯），
+            // 都繼續往下做其餘資料的刪除，不要讓使用者名稱這一小步卡住整個流程
+            Finish_Delete()
+        })
+    } else {
+        Finish_Delete()
+    }
+}
