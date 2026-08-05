@@ -426,15 +426,34 @@
             background-color: rgba(200,60,60,0.5);
             outline: 2px solid rgba(200,60,60,0.7);
         }
+        /* ===== 【新增】卡住提示動畫：格子只有「金框 current」、沒有「紅框 wrong」的狀態下
+           打錯了，上下震動一下，提醒玩家「你是被跳過來卡在這裡的，要先打對才能繼續」。
+           跟一般打錯的紅框 .wrong 不同，這裡刻意「不」加紅框，維持金框樣式，
+           只是加一個震動效果，所以底色/外框完全交給 .current 處理，這裡只負責動畫本身。
+           【修正】原本只有 .game_char_box 有這條規則，中級「逐字注音」模式的格子用的是
+           .bopomofo_char（不是 .game_char_box），所以這裡把 .bopomofo_char 也一起加進來。 ===== */
+        .game_char_box.box_shake,
+        .bopomofo_char.box_shake {
+            animation: box_shake_vertical 300ms ease;
+        }
+        @keyframes box_shake_vertical {
+            /* 0% / 100% 都回到原位，這樣動畫播完格子不會「定格」在偏移的位置，
+               中間用「上→下→上→下，幅度遞減」營造出真實震動的手感（跟單純左右滑動的 shake 不同，
+               這裡刻意都用 translateY 做垂直位移，符合「上下震動」的需求） */
+            0%   { transform: translateY(0); }
+            20%  { transform: translateY(-6px); }
+            40%  { transform: translateY(4px); }
+            60%  { transform: translateY(-3px); }
+            80%  { transform: translateY(2px); }
+            100% { transform: translateY(0); }
+        }
         /* ===== 【新增】打錯的那個字：從格子上方「跳出來」淡入淡出 =====
-           玩家打錯的當下，把「他實際按出來的注音符號」用一個小字浮出來，
-           往上飄一小段再淡出，讓玩家清楚看到「你剛剛打的是這個字，不對」。
+           玩家打錯的當下（包含卡住之後還繼續狂按），把「他實際按出來的注音符號」用一個
+           小字浮出來，往上飄一小段再淡出，讓玩家清楚看到「你剛剛打的是這個字，不對」。
            .game_char_box / .bopomofo_char 需要 position: relative 當定位基準，
            每次打錯都會「新增一個」這種 span（不是重複用同一個），
-           這樣就算連續打錯，也會一顆一顆往上冒出來，而不是疊在一起沒有變化。
-           【修改】原本打錯之後這格會被鎖住，需要一個「卡住震動」動畫提醒玩家；
-           新邏輯下打錯直接跳到下一格（最後一格則直接結束遊戲），不會再卡住，
-           所以原本的 box_shake 震動動畫已經不需要了，這裡移除。 */
+           這樣狂按的時候會一顆一顆往上冒出來，跟 box_shake 用同一格 class 重播動畫不同，
+           視覺上比較像「連續彈出」而不是「疊在一起沒有變化」。 */
         .game_char_box,
         .bopomofo_char {
             position: relative;
@@ -442,10 +461,10 @@
         .wrong_char_popup {
             position: absolute;
             left: 50%;
-            top: -1;
+            top: 0;
             transform: translate(-50%, 0);
             pointer-events: none;
-            color: rgb(251, 25, 25);
+            color: rgb(255,140,140);
             font-weight: bold;
             text-shadow: 0 0 6px rgba(200,60,60,0.9), 0 0 2px rgba(0,0,0,0.6);
             white-space: nowrap;
@@ -1002,7 +1021,7 @@
             ">
                 1. 請切換至<b style="color: #c9a84c;">英文輸入法</b><br>
                 2. 確認 <b style="color: #c9a84c;">Caps Lock 未開啟</b><br>
-                3. 如果打錯字（框框變成紅色） <b style="color: #c9a84c;">會自動跳到下一格繼續進行</b>
+                3. 如果打錯字（框框變成紅色） <b style="color: #c9a84c;">會自動跳到下一格；若連續兩格都打錯，就會卡在金框上震動，打對才能繼續</b>
             </div>
 
             <button onclick="
@@ -1124,6 +1143,11 @@
         let target = ""          // 這關要打的字串
         let current = 0          // 目前指到第幾個字（從 0 開始）
         let wrong_key_times = 0  // 總共打錯幾次
+        // 【新增】卡住狀態下，玩家可能會一直狂按同一格（想矇對），
+        // 這個旗標用來確保「同一次卡住」只把第一次的錯誤算進 wrong_key_times，
+        // 之後狂按只播動畫、不會一直往上加，避免正確率被灌爆。
+        // 每次 current 改變（前進或 Backspace 後退）都要重設回 false。
+        let stuck_mistake_counted = false
         let target_get = 0       // 總共打對幾個字
         let isRunning = false    // 計時是否已經開始
         let startTime = null     // 開始的時間點（毫秒
@@ -1947,6 +1971,7 @@
             //重置狀態
             current = 0
             wrong_key_times = 0
+            stuck_mistake_counted = false  // 【新增】每次重打/換關都要重置卡住旗標
             target_get = 0
             isRunning = false
             startTime = null
@@ -2755,6 +2780,29 @@
 
 
 
+        // ===== 【新增】讓「卡住的那一格（金框 current）」播放一次上下震動動畫 =====
+        // 用途：玩家上一格已經打錯（紅框），跳到這一格之後又打錯，這格就會卡住，
+        // 必須打對才能繼續。這個函式讓玩家直覺知道「這格卡住了，要打對它」，
+        // 但刻意不加紅框，維持金框樣式（跟「已經跳過去、變成紀錄」的紅框做出區隔）。
+        function Shake_Wrong_Box(){
+            const box = boxes[current]
+            if(!box) return
+
+            // 【重點】CSS animation 有個特性：同一個 class 如果「已經在身上」，
+            // 再呼叫一次 classList.add() 瀏覽器會視為沒有變化，動畫不會重新播放。
+            // 玩家如果連續按錯（卡住後又亂按兩三下），我們希望「每一下」都震一次，
+            // 所以要先移除 class，強制觸發一次 reflow（讀取 offsetWidth 會逼瀏覽器重新計算版面），
+            // 讓瀏覽器徹底「忘記」剛剛播過這個動畫，接下來重新加上 class 才能讓動畫重新從頭播放。
+            box.classList.remove("box_shake")
+            void box.offsetWidth   // 強制 reflow
+            box.classList.add("box_shake")
+
+            // 動畫播完（300ms 後）就把 class 移掉，避免留在身上導致下次觸發不了。
+            box.addEventListener("animationend", function(){
+                box.classList.remove("box_shake")
+            }, { once: true })
+        }
+
         // ===== 【新增】讓「打錯的那個字」從格子上方跳出來、淡入淡出 =====
         // 這裡「每次呼叫」都會新增一個獨立的 span，
         // 不是重複用同一個 class 觸發動畫。這樣如果玩家卡住之後還一直亂按，
@@ -2822,6 +2870,7 @@
                 boxes[current].classList.remove("current")
 
                 current--
+                stuck_mistake_counted = false  // 【新增】current 改變了，卡住旗標重設
 
                 // 只有「退回去的那格」原本是打對（correct）時，才需要把 target_get 扣回來；
                 // 如果那格是打錯被跳過的（wrong），本來就沒有算進 target_get，不能重複扣。
@@ -2858,6 +2907,7 @@
                 boxes[current].classList.add("correct")               //加上綠框
                 target_get++   //打對數量 +1
                 current++      //移到下一格
+                stuck_mistake_counted = false  // 【新增】current 改變了，卡住旗標重設
 
                 if (current < boxes.length) {
                     // 還有下一格，把金框移過去
@@ -2884,14 +2934,12 @@
                 Update_Normal_Mode_Target1_Highlight()
             } else {
                 //打錯
-                wrong_key_times++   //錯誤次數 +1
-
-                // 不管是不是最後一格，都先在「剛打錯的這一格」跳出玩家實際打出來的字，淡入淡出
-                Show_Wrong_Char_Popup(boxes[current], bopomofo[key])
 
                 if (current === boxes.length - 1) {
-                    // 【新增】這格已經是最後一格，沒有下一格可以跳了：
+                    // 【維持】最後一格沒有下一格可以跳、也不會有「卡住」的問題：
                     // 打錯就直接結束遊戲，不用管這格要標紅還是留金框。
+                    wrong_key_times++   //錯誤次數 +1
+                    Show_Wrong_Char_Popup(boxes[current], bopomofo[key])
                     boxes[current].classList.remove("current")
                     boxes[current].classList.add("wrong")
                     Update_Normal_Mode_Target1_Highlight()
@@ -2899,13 +2947,35 @@
                     return
                 }
 
-                // 不是最後一格：這格直接標成紅框（wrong），不鎖住，
-                // 游標直接跳到下一格（變金框 current），跟「打對」時的捲動邏輯一致。
+                // 【新增】判斷這格是不是「卡住格」：如果上一格已經是紅框（wrong），
+                // 代表這格是「因為上一格打錯才被跳過來的目標格」，這裡再打錯就要卡住，
+                // 不會前進、不會變紅，維持金框，直到打對為止。
+                const is_stuck_box = current > 0 && boxes[current - 1].classList.contains("wrong")
+
+                if (is_stuck_box) {
+                    // 卡住：只有「這次卡住之後的第一次」才計入錯誤次數，
+                    // 之後狂按同一格只播動畫、不會一直累加，避免正確率被灌爆。
+                    if (!stuck_mistake_counted) {
+                        wrong_key_times++
+                        stuck_mistake_counted = true
+                    }
+                    Show_Wrong_Char_Popup(boxes[current], bopomofo[key])  //跳出打錯的字
+                    Shake_Wrong_Box()  //金框震動（不會變紅）
+                    return
+                }
+
+                // 不是卡住格（第一次犯錯，給一次免費跳過的機會）：
+                // 這格直接標成紅框（wrong），游標直接跳到下一格（變金框 current），
+                // 跟「打對」時的捲動邏輯一致。
+                wrong_key_times++   //錯誤次數 +1
+                Show_Wrong_Char_Popup(boxes[current], bopomofo[key])  //跳出打錯的字
+
                 const current_top = boxes[current].offsetTop
 
                 boxes[current].classList.remove("current")
                 boxes[current].classList.add("wrong")
                 current++
+                stuck_mistake_counted = false  // 【新增】current 改變了，卡住旗標重設
                 boxes[current].classList.add("current")
 
                 const next_top = boxes[current].offsetTop
