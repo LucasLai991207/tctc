@@ -327,7 +327,16 @@ function cg_init(difficulty, seconds, stage){
         cg_render_article()
     }
 
-    cg_input_textarea.focus()
+    // ===== 【新增】單詞模式教學視窗：玩家還沒勾過「之後不再顯示」的話，
+    // 每次進單詞模式（包含按「再來一次」重開）都要先跳出來，說明「打完一個詞會自動送出、換下一個」，
+    // 不然很多人會下意識打完一個詞按空白鍵，以為要手動送出。
+    // 視窗開著時先不 focus 輸入框（cg_show_word_intro_modal 會順便鎖住 textarea），
+    // 避免玩家在視窗蓋著的狀態下盲打、意外啟動計時器。
+    if(cg_stage === "word" && localStorage.getItem(CG_WORD_INTRO_KEY) !== "1"){
+        cg_show_word_intro_modal()
+    } else {
+        cg_input_textarea.focus()
+    }
 }
 
 function cg_start_timer(){
@@ -874,6 +883,51 @@ if(cg_punct_modal_overlay){
     cg_punct_modal_overlay.addEventListener("click", function(event){
         if(event.target === cg_punct_modal_overlay){
             Close_Punctuation_Modal()
+        }
+    })
+}
+
+// ===== 【新增】單詞模式教學視窗 =====
+// 目的：很多玩家第一次玩單詞模式，會下意識打完一個詞就按空白鍵/Enter，以為要手動送出，
+// 但實際上系統是「打對就自動判定完成、直接接下一個詞」，不需要手動送出。
+// 用一個 localStorage flag 記住「玩家已經勾選不再顯示」，勾了之後才會永久跳過這個視窗，
+// 沒勾的話，每一次進單詞模式（包含按「再來一次」）都會再跳出來提醒一次。
+const CG_WORD_INTRO_KEY       = "tctc2.0-challenge_word_intro_dismissed"
+const cg_word_intro_modal     = document.getElementById("cg_word_intro_modal")
+const cg_word_intro_dontshow  = document.getElementById("cg_word_intro_dontshow")
+const cg_word_intro_start_btn = document.getElementById("cg_word_intro_start_btn")
+
+function cg_show_word_intro_modal(){
+    if(!cg_word_intro_modal) return
+    // 視窗蓋著的時候先鎖住輸入框，避免玩家隔著視窗盲打，意外把計時器啟動掉
+    if(cg_input_textarea) cg_input_textarea.disabled = true
+    cg_word_intro_modal.classList.remove("is_hidden")
+}
+
+function cg_close_word_intro_modal(){
+    if(!cg_word_intro_modal) return
+
+    // 勾了「之後不再顯示」才寫進 localStorage，沒勾的話這次只是關掉，下次進單詞模式還是會再跳出來
+    if(cg_word_intro_dontshow && cg_word_intro_dontshow.checked){
+        localStorage.setItem(CG_WORD_INTRO_KEY, "1")
+    }
+
+    cg_word_intro_modal.classList.add("is_hidden")
+
+    if(cg_input_textarea){
+        cg_input_textarea.disabled = false
+        cg_input_textarea.focus()
+    }
+}
+
+if(cg_word_intro_start_btn){
+    cg_word_intro_start_btn.addEventListener("click", cg_close_word_intro_modal)
+}
+if(cg_word_intro_modal){
+    // 點遮罩本身（不是點裡面的內容面板）也能關閉，邏輯跟標點符號提示視窗一致
+    cg_word_intro_modal.addEventListener("click", function(event){
+        if(event.target === cg_word_intro_modal){
+            cg_close_word_intro_modal()
         }
     })
 }
