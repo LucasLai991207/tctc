@@ -5,6 +5,21 @@
     <title>挑戰模式 | TCTC 繁體中文打字中心</title>
     <meta name="robots" content="noindex, nofollow">
 
+    <link rel="stylesheet" href="TCTC2-0-intro_lobby.css">
+    <link rel="stylesheet" href="TCTC2-0-main_lobby.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@200;300;400;500;700&display=swap" rel="stylesheet">
+
+    <meta name="description" content="TCTC 提供最流暢的繁體中文打字練習環境！專為'學生與打字初學者'設計，具備錯字即時分析、精準 WPM 速度統計，快來挑戰你的打字極限！">
+    <meta name="keywords" content="打字練習, 中文打字, 繁體中文打字, 練打字, WPM, TCTC, 打字測試, 打字, 打字網站, 練習打字, 初學者打字, tctc, typing club, 中文, 繁體中文, 繁中打字, 繁體中文打字網站">
+    <meta name="robots" content="index, follow">    
+
+    <!--google驗證-->
+    <meta name="google-site-verification" content="fHfTpW9ouqdLEFGEQhLvwelT1xdZ7Sxmi-iKBHY7S_8" /> 
+    <meta name="google-site-verification" content="TCoafv_OWOGsDLs525AY-SGwS7PqMUy2BLx3JLYJY74" />
+
     <!--瀏覽器分頁小圖-->
     <link rel="icon" href="favicon-32x32.png" type="image/png" sizes="32x32">
 
@@ -14,577 +29,353 @@
     <!--分享時顯示的title-->
     <meta property="og:title" content="TCTC 繁體中文打字中心">
 
+    <meta property="og:description" content="最適合學生的線上中打測試網站，快來挑戰你的速度極限！">
+    <meta property="og:type" content="website">
+
     <link rel="stylesheet" href="TCTC2-0-intro_lobby.css">
     <link rel="stylesheet" href="TCTC2-0-main_lobby.css">
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@200;300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@200;300;400;500;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@200;300;400;500&display=swap" rel="stylesheet">
 
+    <!-- ===== 【新增】挑戰模式專用樣式：難度選擇卡（簡單／普通／困難／極限）=====
+         獨立寫在這裡（不動 main_lobby.css），避免影響主線模式原本的三卡難度選單版型 -->
     <style>
-        body{
-            padding-top: 63px;
-        }
-        .game_back_btn {
-            position: fixed;
-            top: 70px;
-            left: 2rem;
-            height: 2.3rem;
-            width: 2.3rem;
-
-            background-color: var(--dark-blue);
-            border: 1px solid rgba(201,168,76,0.6);
-            border-radius: 0.1rem;
-
+        .cg_difficulty_selector{
             display: flex;
-            align-items: center;
-            justify-content: center;
+            gap: 16px;
 
-            font-size: 2rem;
-            color: #fff;
-            font-weight: 300;
+            width: 60vw;
+            max-width: 900px;
+            margin-bottom: 15px;
+
+            box-sizing: border-box;
+        }
+        .cg_difficulty_card{
+            position: relative;
+            flex: 1;
+            min-width: 0;
+
+            padding: 1rem 1rem 0.8rem;
+            background-color: var(--dark-blue);
+
+            border-radius: 6px;
+            border: 2px solid rgba(201, 168, 76, 0.5);
+            border-left: 3px solid var(--champagne-gold);
 
             cursor: pointer;
-            transition: all 250ms ease-in-out;
-            box-shadow: 0 0 1rem rgba(0,0,0,0.8);
-            z-index: 100;
+            transition: all 200ms ease-out;
         }
-        .game_back_btn:hover {
-            background-color: var(--champagne-gold);
-            color: var(--dark-blue);
+        .cg_difficulty_card:hover{
+            background-color: var(--light-blue);
         }
-        /* ===== 【新增】挑戰模式左上角的浮動排行榜按鈕 =====
-           完全比照 game.html 裡 .game_rank_floating_btn 的樣式與定位邏輯：
-           固定在返回鍵（.game_back_btn，left: 2rem）右側，
-           left: 5.3rem = 2rem(返回鍵位置) + 2.3rem(返回鍵寬度) + 1rem(間距)，
-           兩顆按鈕視覺上緊鄰、高度對齊，維持跟主線關卡頁一致的介面語言。 */
-        .game_rank_floating_btn {
-            position: fixed;
-            top: 70px;
-            left: 5.3rem;
-            height: 2.3rem;
-            width: 2.3rem;
-            background-color: var(--dark-blue);
-            border: 1px solid rgba(201,168,76,0.6);
-            border-radius: 0.1rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.1rem;
-            cursor: pointer;
-            transition: all 250ms ease-in-out;
-            z-index: 100;
-            padding-left: 5px;
+        .cg_difficulty_card_level{
+            color: var(--champagne-gold);
+            font-size: 0.75rem;
+            letter-spacing: 2px;
         }
-        .game_rank_floating_btn:hover {
-            background-color: var(--champagne-gold);
+        .cg_difficulty_card_name{
+            color: whitesmoke;
+            font-size: 1.5rem;
+            font-weight: 400;
+            margin-top: 0.2rem;
         }
-        .cg_wrap{
-            width: 100vw;
-            min-height: calc(100vh - 63px);
+
+        /* 四種難度分別用不同左邊條顏色標示強度，簡單→極限 由平靜到警示 */
+        .cg_difficulty_card[data-difficulty="easy"]{ border-left-color: #7fbf7f; }
+        .cg_difficulty_card[data-difficulty="medium"]{ border-left-color: var(--champagne-gold); }
+        .cg_difficulty_card[data-difficulty="hard"]{ border-left-color: #d98a4a; }
+        .cg_difficulty_card[data-difficulty="extreme"]{ border-left-color: #d95a5a; }
+
+        .cg_difficulty_card.cg_difficulty_selected{
+            transition: all 300ms ease-out;
+            box-shadow: 0px 1.5px 4px var(--champagne-gold) !important;
+            background-color: var(--light-blue);
+            border: 2px solid var(--champagne-gold);
+        }
+
+        @media (max-width: 900px){
+            .cg_difficulty_selector{ flex-wrap: wrap; }
+            .cg_difficulty_card{ min-width: 45%; }
+        }
+
+        /* ===== 【新增】積分欄位（放在 wpm / 正確率 更左邊）===== */
+        .cg_profileblock_points{
+            position: absolute;
+            top: 25%;
+            right: 21%;
+
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 3rem 1.5rem 5rem;
-        }
-        .cg_topbar{
-            width: 100%;
-            max-width: 900px;
 
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            width: 4rem;
+            height: 4.5rem;
+        }
 
-            margin-bottom: 2rem;
-        }
-        .cg_duration_tag{
-            font-family: "Noto Serif TC", serif;
-            color: #C9A84C;
-            font-size: 0.95rem;
-            letter-spacing: 2px;
-            border: 1px solid rgba(201,168,76,0.4);
-            border-radius: 20px;
-            padding: 0.35rem 1rem;
-        }
-        .cg_timer{
-            font-family: "Noto Serif TC", serif;
-            font-size: 2.2rem;
-            font-weight: 300;
-            color: whitesmoke;
-            letter-spacing: 2px;
-            font-variant-numeric: tabular-nums;
-        }
-        .cg_timer.cg_timer_warn{
-            color: #e07a5f;
-        }
-        .cg_stats{
-            display: flex;
-            gap: 1.4rem;
-        }
-        .cg_stat{
-            font-family: "Noto Serif TC", serif;
-            color: gray;
+        /* ===== 【新增】時間長度按鈕旁的積分標示 ===== */
+        .cg_chapter_points{
+            margin-left: auto;
+            margin-right: 1rem;
+            color: var(--champagne-gold);
             font-size: 0.85rem;
-            text-align: right;
-        }
-        .cg_stat span{
-            color: #C9A84C;
-            font-size: 1.2rem;
-            margin-left: 0.3rem;
-        }
-
-        .cg_article_box{
-            width: 70vw;
-            max-width: 1400px;
-
-            background-color: var(--dark-blue);
-            border: 1px solid rgba(201,168,76,0.25);
-            border-radius: 8px;
-
-            padding: 1rem 2rem;
-
-            font-family: "Noto Serif TC", serif;
-            font-size: 1.35rem;
-            line-height: 2;
             letter-spacing: 1px;
-
-            color: rgb(170,170,170);
-
-            cursor: text;
-
-            /* ===== 【新增】固定可視高度，讓長文章用「捲動」呈現，而不是把整頁往下撐開 =====
-               max-height 用 calc() 直接算「字體大小 × 行高 × 想顯示的行數」，
-               這樣以後如果調整 font-size 或 line-height，這裡不用跟著手動改，永遠是 4 行的高度。
-               overflow-y: hidden → 超出這個高度的文字先藏起來，
-               之後靠 JS 呼叫 scrollBy() 主動捲動，不讓使用者自己用滑鼠捲（維持跟 game.html 一致的「跟著打字進度走」體驗）。 */
-            max-height: calc(1.35rem * 2.3 * 4);
-            overflow-y: hidden;
-            position: relative;
-        }
-        .cg_char{
-            transition: color 120ms ease, background-color 120ms ease;
-            border-radius: 3px;
-        }
-        .cg_char.correct{
-            color: rgb(140,220,140);
-        }
-        .cg_char.wrong{
-            color: #fff;
-            background-color: rgba(200,60,60,0.65);
-        }
-        .cg_char.current{
-            outline: 2px solid var(--champagne-gold);
-            background-color: rgba(201,168,76,0.15);
         }
 
-        /* ===== 【新增】單詞模式：每個詞彙是一張獨立的「詞卡」，不用像文章模式那樣逐字接在一起 ===== */
-        .cg_word{
-            display: inline-block;
-            margin: 0 0.4rem 0.5rem 0;
-            padding: 0.15rem 0.4rem;
-            border-radius: 4px;
-            transition: opacity 200ms ease, background-color 200ms ease;
+        /* ===== 時間清單拆成「文章模式／單詞模式」兩個分組，
+             各自有一個明顯的大標題，兩組之間留足夠間距，不會擠在一起 ===== */
+        .cg_stage_group{
+            margin-bottom: 1.4rem;
         }
-        .cg_word_done{
-            /* ===== 【調整】拿掉 text-decoration: line-through 那條刪除線，
-               顏色也從綠色改成偏暗的灰色 + 更低的透明度，讓已完成的詞融入背景、
-               視覺重心自然留在「目前正在打」跟「還沒打」的詞卡上 ===== */
-            color: rgb(120,120,130);
-            opacity: 0.45;
+        .cg_stage_group:last-child{
+            margin-bottom: 0;
         }
-        .cg_word_pending{
-            color: rgb(170,170,170);
-        }
-        .cg_word_current{
-            background-color: rgba(201,168,76,0.15);
-            outline: 1px solid rgba(201,168,76,0.5);
+        .cg_stage_group_label{
+            display: flex;
+            align-items: center;
+            gap: 10px;
+
+            color: var(--champagne-gold);
+            font-size: 1rem;
+            font-weight: 500;
+            letter-spacing: 3px;
+            margin: 0 0 0.7rem 0.2rem;
         }
 
+        .cg_stage_group .chapter_frame{
+            margin-bottom: 0.5rem;
+        }
+        .cg_stage_group .chapter_frame:last-child{
+            margin-bottom: 0;
+        }
 
-        .cg_input_box{
-            width: 70vw;
-            max-width: 1400px;
-            margin-top: 1.2rem;
+        /* ===== 【調整】進步曲線區塊：放在 challenge_stage_container 裡、關卡卡片「上方」=====
+           寬度故意用 100%（不是寫死的 px/vw），讓它自動跟著 main_lobby_main_frame_mainblock
+           這個外層容器的寬度走，不用去猜 main_lobby.css 裡沒公開的確切數字。
+           同一個容器裡的 .main_lobby_map_stage 也強制加上同一套 width/box-sizing，
+           確保兩者永遠同寬，不會因為 main_lobby.css 裡關卡卡片本身的寫死寬度而對不齊。 */
+        #challenge_stage_container .cg_progress_chart,
+        #challenge_stage_container .main_lobby_map_stage{
+            width: 100%;
             box-sizing: border-box;
+        }
+        .cg_progress_chart{
+            margin-bottom: 1rem;
 
             background-color: var(--dark-blue);
             border: 1px solid rgba(201,168,76,0.25);
             border-radius: 6px;
-
-            padding: 0.2rem 1rem;
-
-            /* ===== 【新增】改成橫向 flex，讓 textarea 跟跳過按鈕並排在同一個框裡 =====
-               align-items: center → 按鈕垂直置中，不會因為 textarea 打到第 2、3 行變高而跑位
-               gap → 兩者之間留一點呼吸空間，不用另外寫 margin */
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
+            padding: 1rem 1.2rem;
         }
-        .cg_input_textarea{
+        .cg_progress_title{
+            margin: 0 0 2rem 0;
+            color: rgba(255,255,255,0.65);
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+        }
+        .cg_progress_svg{
             display: block;
-
-            /* ===== 【調整】原本 width:100% 是「佔滿整個 .cg_input_box」，
-               現在 .cg_input_box 是 flex 容器、旁邊多了跳過按鈕，
-               改用 flex: 1 1 auto 讓 textarea 自動吃掉「扣掉按鈕之後剩下的空間」，
-               min-width: 0 是 flex 子元素常見的必要寫法，
-               沒有它的話文字太長時 textarea 有時候不會照 flex 比例縮小、反而把按鈕擠出框外 ===== */
-            flex: 1 1 auto;
-            min-width: 0;
-
-            /* ===== 讓 textarea 長得像純文字輸入框，而不是預設有邊框、可拖曳縮放的樣子 ===== */
-            border: none;
-            outline: none;
-            background: transparent;
-            resize: none;              /* 拿掉右下角可手動拖曳縮放的把手，高度改由 JS 的 Auto_Grow 控制 */
-            box-sizing: border-box;
-
-            font-family: "Noto Serif TC", serif;
-            font-size: 1.35rem;
-            line-height: 2.3;          /* 跟 .cg_article_box 的行高一致，換行時視覺節奏才會對齊 */
+            width: 100%;
+            height: 90px;
+        }
+        .cg_progress_label{
+            margin: 0.5rem 0 0 0;
+            color: rgba(255,255,255,0.55);
+            font-size: 0.8rem;
             letter-spacing: 1px;
-            color: #fff;
-
-            /* ===== 【新增】撐到 3 行之後就不再繼續長高，改成固定高度＋內部捲動 =====
-               JS 的 Auto_Grow 還是會持續嘗試把 height 設成 scrollHeight，
-               但瀏覽器會用 max-height 這條規則把實際高度「夾住」在 3 行，超過的部分就交給下面的
-               overflow-y 處理，不會讓輸入框無限往下把整個頁面撐開。
-               算法跟目標文字框的 max-height 同一套邏輯：字體大小 × 行高 × 想顯示的行數。 */
-            max-height: calc(1.35rem * 2.3 * 3);
-
-            overflow-y: auto;
-
-            scrollbar-width: thin;                             /* 細捲軸 */
-            scrollbar-color: var(--dark-blue) transparent; /* 滑塊顏色／軌道顏色 */
-        }
-        /* Chrome / Edge / Safari 走 ::-webkit-scrollbar 系列，Firefox 不支援這組偽元素，兩邊分開寫才能都生效 */
-        .cg_input_textarea::-webkit-scrollbar{
-            width: 6px;
-        }
-        .cg_input_textarea::-webkit-scrollbar-thumb{
-            background-color: rgba(201,168,76,0.5);
-            border-radius: 4px;
-        }
-        .cg_input_textarea::-webkit-scrollbar-track{
-            background: transparent;
-        }
-        .cg_input_textarea::placeholder{
-            color: rgba(255,255,255,0.35);
         }
 
-        /*挑戰模式的跳過按鈕*/
-
-        .cg_skip_btn{
-            flex-shrink: 0;   /* 【重要】不管 textarea 裡的字多長，按鈕的寬度都不會被壓縮 */
-
-            font-family: "Noto Serif TC", serif;
-            font-size: 0.85rem;
-            letter-spacing: 1px;
-            white-space: nowrap;
-
-            background-color: transparent;
-            color: rgba(201,168,76,0.75);
-            border: 1px solid rgba(201,168,76,0.4);
-            border-radius: 4px;
-            padding: 0.35rem 0.9rem;
-
-            cursor: pointer;
-            transition: all 200ms ease;
-        }
-        .cg_skip_btn.is_hidden{
-            display: none;
-        }
-
-        .cg_hint{
-            margin-top: 1.2rem;
-            font-family: "Noto Serif TC", serif;
-            color: gray;
-            font-size: 0.85rem;
-        }
-        /* ===== 【新增】「打不出標點符號？」提示按鈕 =====
-           故意用 <span> 而不是 <button>：這裡只是一段「文字裡的可點擊連結」，
-           不需要 button 預設的邊框、背景、內距，用 span + cursor:pointer 更貼近「提示文字」的視覺定位。 */
-        .cg_punct_hint_btn{
-            color: var(--champagne-gold);
-            margin-left: 0.6rem;
-            cursor: pointer;
-            text-decoration: underline;
-            text-underline-offset: 3px;
-            transition: color 200ms ease;
-        }
-
-        .cg_punct_content{
-            background-color: rgba(14, 36, 62, 0.6);
-            padding: 1rem;
-            border-radius: 4px;
-            margin-top: 0.2rem;
-            line-height: 1.9rem;
-
-            color: #fff;
-
-            max-height: 50vh;
-            overflow-y: auto;
-        }
-        .cg_punct_content_title{
-            color: #c9a84c;
-            font-size: 1.1rem;
-            padding-bottom: 0.3rem;
-        }
-        .cg_punct_item_name{
-            color: #c9a84c;
-            font-size: 1rem;
-        }
-
-        .cg_action_row{
-            margin-top: 2rem;
-            display: flex;
-            gap: 1rem;
-        }
-        .cg_btn{
-            font-family: "Noto Serif TC", serif;
-            background-color: transparent;
-            color: var(--champagne-gold);
-            border: 1px solid var(--champagne-gold);
-            border-radius: 4px;
-            padding: 0.6rem 1.6rem;
-            font-size: 0.95rem;
-            letter-spacing: 2px;
-            cursor: pointer;
-            transition: all 300ms ease;
-        }
-        .cg_btn:hover{
-            background-color: #C9A84C;
-            color: #0B1E36;
-        }
-
-        .cm_window{
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        .cm_panel{
-            position: relative;
-            width: 60vw;
-            max-width: 720px;
-            background-color: var(--dark-blue, #0B1E36);
-            opacity: 0.97;
-            border-radius: 8px;
-            padding: 2rem 2.2rem 1rem;
-            margin-top: 10vh;
-            border: 0.5px solid var(--champagne-gold);
-        }
-        .cm_header_sub{
-            font-size: small;
-            font-family: "Noto Serif TC", serif;
-            color: #C9A84C;
-            font-weight: 400;
-            letter-spacing: 2px;
-        }
-        .cm_header_title{
-            font-family: "Noto Serif TC", serif;
-            font-weight: 200;
-            color: #ffffff;
-            font-size: 2.2rem;
-            margin-top: 0.3rem;
-        }
-
-        /* 結算視窗 */
-        .cg_result_panel{
-            width: 60vw;
-            max-width: 640px;
-            text-align: center;
-        }
-        .cg_result_row{
-            display: flex;
-            justify-content: center;
-            gap: 3rem;
-            margin-top: 1.8rem;
-            margin-bottom: 2rem;
-        }
-        .cg_result_item{
-            font-family: "Noto Serif TC", serif;
-        }
-        .cg_result_item_label{
-            color: gray;
-            font-size: 0.85rem;
-            letter-spacing: 2px;
-        }
-        .cg_result_item_value{
-            color: #C9A84C;
-            font-size: 2.6rem;
-            font-weight: 300;
-            margin-top: 0.3rem;
-        }
-        .cg_result_detail{
-            text-align: left;
-            color: #fff;
-            line-height: 25px;
-            margin-top: 1.5rem;
-        }
     </style>
 </head>
 <body>
     <nav id="nav">
         <img src="TCTC2.0 logo.png" class="logo_style" onclick="window.location.href='TCTC2-0-main.html'">
         <div class="nav_css">
-            <div onclick="window.location.href='index.html'">關於我們</div>
-            <div class="cm_nav_btn" onclick="window.location.href='TCTC2-0-challenge_lobby.html'">挑戰模式</div>
-            <div class="main_lobby_more_detil_div">更多 ≡
-                <div class="main_ranking" onclick="window.location.href='TCTC2-0-ranking.html'">排行榜</div>
-                <div class="main_profile" onclick="window.location.href='TCTC2-0-profile.html'">設定</div>
+            <div onclick="window.location.href='TCTC2-0-details.html'">常見問題</div>
+            <div class="nav_dropdown">
+                模式 <span class="nav_dropdown_arrow">≡</span>
+                <div class="nav_dropdown_menu">
+                    <div class="nav_dropdown_panel">
+                        <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-main.html'">主線模式</div>
+                        <div class="nav_dropdown_item nav_dropdown_item_active" onclick="window.location.href='TCTC2-0-challenge_lobby.html'">挑戰模式</div>
+                </div>
+            </div>
+            <div class="nav_dropdown">
+                更多 <span class="nav_dropdown_arrow">≡</span>
+                <div class="nav_dropdown_menu">
+                    <div class="nav_dropdown_panel">
+                        <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-ranking.html'">排行榜</div>
+                        <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-profile.html'">設定</div>
+                    </div>
+                </div>
             </div>
         </div>
     </nav>
 
-    <div class="game_back_btn" onclick="window.location.href='TCTC2-0-challenge_lobby.html'">←</div>
-    <!-- ===== 【新增】不用打完這關也能看排名的浮動按鈕，固定貼在返回鍵旁邊 =====
-         直接呼叫 challenge.js 裡的 View_Challenge_Ranking()，該函式會用目前這次挑戰的
-         cg_difficulty / cg_stage / cg_duration_seconds 組成 comboId，導向對應組合的排行榜，
-         跟結算畫面「查看排名」按鈕共用同一份邏輯，不會有兩處寫法不一致的風險。 -->
-    <div class="game_rank_floating_btn" id="cg_rank_floating_btn" title="查看這個組合的排名（不用打完也能看）" onclick="View_Challenge_Ranking()">🏆</div>
+    <main id="main_lobby_frame">
+        <section id="main_lobby_main_frame">
+            <div class="main_lobby_main_frame">
+                <div class="main_lobby_back_to_intro_button" onclick="window.location.href='TCTC2-0-main.html'">
+                    ←
+                </div>
 
-    <main class="cg_wrap">
-        <div class="cg_topbar">
-            <div class="cg_duration_tag" id="cg_duration_tag">— 分鐘挑戰</div>
-            <div class="cg_timer" id="cg_timer">00:00</div>
-            <div class="cg_stats">
-                <div class="cg_stat">WPM<span id="cg_live_wpm">0</span></div>
-                <div class="cg_stat">正確率<span id="cg_live_acc">100%</span></div>
+                <div class="main_lobby_main_frame_profileblock">
+                    <div class="profile_avatar_container">
+                        <div class="avatar_default_head"></div>
+                        <div class="avatar_default_body"></div>
+                    </div>
+
+                    <div class="main_lobby_main_frame_player_profile">
+                        <div class="main_lobby_main_frame_player_profile_left_div">
+                            <p class="main_lobby_main_frame_player_profile_left_div_name">
+                                <span class="main_lobby_main_frame_player_profile_left_div_username">玩家</span>
+                            </p>
+                            <p class="main_lobby_main_frame_player_profile_left_div_rank">挑戰模式</p>
+                        </div>
+
+                        <!-- ===== 【新增】WPM / 正確率 / 積分（跟主線大廳同款式）===== -->
+                        <div class="main_lobby_main_frame_profileblock_wpm">
+                            <div id="cg_profile_wpm" style="font-size: 1.4rem;color: #c9a84c;letter-spacing:3px">0</div>
+                            <div style="color: lightgray;">字/分</div>
+                        </div>
+                        <div class="main_lobby_main_frame_profileblock_acc">
+                            <div id="cg_profile_acc" style="font-size: 1.4rem;color: #c9a84c;letter-spacing:3px">0%</div>
+                            <div style="color: lightgray;">正確率</div>
+                        </div>
+                        <div class="cg_profileblock_points">
+                            <div id="cg_profile_points" style="font-size: 1.4rem;color: #c9a84c;letter-spacing:3px">0</div>
+                            <div style="color: lightgray;">積分</div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- ===== 【新增】難度選擇（簡單／普通／困難／極限）===== -->
+                <div class="cg_difficulty_selector" id="cg_difficulty_selector">
+                    <div class="cg_difficulty_card" data-difficulty="easy">
+                        <div class="cg_difficulty_card_level">LEVEL I</div>
+                        <div class="cg_difficulty_card_name">簡單</div>
+                    </div>
+                    <div class="cg_difficulty_card" data-difficulty="medium">
+                        <div class="cg_difficulty_card_level">LEVEL II</div>
+                        <div class="cg_difficulty_card_name">普通</div>
+                    </div>
+                    <div class="cg_difficulty_card" data-difficulty="hard">
+                        <div class="cg_difficulty_card_level">LEVEL III</div>
+                        <div class="cg_difficulty_card_name">困難</div>
+                    </div>
+                    <div class="cg_difficulty_card" data-difficulty="extreme">
+                        <div class="cg_difficulty_card_level">LEVEL IV</div>
+                        <div class="cg_difficulty_card_name">極限（難）</div>
+                    </div>
+                </div>
+
+                <div class="main_lobby_main_frame_row"> <!-- 左右槽 -->
+                    <div class="main_lobby_main_frame_mainblock" id="challenge_stage_container"> <!--關卡：只會有一張卡-->
+                    </div>
+                    <div class="main_lobby_main_frame_map_selector" id="challenge_minute_selector"> <!--章節變成時間長度-->
+                        <p class="main_lobby_chapter_selector_text1">選擇挑戰時間</p>
+                        <div class="main_lobby_chapter_list_style" id="minute_list">
+                            <div class="cg_stage_group">
+                                <p class="cg_stage_group_label">文章模式</p>
+                                <div class="chapter_frame" data-seconds="30" data-stage="article">
+                                    <div class="easy_chapter_frame_row">
+                                        <p class="easy_chapter_frame_number"><span class="easy_chapter_name">30 秒挑戰</span></p>
+                                    </div>
+                                    <span class="cg_chapter_points" id="cg_points_article_30"></span>
+                                </div>
+                                <div class="chapter_frame" data-seconds="60" data-stage="article">
+                                    <div class="easy_chapter_frame_row">
+                                        <p class="easy_chapter_frame_number"><span class="easy_chapter_name">一分鐘挑戰</span></p>
+                                    </div>
+                                    <span class="cg_chapter_points" id="cg_points_article_60"></span>
+                                </div>
+                                <div class="chapter_frame" data-seconds="180" data-stage="article">
+                                    <div class="easy_chapter_frame_row">
+                                        <p class="easy_chapter_frame_number"><span class="easy_chapter_name">三分鐘挑戰</span></p>
+                                    </div>
+                                    <span class="cg_chapter_points" id="cg_points_article_180"></span>
+                                </div>
+                                <div class="chapter_frame" data-seconds="300" data-stage="article">
+                                    <div class="easy_chapter_frame_row">
+                                        <p class="easy_chapter_frame_number"><span class="easy_chapter_name">五分鐘挑戰</span></p>
+                                    </div>
+                                    <span class="cg_chapter_points" id="cg_points_article_300"></span>
+                                </div>
+                                <div class="chapter_frame" data-seconds="600" data-stage="article">
+                                    <div class="easy_chapter_frame_row">
+                                        <p class="easy_chapter_frame_number"><span class="easy_chapter_name">十分鐘挑戰</span></p>
+                                    </div>
+                                    <span class="cg_chapter_points" id="cg_points_article_600"></span>
+                                </div>
+                            </div>
+
+                            <div class="cg_stage_group">
+                                <p class="cg_stage_group_label">單詞模式</p>
+                                <div class="chapter_frame" data-seconds="30" data-stage="word">
+                                    <div class="easy_chapter_frame_row">
+                                        <p class="easy_chapter_frame_number"><span class="easy_chapter_name">30 秒挑戰</span></p>
+                                    </div>
+                                    <span class="cg_chapter_points" id="cg_points_word_30"></span>
+                                </div>
+                                <div class="chapter_frame" data-seconds="60" data-stage="word">
+                                    <div class="easy_chapter_frame_row">
+                                        <p class="easy_chapter_frame_number"><span class="easy_chapter_name">一分鐘挑戰</span></p>
+                                    </div>
+                                    <span class="cg_chapter_points" id="cg_points_word_60"></span>
+                                </div>
+                                <div class="chapter_frame" data-seconds="180" data-stage="word">
+                                    <div class="easy_chapter_frame_row">
+                                        <p class="easy_chapter_frame_number"><span class="easy_chapter_name">三分鐘挑戰</span></p>
+                                    </div>
+                                    <span class="cg_chapter_points" id="cg_points_word_180"></span>
+                                </div>
+                                <div class="chapter_frame" data-seconds="300" data-stage="word">
+                                    <div class="easy_chapter_frame_row">
+                                        <p class="easy_chapter_frame_number"><span class="easy_chapter_name">五分鐘挑戰</span></p>
+                                    </div>
+                                    <span class="cg_chapter_points" id="cg_points_word_300"></span>
+                                </div>
+                                <div class="chapter_frame" data-seconds="600" data-stage="word">
+                                    <div class="easy_chapter_frame_row">
+                                        <p class="easy_chapter_frame_number"><span class="easy_chapter_name">十分鐘挑戰</span></p>
+                                    </div>
+                                    <span class="cg_chapter_points" id="cg_points_word_600"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
-
-        <!-- ===== 目標文字框：只負責「顯示 + 逐字上色」，不接受輸入 ===== -->
-        <div class="cg_article_box" id="cg_article_box">
-        </div>
-
-        <!-- ===== 【修正】輸入框：比照 game.html 的直接輸入模式，是一個真的看得到的獨立框，
-             跟上面的目標文字框是兩個分開的區塊，不是疊在文字上面的隱形輸入框 ===== -->
-        <div class="cg_input_box" id="cg_input_box">
-            <textarea
-                class="cg_input_textarea"
-                id="cg_input_textarea"
-                rows="1"
-                placeholder="請在這裡輸入上方的文章內容…"
-                autocomplete="off"
-                autocorrect="off"
-                autocapitalize="off"
-                spellcheck="false"
-            ></textarea>
-
-            <!-- ===== 【新增】跳過按鈕：預設是 .is_hidden（文章模式不顯示），
-                 只有在單詞模式初始化時，JS 會把這個 class 拿掉 ===== -->
-            <button type="button" class="cg_skip_btn is_hidden" id="cg_skip_btn">跳過 →</button>
-        </div>
-
-        <div class="cg_hint">
-            正確率以及指法才是打字快速的關鍵
-            <span class="cg_punct_hint_btn" id="cg_punct_hint_btn">打不出標點符號？</span>
-        </div>
-
-        <div class="cg_action_row">
-            <button class="cg_btn" onclick="Restart_Challenge()">再來一次</button>
-            <button class="cg_btn" onclick="window.location.href='TCTC2-0-challenge_lobby.html'">返回大廳</button>
-        </div>
+        </section>
     </main>
 
-
-    <!-- ===== 結算視窗 ===== -->
-    <div class="cm_window is_hidden" id="cg_result_window">
-        <div class="cm_panel cg_result_panel">
-            <div class="cm_header_sub">挑戰總覽</div>
-            <div class="cm_header_title" id="cg_result_title">時間到！</div>
-            <div class="cg_result_row">
-                <div class="cg_result_item">
-                    <div class="cg_result_item_label">字 / 分 (CPM)</div>
-                    <div class="cg_result_item_value" id="cg_result_wpm">0</div>
-                </div>
-                <div class="cg_result_item">
-                    <div class="cg_result_item_label">正確率</div>
-                    <div class="cg_result_item_value" id="cg_result_acc">0%</div>
-                </div>
-
+    <footer class="intro_footer">
+        <div class="footer_div">
+            <div style="display: flex;justify-content: flex-start;flex-direction: column;gap: 0.7rem;">
+                <p style="margin: 0;font-size: larger;">關於我們</p>
             </div>
-            <div class="cg_result_detail">
-                <div id="cg_result_mode">模式模式 </div>
-                <div id="cg_result_difficulty">關卡難度</div>
-                <div id="cg_result_all_char">總打字元數 </div>
-                <div id="cg_result_time_used">總耗時 </div>
-                <div id="cg_result_correct">正確字元數 </div>
-                <div id="cg_result_false">錯誤字元數 </div>
-                <div id="cg_result_deleted_time">修正次數 </div>
-                <div id="cg_result_skip_count">跳過次數 </div>
-                <div id="cg_result_highest_wpm">瞬時最高CPM </div>
+            <div style="display: flex;justify-content: flex-start;flex-direction: column;gap: 0.7rem;">
+                <p style="margin: 0;font-size: larger;">聯絡我們</p>
+                <a style="font-size: 0.8rem;">✉ tctc.official.tw@gmail.com</a>
             </div>
-            <div class="cg_action_row" style="justify-content:center;">
-                <button class="cg_btn" onclick="Restart_Challenge()">再來一次</button>
-                <button class="cg_btn" id="cg_result_view_ranking_btn" onclick="View_Challenge_Ranking()">查看排名</button>
-                <button class="cg_btn" id="cg_result_back_lobby_btn" onclick="Leave_Challenge_Result('TCTC2-0-challenge_lobby.html')">返回大廳</button>
+            <div style="display: flex;justify-content: flex-start;flex-direction: column;gap: 0.7rem;">
+                <p style="margin: 0;font-size: larger;">平台連結</p>
+                <a style="font-size: 0.8rem;" href="https://www.youtube.com/channel/UCIA5fwMrvGpvcQbG0ZX2ZLA">Youtube</a>
             </div>
         </div>
-    </div>
-
-    <!-- ===== 【新增】標點符號輸入指法說明視窗 =====
-         結構完全比照上面的 cg_result_window：外層 .cm_window 當作半透明遮罩，
-         裡面包一個 .cm_panel 當作真正的視窗內容。這樣兩個視窗共用同一套開關 CSS（.is_hidden），
-         也維持全站彈出視窗長得都一樣的一致性。 -->
-    <div class="cm_window is_hidden" id="cg_punct_modal_overlay">
-        <div class="cm_panel">
-            <div class="cm_header_sub">輸入小技巧</div>
-            <div class="cm_header_title">標點符號怎麼打？</div>
-
-            <div class="cg_punct_content">
-                <div class="cg_punct_content_title">各種符號輸入的指法：</div><br>
-
-                <span class="cg_punct_item_name">引號「」</span> <br>
-                • Windows：Ctrl + [ + ↓選擇，就會直接彈出選字清單。（持續按住 Ctrl，點一下 [ 之後使用方向鍵調整至需要的符號）<br>
-                • Mac：直接按下鍵盤右上角的符號即可打出<br><br>
-
-                <span class="cg_punct_item_name">頓號、</span> <br>
-                • Windows：Ctrl + '（' 為上引號，在 Enter 鍵左邊）。<br>
-                • Mac：直接按下鍵盤右上角的符號即可打出<br><br>
-
-                <span class="cg_punct_item_name">冒號：</span> <br>
-                • Windows：Ctrl + shift + ;（; 為注音ㄤ的按鍵）<br>
-                • Mac：shift + ;<br><br>
-
-                <span class="cg_punct_item_name">問號？</span> <br>
-                • Windows：Ctrl + shift + /（/ 為注音ㄥ的按鍵）<br>
-                • Mac：shift + /<br><br>
-
-                <span class="cg_punct_item_name">驚嘆號！</span> <br>
-                • Windows：Ctrl + shift + 1（1 為注音ㄅ的按鍵）<br>
-                • Mac：shift + 1<br><br>
-
-                <span class="cg_punct_item_name">逗號，</span> <br>
-                • Windows：Ctrl + ,（, 為注音ㄝ的按鍵）<br>
-                • Mac：shift + ,<br><br>
-
-                <span class="cg_punct_item_name">句號。</span> <br>
-                • Windows：Ctrl + .（. 為注音ㄡ的按鍵）<br>
-                • Mac：shift + .<br><br>
-
-            </div>
-
-            <div class="cg_action_row" style="justify-content:center;">
-                <button class="cg_btn" id="cg_punct_modal_close">關閉</button>
-            </div>
+        <div style="margin-top: 2rem; font-size: 0.8rem; color: #555; letter-spacing: 1px;">
+            &copy; 2026 TCTC2.0 繁體中文打字中心. All Rights Reserved.
         </div>
-    </div>
+    </footer>
 
-    <script src="TCTC2-0-challenge_data.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
-    <script src="TCTC2-0-firebase.js?v=3"></script>
-    <!-- 【新增】在線時長追蹤（全站共用，每個頁面都要載入） -->
+    <!-- 【新增】在線時長追蹤（全站共用，每個頁面都要載入）
+         這個頁面沒有載入 Firebase，時間會先記在本機，等下次造訪
+         game.html / TCTC2-0-challenge.html / TCTC2-0-ranking.html 時補交上雲端。 -->
     <script src="TCTC2-0-online_time.js"></script>
-    <script src="TCTC2-0-challenge.js"></script>
+    <!-- 【新增】把玩家在設定頁面上傳的頭像顯示在這裡的頭像框裡（只讀 localStorage，不碰 Firebase） -->
+    <script src="TCTC2-0-avatar_display.js"></script>
+    <script src="TCTC2-0-challenge_lobby.js"></script>
     <script defer src="https://cloud.umami.is/script.js" data-website-id="070df494-4361-4dce-ad65-a25b404811e9"></script>
 
 </body>

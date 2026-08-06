@@ -956,78 +956,79 @@
     margin-left: 0.2rem;
 } */
 
-.main_lobby_more_detil_div {
+/* ============================================================
+   Nav 下拉選單（共用元件）
+   ------------------------------------------------------------
+   用在導覽列的「更多 ≡」跟「模式 ≡」。
+   單純需求：滑鼠移上去，下方出現幾個選項，跟主 nav 同一個底色，
+   沒有框線、沒有三角形、沒有另外配色，看起來就是 nav 本身往下多長出幾行字。
+
+   面板用 left:50% + translateX(-50%) 讓面板「水平置中」對齊觸發文字，
+   而不是貼齊左邊或右邊——因為面板內容（例如「主線模式」「排行榜」）
+   通常比觸發文字（「模式」「更多」，只有 2 個字）寬，
+   貼左邊會讓面板整個往右凸出一塊、貼右邊則整個往左凸出一塊，
+   兩種都會讓面板看起來歪一邊；置中才會讓多出來的寬度平均分攤在兩側，
+   視覺上才是真正「垂直長在文字正下方」的效果。
+   ============================================================ */
+
+.nav_dropdown {
     position: relative;
     cursor: pointer;
 
-    font-width: 1.1rem;
-    color: black;
-}
-
-/* --- 共同樣式設定 (初始狀態：完全透明、隱藏、縮回上方) --- */
-.main_achievement,
-.main_ranking,
-.main_profile {
-    color: #0a0808;
-    font-weight: 400;
-
-    position: absolute;
-
-    width: 8rem;
-    height: 2.7rem;
-
-    background-color: rgba(245, 245, 243, 0.9); 
-
-    border-left: 1px solid var(--champagne-gold);
-    border-right: 1px solid var(--champagne-gold);
-
-    padding-left: 1rem;
-    
     display: flex;
     align-items: center;
+    gap: 0.3rem;
 
-    /*初始*/
-
-    opacity: 0;
-    visibility: hidden;
-    
-    box-shadow: -2px 1px 5px rgba(0, 0, 0, 0.2);
-    top: 0; 
-    
-    transition: opacity 0.3s ease, top 0.3s ease, visibility 0.3s ease;
+    color: black;
+    font-size: 1.1rem;
 }
 
-
-
-
-.main_lobby_more_detil_div:hover .main_achievement {
-    opacity: 0.9;            
-    visibility: visible;
-    top: 2rem;             
-    transition-delay: 0s;    
+.nav_dropdown_arrow {
+    font-size: 0.9rem;
 }
 
-.main_lobby_more_detil_div:hover .main_ranking {
-    opacity: 0.85;            
-    visibility: visible;
-    top: 2rem;            
-    transition-delay: 0.05s; 
+.nav_dropdown_menu {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+
+    display: none;
+    z-index: 20;
 }
-.main_lobby_more_detil_div:hover .main_profile {
-    opacity: 0.8;            
-    visibility: visible;
-    top: 4.5rem;            
-    transition-delay: 0.1s; 
+.nav_dropdown:hover .nav_dropdown_menu {
+    display: block;
 }
 
+.nav_dropdown_panel {
+    display: flex;
+    flex-direction: column;
 
-.main_lobby_more_detil_div .main_achievement {
-    transition-delay: 0.1s;
+    width: max-content;
+    margin-top: 10px;
+
+    background-color: rgb(245, 243, 243);
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
 }
 
-.main_lobby_more_detil_div .main_ranking {
-    transition-delay: 0.05s;    
+.nav_dropdown_item {
+    padding: 0.6rem 0.9rem;
+
+    font-size: 0.99rem;
+    color: #1a1a1a;
+    white-space: nowrap;
+
+    transition: all 300ms ease-in-out;
 }
-.main_lobby_more_detil_div .main_profile {
-    transition-delay: 0s;    
+.nav_dropdown_item:hover {
+    background-color: rgba(0, 0, 0, 0.06);
+
 }
+
+.nav_dropdown_item_active {
+    font-weight: 600;
+    text-shadow: 0 0 1px gray;
+}
+

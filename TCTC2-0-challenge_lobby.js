@@ -2,14 +2,12 @@ const challenge_stage_container = document.getElementById("challenge_stage_conta
 const minute_list = document.getElementById("minute_list")
 const difficulty_selector = document.getElementById("cg_difficulty_selector")
 
-// ===== 難度 / 秒數 對照表（要跟 TCTC2-0-challenge.js 裡的定義保持一致）=====
 const CGL_DIFFICULTY_LABEL = {
     easy:    "簡單",
     medium:  "普通",
     hard:    "困難",
     extreme: "極限"
 }
-// 關卡（文章模式／單詞模式）對照表
 const CGL_STAGE_LABEL = {
     article: "文章模式",
     word:    "單詞模式"
@@ -29,7 +27,7 @@ const CGL_POINTS_MULTIPLIER = { easy: 1, medium: 1.5, hard: 2, extreme: 3 }
 // ===== 【新增】進步曲線相關 =====
 // key 名稱要跟 TCTC2-0-challenge.js 裡儲存歷史紀錄的地方完全一致，不然讀不到資料
 const CGL_HISTORY_KEY = "tctc2.0-challenge_history"
-const CGL_CHART_POINTS = 12   // 曲線只畫最近幾筆，太多筆線會擠在一起看不清楚
+const CGL_CHART_POINTS = 50   // 曲線只畫最近幾筆，太多筆線會擠在一起看不清楚
 
 // 讀取歷史紀錄，格式壞掉或還沒有任何紀錄時，安全地回傳空陣列
 function CGL_Get_History(){
@@ -208,9 +206,7 @@ function Render_Challenge_Stage(){
         window.location.href = `TCTC2-0-challenge.html?difficulty=${selected_difficulty}&seconds=${selected_seconds}&stage=${selected_stage}`
     })
 
-    // ===== 【新增】獎盃按鈕：直接跳去看「目前這個難度＋模式＋時間長度」組合的排行榜 =====
-    // 用 stopPropagation 擋掉事件往上冒泡，不然點下去會被外層卡片的 click 監聽器
-    // 誤判成「開始挑戰」，直接被拉去玩，而不是看排行榜
+
     const rank_btn = document.getElementById("challenge_rank_btn")
     if(rank_btn){
         rank_btn.addEventListener("click", function(event){
@@ -255,10 +251,14 @@ function Select_Seconds(seconds, stage, clickedEl){
 }
 
 document.addEventListener("DOMContentLoaded", function(){
-    // 顯示玩家名稱（跟其他頁面共用同一個 localStorage key，純讀取不寫入）
     const usernameEl = document.querySelector(".main_lobby_main_frame_player_profile_left_div_username")
-    if(usernameEl && localStorage.getItem("username")){
-        usernameEl.textContent = localStorage.getItem("username")
+    const saved_username = localStorage.getItem("username")
+    const cached_guest_number = localStorage.getItem("tctc_guest_number")
+
+    if(usernameEl && saved_username){
+        usernameEl.textContent = saved_username
+    } else if(usernameEl && cached_guest_number){
+        usernameEl.textContent = "訪客#" + String(cached_guest_number).padStart(4, "0")
     }
 
     // ===== 難度卡片：綁定點擊事件 =====

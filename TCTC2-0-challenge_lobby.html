@@ -191,11 +191,27 @@
     <nav id="nav">
         <img src="TCTC2.0 logo.png" class="logo_style" onclick="window.location.href='TCTC2-0-main.html'">
         <div class="nav_css">
+            <!-- <div>登入</div> -->
             <div onclick="window.location.href='TCTC2-0-details.html'">常見問題</div>
-            <div onclick="window.location.href='TCTC2-0-main.html'">主線模式</div>
-            <div class="main_lobby_more_detil_div">更多 ≡
-                <div class="main_ranking" onclick="window.location.href='TCTC2-0-ranking.html'">排行榜</div>
-                <div class="main_profile" onclick="window.location.href='TCTC2-0-profile.html'">設定</div>
+            <!-- ===== 【修改】把「挑戰模式」單一連結，改成跟「更多」同一套 .nav_dropdown 元件 =====
+                 之後要加新模式，只要在 .nav_dropdown_panel 裡多加一個 .nav_dropdown_item 就好 -->
+            <div class="nav_dropdown">
+                模式 <span class="nav_dropdown_arrow">≡</span>
+                <div class="nav_dropdown_menu">
+                    <div class="nav_dropdown_panel">
+                        <div class="nav_dropdown_item nav_dropdown_item_active" onclick="window.location.href='TCTC2-0-main.html'">主線模式</div>
+                        <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-challenge_lobby.html'">挑戰模式</div>
+                    </div>
+                </div>
+            </div>
+            <div class="nav_dropdown">
+                更多 <span class="nav_dropdown_arrow">≡</span>
+                <div class="nav_dropdown_menu">
+                    <div class="nav_dropdown_panel">
+                        <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-ranking.html'">排行榜</div>
+                        <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-profile.html'">設定</div>
+                    </div>
+                </div>
             </div>
         </div>
     </nav>
