@@ -590,6 +590,33 @@
         </div>
     </div>
 
+    <!-- ===== 【新增】單詞模式教學視窗 =====
+         結構比照上面的 cg_punct_modal_overlay：外層 .cm_window 當半透明遮罩，裡面包 .cm_panel。
+         只要玩家還沒勾過「之後不再顯示」，每次進單詞模式都會先跳出來，
+         說明「打完一個詞會自動送出、換下一個」，不用手動按空白鍵或 Enter。 -->
+    <div class="cm_window is_hidden" id="cg_word_intro_modal">
+        <div class="cm_panel" style="max-width: 520px;">
+            <div class="cm_header_sub">單詞模式小提醒</div>
+            <div class="cm_header_title" style="font-size: 1.6rem;">打完一個詞會自動換下一個</div>
+
+            <div class="cg_punct_content" style="max-height: none;">
+                單詞模式每一個單詞都要用 Enter 送出！<br><br>
+                只要把畫面上反白的那個詞打對，系統就會自動判定完成、清空輸入框、<br>
+                直接接著跳下一個詞，一個接一個連續打下去就對了。<br><br>
+                如果卡住打不出來，也可以按輸入框旁邊的「跳過」按鈕直接換下一個詞。
+            </div>
+
+            <label style="display:flex;align-items:center;gap:0.5rem;margin-top:1.2rem;color:rgba(255,255,255,0.7);font-size:0.85rem;letter-spacing:1px;cursor:pointer;">
+                <input type="checkbox" id="cg_word_intro_dontshow">
+                連這種基本常識都要告訴我，以後不准再顯示這個破視窗
+            </label>
+
+            <div class="cg_action_row" style="justify-content:center;">
+                <button class="cg_btn" id="cg_word_intro_start_btn">我知道了</button>
+            </div>
+        </div>
+    </div>
+
     <script src="TCTC2-0-challenge_data.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
