@@ -174,9 +174,14 @@ function Change_into_intro(){
 }
 
 
-//改變username
-const username = document.querySelector(".main_lobby_main_frame_player_profile_left_div_username")
-if(localStorage.getItem("username")){
-    username.textContent = localStorage.getItem("username")
-}
 
+const username = document.querySelector(".main_lobby_main_frame_player_profile_left_div_username")
+const saved_username = localStorage.getItem("username")
+const cached_guest_number = localStorage.getItem("tctc_guest_number")
+
+if(saved_username){
+    username.textContent = saved_username
+} else if(cached_guest_number){
+    // 補零成固定 4 位數，跟 TCTC2-0-firebase.js 的 Get_Player_Display_Name() 格式保持一致
+    username.textContent = "訪客#" + String(cached_guest_number).padStart(4, "0")
+}

@@ -55,13 +55,17 @@ nav {
     gap: 15px;
     align-items: center;
 }
-.nav_css div{
+.nav_css > div{
     font-size: 1.1rem;
     margin-right: 30px;
     cursor: pointer;
     /*手指*/
-    transition: 200ms ease;
-    /*過渡動畫*/
+    /* 【修正】原本是 ".nav_css div"，選到的是「.nav_css 底下所有的 div」，
+       不只是最外層的導覽項目，連 .nav_dropdown 裡巢狀的 .nav_dropdown_menu /
+       .nav_dropdown_panel / .nav_dropdown_item 這些 div 也全部被吃到這條規則——
+       margin-right:30px 讓下拉面板的寬度被撐大 30px，多出一塊看不出來的空白，
+       transition 也讓下拉選單裡每個項目的 hover 都跟著套用不必要的過渡動畫。
+       改成 ".nav_css > div"（只選直接子層），下拉選單內部的元素就不會再被波及。 */
 }
 
 .logo_style {
