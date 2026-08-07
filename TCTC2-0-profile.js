@@ -312,6 +312,52 @@ function Clear_Local_Player_Data(){
     })
 }
 
+/* ============================================================
+   【新增】登出並清除這台裝置的訪客紀錄
+   ------------------------------------------------------------
+   跟 Delete_All_Data_Clicked() 不一樣：這裡不會呼叫任何刪除雲端資料的
+   函式，單純呼叫 TCTC2-0-firebase.js 的 Logout_And_Clear_Guest_Backup()，
+   讓這台裝置忘記「登入前是哪個訪客」，登出後直接變成一個全新訪客身份。
+   ============================================================ */
+
+// 只有目前是登入狀態，才顯示這個按鈕區塊——純訪客身份沒有「登出」這回事
+function Init_Logout_Zone_Visibility(){
+    const zoneEl = document.getElementById("profile_logout_zone")
+    if(!zoneEl) return
+
+    const is_logged_in = (typeof Get_Current_Account_Uid === "function") && !!Get_Current_Account_Uid()
+    zoneEl.classList.toggle("is_hidden", !is_logged_in)
+}
+
+function Logout_And_Clear_Clicked(){
+    const btnEl = document.getElementById("profile_logout_clear_btn")
+
+    if(typeof Logout_And_Clear_Guest_Backup !== "function"){
+        console.log("[auth] Firebase 尚未載入，無法登出")
+        Show_Profile_Toast("系統暫時無法登出，請重新整理頁面再試一次", true)
+        return
+    }
+
+    if(btnEl){
+        btnEl.disabled = true
+        btnEl.textContent = "處理中..."
+    }
+
+    Logout_And_Clear_Guest_Backup(function(success){
+        if(!success){
+            Show_Profile_Toast("登出失敗，請稍後再試一次", true)
+            if(btnEl){
+                btnEl.disabled = false
+                btnEl.textContent = "登出並清除這台裝置的訪客紀錄"
+            }
+            return
+        }
+        // 直接重新整理頁面，讓所有欄位回到「全新訪客」該有的初始狀態，
+        // 理由跟 Delete_All_Data_Clicked() 最後的重新整理完全一樣
+        window.location.reload()
+    })
+}
+
 function Delete_All_Data_Clicked(){
     const confirmBtnEl = document.getElementById("profile_delete_confirm_btn")
 
@@ -362,7 +408,40 @@ function Delete_All_Data_Clicked(){
 // 在 online_time.js 觸發補交「之後」才執行，讀到的資料才會是最新的。
 document.addEventListener("DOMContentLoaded", function(){
     Load_Cloud_Player_Stats()
+    Init_Logout_Zone_Visibility()
+    Init_Typing_Sound_Toggle()   // 【新增】純本機設定，不用等雲端資料，直接讀 localStorage 初始化
 })
+
+/* ============================================================
+   【新增】打字音效開關 —— 純本機設定（localStorage），不同步雲端
+   ------------------------------------------------------------
+   跟排行榜顯示開關不一樣：不需要等雲端資料回來才能決定初始狀態，
+   所以一開始就是可以點的（HTML 那邊沒有加 disabled）。
+   實際的 localStorage 讀寫都交給 TCTC2-0-typing_sound.js 的
+   Get_Typing_Sound_Enabled() / Set_Typing_Sound_Enabled()，
+   這裡只負責同步 checkbox 的畫面狀態。
+   ============================================================ */
+function Init_Typing_Sound_Toggle(){
+    const toggleEl = document.getElementById("profile_typing_sound_toggle")
+    if(!toggleEl) return
+
+    if(typeof Get_Typing_Sound_Enabled !== "function"){
+        console.log("[typing_sound] 打字音效模組尚未載入，開關維持預設狀態")
+        return
+    }
+    toggleEl.checked = Get_Typing_Sound_Enabled()
+}
+
+// is_enabled：checkbox 切換「之後」的狀態，來自 HTML 的 onchange="Toggle_Typing_Sound(this.checked)"
+function Toggle_Typing_Sound(is_enabled){
+    if(typeof Set_Typing_Sound_Enabled !== "function"){
+        console.log("[typing_sound] 打字音效模組尚未載入，無法儲存設定")
+        Show_Profile_Toast("更新失敗，請重新整理頁面再試一次", true)
+        return
+    }
+    Set_Typing_Sound_Enabled(is_enabled)
+    Show_Profile_Toast(is_enabled ? "已開啟打字音效" : "已關閉打字音效", false)
+}
 
 /* ============================================================
    【新增】自訂頭像 —— 完全只存在這台裝置的瀏覽器（localStorage），

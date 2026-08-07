@@ -79,11 +79,33 @@
                 ".write": true,
                 ".validate": "newData.isNumber() && newData.val() >= 0"
               }
+            },
+            "accounts": {
+              "$uid": {
+                ".read": "auth != null && auth.uid === $uid",
+                ".write": "auth != null && auth.uid === $uid",
+                ".validate": "newData.hasChildren(['anon_id', 'provider', 'created_at'])",
+                "anon_id": { ".validate": "newData.isString()" },
+                "email": { ".validate": "newData.val() === null || newData.isString()" },
+                "provider": { ".validate": "newData.isString()" },
+                "created_at": { ".validate": true }
+              }
             }
           }
         }
 
-   【新增規則說明】新增了「網站瀏覽次數」功能，需要兩塊新規則：
+   【新增規則說明・帳號系統】新增了 accounts/{uid} 這個節點，用來存放
+   「一個已登入帳號的 uid，對應到哪一組 anon_id」，是整個登入/註冊功能
+   能不能正常運作的關鍵資料。跟其他節點不一樣的地方：
+   - .read / .write 都限定 auth.uid === $uid，也就是「只有這個帳號本人
+     能讀寫自己的這一筆對照資料」，不像 leaderboard 那樣任何登入過的人
+     都能寫。理由：這筆資料一旦被亂改（例如把 anon_id 改成別人的），
+     等於能冒充讀到別人的所有雲端資料，必須鎖到最嚴。
+   - 如果你的 Firebase 專案是延續舊專案繼續用，記得手動把這個 accounts
+     區塊「補進」你現有的規則物件裡，不要整個覆蓋掉，不然舊規則會不見
+     （這句提醒跟上面每一段新增規則的提醒完全一樣，重要的事再說一次）。
+
+   【新增規則說明・網站瀏覽次數】新增了「網站瀏覽次數」功能，需要兩塊新規則：
    1. site_meta/total_page_views：全站瀏覽總數，不分訪客或已登入玩家，
       每次有人載入任何一個頁面就 +1，用來顯示在排行榜頁面最上方。
    2. player_stats/$anonId/page_views：延續原本 player_stats 的設計，
@@ -419,20 +441,30 @@ function _Filter_Out_Hidden_Players(list, callback) {
     }
 
     const checks = list.map(function (entry) {
-        return tctc_db.ref(`player_stats/${entry._anon_id}/hide_from_leaderboard`)
+        // 【改動】原本只查 hide_from_leaderboard 這一個欄位，
+        // 改成查整個 player_stats/{anon_id} 節點，
+        // 這樣可以「順便」拿到最新的 name，不用額外多發一次請求
+        return tctc_db.ref(`player_stats/${entry._anon_id}`)
             .once("value")
             .then(function (snapshot) {
-                return { entry: entry, hidden: snapshot.val() === true }
+                const stats = snapshot.val() || {}
+                return { entry: entry, hidden: stats.hide_from_leaderboard === true, live_name: stats.name }
             })
             .catch(function () {
-                return { entry: entry, hidden: false }
+                return { entry: entry, hidden: false, live_name: null }
             })
     })
 
     Promise.all(checks).then(function (results) {
         const visible_list = results
             .filter(function (r) { return !r.hidden })
-            .map(function (r) { return r.entry })
+            .map(function (r) {
+                // 【新增】用 player_stats 裡「現在」的名字蓋掉這筆分數記錄裡的舊快照，
+                // 這樣不管這筆成績是多久以前上傳的，畫面上永遠顯示玩家目前的名字。
+                // 如果 player_stats 裡剛好沒有 name（理論上不該發生），就保留原本的舊名字當備援。
+                if (r.live_name) r.entry.name = r.live_name
+                return r.entry
+            })
         callback(visible_list)
     })
 }
@@ -1181,4 +1213,358 @@ function Delete_All_Player_Data(callback) {
     } else {
         Finish_Delete()
     }
+}
+
+/* ============================================================
+   【新增】帳號系統（Email/密碼 + Google 登入 / 註冊）
+   ============================================================
+   跟全站原本的資料架構有一個很重要的前提差異，先講清楚：
+
+   全站幾乎所有讀寫（player_stats、leaderboard、challenge_leaderboard、
+   usernames……）都是用 Get_Anon_Id() 這個「自己土法煉鋼存在 localStorage
+   的隨機 UUID」當 key，跟上面 firebase.auth().signInAnonymously() 拿到的
+   匿名登入 uid【完全是兩條獨立的線】——匿名登入的 uid 目前只拿來讓
+   Rules 檢查「這次寫入是不是從一個有效登入送出來的」，從來沒被拿去當過
+   任何資料的 key。
+
+   這代表：如果單純呼叫 linkWithCredential 把匿名身份升級成帳號，
+   uid 雖然會保留、變成「正式帳號」，但 player_stats／leaderboard 這些
+   資料完全不會自動被帶過去——因為它們的 key 是 tctc_anon_id
+   （存在 localStorage），不是 auth 的 uid，linkWithCredential 只會動到
+   auth 那條線，不會動到 localStorage 裡的值。
+
+   所以這裡採用的解法，是額外加一層「帳號 → anon_id」對照表
+   （accounts/{uid}: { anon_id, email, provider, created_at }），
+   而不是把全站幾十個地方全部改成用 uid 當 key：
+   - 註冊「要繼承」：不換 tctc_anon_id（沿用現有這組），linkWithCredential
+     只負責把 auth 升級成正式帳號，然後把「這組 uid 對應到現有這個 anon_id」
+     寫進 accounts 對照表
+   - 註冊「不要繼承」：本機直接換一組全新的 anon_id，新 uid 對照到這組新
+     anon_id，舊資料變孤兒留在雲端（不刪除，但沒人能再選到）
+   - 登入既有帳號：認證拿到 uid → 查 accounts/{uid}/anon_id
+     → 把 localStorage 的 tctc_anon_id 覆蓋成那組值 → 全站原本的讀寫函式
+     完全不用改，因為它們本來就是每次現讀 localStorage
+   ============================================================ */
+
+// ===== 本機 localStorage 的帳號相關 key，統一定義在這裡，其他檔案（auth_ui.js／profile.js）
+// 直接呼叫下面的 Get_/Set_ 函式操作，不要自己在別的地方硬寫字串 key，避免打錯字 =====
+const AUTH_ACCOUNT_UID_KEY = "tctc2.0-account_uid"       // 目前登入中的帳號 uid，沒登入就不存在這個 key
+const AUTH_ACCOUNT_DISPLAY_KEY = "tctc2.0-account_display" // 顯示在 nav 上的帳號名稱（email 或 Google 顯示名稱）
+const AUTH_GUEST_BACKUP_KEY = "tctc2.0-guest_backup_anon_id" // 登入帳號「之前」，這台裝置原本的訪客 anon_id 備份
+
+function Get_Current_Account_Uid() {
+    return localStorage.getItem(AUTH_ACCOUNT_UID_KEY)
+}
+function Get_Current_Account_Display() {
+    return localStorage.getItem(AUTH_ACCOUNT_DISPLAY_KEY)
+}
+
+// 產生一組全新的訪客 anon_id（跟 Get_Anon_Id() 內部產生新 id 的邏輯完全一致，
+// 獨立拉出來是因為「不繼承」「登出且沒有備份」這兩種情況都需要各自生一組新的，
+// 不想在兩個地方各寫一次一樣的 crypto.randomUUID() fallback 邏輯）
+function _Generate_New_Anon_Id() {
+    return crypto.randomUUID ? crypto.randomUUID() : ("anon-" + Date.now() + "-" + Math.random().toString(16).slice(2))
+}
+
+/* ------------------------------------------------------------
+   切換「這台裝置現在代表誰」的核心函式
+   ------------------------------------------------------------
+   把 localStorage 的 tctc_anon_id 換成 new_anon_id，並且：
+   1. 清掉 tctc_guest_number 快取——這個快取是「數字」，沒有標明是哪個
+      anon_id 的，身份一換，舊快取跟新身份對不上，留著會顯示錯的訪客編號，
+      清掉之後下次呼叫 Get_Guest_Number() 會自動用新 anon_id 重新跟雲端要。
+   2. 把 localStorage 的 username 同步成「新身份」在雲端已經設定過的名字
+      （讀 player_stats/{new_anon_id}/name）；如果新身份還沒設定過名字，
+      就把本機這欄清空，不然畫面會顯示成「舊身份的名字」，資料對不起來。
+
+   呼叫端（Login/Register/Logout 相關函式）都要透過這支函式做切換，
+   不要自己徒手 setItem("tctc_anon_id", ...)，不然上面兩個快取清理很容易漏掉。
+   ------------------------------------------------------------ */
+// 這些 key 都是「跟身份綁定、理論上該跟著身份走」的本機統計，但原本各自
+// 用固定字串存在 localStorage，不分訪客/帳號，導致切換身份（登入/繼承/登出）
+// 之後，畫面還是顯示「上一個身份」殘留的數字。切換身份時全部清掉，
+// 讓新身份從乾淨狀態開始（雲端排行榜資料不受影響，只是本機快取被清空，
+// 之後重打就會依新身份重新累積）。
+const IDENTITY_BOUND_LOCAL_KEYS = [
+    "average_wpm", "average_acc", "wpm_sum", "wpm_times", "acc_sum", "acc_times",
+    "average_challenge_wpm", "average_challenge_acc", "tctc2.0-challenge_total_points",
+    "tctc2.0-challenge_history", "tctc2.0-profile_avatar", "stage_progress", "intro"
+]
+
+function Switch_Active_Identity(new_anon_id, callback) {
+    localStorage.setItem("tctc_anon_id", new_anon_id)
+    localStorage.removeItem("tctc_guest_number")
+    IDENTITY_BOUND_LOCAL_KEYS.forEach(function (key) { localStorage.removeItem(key) })
+
+    tctc_db.ref(`player_stats/${new_anon_id}/name`).once("value").then(function (snapshot) {
+        const cloud_name = snapshot.val()
+        if (cloud_name) {
+            localStorage.setItem("username", cloud_name)
+        } else {
+            localStorage.removeItem("username")
+        }
+        if (callback) callback()
+    }).catch(function (error) {
+        console.log("[auth] 切換身份後讀取暱稱失敗：", error)
+        localStorage.removeItem("username")
+        if (callback) callback()
+    })
+}
+
+/* ------------------------------------------------------------
+   把 Firebase Auth 回傳的錯誤代碼翻譯成中文訊息
+   ------------------------------------------------------------
+   完整代碼表請參考官方文件：
+   https://firebase.google.com/docs/reference/js/auth#autherrorcodes
+   這裡只列出這個網站實際會碰到的常見狀況，沒列到的一律退回顯示
+   error.message（英文原文，至少比完全沒訊息好）。
+   ------------------------------------------------------------ */
+function _Translate_Auth_Error(error) {
+    const code = error && error.code
+    const MESSAGE_MAP = {
+        "auth/email-already-in-use": "這個 Email 已經被註冊過了，直接登入看看？",
+        "auth/invalid-email": "Email 格式不正確",
+        "auth/weak-password": "密碼強度不夠，至少需要 6 個字元",
+        "auth/wrong-password": "密碼錯誤",
+        "auth/user-not-found": "找不到這個帳號",
+        "auth/invalid-credential": "帳號或密碼錯誤",
+        "auth/popup-closed-by-user": "登入視窗被關閉了，請再試一次",
+        "auth/popup-blocked": "瀏覽器擋下了登入彈窗，請允許彈出視窗後再試一次",
+        "auth/credential-already-in-use": "這個 Google 帳號已經被其他帳號綁定過了",
+        "auth/network-request-failed": "網路連線發生問題，請檢查網路後再試一次",
+        "auth/too-many-requests": "嘗試次數過多，請稍後再試"
+    }
+    return (code && MESSAGE_MAP[code]) || (error && error.message) || "發生未知錯誤，請稍後再試"
+}
+
+/* ------------------------------------------------------------
+   註冊/登入彈窗要顯示的「訪客資料繼承預覽」
+   ------------------------------------------------------------
+   回傳目前這個 anon_id 在 player_stats 裡的原始資料（局數、平均 WPM……），
+   給彈窗組出「要不要繼承」的比較文字用。
+
+   Should_Prompt_Guest_Inherit(stats)：判斷「這包資料值不值得問一次」——
+   局數（wpm_count）、正確率局數（acc_count）、挑戰積分、在線秒數
+   只要有任何一項大於 0，就代表這台裝置有實際玩過，才需要跳出詢問；
+   全部都是 0 或整包是空物件，代表這是全新訪客，直接跳過詢問即可
+   （不管選哪個結果都一樣是空的，問了也沒意義）。
+   ------------------------------------------------------------ */
+function Get_Guest_Inherit_Preview(callback) {
+    const anon_id = Get_Anon_Id()
+    tctc_db.ref(`player_stats/${anon_id}`).once("value").then(function (snapshot) {
+        callback(snapshot.val() || {})
+    }).catch(function (error) {
+        console.log("[auth] 讀取訪客資料預覽失敗：", error)
+        callback(null) // null 代表讀取失敗（不是「沒有資料」），呼叫端要分開處理
+    })
+}
+function Should_Prompt_Guest_Inherit(stats) {
+    if (!stats) return false
+    return !!(
+        (stats.wpm_count && stats.wpm_count > 0) ||
+        (stats.acc_count && stats.acc_count > 0) ||
+        (stats.total_points && stats.total_points > 0) ||
+        (stats.online_seconds && stats.online_seconds > 0)
+    )
+}
+
+/* ------------------------------------------------------------
+   註冊 —— 「要繼承」路徑
+   ------------------------------------------------------------
+   用 linkWithCredential／linkWithPopup 把目前的匿名登入升級成正式帳號，
+   uid 不變，本機 tctc_anon_id 也【不用換】——這正是「繼承」能夠成立的關鍵：
+   所有雲端資料本來就是用這組 anon_id 存的，完全不用搬移，只要把
+   「這個新帳號的 uid，對應到這組 anon_id」寫進 accounts 對照表即可。
+   ------------------------------------------------------------ */
+function Register_With_Email_Inherit(email, password, callback) {
+    const user = firebase.auth().currentUser
+    if (!user) {
+        callback(false, "匿名登入尚未完成，請重新整理頁面再試一次")
+        return
+    }
+    const credential = firebase.auth.EmailAuthProvider.credential(email, password)
+    user.linkWithCredential(credential).then(function (result) {
+        _Finish_Account_Write(result.user, "email", Get_Anon_Id(), callback)
+    }).catch(function (error) {
+        callback(false, _Translate_Auth_Error(error))
+    })
+}
+function Register_With_Google_Inherit(callback) {
+    const user = firebase.auth().currentUser
+    if (!user) {
+        callback(false, "匿名登入尚未完成，請重新整理頁面再試一次")
+        return
+    }
+    user.linkWithPopup(new firebase.auth.GoogleAuthProvider()).then(function (result) {
+        _Finish_Account_Write(result.user, "google", Get_Anon_Id(), callback)
+    }).catch(function (error) {
+        callback(false, _Translate_Auth_Error(error))
+    })
+}
+
+/* ------------------------------------------------------------
+   註冊 —— 「不要繼承」路徑
+   ------------------------------------------------------------
+   直接用 createUserWithEmailAndPassword／signInWithPopup（不 link），
+   這兩個方法本身就會把「目前登入中的使用者」換成全新帳號，原本的匿名
+   auth session 不會被刪除、只是不再是目前登入者（變成一筆孤兒的匿名
+   使用者留在 Firebase Auth 後台，不影響任何功能，也不用特別去清）。
+
+   本機 tctc_anon_id 換成全新一組，舊的那組（連同底下所有 player_stats／
+   leaderboard 資料）就此變成孤兒資料留在雲端，不會被刪除，但也沒有任何
+   本機記錄能再指回它。
+   ------------------------------------------------------------ */
+function Register_With_Email_Fresh(email, password, callback) {
+    firebase.auth().createUserWithEmailAndPassword(email, password).then(function (result) {
+        _Finish_Account_Write(result.user, "email", _Generate_New_Anon_Id(), callback)
+    }).catch(function (error) {
+        callback(false, _Translate_Auth_Error(error))
+    })
+}
+function Register_With_Google_Fresh(callback) {
+    firebase.auth().signInWithPopup(new firebase.auth.GoogleAuthProvider()).then(function (result) {
+        _Finish_Account_Write(result.user, "google", _Generate_New_Anon_Id(), callback)
+    }).catch(function (error) {
+        callback(false, _Translate_Auth_Error(error))
+    })
+}
+
+// 兩條註冊路徑（繼承／不繼承）最後都會走到這裡：
+// 1. 把本機 anon_id 換成 final_anon_id（繼承路徑傳進來的就是目前這組，等於沒換）
+// 2. 寫入 accounts/{uid} 對照表
+// 3. Email 註冊的話寄一封驗證信（不會擋住註冊流程本身——寄信失敗只印 console，
+//    不影響 callback(true)，避免因為信箱服務商偶發問題卡住整個註冊）
+function _Finish_Account_Write(user, provider, final_anon_id, callback) {
+    Switch_Active_Identity(final_anon_id, function () {
+        tctc_db.ref(`accounts/${user.uid}`).set({
+            anon_id: final_anon_id,
+            email: user.email || null,
+            provider: provider,
+            created_at: firebase.database.ServerValue.TIMESTAMP
+        }).then(function () {
+            localStorage.setItem(AUTH_ACCOUNT_UID_KEY, user.uid)
+            localStorage.setItem(AUTH_ACCOUNT_DISPLAY_KEY, user.displayName || user.email || "已登入玩家")
+
+            if (provider === "email" && user.emailVerified === false && typeof user.sendEmailVerification === "function") {
+                user.sendEmailVerification().catch(function (error) {
+                    console.log("[auth] 驗證信寄送失敗：", error)
+                })
+            }
+            callback(true)
+        }).catch(function (error) {
+            console.log("[auth] 寫入帳號對照表失敗：", error)
+            callback(false, "註冊時發生錯誤，請稍後再試一次")
+        })
+    })
+}
+
+/* ------------------------------------------------------------
+   登入既有帳號（Email/密碼 或 Google）
+   ------------------------------------------------------------
+   跟註冊不同，登入「不會」問要不要繼承——直接把這台裝置切換成該帳號
+   的雲端資料。如果這台裝置切換前本來就處於訪客模式（還沒登入過任何帳號）
+   且有自己的訪客進度，會先把那組 anon_id 存進 AUTH_GUEST_BACKUP_KEY 備份，
+   不會被覆蓋消失，之後登出時會自動換回來（見下面 Logout_Account）。
+   ------------------------------------------------------------ */
+function Login_With_Email(email, password, callback) {
+    firebase.auth().signInWithEmailAndPassword(email, password).then(function (result) {
+        _Finish_Login(result.user, callback)
+    }).catch(function (error) {
+        callback(false, _Translate_Auth_Error(error))
+    })
+}
+function Login_With_Google(callback) {
+    firebase.auth().signInWithPopup(new firebase.auth.GoogleAuthProvider()).then(function (result) {
+        _Finish_Login(result.user, callback)
+    }).catch(function (error) {
+        callback(false, _Translate_Auth_Error(error))
+    })
+}
+function _Finish_Login(user, callback) {
+    tctc_db.ref(`accounts/${user.uid}/anon_id`).once("value").then(function (snapshot) {
+        const account_anon_id = snapshot.val()
+        if (!account_anon_id) {
+            // 理論上不該發生——每個帳號一定是透過上面的註冊流程建立，
+            // 一定會有這筆對照。保險起見還是給明確錯誤訊息，而不是讓後面整段爆掉。
+            callback(false, "找不到這個帳號對應的資料，請聯絡我們回報這個問題")
+            return
+        }
+
+        // 這台裝置「登入前」如果還不是已登入狀態，代表目前用的 anon_id 是某個訪客的，
+        // 先備份起來，登出後才找得回來
+        if (!Get_Current_Account_Uid()) {
+            localStorage.setItem(AUTH_GUEST_BACKUP_KEY, Get_Anon_Id())
+        }
+
+        Switch_Active_Identity(account_anon_id, function () {
+            localStorage.setItem(AUTH_ACCOUNT_UID_KEY, user.uid)
+            localStorage.setItem(AUTH_ACCOUNT_DISPLAY_KEY, user.displayName || user.email || "已登入玩家")
+            callback(true)
+        })
+    }).catch(function (error) {
+        console.log("[auth] 讀取帳號對照表失敗：", error)
+        callback(false, "登入時發生錯誤，請稍後再試一次")
+    })
+}
+
+/* ------------------------------------------------------------
+   登出（一般登出，從 nav 按的那個）
+   ------------------------------------------------------------
+   - 這台裝置登入前有備份訪客資料（AUTH_GUEST_BACKUP_KEY 存在）：
+     換回那組 anon_id，訪客進度原封不動「復活」
+   - 沒有備份（例如這台裝置一開始就直接登入，從沒當過訪客）：
+     配一組全新的 anon_id，變成一個全新訪客
+   - 不管哪一種，登出後都要重新呼叫 signInAnonymously()，
+     讓 firebase.auth().currentUser 恢復成「有登入」的匿名狀態，
+     不然任何要求 auth != null 的 Rules 寫入會全部被擋下來
+   ------------------------------------------------------------ */
+function Logout_Account(callback) {
+    firebase.auth().signOut().then(function () {
+        localStorage.removeItem(AUTH_ACCOUNT_UID_KEY)
+        localStorage.removeItem(AUTH_ACCOUNT_DISPLAY_KEY)
+
+        const backup_anon_id = localStorage.getItem(AUTH_GUEST_BACKUP_KEY)
+        const restore_to_anon_id = backup_anon_id || _Generate_New_Anon_Id()
+        if (backup_anon_id) localStorage.removeItem(AUTH_GUEST_BACKUP_KEY)
+
+        Switch_Active_Identity(restore_to_anon_id, function () {
+            if (typeof firebase.auth === "function") {
+                firebase.auth().signInAnonymously().catch(function (error) {
+                    console.log("[auth] 登出後重新匿名登入失敗：", error)
+                })
+            }
+            if (callback) callback(true)
+        })
+    }).catch(function (error) {
+        console.log("[auth] 登出失敗：", error)
+        if (callback) callback(false)
+    })
+}
+
+/* ------------------------------------------------------------
+   【新增】登出並清除這台裝置的訪客紀錄（給共用電腦用）
+   ------------------------------------------------------------
+   跟上面一般的 Logout_Account 差在：不管這台裝置有沒有備份的訪客資料，
+   一律【丟棄】那筆備份、配一組全新的 anon_id，不會「復活」成登入前的
+   訪客進度。雲端那份舊訪客資料本身不會被刪除（跟 Delete_All_Player_Data
+   是兩回事），只是這台裝置不會再有任何本機記錄指向它。
+   ------------------------------------------------------------ */
+function Logout_And_Clear_Guest_Backup(callback) {
+    firebase.auth().signOut().then(function () {
+        localStorage.removeItem(AUTH_ACCOUNT_UID_KEY)
+        localStorage.removeItem(AUTH_ACCOUNT_DISPLAY_KEY)
+        localStorage.removeItem(AUTH_GUEST_BACKUP_KEY) // 刻意丟棄，不 restore
+
+        Switch_Active_Identity(_Generate_New_Anon_Id(), function () {
+            if (typeof firebase.auth === "function") {
+                firebase.auth().signInAnonymously().catch(function (error) {
+                    console.log("[auth] 登出後重新匿名登入失敗：", error)
+                })
+            }
+            if (callback) callback(true)
+        })
+    }).catch(function (error) {
+        console.log("[auth] 登出失敗：", error)
+        if (callback) callback(false)
+    })
 }

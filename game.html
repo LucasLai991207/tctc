@@ -21,6 +21,8 @@
 
     <link rel="stylesheet" href="TCTC2-0-intro_lobby.css">
     <link rel="stylesheet" href="TCTC2-0-main_lobby.css">
+    <!-- 【新增】帳號系統彈窗樣式 -->
+    <link rel="stylesheet" href="TCTC2-0-auth_ui.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@200;300;400;500;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
@@ -598,9 +600,19 @@
 
             transition: all 300ms ease;
         }
-        .rank_view_btn:hover {
-            background-color: var(--champagne-gold);
-            color: var(--dark-blue);
+
+        /* 【新增】「查看排名」+「分享成績卡」的並排容器：
+           display:flex 讓兩顆按鈕水平排在一起（父層 .game_result 是 column 方向，
+           這一個 div 本身只算一個 flex 子項，裡面才是真正橫向排列的地方）；
+           flex-wrap 讓手機窄螢幕擠不下兩顆時可以自動換行，不會把版面撐爆。 */
+        .game_result_share_rank_row {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .game_result_share_rank_row .rank_view_btn {
+            margin-top: 0;
         }
         .cg_punct_content_min_text{
             font-size: 0.8rem;
@@ -811,7 +823,7 @@
 
 
     <div class="game_back_btn" onclick="window.location.href='TCTC2-0-main.html'">←</div>
-    <div class="game_rank_floating_btn" id="game_rank_floating_btn" title="查看這關排名（不用打完也能看）" onclick="window.location.href='TCTC2-0-ranking.html?stage=' + encodeURIComponent(stageId)">🏆</div>
+    <div class="game_rank_floating_btn" id="game_rank_floating_btn" title="查看這關排名（不用打完也能看）" onclick="window.location.href='TCTC2-0-ranking.html?stage=' + encodeURIComponent(stageId) + '&return_to=' + encodeURIComponent(window.location.href)">🏆</div>
 
     <!--外層容器：讓「倒數設定按鈕」跟「計時器」水平並排、同高對齊，整組固定在原本計時器的位置-->
     <div class="game_timer_wrap">
@@ -973,7 +985,16 @@
                 </div>
             </div>
             <button class="next_game_btn" onclick="Find_next_game(stageId)">下一關</button>
-            <button class="rank_view_btn" id="rank_view_btn" onclick="window.location.href='TCTC2-0-ranking.html?stage=' + encodeURIComponent(stageId)">🏆 查看這關排名</button>
+            <!-- 【修正】原本這兩顆各自是 .game_result 底下獨立的 flex 子項，
+                 而 .game_result 是 flex-direction: column，導致兩顆還是各占一行、直的疊在一起，
+                 沒有真的並排。包一層 .game_result_share_rank_row（display:flex）進去，
+                 讓這兩顆變成同一個 flex 子項裡的東西，才會真正水平並排。 -->
+            <div class="game_result_share_rank_row">
+                <button class="rank_view_btn" id="rank_view_btn" onclick="window.location.href='TCTC2-0-ranking.html?stage=' + encodeURIComponent(stageId) + '&return_to=' + encodeURIComponent(window.location.href)">🏆 查看這關排名</button>
+                <!-- 【新增】分享成績卡：點下去呼叫 Share_Current_Result()，
+                     這個函式會拿 ShowResult() 裡剛算好的 wpm/acc/關卡名稱，交給 share_card.js 畫圖 -->
+                <button class="rank_view_btn" id="share_result_btn" onclick="Share_Current_Result()">📤 分享成績卡</button>
+            </div>
         </div>
         <!-- tuturial overlay-->
 
@@ -1109,9 +1130,18 @@
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
     <script src="TCTC2-0-firebase.js?v=3"></script>
+    <!-- 【新增】帳號系統：nav 上的帳號按鈕跟登入/註冊彈窗 -->
+    <script src="TCTC2-0-auth_ui.js"></script>
     <!-- 【新增】在線時長追蹤（全站共用，每個頁面都要載入） -->
     <script src="TCTC2-0-online_time.js"></script>
+    <!-- 【新增】打字音效（共用模組，哪頁要用哪頁自己載入） -->
+    <script src="TCTC2-0-typing_sound.js"></script>
+    <!-- 【新增】成績分享卡片（共用模組，哪頁要用哪頁自己載入） -->
+    <script src="TCTC2-0-share_card.js"></script>
     <script>
+
+        // 【新增】頁面一載入就準備好打字音效（建立 AudioContext + 非同步載入音效檔）
+        Init_Typing_Sound()
 
         // ===== 讀取 URL 參數 =====
         // window.location.search 是網址裡 ? 之後的部分，例如 "?stage=1-2-1"
@@ -1163,6 +1193,10 @@
         let target_get = 0       // 總共打對幾個字
         let isRunning = false    // 計時是否已經開始
         let startTime = null     // 開始的時間點（毫秒
+        // 【新增】最近一次 ShowResult() 算出來的成績摘要，給「分享成績卡」按鈕使用；
+        // 之所以要另外存一份，是因為 wpm / acc 這些數字是 ShowResult() 裡的區域變數，
+        // 函式執行完就沒了，按鈕在那之後被點擊時已經拿不到，所以要存到這個全域變數裡。
+        let last_result_summary = null
         let boxes = []           // 存所有方框 div的陣列 方便用 boxes[0] boxes[1]取得
         let timerInterval = null // 右上角計時器的 interval id
         let box_to_char_idx = [] // 【新增】中級「逐字注音」模式專用：注音鍵位 index → 目標句子(target1)第幾個字
@@ -1595,6 +1629,17 @@
                     behavior: "smooth"
                 })
             }
+            // 【修改】原本這裡是「拿這次新增的字元跟目標句子同一個位置比對，對上了才播音效」，
+            // 但玩家是用注音輸入法打字：組字中的每一次按鍵，event.isComposing 都是 true，
+            // 上面第 1595 行 `if(event && event.isComposing) return` 早就把這個函式擋掉了，
+            // 真正能跑到這裡的，只有「選字選完、字元定案」的那一次 input 事件——
+            // 也就是說，玩家明明按了一整串注音符號鍵（ㄋ、ㄧ、ˇ...），卻只有選字完成那一下
+            // 才有機會聽到音效，其餘每一次按鍵完全沒有回饋，聽起來就像大部分時候都是靜音的。
+            // 空白鍵更明顯：Zhuyin 輸入法的空白鍵大多是拿來「選第一個候選字」，
+            // 幾乎不會真的在 typed_text 裡產生一個字元完全相等的空白字元 " "，
+            // 所以 Play_Space_Sound() 這個分支實際上幾乎永遠不會被觸發。
+            // 現在把播音效的邏輯整個搬到下面新增的 keydown 監聽器（Play_Typing_Feedback_Sound），
+            // 只要玩家按下鍵盤就給聲音回饋，不再依賴「這個鍵有沒有讓輸入框內容變成正確答案」。
             text_input_prev_typed_length = typed_text.length
 
             // 【修改】原本一定要「一字不差」才會結束關卡，玩家打錯就永遠卡住。
@@ -1631,6 +1676,56 @@
             // 字數還沒打滿 → 什麼都不做，繼續讓玩家打
         }
 
+        // ===== 【新增】直接輸入模式的打字音效：純粹依照「玩家按了哪個實體鍵」決定播什麼音效，
+        // 完全不管這個鍵最後有沒有讓輸入框內容變成正確答案。=====
+        // 這裡刻意用 event.code（實體鍵盤位置，例如 "Space"、"Enter"、"KeyA"）
+        // 而不是 event.key（輸入法轉換後的字元），原因是：玩家用注音輸入法打字、
+        // IME 正在組字的過程中，Chrome 等瀏覽器很多時候會把 event.key 回報成字串
+        // "Process"（代表這個鍵被輸入法接管、還沒有確定的字元可以回報），
+        // 如果拿 event.key 去判斷「這是不是空白鍵/Enter」，組字期間幾乎每次都判斷不出來。
+        // event.code 記錄的是「按下了鍵盤上哪一個實體按鍵」，不受輸入法組字狀態影響，
+        // 不管是不是正在選字，Space 永遠回報 "Space"、Enter 永遠回報 "Enter"，
+        // 這也是為什麼原本「打對才播空白鍵音效」幾乎聽不到聲音的根本原因——
+        // 用注音輸入法時，空白鍵大多是拿來選字，並不會在 typed_text 裡打出一個
+        // 真正的空白字元，用內容比對永遠比不到；現在改成只要「按下」這個實體鍵就給音效，
+        // 就不會再受組字流程的影響。
+        function Play_Typing_Feedback_Sound(event){
+            // 空白鍵、Enter 各自有專屬音效，優先判斷、判斷完直接 return，
+            // 不會再落到下面「一般鍵隨機混音」的分支
+            if(event.code === "Space"){
+                Play_Space_Sound()
+                return
+            }
+            if(event.code === "Enter" || event.code === "NumpadEnter"){
+                Play_Enter_Sound()
+                return
+            }
+            // 【新增】Backspace（退格）沿用 Enter 的音效，不用另外做新的音檔
+            if(event.code === "Backspace"){
+                Play_Enter_Sound()
+                return
+            }
+
+            // 【新增】排除「不會打出任何注音符號」的功能鍵/控制鍵：
+            // 這些鍵按下並不是玩家在輸入內容，不應該跟著發出「打字」的音效，
+            // 否則會變成切換視窗、按方向鍵移動游標時也在「喀喀喀」響。
+            // 【修改】Backspace 已經在上面獨立判斷、播 Enter 的音效，
+            // 這裡的排除清單就把它拿掉，不然會在跑到上面的判斷「之後」又被這裡攔一次
+            // ——不過因為上面已經 return 了，其實不影響行為，只是拿掉比較不會誤導閱讀。
+            const NON_TYPING_KEY_CODES = [
+                "Tab", "ShiftLeft", "ShiftRight", "ControlLeft", "ControlRight",
+                "AltLeft", "AltRight", "CapsLock", "Escape", "MetaLeft", "MetaRight",
+                "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight",
+                "Home", "End", "PageUp", "PageDown", "Delete", "Insert",
+                "ContextMenu", "NumLock", "ScrollLock", "Pause", "PrintScreen"
+            ]
+            if(NON_TYPING_KEY_CODES.includes(event.code)) return
+            if(/^F([1-9]|1[0-9]|2[0-4])$/.test(event.code)) return   // F1 ~ F24 功能鍵
+
+            // 其餘的鍵（不管最後打不打得對）一律當作「有效的一次打字動作」，
+            // 用兩種音效隨機混音，避免一直重複同一個聲音聽起來很單調
+            Play_Correct_Sound()
+        }
 
         // ===== 【新增】渲染中級專用的輸入模式切換按鈕 =====
         // 只有「中級」（stage id 開頭是 2）且類型是「綜合練習」的關卡才會顯示
@@ -1885,6 +1980,10 @@
                     event.preventDefault()
                 }
             })
+
+            // 【新增】打字音效改成完全跟著「玩家有沒有按鍵」走，不再管這個鍵有沒有讓輸入框
+            // 的內容變成正確答案（原因見上面 Check_Text_Input_Match 裡拿掉那段邏輯的註解）。
+            game_container_input.addEventListener("keydown", Play_Typing_Feedback_Sound)
 
             // 【新增】禁止在輸入框內貼上文字，防止玩家直接複製題目貼上作弊
             // paste 事件：不管玩家是按 Ctrl+V、用滑鼠右鍵選單「貼上」，
@@ -2580,6 +2679,12 @@
                 ? (wpm >= Get_Stage_Default_Wpm(stage) && acc >= (typeof stage.acc_min === "number" && stage.acc_min > 0 ? stage.acc_min : 90))
                 : acc > 89
 
+            // 【新增】過關才播放 complete 音效，acc < 90 就不播（即使 stage_is_passed 因為
+            // 高級關卡門檻比較低而判定過關，這裡還是額外用 acc >= 90 卡一次，維持一致的音效門檻）
+            if(stage_is_passed && acc >= 90){
+                Play_Complete_Sound()
+            }
+
             //如果是 章節訓練 或 中級（綜合練習，全數採計）或 基礎輸入 或 高級 就採計到 平均wpm
             if((stage.name === "章節驗收" || stage.name === "精熟度測試" || stage.type === "基礎輸入" || stage.type === "速度挑戰" || stage.type === "綜合練習") && (!Is_Box_Input_Stage(stage) || stage_is_passed)){
                 wpm_sum += wpm;
@@ -2651,6 +2756,28 @@
             document.getElementById("result_acc").textContent = acc + "%"
             document.getElementById("result_chars").textContent = target_get
             document.getElementById("result_errors").textContent = wrong_key_times
+
+            // 【新增】把這次算好的 wpm/acc/關卡名稱存起來，分享卡按鈕點下去的時候直接讀這裡，
+            // 不用重新計算一次（wrong_key_times 之後可能會被 Init() 重設，這裡要在被改掉之前存好）
+            // 【新增】details：把這次結算算出來的所有細項數字一起塞進分享卡，
+            // 錯誤/修正次數的標籤要跟畫面上的 errors_label 用同一套判斷（直接輸入模式是「修正次數」，
+            // 其他模式是「錯誤次數」），避免分享卡跟畫面上顯示的文字對不起來。
+            last_result_summary = {
+                wpm: wpm,
+                acc: acc,
+                label: (stage.name || stageId) + "",
+                sub_label: get_difficulty_by_stageid(stage.id) === "hard"
+                    ? "高級關卡・速度挑戰"
+                    : (Is_Box_Input_Stage(stage) ? "基礎輸入練習" : "主線模式"),
+                details: [
+                    { label: "關卡編號", value: stageId },
+                    { label: "關卡類型", value: stage.type || "－" },
+                    { label: "正確字數", value: String(target_get) },
+                    { label: Is_Box_Input_Stage(stage) ? "修正次數" : "錯誤次數", value: String(wrong_key_times) },
+                    { label: "總耗時", value: Format_Timer(timeUsed) },
+                    { label: "本次結果", value: stage_is_passed ? "通過" : "未通過" }
+                ]
+            }
 
             // 【新增】直接輸入模式（輸入法選字）的 backspace 次數，
             // 不等於「真正打錯」，可能只是選字選錯又修正而已，
@@ -2730,6 +2857,16 @@
                 behavior: "smooth"
             })
 
+        }
+
+        // ===== 【新增】分享成績卡按鈕的進入點 =====
+        // 純粹是個轉接函式：檢查 last_result_summary 有沒有資料（防呆用，
+        // 理論上這個按鈕只會在結果畫面顯示之後才點得到，一定會有資料），
+        // 有的話就交給 share_card.js 的 Open_Share_Card_Modal() 處理接下來所有事情
+        // （畫 Canvas、跳出預覽彈窗、下載按鈕），這裡不用管任何細節。
+        function Share_Current_Result(){
+            if(!last_result_summary) return
+            Open_Share_Card_Modal(last_result_summary)
         }
 
 
@@ -2912,6 +3049,15 @@
             // 判斷對錯 
             if (target[current] === bopomofo[key]) {
 
+                // 【新增】打對音效：空白鍵/Enter 各自有專屬音效，其他一般字用兩種音效隨機混音
+                if(key === " "){
+                    Play_Space_Sound()
+                } else if(key === "Enter"){
+                    Play_Enter_Sound()
+                } else {
+                    Play_Correct_Sound()
+                }
+
                 const current_top = boxes[current].offsetTop
 
                 //對了
@@ -2951,6 +3097,7 @@
                     // 【維持】最後一格沒有下一格可以跳、也不會有「卡住」的問題：
                     // 打錯就直接結束遊戲，不用管這格要標紅還是留金框。
                     wrong_key_times++   //錯誤次數 +1
+                    Play_Wrong_Sound()   // 【新增】目前無對應音檔，呼叫了不會發出聲音
                     Show_Wrong_Char_Popup(boxes[current], bopomofo[key])
                     boxes[current].classList.remove("current")
                     boxes[current].classList.add("wrong")
@@ -2971,6 +3118,7 @@
                         wrong_key_times++
                         stuck_mistake_counted = true
                     }
+                    Play_Wrong_Sound()   // 【新增】目前無對應音檔，呼叫了不會發出聲音
                     Show_Wrong_Char_Popup(boxes[current], bopomofo[key])  //跳出打錯的字
                     Shake_Wrong_Box()  //金框震動（不會變紅）
                     return
@@ -2980,6 +3128,7 @@
                 // 這格直接標成紅框（wrong），游標直接跳到下一格（變金框 current），
                 // 跟「打對」時的捲動邏輯一致。
                 wrong_key_times++   //錯誤次數 +1
+                Play_Wrong_Sound()   // 【新增】目前無對應音檔，呼叫了不會發出聲音
                 Show_Wrong_Char_Popup(boxes[current], bopomofo[key])  //跳出打錯的字
 
                 const current_top = boxes[current].offsetTop

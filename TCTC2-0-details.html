@@ -21,8 +21,8 @@
     <link rel="stylesheet" href="TCTC2-0-intro_lobby.css">
     <link rel="stylesheet" href="TCTC2-0-main_lobby.css">
     <link rel="stylesheet" href="TCTC2-0-profile.css">
-
-
+    <!-- 【新增】帳號系統彈窗樣式 -->
+    <link rel="stylesheet" href="TCTC2-0-auth_ui.css">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -290,13 +290,13 @@
         <summary class="detail_h2">-隱私</summary>
 
         <h3>Q: 會收集我的資料？</h3><br>
-        <h4 class="detail_ans">TCTC 僅收集提供服務所需的基本資料，例如使用者名稱、登入資訊（頭像、名字）及練習成績。我們沒有權力收集與打字練習無關的個人資料，而且純千端網頁也沒辦法獲取。</h4>
+        <h4 class="detail_ans">TCTC 僅收集提供服務所需的基本資料，例如使用者名稱、登入資訊（頭像、名字）及練習成績。我們沒有權力收集與打字練習無關的個人資料，而且純千端網頁也沒辦法獲取。且所有密碼到後端都經過雜湊，我們絕對看不到明文。</h4>
 
         <h3>Q: 我的成績是公開的嗎？</h3><br>
         <h4 class="detail_ans">若參與排行榜，你的使用者名稱與成績可能會公開顯示於排行榜中。除了排行榜所需資訊外，不會公開其他個人資料。</h4>
 
         <h3>Q: 可以隱藏排行榜嗎？</h3><br>
-        <h4 class="detail_ans">此功能正在規劃中，未來將提供是否公開排行榜的選項。</h4>
+        <h4 class="detail_ans">可以。個人設定有這項功能。</h4>
         </details>
 
 
@@ -374,6 +374,13 @@
     <!-- 【新增】在線時長追蹤（全站共用，每個頁面都要載入）
          這個頁面沒有載入 Firebase，時間會先記在本機，等下次造訪
          game.html / TCTC2-0-challenge.html / TCTC2-0-ranking.html 時補交上雲端。 -->
+    <!-- 【新增】帳號系統：nav 上的帳號按鈕跟登入/註冊彈窗需要這幾支 -->
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+    <script src="TCTC2-0-firebase.js?v=3"></script>
+    <script src="TCTC2-0-auth_ui.js"></script>
+
     <script src="TCTC2-0-online_time.js"></script>
     <script defer src="https://cloud.umami.is/script.js" data-website-id="070df494-4361-4dce-ad65-a25b404811e9"></script>
 

@@ -7,28 +7,20 @@
         TCTC2-0-firebase.js（Get_Stage_Leaderboard / Get_Challenge_Leaderboard）
    ============================================================ */
 
-// ===== 【新增】排行榜返回鍵：回到「剛剛所在的關卡路徑」，而不是寫死跳回主畫面 =====
-// 核心概念：history.back() 是瀏覽器原生的「上一頁」功能，
-// 它會讀取瀏覽器的分頁歷史紀錄（history stack），回到使用者上一個造訪的頁面。
-// 因為 game.html / challenge_lobby.js 點擊排行榜連結時，都是用
-// window.location.href = 'TCTC2-0-ranking.html?...' 這種「一般跳轉」方式進來的，
-// 這種跳轉方式預設就會把新頁面推進 history stack，所以「上一頁」自然就是你剛剛的關卡頁，
-// 難度/模式/秒數等狀態也都會維持原狀，因為那個頁面本身沒有被重新載入。
-function Ranking_Go_Back(){
-    // document.referrer：瀏覽器記錄「這個頁面是從哪個網址連過來的」，
-    // 用來判斷使用者是不是「正常從站內某頁面點連結進來的」，
-    // 而不是直接貼網址、或從書籤、外部連結直接打開排行榜頁
-    // （這種情況下 history 裡可能沒有上一頁，history.back() 會沒反應或跳出網站）
-    const cameFromSameSite = document.referrer && document.referrer.includes(window.location.host)
-
-    if(cameFromSameSite && window.history.length > 1){
-        // 有上一頁紀錄，且確定是從站內某頁面過來的 → 直接返回上一頁
-        window.history.back()
-    } else {
-        // 沒有可返回的紀錄（例如直接貼網址開啟排行榜頁）→ 安全地退回主畫面，避免返回鍵卡死
-        window.location.href = 'TCTC2-0-main.html'
-    }
-}
+// ===== 【修改】排行榜返回鍵：改成用網址帶的 return_to 參數記住「真正的入口」 =====
+// 原本的做法是讀「排行榜頁面現在選單顯示的難度/秒數/關卡」去猜返回目的地，
+// 這樣做有兩個問題：(1) 就算猜對是挑戰模式，也是猜去遊戲畫面，不是大廳，
+// 目的地本身就不對；(2) 只要使用者進來之後自己切換過選單/分頁，
+// 猜出來的目的地就會跟他真正的來源完全無關（例如從導覽列直接點「排行榜」，
+// 選單預設停在某個組合，按返回卻被送進那個組合的遊戲畫面）。
+//
+// 現在改成：game.html / TCTC2-0-challenge_lobby.js / TCTC2-0-challenge.js
+// 這三個「真正會連來排行榜」的入口，各自在跳轉時把「自己當下的網址」用
+// return_to 參數一起帶過來；這裡只負責讀出來、原封不動送回去，
+// 不管使用者進來後在排行榜頁面裡怎麼切換選單都不影響返回目的地。
+// 如果網址沒帶 return_to（例如直接從導覽列的「排行榜」連結、或直接貼網址進來），
+// 代表不是從任何一個「關卡/大廳」過來的，沒有一個該回去的地方，退回主畫面就是合理預設值。
+const ranking_return_to = new URLSearchParams(window.location.search).get("return_to")
 
 //======= 共用 DOM =======
 const mode_tab_stage = document.getElementById("ranking_mode_tab_stage")
@@ -761,6 +753,21 @@ function Load_Total_Page_Views() {
             ? "網站總瀏覽次數：讀取失敗"
             : `網站總瀏覽次數：${total.toLocaleString("zh-TW")} 次`
     })
+}
+
+/* ============================================================
+   【修改】左上角「←」返回按鈕：直接回到 return_to 記住的那個入口網址。
+   不再依照排行榜頁面「現在」的選單狀態去猜目的地——
+   選單只是使用者在排行榜頁面裡自己瀏覽的紀錄，跟他從哪裡進來是兩回事。
+   ============================================================ */
+function Go_Back_From_Ranking() {
+    if (ranking_return_to) {
+        window.location.href = ranking_return_to
+        return
+    }
+
+    // 沒有 return_to（不是從關卡/大廳點進來的），沒有一個「該回去的地方」，回主畫面是合理的預設值
+    window.location.href = "TCTC2-0-main.html"
 }
 
 /* ============================================================

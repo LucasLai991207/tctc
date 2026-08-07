@@ -93,7 +93,95 @@ let cg_skip_count = 0         // 【新增】玩家按下「跳過」按鈕的�
 // ===== 跟 game.html 直接輸入模式一致：記錄「上一次事件觸發時」游標打到第幾個字 =====
 // 用途：每次打字後，要拿「打字前」跟「打字後」目前這格文字的 offsetTop（垂直位置）互相比較，
 // 如果不一樣，代表換行了，才需要呼叫 scrollBy() 把「目標文字框」往下捲一行。
-let cg_prev_typed_length = 0
+// 【調整】原本存的是「輸入框字數」，現在文章模式改用即時比對（cg_align_typed_to_target），
+// 玩家實際打的字數可能因為漏字/多打字而跟「目標文字位置」不一樣，
+// 所以這裡改存「目標文字的比對位置（target pointer）」，語意更準確，變數也改名成 cg_prev_target_index。
+let cg_prev_target_index = 0
+
+// ===== 【新增】打字音效用的追蹤變數 =====
+// 邏輯跟 game.html 的 text_input_prev_typed_length 一致：記住「上一次已經處理過的長度／
+// 對到目標文字的哪個位置」，下次輸入事件只需要比對「新增的那一段」，
+// 不用重算整句，也才能正確跳過 IME 組字中的中間狀態（只在組字結束、真正定案時才比對）。
+let cg_prev_input_length = 0     // 文章模式：上次事件時，輸入框的字數
+let cg_prev_target_pointer = 0   // 文章模式：上次事件時，比對到目標文章的第幾個字（對應 cg_alignment.targetPointer）
+let cg_word_prev_input_length = 0 // 單詞模式：上次事件時，目前這個詞輸入框的字數（每次吃掉一個詞、清空輸入框就會歸零）
+
+// ===== 【新增】文章模式的即時比對結果快取 =====
+// 每次輸入事件都會重新跑一次 cg_align_typed_to_target()，把結果存在這裡，
+// 同一次輸入事件裡，畫面上色（cg_update_display）、統計數字（cg_get_progress_snapshot）、
+// 換行捲動（cg_maybe_scroll_to_next_line）都共用這一份結果，不用重複計算。
+let cg_alignment = null
+
+// 連續要對上幾個字，才承認「這是漏字/多打字」而不是單純打錯（巧合對上的機率會隨這個數字指數下降）
+const CG_ALIGN_LOOKAHEAD = 2
+
+// ===== 【新增】即時比對演算法：把玩家輸入的內容跟目標文章對齊，容忍「漏字」跟「多打一個字」 =====
+// 概念：原本的比對是死死地拿 typed[i] 跟 target[i] 比，只要中間漏一個字，
+// 後面所有位置就全部平移、全部判定成錯的。
+// 這裡改成一邊比對一邊維護兩根指標（t = 讀到 typed 的第幾格／g = 讀到 target 的第幾格），
+// 遇到對不上的時候，先「往後看」CG_ALIGN_LOOKAHEAD 個字：
+//   - 如果玩家目前打的字，其實接下來能連續對上「目標往後跳 1 個字」的內容 → 判定成「漏字」，
+//     把 target 那個字標成 missed（算錯），target 指標往前推進，玩家輸入的字不動、留著跟新的位置比。
+//   - 如果玩家目前打的字，往後跳 1 個字之後能連續對上「目標現在的位置」→ 判定成「多打一個字」，
+//     直接跳過玩家那個多打的字，target 指標不動。
+//   - 兩種都對不上，才視為單純打錯字（原本的行為：這一格標成錯的，兩邊指標一起往前走）。
+// 用「連續 2 個字才算數」而不是只看 1 個字，是為了降低中文常見重複字（的、了、是...）巧合對上、誤判的機率。
+function cg_align_typed_to_target(typed, target){
+    let t = 0
+    let g = 0
+    const status = new Array(target.length).fill("pending")
+    let extraCount = 0   // 玩家「多打」但被判定要忽略的字數，供之後如果要顯示提示用
+
+    // 檢查 str 從 idx 開始的那一小段，是否完整等於 needle（用來確認「連續 N 個字都對上」）
+    function matches_at(str, idx, needle){
+        if(needle.length === 0) return false
+        if(idx < 0 || idx + needle.length > str.length) return false
+        for(let k = 0; k < needle.length; k++){
+            if(str[idx + k] !== needle[k]) return false
+        }
+        return true
+    }
+
+    while(t < typed.length && g < target.length){
+        if(typed[t] === target[g]){
+            status[g] = "correct"
+            t++
+            g++
+            continue
+        }
+
+        // ===== 嘗試判定「漏字」：往後跳 1 個目標字，看能不能連續對上 =====
+        const skip_window = Math.min(CG_ALIGN_LOOKAHEAD, typed.length - t, target.length - g - 1)
+        if(skip_window > 0 && matches_at(typed, t, target.slice(g + 1, g + 1 + skip_window))){
+            status[g] = "missed"   // 這個字被漏打，算錯，但不影響後面的比對
+            g++
+            continue
+        }
+
+        // ===== 嘗試判定「多打一個字」：玩家多按了一鍵，往前跳 1 個字看能不能連續對上 =====
+        const extra_window = Math.min(CG_ALIGN_LOOKAHEAD, typed.length - t - 1, target.length - g)
+        if(extra_window > 0 && matches_at(typed, t + 1, target.slice(g, g + extra_window))){
+            extraCount++
+            t++   // 忽略這個多打的字，target 指標不動
+            continue
+        }
+
+        // ===== 都不是，單純打錯字（替換），行為跟原本一樣 =====
+        status[g] = "wrong"
+        t++
+        g++
+    }
+
+    if(g < target.length) status[g] = "current"   // 下一格要打的字，游標高亮位置
+
+    return { status: status, targetPointer: g, extraCount: extraCount }
+}
+
+// 依目前輸入框內容重新跑一次比對，結果存進 cg_alignment 快取
+function cg_recompute_alignment(){
+    cg_alignment = cg_align_typed_to_target(cg_input_textarea.value, cg_target_text)
+    return cg_alignment
+}
 
 function cg_get_settings_from_url(){
     const params = new URLSearchParams(window.location.search)
@@ -280,7 +368,11 @@ function cg_init(difficulty, seconds, stage){
 
     cg_start_time = null
     cg_finished = false
-    cg_prev_typed_length = 0   // 重置捲動追蹤用的索引，避免沿用到上一輪的進度
+    cg_prev_target_index = 0   // 重置捲動追蹤用的索引，避免沿用到上一輪的進度
+    cg_alignment = null        // 重置即時比對快取，避免沿用到上一輪的比對結果
+    cg_prev_input_length = 0   // 【新增】重置音效追蹤變數，避免沿用到上一輪的位置
+    cg_prev_target_pointer = 0
+    cg_word_prev_input_length = 0
 
     // 【新增】重置結算統計
     cg_correction_count = 0
@@ -358,11 +450,14 @@ function cg_start_timer(){
     }, 250)
 }
 
+// ===== 【調整】改用 cg_align_typed_to_target 的比對結果算正確字數，不再是死板的 typed[i] vs target[i] =====
+// 這樣漏字/多打字造成的誤判不會被算進「正確字數」的損失裡（漏掉的那個字本身還是算錯，
+// 但不會連帶把後面明明打對的字也一起算成錯）。
 function cg_count_correct(typedValue){
+    const alignment = cg_align_typed_to_target(typedValue, cg_target_text)
     let correct = 0
-    const len = Math.min(typedValue.length, cg_target_text.length)
-    for(let i = 0; i < len; i++){
-        if(typedValue[i] === cg_target_text[i]) correct++
+    for(let i = 0; i < alignment.status.length; i++){
+        if(alignment.status[i] === "correct") correct++
     }
     return correct
 }
@@ -421,19 +516,25 @@ function cg_update_live_stats(){
     }
 }
 
+// ===== 【調整】改用 cg_alignment（即時比對結果）決定每一格字的顏色，取代原本死板的 i < typedValue.length 判斷 =====
+// status[i] 可能是 correct / wrong / missed（漏字，也顯示成錯誤色）/ current（下一個要打的字）/ pending（還沒打到）
 function cg_update_display(){
-    const typedValue = cg_input_textarea.value
     const chars = cg_article_box.children
+    const status = cg_alignment ? cg_alignment.status : []
 
     for(let i = 0; i < chars.length; i++){
         const span = chars[i]
         span.classList.remove("correct", "wrong", "current")
 
-        if(i < typedValue.length){
-            span.classList.add(typedValue[i] === cg_target_text[i] ? "correct" : "wrong")
-        } else if(i === typedValue.length){
+        const s = status[i]
+        if(s === "correct"){
+            span.classList.add("correct")
+        } else if(s === "wrong" || s === "missed"){
+            span.classList.add("wrong")
+        } else if(s === "current"){
             span.classList.add("current")
         }
+        // pending：維持預設樣式，不用加 class
     }
 }
 
@@ -454,7 +555,10 @@ function cg_get_char_top(index){
 // 3. 如果兩者不同，代表視線焦點換到下一行了，用 scrollBy() 把文章框往下捲「剛好一行」的距離
 //    （因為換行造成的 offsetTop 差，本身就等於一行的高度，不用另外硬寫死行高數字）
 function cg_maybe_scroll_to_next_line(prev_top){
-    const new_index = cg_input_textarea.value.length
+    // 【調整】原本用「輸入框字數」當作目前打到第幾格的索引，
+    // 但現在漏字/多打字之後，輸入框字數不再等於目標文字的實際位置，
+    // 改用比對結果的 targetPointer（下一個要打的目標字位置）才準確。
+    const new_index = cg_alignment ? cg_alignment.targetPointer : 0
     const new_top = cg_get_char_top(new_index)
 
     if(prev_top !== null && new_top !== null && new_top !== prev_top){
@@ -464,7 +568,7 @@ function cg_maybe_scroll_to_next_line(prev_top){
         })
     }
 
-    cg_prev_typed_length = new_index
+    cg_prev_target_index = new_index
 }
 
 // ===== 【新增】單詞模式專用的「換行就捲動」，邏輯跟上面的 cg_maybe_scroll_to_next_line 是同一套概念，
@@ -493,7 +597,11 @@ function cg_on_input(event){
 
     // 在「這次輸入造成畫面更新」之前，先把目前這格字的位置記下來，
     // 才有辦法在更新之後拿新舊位置比較、判斷要不要捲動。
-    const prev_top = cg_get_char_top(cg_prev_typed_length)
+    const prev_top = cg_get_char_top(cg_prev_target_index)
+
+    // 【新增】每次輸入都重新跑一次即時比對（漏字/多打字容錯），結果快取進 cg_alignment，
+    // 下面的上色、統計、捲動、完成判斷全部共用同一份結果。
+    cg_recompute_alignment()
 
     cg_update_display()
     cg_update_live_stats()
@@ -508,13 +616,26 @@ function cg_on_input(event){
         return
     }
 
+    // 【修改】原本這裡是「拿這次新增的字元跟目標文章同一個位置比對，對上了才播音效」，
+    // 但玩家是用注音輸入法打字：組字中的每一次按鍵，event.isComposing 都是 true，
+    // 上面第 615 行 `if(event && event.isComposing) return` 早就把這個函式擋掉了，
+    // 真正能跑到這裡的只有「選字選完、字元定案」那一次 input 事件，
+    // 也就是說玩家按了一整串注音符號鍵卻幾乎聽不到聲音；空白鍵在 Zhuyin 輸入法裡
+    // 大多是拿來選第一個候選字，不會真的打出空白字元，Play_Space_Sound() 這個分支
+    // 實際上幾乎永遠不會被觸發。現在把播音效的邏輯整個搬到 cg_on_keydown_typing_sound
+    // （綁在 keydown，見下方事件綁定區塊），只要按下鍵盤就給聲音回饋。
+    cg_prev_input_length = cg_input_textarea.value.length
+    cg_prev_target_pointer = cg_alignment ? cg_alignment.targetPointer : cg_prev_target_pointer
+
     // 走到這裡代表：不是在組字中，這時候才是「真正定案」的內容，
     // 可以放心拿來判斷換行、判斷有沒有打完。
     cg_maybe_scroll_to_next_line(prev_top)
 
     // ===== 【調整】文章打完了，不代表挑戰結束——怕題庫被打完，改成累計這篇的成績後，
-    // 直接再抽一篇新的接著打，直到時間到才真正結算（cg_finish_challenge 只會被計時器呼叫）=====
-    if(cg_input_textarea.value.length >= cg_target_text.length){
+    // 直接再抽一篇新的接著打，直到時間到才真正結算（cg_finish_challenge 只會被計時器呼叫）。
+    // 【調整】改用比對結果的 targetPointer 判斷「打完了沒」，而不是直接比輸入框字數——
+    // 因為現在漏字/多打字之後，輸入框字數不一定等於文章總字數了。 =====
+    if(cg_alignment && cg_alignment.targetPointer >= cg_target_text.length){
         cg_draw_next_article()
     }
 }
@@ -528,7 +649,10 @@ function cg_draw_next_article(){
     // 重新抽一篇新文章接著打（題庫會重複抽，永遠不會用完）
     cg_target_text = cg_pick_random_article(cg_difficulty)
     cg_input_textarea.value = ""
-    cg_prev_typed_length = 0
+    cg_prev_target_index = 0
+    cg_alignment = null   // 換文章了，上一篇的比對快取要清掉，避免下一次 render 短暫沿用到舊資料
+    cg_prev_input_length = 0     // 【新增】換文章了，音效追蹤也要歸零，不然會拿舊文章的位置去比對新文章
+    cg_prev_target_pointer = 0
 
     cg_render_article()
     cg_auto_grow_textarea()
@@ -558,6 +682,10 @@ function cg_on_input_word(event){
     const typedValue = cg_input_textarea.value
     const target = cg_word_queue[cg_word_index] || ""
 
+    // 【修改】原本這裡跟文章模式一樣，是「打對才播音效」；理由同上（見 cg_on_input 裡的
+    // 說明），改成統一交給 cg_on_keydown_typing_sound 處理，只要按鍵就有聲音回饋。
+    cg_word_prev_input_length = typedValue.length
+
     if(target.length > 0 && typedValue === target){
         // ===== 【新增】在「這個詞被吃掉、畫面重新渲染」之前，先記下目前這個詞卡的 offsetTop，
         // 才有辦法在渲染完之後拿新舊位置比較、判斷下一個詞是不是換到新的一行了 =====
@@ -569,6 +697,7 @@ function cg_on_input_word(event){
         cg_word_index++
 
         cg_input_textarea.value = ""
+        cg_word_prev_input_length = 0   // 【新增】詞被吃掉、輸入框清空了，音效追蹤也要跟著歸零
         cg_auto_grow_textarea()
 
         cg_refill_word_queue()
@@ -598,6 +727,7 @@ function cg_skip_word(){
     cg_word_index++
 
     cg_input_textarea.value = ""   // 清空輸入框，跟打對「吃掉詞」的行為一致
+    cg_word_prev_input_length = 0   // 【新增】同上，音效追蹤要跟著歸零
     cg_start_timer()
     cg_auto_grow_textarea()
 
@@ -629,6 +759,53 @@ function cg_on_keydown_count_correction(event){
     }
 }
 
+// ===== 【新增，比照 game.html 的 Play_Typing_Feedback_Sound】打字音效：
+// 純粹依照「玩家按了哪個實體鍵」決定播什麼音效，完全不管這個鍵最後有沒有讓輸入框
+// 內容變成正確答案。文章模式（cg_on_input）跟單詞模式（cg_on_input_word）共用這一個函式。
+//
+// 這裡用 event.code（實體鍵盤位置，例如 "Space"、"Enter"、"KeyA"）而不是 event.key
+// （輸入法轉換後的字元）：玩家用注音輸入法打字、IME 正在組字的過程中，Chrome 等瀏覽器
+// 很多時候會把 event.key 回報成字串 "Process"（代表這個鍵被輸入法接管、還沒有確定的
+// 字元可以回報），拿 event.key 判斷組字期間按的是不是空白鍵/Enter 幾乎判斷不出來；
+// event.code 記錄的是「按下了鍵盤上哪一個實體按鍵」，不受組字狀態影響，
+// 不管是不是正在選字，Space 永遠回報 "Space"、Enter 永遠回報 "Enter"。
+function cg_on_keydown_typing_sound(event){
+    if(cg_finished) return
+
+    // 空白鍵、Enter 各自有專屬音效，優先判斷、判斷完直接 return，
+    // 不會再落到下面「一般鍵隨機混音」的分支
+    if(event.code === "Space"){
+        Play_Space_Sound()
+        return
+    }
+    if(event.code === "Enter" || event.code === "NumpadEnter"){
+        Play_Enter_Sound()
+        return
+    }
+    // 【新增】Backspace（退格）沿用 Enter 的音效，不用另外做新的音檔
+    if(event.code === "Backspace"){
+        Play_Enter_Sound()
+        return
+    }
+
+    // 【新增】排除「不會打出任何注音符號」的功能鍵/控制鍵，避免切換視窗、
+    // 按方向鍵移動游標時也跟著發出「打字」的音效
+    // 【修改】Backspace 已經在上面獨立判斷、播 Enter 的音效，這裡的排除清單就把它拿掉
+    const NON_TYPING_KEY_CODES = [
+        "Tab", "ShiftLeft", "ShiftRight", "ControlLeft", "ControlRight",
+        "AltLeft", "AltRight", "CapsLock", "Escape", "MetaLeft", "MetaRight",
+        "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight",
+        "Home", "End", "PageUp", "PageDown", "Delete", "Insert",
+        "ContextMenu", "NumLock", "ScrollLock", "Pause", "PrintScreen"
+    ]
+    if(NON_TYPING_KEY_CODES.includes(event.code)) return
+    if(/^F([1-9]|1[0-9]|2[0-4])$/.test(event.code)) return   // F1 ~ F24 功能鍵
+
+    // 其餘的鍵（不管最後打不打得對）一律當作「有效的一次打字動作」，
+    // 用兩種音效隨機混音，避免一直重複同一個聲音聽起來很單調
+    Play_Correct_Sound()
+}
+
 // ===== 【新增】把這次挑戰的結果存成一筆歷史紀錄，給 lobby 頁面畫進步曲線用 =====
 function cg_save_history_entry(entry){
     let history = []
@@ -654,6 +831,12 @@ function cg_save_history_entry(entry){
 // 頁面在寫入請求送達伺服器前就被砍掉，導致分數/積分悄悄遺失。
 let cg_pending_sync_promise = null
 
+// ===== 【新增】分享成績卡用：存放這次結算算好的完整資料（wpm/acc/細項），供分享按鈕讀取 =====
+// 跟 game.html 的 last_result_summary 是同一套邏輯，只是換一個變數名稱避免跟主線模式衝突
+// （兩個頁面各自載入 TCTC2-0-share_card.js，不會同時存在同一個頁面，就算真的同時載入，
+// 兩邊變數名稱不同也不會互相覆寫）。
+let last_challenge_result_summary = null
+
 function cg_finish_challenge(){
     if(cg_finished) return
     cg_finished = true
@@ -678,6 +861,11 @@ function cg_finish_challenge(){
     const acc_attempts = typed + cg_correction_count
     const finalAcc = acc_attempts > 0 ? Math.round((correct / acc_attempts) * 100) : 0
 
+    // 【新增】跟 game.html 用同一個門檻：acc >= 90 才播放過關音效，acc < 90 不播
+    if(finalAcc >= 90){
+        Play_Complete_Sound()
+    }
+
     // 挑戰結束當下，也順便檢查一次「最終 WPM」有沒有比過程中記錄到的瞬時最高值還高
     if(finalWpm > cg_highest_cpm) cg_highest_cpm = finalWpm
 
@@ -697,6 +885,35 @@ function cg_finish_challenge(){
     if(cg_result_deleted_el) cg_result_deleted_el.textContent = `修正次數：${cg_correction_count}`
     if(cg_result_skip_el) cg_result_skip_el.textContent = `跳過次數：${cg_skip_count}`
     if(cg_result_highest_el) cg_result_highest_el.textContent = `瞬時最高CPM：${cg_highest_cpm}`
+
+    // ===== 【新增】把這次結算算出來的所有細項，存成分享卡按鈕會讀的資料 =====
+    // 邏輯比照 game.html 的 last_result_summary：在這次結算的數字被存進 localStorage、
+    // cg_correction_count / cg_skip_count 等變數被 Restart_Challenge() 重設之前，先存好一份快照，
+    // 分享卡按鈕點下去的時候直接讀這裡，不用重新計算一次。
+    // 跳過次數只有單詞模式才有意義（文章模式沒有「跳過」這個動作），文章模式就不塞這一項，
+    // 避免分享卡上出現一行永遠是 0、對文章模式玩家沒有意義的數字。
+    const cg_share_details = [
+        { label: "難度", value: CG_DIFFICULTY_LABEL[cg_difficulty] || cg_difficulty },
+        { label: "模式", value: CG_STAGE_LABEL[cg_stage] || cg_stage },
+        { label: "時間限制", value: CG_DURATION_LABEL[cg_duration_seconds] || `${cg_duration_seconds} 秒` },
+        { label: "總打字元數", value: String(typed) },
+        { label: "正確字元數", value: String(correct) },
+        { label: "錯誤字元數", value: String(wrong) },
+        { label: "修正次數", value: String(cg_correction_count) },
+        { label: "瞬時最高CPM", value: String(cg_highest_cpm) },
+        { label: "總耗時", value: cg_format_time(elapsedSeconds) },
+        { label: "本次結果", value: finishedEarly ? "✅ 挑戰完成" : "⏱️ 時間到" }
+    ]
+    if(cg_stage === "word"){
+        cg_share_details.splice(7, 0, { label: "跳過次數", value: String(cg_skip_count) })
+    }
+    last_challenge_result_summary = {
+        wpm: finalWpm,
+        acc: finalAcc,
+        label: `${CG_DIFFICULTY_LABEL[cg_difficulty] || cg_difficulty}・${CG_DURATION_LABEL[cg_duration_seconds] || cg_duration_seconds + " 秒"}`,
+        sub_label: `速度挑戰模式・${CG_STAGE_LABEL[cg_stage] || cg_stage}`,
+        details: cg_share_details
+    }
 
     // ===== 【新增】結算積分＋比照主線模式的作法，用「累計平均」記錄 WPM / 正確率 =====
     // （跟 game.html 的 wpm_sum / wpm_times / average_wpm 邏輯一致，只是換一組 key 給挑戰模式獨立使用）
@@ -803,7 +1020,19 @@ function Leave_Challenge_Result(target_url){
 // ===== 【新增】跳到排行榜頁面，直接定位到「這一次打的難度＋模式＋時間長度」組合 =====
 function View_Challenge_Ranking(){
     const comboId = `${cg_difficulty}-${cg_stage}-${cg_duration_seconds}`
-    Leave_Challenge_Result(`TCTC2-0-ranking.html?mode=challenge&combo=${comboId}`)
+    // 【新增】帶上 return_to = 這次打的這一頁網址（含難度/秒數/模式參數），
+    // 排行榜返回時才會回到「這次打的這個挑戰畫面」，而不是隨便一個由排行榜選單猜出來的組合
+    Leave_Challenge_Result(`TCTC2-0-ranking.html?mode=challenge&combo=${comboId}&return_to=${encodeURIComponent(window.location.href)}`)
+}
+
+// ===== 【新增】分享成績卡按鈕的進入點 =====
+// 跟 game.html 的 Share_Current_Result() 是同一套做法：純粹轉接，檢查資料存不存在（防呆用，
+// 理論上這個按鈕只會在結算畫面顯示之後才點得到，一定會有資料），有的話直接交給
+// share_card.js 的 Open_Share_Card_Modal() 處理接下來所有事情（畫 Canvas、跳出預覽彈窗、下載按鈕）。
+// 不需要等雲端同步（cg_pending_sync_promise），分享卡是純前端畫圖，跟排行榜/積分同步沒有關係。
+function Share_Current_Challenge_Result(){
+    if(!last_challenge_result_summary) return
+    Open_Share_Card_Modal(last_challenge_result_summary)
 }
 
 function Restart_Challenge(){
@@ -811,10 +1040,24 @@ function Restart_Challenge(){
     cg_init(cg_difficulty, cg_duration_seconds, cg_stage)
 }
 
+// ===== 【新增】左上角「←」返回大廳按鈕的確認機制 =====
+// 只有「挑戰已經開始計時、但還沒結束」的時候才需要跳出確認視窗，
+// 因為這種狀態下離開會直接把這次的成績丟掉，沒有任何存檔機制。
+// 如果玩家根本還沒開始打字（cg_start_time 還是 null），或挑戰已經結束（cg_finished），
+// 離開沒有任何損失，直接放行、不用打擾玩家。
+function Confirm_Leave_Challenge(){
+    const in_progress = cg_start_time && !cg_finished
+    if(in_progress && !confirm("挑戰還沒結束，現在離開這次的成績不會被記錄，確定要返回大廳嗎？")){
+        return
+    }
+    window.location.href = "TCTC2-0-challenge_lobby.html"
+}
+
 // ===== 綁定事件 =====
 if(cg_input_textarea){
     cg_input_textarea.addEventListener("input", cg_on_input_router)
     cg_input_textarea.addEventListener("keydown", cg_on_keydown_count_correction)   // 【新增】統計修正次數
+    cg_input_textarea.addEventListener("keydown", cg_on_keydown_typing_sound)       // 【新增】按鍵就播打字音效，不用管打不打對
 
     // ===== 【比照 game.html】IME 選字結束時，再檢查一次 =====
     // 例如玩家打「ㄋㄧˇ ㄏㄠˇ」選出「你好」，選字完成的當下會觸發 compositionend，
@@ -934,6 +1177,7 @@ if(cg_word_intro_modal){
 
 // ===== 頁面載入時，讀取網址上的 ?difficulty= 與 ?seconds= 開始測驗 =====
 document.addEventListener("DOMContentLoaded", function(){
+    Init_Typing_Sound()   // 【新增】頁面一載入就準備好打字音效
     const settings = cg_get_settings_from_url()
     cg_init(settings.difficulty, settings.seconds, settings.stage)
 })
