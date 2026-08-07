@@ -38,6 +38,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@200;300;400;500;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@200;300;400;500&display=swap" rel="stylesheet">
 
+    <!-- 【新增】帳號系統彈窗樣式 -->
+    <link rel="stylesheet" href="TCTC2-0-auth_ui.css">
+
     <!-- ===== 【新增】挑戰模式專用樣式：難度選擇卡（簡單／普通／困難／極限）=====
          獨立寫在這裡（不動 main_lobby.css），避免影響主線模式原本的三卡難度選單版型 -->
     <style>
@@ -376,6 +379,13 @@
     <!-- 【新增】在線時長追蹤（全站共用，每個頁面都要載入）
          這個頁面沒有載入 Firebase，時間會先記在本機，等下次造訪
          game.html / TCTC2-0-challenge.html / TCTC2-0-ranking.html 時補交上雲端。 -->
+    <!-- 【新增】帳號系統：nav 上的帳號按鈕跟登入/註冊彈窗需要這幾支 -->
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+    <script src="TCTC2-0-firebase.js?v=3"></script>
+    <script src="TCTC2-0-auth_ui.js"></script>
+
     <script src="TCTC2-0-online_time.js"></script>
     <!-- 【新增】把玩家在設定頁面上傳的頭像顯示在這裡的頭像框裡（只讀 localStorage，不碰 Firebase） -->
     <script src="TCTC2-0-avatar_display.js"></script>

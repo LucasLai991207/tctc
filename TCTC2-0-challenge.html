@@ -16,6 +16,8 @@
 
     <link rel="stylesheet" href="TCTC2-0-intro_lobby.css">
     <link rel="stylesheet" href="TCTC2-0-main_lobby.css">
+    <!-- 【新增】帳號系統彈窗樣式 -->
+    <link rel="stylesheet" href="TCTC2-0-auth_ui.css">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -70,11 +72,11 @@
             display: flex;
             align-items: center;
             justify-content: center;
+
             font-size: 1.1rem;
             cursor: pointer;
             transition: all 250ms ease-in-out;
             z-index: 100;
-            padding-left: 5px;
         }
         .game_rank_floating_btn:hover {
             background-color: var(--champagne-gold);
@@ -338,6 +340,15 @@
             margin-top: 2rem;
             display: flex;
             gap: 1rem;
+            flex-wrap: wrap;
+        }
+        /* 【新增】「查看排名」+「分享成績卡」的並排群組：
+           display:flex 讓兩顆按鈕水平排在一起，沒有設 flex-wrap，
+           所以這組永遠是一整條，不會被拆成兩行；
+           外層 .cg_action_row 換行時，這組會整個一起被推到下一行。 */
+        .cg_result_share_rank_group{
+            display: flex;
+            gap: 1rem;
         }
         .cg_btn{
             font-family: "Noto Serif TC", serif;
@@ -455,12 +466,12 @@
         </div>
     </nav>
 
-    <div class="game_back_btn" onclick="window.location.href='TCTC2-0-challenge_lobby.html'">←</div>
+    <div class="game_back_btn" onclick="Confirm_Leave_Challenge()">←</div>
     <!-- ===== 【新增】不用打完這關也能看排名的浮動按鈕，固定貼在返回鍵旁邊 =====
          直接呼叫 challenge.js 裡的 View_Challenge_Ranking()，該函式會用目前這次挑戰的
          cg_difficulty / cg_stage / cg_duration_seconds 組成 comboId，導向對應組合的排行榜，
          跟結算畫面「查看排名」按鈕共用同一份邏輯，不會有兩處寫法不一致的風險。 -->
-    <div class="game_rank_floating_btn" id="cg_rank_floating_btn" title="查看這個組合的排名（不用打完也能看）" onclick="View_Challenge_Ranking()">🏆</div>
+    <div class="game_rank_floating_btn" id="cg_rank_floating_btn" title="查看這個組合的排名（不用打完也能看）" onclick="View_Challenge_Ranking()">&nbsp;🏆</div>
 
     <main class="cg_wrap">
         <div class="cg_topbar">
@@ -502,7 +513,7 @@
 
         <div class="cg_action_row">
             <button class="cg_btn" onclick="Restart_Challenge()">再來一次</button>
-            <button class="cg_btn" onclick="window.location.href='TCTC2-0-challenge_lobby.html'">返回大廳</button>
+            <button class="cg_btn" onclick="Confirm_Leave_Challenge()">返回大廳</button>
         </div>
     </main>
 
@@ -536,7 +547,13 @@
             </div>
             <div class="cg_action_row" style="justify-content:center;">
                 <button class="cg_btn" onclick="Restart_Challenge()">再來一次</button>
-                <button class="cg_btn" id="cg_result_view_ranking_btn" onclick="View_Challenge_Ranking()">查看排名</button>
+                <!-- 【修正】「查看排名」跟「分享成績卡」包成一組，兩顆永遠黏在一起、
+                     並排顯示——外層 .cg_action_row 就算因為螢幕太窄而換行，
+                     也是整組一起被推到下一行，不會被拆散到不同行去。 -->
+                <div class="cg_result_share_rank_group">
+                    <button class="cg_btn" id="cg_result_view_ranking_btn" onclick="View_Challenge_Ranking()">查看排名</button>
+                    <button class="cg_btn" id="cg_result_share_btn" onclick="Share_Current_Challenge_Result()">分享成績卡</button>
+                </div>
                 <button class="cg_btn" id="cg_result_back_lobby_btn" onclick="Leave_Challenge_Result('TCTC2-0-challenge_lobby.html')">返回大廳</button>
             </div>
         </div>
@@ -600,7 +617,7 @@
             <div class="cm_header_title" style="font-size: 1.6rem;">打完一個詞會自動換下一個</div>
 
             <div class="cg_punct_content" style="max-height: none;">
-                單詞模式每一個單詞都要用 Enter 送出！<br><br>
+                單詞模式不用按空白鍵或 Enter 送出！<br><br>
                 只要把畫面上反白的那個詞打對，系統就會自動判定完成、清空輸入框、<br>
                 直接接著跳下一個詞，一個接一個連續打下去就對了。<br><br>
                 如果卡住打不出來，也可以按輸入框旁邊的「跳過」按鈕直接換下一個詞。
@@ -608,11 +625,11 @@
 
             <label style="display:flex;align-items:center;gap:0.5rem;margin-top:1.2rem;color:rgba(255,255,255,0.7);font-size:0.85rem;letter-spacing:1px;cursor:pointer;">
                 <input type="checkbox" id="cg_word_intro_dontshow">
-                連這種基本常識都要告訴我，以後不准再顯示這個視窗
+                之後不再顯示這個提醒
             </label>
 
             <div class="cg_action_row" style="justify-content:center;">
-                <button class="cg_btn" id="cg_word_intro_start_btn">我知道了</button>
+                <button class="cg_btn" id="cg_word_intro_start_btn">開始挑戰</button>
             </div>
         </div>
     </div>
@@ -622,8 +639,14 @@
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
     <script src="TCTC2-0-firebase.js?v=3"></script>
+    <!-- 【新增】帳號系統：nav 上的帳號按鈕跟登入/註冊彈窗 -->
+    <script src="TCTC2-0-auth_ui.js"></script>
     <!-- 【新增】在線時長追蹤（全站共用，每個頁面都要載入） -->
     <script src="TCTC2-0-online_time.js"></script>
+    <!-- 【新增】打字音效（共用模組，哪頁要用哪頁自己載入） -->
+    <script src="TCTC2-0-typing_sound.js"></script>
+    <!-- 【新增】成績分享卡（共用模組，跟 game.html 用同一份） -->
+    <script src="TCTC2-0-share_card.js"></script>
     <script src="TCTC2-0-challenge.js"></script>
     <script defer src="https://cloud.umami.is/script.js" data-website-id="070df494-4361-4dce-ad65-a25b404811e9"></script>
 

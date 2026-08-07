@@ -1,0 +1,364 @@
+:root{
+    --darker-blue : #0b1a37;
+    --dark-blue : #0B1E36;
+    --light-blue : #0e243e;
+    --champagne-gold : #c9a84c;
+    --gold-soft : rgba(201, 168, 76, 0.15);
+    --gold-line : rgba(201, 168, 76, 0.35);
+    --error-red : #c0392b;
+}
+
+/* ===== 半透明背景遮罩，蓋住整個畫面 =====
+   加上 backdrop-filter 讓背後的頁面呈現輕微毛玻璃感，
+   彈窗會感覺是「浮在畫面上的一層」，不是單純蓋一塊死黑 */
+.auth_modal_overlay{
+    position: fixed;
+    inset: 0;
+    z-index: 10000; /* 比 nav 的 z-index:9999 高一階，確保彈窗永遠蓋在 nav 上面 */
+
+    background-color: rgba(4, 9, 20, 0.6);
+    backdrop-filter: blur(6px) saturate(1.1);
+    -webkit-backdrop-filter: blur(6px) saturate(1.1);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 1rem;
+
+    opacity: 1;
+    transition: opacity 150ms ease;
+}
+.auth_modal_overlay.is_hidden{
+    display: none;
+}
+
+/* ===== 開啟動畫：輕輕從稍小、稍低的位置浮現定位，
+   不是單純的淡入，多一點「被放上桌」的儀式感 ===== */
+@keyframes authModalRise{
+    from{
+        opacity: 0;
+        transform: translateY(10px) scale(0.97);
+    }
+    to{
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+@media (prefers-reduced-motion: reduce){
+    .auth_modal_box{ animation: none !important; }
+}
+
+/* ===== 彈窗卡片本體 =====
+   拿掉制式的滿版陰影卡片感：邊框改用細金線 + 雙層陰影
+   （近黑的貼合陰影 + 極淡的金色暈光），角落加裝飾角框，
+   呼應全站「證書 / 會員卡」式的金線美學（跟難度卡片、CTA glow 同一套語彙） */
+.auth_modal_box{
+    position: relative;
+    width: 100%;
+    max-width: 25rem;
+    max-height: 90vh;
+    overflow-y: auto;
+
+    background-color: var(--dark-blue);
+    border: 1px solid var(--gold-line);
+    border-radius: 4px;
+
+    padding: 2.6rem 2.2rem 2.2rem;
+
+    animation: authModalRise 380ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+
+
+.auth_modal_close{
+    position: absolute;
+    top: 1.1rem;
+    right: 1.2rem;
+
+    width: 1.6rem;
+    height: 1.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 0.95rem;
+    cursor: pointer;
+
+    border-radius: 50%;
+    transition: color 150ms ease, background-color 150ms ease;
+}
+.auth_modal_close:hover{
+    color: whitesmoke;
+    background-color: rgba(255, 255, 255, 0.06);
+}
+
+.auth_view.is_hidden{
+    display: none;
+}
+
+/* ===== 標頭：小標籤（eyebrow）＋ serif 大標題 ＋ 短金線 =====
+   套用跟首頁「網站介紹」「選擇你的程度」同一套語彙
+   （小金字 eyebrow + Noto Serif TC 大標題），
+   讓彈窗跟全站是同一個品牌，不是隨便套一個系統彈窗樣式 */
+.auth_modal_eyebrow{
+    color: var(--champagne-gold);
+    font-size: 0.72rem;
+    letter-spacing: 3px;
+    font-weight: 500;
+    margin: 0 0 0.5rem;
+    opacity: 0.85;
+}
+.auth_modal_title{
+    color: whitesmoke;
+    font-size: 1.55rem;
+    font-weight: 500;
+    letter-spacing: 2px;
+    line-height: 1.4;
+
+    margin: 0;
+}
+
+.auth_modal_subtitle{
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+    line-height: 1.6;
+
+    margin: 0.4rem 0 0.5rem;
+}
+.auth_modal_subtitle_2{
+    color: rgba(255, 255, 255, 0.55);
+    text-shadow: 0 0 2px var(--champagne-gold);
+    font-size: 0.9rem;
+    letter-spacing: 0.5px;
+    line-height: 1.6;
+
+    margin: 0 0 0.5rem;
+}
+
+/* ===== Google 登入/註冊按鈕 =====
+   拿掉純白系統按鈕的廉價感：改成低調的深色描邊卡片，
+   保留 Google 官方四色圖示（辨識度需要），但整體融進深色彈窗 */
+.auth_google_btn{
+    width: 100%;
+    box-sizing: border-box;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+
+    padding: 0.75rem 1rem;
+
+    background-color: rgba(255, 255, 255, 0.03);
+    color: whitesmoke;
+
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 4px;
+
+    font-size: 0.88rem;
+    font-weight: 500;
+    letter-spacing: 1px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+
+    cursor: pointer;
+    transition: border-color 150ms ease, background-color 150ms ease, transform 150ms ease;
+}
+.auth_google_btn:hover{
+    border-color: var(--gold-line);
+    background-color: rgba(255, 255, 255, 0.06);
+    transform: translateY(-1px);
+}
+.auth_google_icon{
+    width: 1.05rem;
+    height: 1.05rem;
+    flex-shrink: 0;
+}
+
+.auth_divider{
+    display: flex;
+    align-items: center;
+
+    margin: 1.2rem 0;
+
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 0.72rem;
+    letter-spacing: 2px;
+}
+.auth_divider::before,
+.auth_divider::after{
+    content: "";
+    flex: 1;
+    height: 1px;
+    background-color: rgba(255, 255, 255, 0.12);
+}
+.auth_divider span{
+    padding: 0 0.9rem;
+}
+
+/* ===== 表單欄位 =====
+   從「整個框都是外框線」改成「底線＋淡底色」的低調樣式，
+   聚焦時底線變金色並輕輕發光，質感比通用的方框 input 更精緻 */
+.auth_field_label{
+    display: block;
+
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 0.74rem;
+    letter-spacing: 2px;
+
+    margin-bottom: 0.5rem;
+}
+.auth_input{
+    width: 100%;
+    box-sizing: border-box;
+
+    background-color: rgba(255, 255, 255, 0.03);
+    color: whitesmoke;
+
+    border: none;
+    border-bottom: 1px solid rgba(201, 168, 76, 0.3);
+    border-radius: 2px 2px 0 0;
+
+    padding: 0.65rem 0.7rem;
+    margin-bottom: 1.1rem;
+
+    font-size: 0.92rem;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+
+    transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+}
+.auth_input::placeholder{
+    color: rgba(255, 255, 255, 0.28);
+}
+.auth_input:focus{
+    outline: none;
+    background-color: rgba(201, 168, 76, 0.05);
+}
+
+.auth_error_text{
+    min-height: 1.1rem;
+    margin: -0.3rem 0 0.9rem;
+
+    color: var(--error-red);
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+}
+
+/* ===== 主要提交按鈕 =====
+   保留全站慣用的「金底深字，hover 反轉成金字空心」，
+   但加一點呼吸感陰影，讓它看起來更像實體的按壓元件 */
+.auth_submit_btn{
+    width: 100%;
+    box-sizing: border-box;
+
+    padding: 0.8rem 1rem;
+    margin-top: 0.3rem;
+
+    background-color: var(--champagne-gold);
+    color: var(--darker-blue);
+
+    border: 1px solid var(--champagne-gold);
+    border-radius: 3px;
+
+    font-size: 0.95rem;
+    font-weight: 500;
+    letter-spacing: 2px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(201, 168, 76, 0.18);
+    transition: all 200ms ease;
+}
+.auth_submit_btn:hover{
+    background-color: transparent;
+    color: var(--champagne-gold);
+    box-shadow: 0 6px 18px rgba(201, 168, 76, 0.08);
+}
+
+.auth_secondary_btn{
+    width: 100%;
+    box-sizing: border-box;
+
+    padding: 0.7rem 1rem;
+    margin-top: 0.8rem;
+
+    background-color: transparent;
+    color: rgba(255, 255, 255, 0.55);
+
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 3px;
+
+    font-size: 0.88rem;
+    letter-spacing: 1px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+
+    cursor: pointer;
+    transition: all 150ms ease;
+}
+.auth_secondary_btn:hover{
+    border-color: var(--gold-line);
+    color: var(--champagne-gold);
+}
+
+.auth_switch_text{
+    margin: 1.4rem 0 0;
+    text-align: center;
+
+    color: rgba(255, 255, 255, 0.42);
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+}
+.auth_switch_link{
+    color: var(--champagne-gold);
+    cursor: pointer;
+    text-decoration: none;
+    border-bottom: 1px solid var(--gold-line);
+    padding-bottom: 1px;
+    transition: border-color 150ms ease;
+}
+
+
+/* ===== 繼承確認畫面的統計數字列表 ===== */
+.auth_inherit_stats{
+    background-color: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--gold-line);
+    border-radius: 3px;
+
+    padding: 1rem 1.2rem;
+    margin-bottom: 1.4rem;
+}
+.auth_inherit_row{
+    display: flex;
+    justify-content: space-between;
+
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(201, 168, 76, 0.12);
+
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 0.86rem;
+    letter-spacing: 0.5px;
+}
+.auth_inherit_row:last-child{
+    border-bottom: none;
+}
+.auth_inherit_value{
+    color: var(--champagne-gold);
+    font-weight: 500;
+    font-family: "Noto Serif TC", serif;
+}
+
+.auth_loading_text{
+    text-align: center;
+    color: rgba(255, 255, 255, 0.6);
+    font-family: "Noto Serif TC", serif;
+    font-size: 1rem;
+    letter-spacing: 3px;
+    padding: 2.4rem 0;
+}
+
+/* ===== Nav 上的帳號項目（未登入顯示「註冊」／已登入顯示「登出」） ===== */
+#auth_nav_item{
+    white-space: nowrap;
+}

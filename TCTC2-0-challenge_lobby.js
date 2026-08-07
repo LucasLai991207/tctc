@@ -212,7 +212,9 @@ function Render_Challenge_Stage(){
         rank_btn.addEventListener("click", function(event){
             event.stopPropagation()
             const comboId = `${selected_difficulty}-${selected_stage}-${selected_seconds}`
-            window.location.href = `TCTC2-0-ranking.html?mode=challenge&combo=${encodeURIComponent(comboId)}`
+            // 【新增】帶上 return_to = 目前這頁（大廳）的網址，
+            // 這樣排行榜頁面按返回時，才會回到「大廳」而不是直接跳進遊戲畫面
+            window.location.href = `TCTC2-0-ranking.html?mode=challenge&combo=${encodeURIComponent(comboId)}&return_to=${encodeURIComponent(window.location.href)}`
         })
     }
 }

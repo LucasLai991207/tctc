@@ -22,6 +22,8 @@
 
     <link rel="stylesheet" href="TCTC2-0-intro_lobby.css">
     <link rel="stylesheet" href="TCTC2-0-main_lobby.css">
+    <!-- 【新增】帳號系統彈窗樣式 -->
+    <link rel="stylesheet" href="TCTC2-0-auth_ui.css">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -280,6 +282,15 @@
          這個頁面沒有載入 Firebase，時間只會先記在本機，
          等下次去 game.html / TCTC2-0-challenge.html / TCTC2-0-ranking.html
          其中一個頁面時才會被補交上雲端。 -->
+    <!-- 【新增】帳號系統：nav 上的帳號按鈕跟登入/註冊彈窗需要這幾支，
+         順序要在 TCTC2-0-online_time.js 之前，因為 online_time.js 內部
+         會用到 TCTC2-0-firebase.js 的 Get_Anon_Id() -->
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+    <script src="TCTC2-0-firebase.js?v=3"></script>
+    <script src="TCTC2-0-auth_ui.js"></script>
+
     <script src="TCTC2-0-online_time.js"></script>
     <!-- 【新增】把玩家在設定頁面上傳的頭像顯示在這裡的頭像框裡（只讀 localStorage，不碰 Firebase） -->
     <script src="TCTC2-0-avatar_display.js"></script>

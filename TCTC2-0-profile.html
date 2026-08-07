@@ -24,6 +24,8 @@
         <link rel="stylesheet" href="TCTC2-0-intro_lobby.css">
         <link rel="stylesheet" href="TCTC2-0-main_lobby.css">
         <link rel="stylesheet" href="TCTC2-0-profile.css">
+        <!-- 【新增】帳號系統彈窗樣式 -->
+        <link rel="stylesheet" href="TCTC2-0-auth_ui.css">
 
 
         <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -124,7 +126,42 @@
                             </label>
                         </div>
 
+                        <!-- ===== 【新增】打字音效開關 =====
+                             跟上面排行榜開關沿用同一套 .profile_toggle_switch 樣式，不用重新設計。
+                             跟排行榜開關不一樣的地方：這是純本機設定（存 localStorage），
+                             不用讀雲端資料才能決定初始狀態，所以一開始就是可以點的（沒有 disabled），
+                             由 TCTC2-0-profile.js 在 DOMContentLoaded 時用 Get_Typing_Sound_Enabled()
+                             讀回上次的設定值。 -->
+                        <div class="profile_toggle_row">
+                            <div class="profile_toggle_text">
+                                <span class="profile_field_label" style="margin-bottom:0.2rem;">打字音效</span>
+                                <p class="profile_toggle_hint">
+                                    開啟後，主線模式跟挑戰模式打字時會有按鍵音效與過關音效。
+                                    這是只存在這台裝置的設定，不會跟雲端帳號同步。
+                                </p>
+                            </div>
+                            <label class="profile_toggle_switch">
+                                <input type="checkbox" id="profile_typing_sound_toggle" onchange="Toggle_Typing_Sound(this.checked)">
+                                <span class="profile_toggle_slider"></span>
+                            </label>
+                        </div>
+
                         <button class="profile_update_btn" id="profile_update_btn" onclick="Update_profile()">更新資料</button>
+
+                        <!-- ===== 【新增】登出並清除這台裝置的訪客紀錄 =====
+                             只有在「目前是登入狀態」才會顯示（由 profile.js 的
+                             Init_Logout_Zone_Visibility() 判斷，登入狀態靠
+                             Get_Current_Account_Uid() 判斷），純訪客身份沒有
+                             「登出」這個概念，所以預設是 is_hidden。
+                             跟下面「刪除所有資料」不一樣：這裡【不會】刪除雲端
+                             任何資料，只是不讓這台裝置上次的訪客身份在登出後復活，
+                             適合在共用電腦上使用完畢時按。 -->
+                        <div class="profile_danger_zone is_hidden" id="profile_logout_zone">
+                            <button type="button" class="profile_danger_btn_cancel" id="profile_logout_clear_btn" onclick="Logout_And_Clear_Clicked()" style="width: 100%; box-sizing: border-box;">登出這台裝置上的帳號</button>
+                            <p class="profile_avatar_hint" style="margin-top: 0.6rem;">
+                                適合在公用電腦上使用完畢時按下：會登出目前帳號，並且讓下一個使用這台電腦的人不會看到你的訪客進度。<b>不會刪除你帳號在雲端的任何資料</b>，下次登入還是找得回來。
+                            </p>
+                        </div>
 
                         <!-- ===== 【新增】刪除所有資料 =====
                              刻意做成「兩段式」：先按一次只會出現確認區塊，真的要刪除
@@ -240,9 +277,14 @@
         <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
         <script src="TCTC2-0-firebase.js?v=3"></script>
+        <!-- 【新增】帳號系統：nav 上的帳號按鈕跟登入/註冊彈窗 -->
+        <script src="TCTC2-0-auth_ui.js"></script>
 
         <!-- 【新增】在線時長追蹤（全站共用，每個頁面都要載入） -->
         <script src="TCTC2-0-online_time.js"></script>
+        <!-- 【新增】打字音效共用模組：這頁不需要真的播放音效，但開關要呼叫
+             Set_Typing_Sound_Enabled() / Get_Typing_Sound_Enabled()，所以要載入 -->
+        <script src="TCTC2-0-typing_sound.js"></script>
         <script src="TCTC2-0-profile.js"></script>
         <script defer src="https://cloud.umami.is/script.js" data-website-id="070df494-4361-4dce-ad65-a25b404811e9"></script>
     </body>

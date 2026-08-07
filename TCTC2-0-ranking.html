@@ -18,6 +18,8 @@
     <link rel="stylesheet" href="TCTC2-0-intro_lobby.css">
     <link rel="stylesheet" href="TCTC2-0-main_lobby.css">
     <link rel="stylesheet" href="TCTC2-0-ranking.css">
+    <!-- 【新增】帳號系統彈窗樣式 -->
+    <link rel="stylesheet" href="TCTC2-0-auth_ui.css">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -53,7 +55,7 @@
     <main class="ranking_main_style">
         <section class="ranking_first_section">
             <div class="main_lobby_main_frame">
-                <div class="main_lobby_back_to_intro_button" onclick="window.location.href='TCTC2-0-main.html'">
+                <div class="main_lobby_back_to_intro_button" onclick="Go_Back_From_Ranking()">
                     ←
                 </div>
             </div>
@@ -142,6 +144,8 @@
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
     <script src="TCTC2-0-firebase.js?v=3"></script>
+    <!-- 【新增】帳號系統：nav 上的帳號按鈕跟登入/註冊彈窗 -->
+    <script src="TCTC2-0-auth_ui.js"></script>
 
 
     <!-- 【新增】在線時長追蹤（全站共用，每個頁面都要載入） -->
