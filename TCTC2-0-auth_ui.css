@@ -169,7 +169,6 @@
 .auth_google_btn:hover{
     border-color: var(--gold-line);
     background-color: rgba(255, 255, 255, 0.06);
-    transform: translateY(-1px);
 }
 .auth_google_icon{
     width: 1.05rem;
@@ -271,11 +270,7 @@
     box-shadow: 0 6px 18px rgba(201, 168, 76, 0.18);
     transition: all 200ms ease;
 }
-.auth_submit_btn:hover{
-    background-color: transparent;
-    color: var(--champagne-gold);
-    box-shadow: 0 6px 18px rgba(201, 168, 76, 0.08);
-}
+
 
 .auth_secondary_btn{
     width: 100%;

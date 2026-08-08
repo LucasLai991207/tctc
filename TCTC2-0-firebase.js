@@ -67,6 +67,12 @@
                 "acc_sum": { ".write": true, ".validate": "newData.isNumber() && newData.val() >= 0" },
                 "acc_count": { ".write": true, ".validate": "newData.isNumber() && newData.val() >= 0" },
                 "avg_acc": { ".write": true, ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100" },
+                "cg_wpm_sum": { ".write": true, ".validate": "newData.isNumber() && newData.val() >= 0" },
+                "cg_wpm_count": { ".write": true, ".validate": "newData.isNumber() && newData.val() >= 0" },
+                "avg_challenge_wpm": { ".write": true, ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() < 1000" },
+                "cg_acc_sum": { ".write": true, ".validate": "newData.isNumber() && newData.val() >= 0" },
+                "cg_acc_count": { ".write": true, ".validate": "newData.isNumber() && newData.val() >= 0" },
+                "avg_challenge_acc": { ".write": true, ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100" },
                 "online_seconds": { ".write": true, ".validate": "newData.isNumber() && newData.val() >= 0" },
                 "total_points": { ".write": true, ".validate": "newData.isNumber() && newData.val() >= 0" },
                 "page_views": { ".write": true, ".validate": "newData.isNumber() && newData.val() >= 0" },
@@ -629,6 +635,79 @@ function Sync_Player_Stats(wpm, acc) {
     return Promise.all([wpm_chain_promise, acc_chain_promise, name_promise])
 }
 
+// ===== 【新增】把「這次挑戰模式測驗的 WPM / 正確率」另外累加進「挑戰模式專屬」的平均值 =====
+// 跟上面 Sync_Player_Stats 寫的 wpm_sum / wpm_count / avg_wpm 不是同一組欄位——
+// 那組是「主線 + 挑戰模式全部混在一起」的整體表現，給玩家總榜（平均WPM最高／
+// 平均正確率最高）用，這是刻意設計，這裡不能動它。
+// 挑戰大廳卡片顯示的「挑戰模式累計平均」，原本只靠本機 cg_wpm_sum / cg_wpm_times /
+// average_challenge_wpm 這幾個 localStorage key 計算，雲端完全沒有備份，
+// 導致切換身份（登入/登出/繼承）之後這組數字永遠救不回來。
+// 這裡另外開一組 cg_wpm_sum / cg_wpm_count / avg_challenge_wpm（正確率同理）
+// 專門存在雲端，兩邊的用途完全分開，互不影響。
+// 呼叫時機：TCTC2-0-challenge.js 結算成績時，要跟 Sync_Player_Stats 一起呼叫
+// （兩個都要打，一個負責玩家總榜的整體平均，一個負責挑戰模式自己的平均）。
+function Sync_Challenge_Player_Stats(wpm, acc) {
+    if (typeof wpm !== "number" || isNaN(wpm)) return Promise.resolve()
+
+    const anon_id = Get_Anon_Id()
+    const base_ref = tctc_db.ref(`player_stats/${anon_id}`)
+    const acc_value = (typeof acc === "number" && !isNaN(acc)) ? acc : 0
+
+    const wpm_chain_promise = new Promise(function (resolve) {
+        base_ref.child("cg_wpm_sum").transaction(function (current) {
+            return (current || 0) + wpm
+        }, function (error, committed, snapshot) {
+            if (error) {
+                console.log("[player_stats] cg_wpm_sum 同步失敗（很可能是 Firebase Rules 還沒加上 cg_wpm_sum 欄位的規則）：", error)
+                resolve()
+                return
+            }
+            if (!committed) { resolve(); return }
+            const new_sum = snapshot.val()
+            base_ref.child("cg_wpm_count").transaction(function (current) {
+                return (current || 0) + 1
+            }, function (error2, committed2, snapshot2) {
+                if (error2) {
+                    console.log("[player_stats] cg_wpm_count 同步失敗：", error2)
+                    resolve()
+                    return
+                }
+                if (!committed2) { resolve(); return }
+                const new_count = snapshot2.val()
+                base_ref.child("avg_challenge_wpm").set(Math.round((new_sum / new_count) * 10) / 10).finally(resolve)
+            })
+        })
+    })
+
+    const acc_chain_promise = new Promise(function (resolve) {
+        base_ref.child("cg_acc_sum").transaction(function (current) {
+            return (current || 0) + acc_value
+        }, function (error, committed, snapshot) {
+            if (error) {
+                console.log("[player_stats] cg_acc_sum 同步失敗：", error)
+                resolve()
+                return
+            }
+            if (!committed) { resolve(); return }
+            const new_sum = snapshot.val()
+            base_ref.child("cg_acc_count").transaction(function (current) {
+                return (current || 0) + 1
+            }, function (error2, committed2, snapshot2) {
+                if (error2) {
+                    console.log("[player_stats] cg_acc_count 同步失敗：", error2)
+                    resolve()
+                    return
+                }
+                if (!committed2) { resolve(); return }
+                const new_count = snapshot2.val()
+                base_ref.child("avg_challenge_acc").set(Math.round((new_sum / new_count) * 10) / 10).finally(resolve)
+            })
+        })
+    })
+
+    return Promise.all([wpm_chain_promise, acc_chain_promise])
+}
+
 // ===== 【新增】把「這次挑戰賺到的積分」累加進玩家總積分 =====
 // 呼叫時機：TCTC2-0-challenge.js 結算積分之後，只要 pointsEarned > 0 就會呼叫。
 // 邏輯很單純，就是把 pointsEarned 加進 total_points，沒有平均值的概念，
@@ -1143,6 +1222,8 @@ function Delete_All_Player_Data(callback) {
     ;[
         "name", "wpm_sum", "wpm_count", "avg_wpm",
         "acc_sum", "acc_count", "avg_acc",
+        "cg_wpm_sum", "cg_wpm_count", "avg_challenge_wpm",
+        "cg_acc_sum", "cg_acc_count", "avg_challenge_acc",
         "online_seconds", "total_points", "hide_from_leaderboard"
     ].forEach(function (field) {
         updates[`player_stats/${anon_id}/${field}`] = null
@@ -1287,25 +1368,69 @@ function _Generate_New_Anon_Id() {
 // 之後重打就會依新身份重新累積）。
 const IDENTITY_BOUND_LOCAL_KEYS = [
     "average_wpm", "average_acc", "wpm_sum", "wpm_times", "acc_sum", "acc_times",
-    "average_challenge_wpm", "average_challenge_acc", "tctc2.0-challenge_total_points",
+    "average_challenge_wpm", "average_challenge_acc", "cg_wpm_sum", "cg_wpm_times", "cg_acc_sum", "cg_acc_times",
+    "tctc2.0-challenge_total_points",
     "tctc2.0-challenge_history", "tctc2.0-profile_avatar", "stage_progress", "intro"
 ]
 
 function Switch_Active_Identity(new_anon_id, callback) {
+    // 【修正 1】只有「真的換成另一組 anon_id」時，才清空這些跟身份綁定的本機快取。
+    // 「繼承」註冊路徑（Register_With_Email_Inherit / Register_With_Google_Inherit）
+    // 傳進來的 new_anon_id 就是目前這組 anon_id 本人（uid 換了，但 anon_id 沒換），
+    // 這種情況下本機快取本來就是對的，不需要清空重來——尤其
+    // tctc2.0-challenge_history / tctc2.0-profile_avatar / stage_progress / intro
+    // 這些欄位雲端根本沒有備份，一旦清空就真的救不回來了。
+    const anon_id_unchanged = (Get_Anon_Id() === new_anon_id)
+
     localStorage.setItem("tctc_anon_id", new_anon_id)
     localStorage.removeItem("tctc_guest_number")
-    IDENTITY_BOUND_LOCAL_KEYS.forEach(function (key) { localStorage.removeItem(key) })
 
-    tctc_db.ref(`player_stats/${new_anon_id}/name`).once("value").then(function (snapshot) {
-        const cloud_name = snapshot.val()
-        if (cloud_name) {
-            localStorage.setItem("username", cloud_name)
+    if (!anon_id_unchanged) {
+        IDENTITY_BOUND_LOCAL_KEYS.forEach(function (key) { localStorage.removeItem(key) })
+    }
+
+    // 【修正 2】原本這裡只抓 player_stats/{new_anon_id}/name 一個欄位，
+    // 清空快取之後卻只補回暱稱，average_wpm / average_acc / 挑戰積分這些欄位
+    // 永遠停在「清空後的空值」，直到玩家再打一關才會被覆蓋——而且那一關算出來的
+    // 「平均值」是從本機被清空的 wpm_sum/wpm_times 重新起算，並不是這個身份
+    // 真正的累積平均，等於用一次的成績覆蓋掉一直以來的紀錄。
+    // 改成抓整個 player_stats/{new_anon_id} 節點，把雲端「這個身份真正的累積數字」
+    // 完整地補回本機快取（wpm_sum / wpm_count / avg_wpm、acc_sum / acc_count / avg_acc、
+    // total_points），不管是登入別人帳號、登出換訪客，還是繼承註冊，
+    // 畫面顯示的都會是雲端當下真實的數字，不會再出現「歸零/消失」的狀況。
+    // （tctc2.0-challenge_history、profile_avatar 等雲端沒有備份的欄位，
+    // 在真的换成別的身份時仍然無法復原，這是資料本來就只存在本機的既有限制。）
+    tctc_db.ref(`player_stats/${new_anon_id}`).once("value").then(function (snapshot) {
+        const cloud_stats = snapshot.val() || {}
+
+        if (cloud_stats.name) {
+            localStorage.setItem("username", cloud_stats.name)
         } else {
             localStorage.removeItem("username")
         }
+
+        if (typeof cloud_stats.wpm_sum === "number") localStorage.setItem("wpm_sum", cloud_stats.wpm_sum)
+        if (typeof cloud_stats.wpm_count === "number") localStorage.setItem("wpm_times", cloud_stats.wpm_count)
+        if (typeof cloud_stats.avg_wpm === "number") localStorage.setItem("average_wpm", Math.round(cloud_stats.avg_wpm))
+
+        if (typeof cloud_stats.acc_sum === "number") localStorage.setItem("acc_sum", cloud_stats.acc_sum)
+        if (typeof cloud_stats.acc_count === "number") localStorage.setItem("acc_times", cloud_stats.acc_count)
+        if (typeof cloud_stats.avg_acc === "number") localStorage.setItem("average_acc", Math.round(cloud_stats.avg_acc))
+
+        // 【新增】挑戰模式專屬的平均值，對應 Sync_Challenge_Player_Stats() 寫的那組獨立欄位
+        if (typeof cloud_stats.cg_wpm_sum === "number") localStorage.setItem("cg_wpm_sum", cloud_stats.cg_wpm_sum)
+        if (typeof cloud_stats.cg_wpm_count === "number") localStorage.setItem("cg_wpm_times", cloud_stats.cg_wpm_count)
+        if (typeof cloud_stats.avg_challenge_wpm === "number") localStorage.setItem("average_challenge_wpm", Math.round(cloud_stats.avg_challenge_wpm))
+
+        if (typeof cloud_stats.cg_acc_sum === "number") localStorage.setItem("cg_acc_sum", cloud_stats.cg_acc_sum)
+        if (typeof cloud_stats.cg_acc_count === "number") localStorage.setItem("cg_acc_times", cloud_stats.cg_acc_count)
+        if (typeof cloud_stats.avg_challenge_acc === "number") localStorage.setItem("average_challenge_acc", Math.round(cloud_stats.avg_challenge_acc))
+
+        if (typeof cloud_stats.total_points === "number") localStorage.setItem("tctc2.0-challenge_total_points", cloud_stats.total_points)
+
         if (callback) callback()
     }).catch(function (error) {
-        console.log("[auth] 切換身份後讀取暱稱失敗：", error)
+        console.log("[auth] 切換身份後讀取雲端資料失敗：", error)
         localStorage.removeItem("username")
         if (callback) callback()
     })
