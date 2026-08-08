@@ -65,10 +65,18 @@
             cursor: pointer;
         }
         .logo_style { margin-left: 10px; cursor: pointer; }
-        .game_back_btn {
+        /* ===== 【修改】左上角四顆按鈕（返回／排行榜／鍵盤開關／再試一次）統一包在一個 flex 容器裡，
+           這樣任何一顆用 display:none 隱藏時，其他顆會自動往左靠攏、不會留空格 ===== */
+        .game_top_left_controls {
             position: fixed;
             top: 70px;
             left: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            z-index: 100;
+        }
+        .game_back_btn {
             height: 2.3rem;
             width: 2.3rem;
             background-color: var(--dark-blue);
@@ -82,17 +90,14 @@
             font-weight: 300;
             cursor: pointer;
             transition: all 250ms ease-in-out;
-            z-index: 100;
+            flex-shrink: 0;
         }
         .game_back_btn:hover {
             background-color: var(--champagne-gold);
             color: var(--dark-blue);
         }
-        /* ===== 【新增】不用打完這關也能看排名的浮動按鈕，固定貼在返回鍵旁邊 ===== */
+        /* ===== 【新增】不用打完這關也能看排名的浮動按鈕 ===== */
         .game_rank_floating_btn {
-            position: fixed;
-            top: 70px;
-            left: 5.3rem;
             height: 2.3rem;
             width: 2.3rem;
             background-color: var(--dark-blue);
@@ -104,10 +109,52 @@
             font-size: 1.1rem;
             cursor: pointer;
             transition: all 250ms ease-in-out;
-            z-index: 100;
+            flex-shrink: 0;
         }
         .game_rank_floating_btn:hover {
             background-color: var(--champagne-gold);
+        }
+        /* ===== 【新增】鍵盤顯示/隱藏切換、再試一次 ===== */
+        .kb_toggle_btn {
+            height: 2.3rem;
+            width: 2.3rem;
+            background-color: var(--dark-blue);
+            border: 1px solid rgba(201,168,76,0.6);
+            border-radius: 0.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            color: #fff;
+            cursor: pointer;
+            transition: all 250ms ease-in-out;
+            flex-shrink: 0;
+        }
+        .kb_toggle_btn:hover {
+            background-color: var(--champagne-gold);
+            color: var(--dark-blue);
+        }
+        .kb_toggle_btn.kb_off {
+            opacity: 0.45;
+        }
+        .game_retry_fixed_btn {
+            height: 2.3rem;
+            width: 2.3rem;
+            background-color: var(--dark-blue);
+            border: 1px solid rgba(201,168,76,0.6);
+            border-radius: 0.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.7rem;
+            color: #fff;
+            cursor: pointer;
+            transition: all 250ms ease-in-out;
+            flex-shrink: 0;
+        }
+        .game_retry_fixed_btn:hover {
+            background-color: var(--champagne-gold);
+            color: var(--dark-blue);
         }
         /* ===== 【新增】外層容器：讓按鈕跟計時器水平並排、固定在畫面右上角 ===== */
         /* 位置跟原本 .game_timer 單獨使用 position:fixed 時完全一樣，只是現在多包一層 */
@@ -538,6 +585,7 @@
             margin-top: 0.3rem;
         }
         .game_retry_btn {
+            display: none !important;  /* 【修改】改用左上角固定圖示按鈕，這個保留在 DOM 只是避免既有程式碼報錯 */
             box-sizing: border-box;
 
             background-color: var(--champagne-gold);
@@ -792,6 +840,107 @@
             outline: 2px solid var(--champagne-gold);
             background-color: rgba(201,168,76,0.15);
         }
+        /* ===== 【新增】即時反饋鍵盤（印在輸入框底下，非浮動）===== */
+        .live_keyboard {
+            width: 100%;
+            max-width: 900px;
+            align-self: center;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 12px;
+            box-sizing: border-box;
+            background-color: rgba(11, 26, 55, 0.6);
+            border: 1px solid rgba(201, 168, 76, 0.3);
+            border-radius: 10px;
+        }
+        .live_keyboard.kb_hidden {
+            display: none;
+        }
+        .kb_row {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+        }
+        .kb_key {
+            flex: 1 1 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-width: 0;
+            height: 44px;
+            border-radius: 6px;
+            background-color: var(--light-blue);
+            border: 1px solid rgba(255,255,255,0.12);
+            color: rgba(255,255,255,0.55);
+            transition: all 90ms ease;
+            position: relative;
+        }
+        .kb_key.kb_wide_1 { flex: 1.6 1 0; }
+        .kb_key.kb_wide_2 { flex: 2 1 0; }
+        .kb_key.kb_space { flex: 6 1 0; }
+        .kb_key.kb_inactive {
+            color: rgba(255,255,255,0.25);
+            background-color: rgba(255,255,255,0.03);
+        }
+        .kb_zhuyin {
+            font-size: 0.95rem;
+            line-height: 1.1;
+            font-weight: 600;
+        }
+        .kb_shift_label {
+            font-size: 0.65rem;
+            color: var(--champagne-gold);
+            opacity: 0.65;
+            line-height: 1;
+        }
+        .kb_letter {
+            font-size: 0.55rem;
+            color: rgba(255,255,255,0.35);
+            letter-spacing: 0.5px;
+            margin-top: 1px;
+        }
+        .kb_key.kb_current {
+            background-color: rgba(201, 168, 76, 0.18);
+            border-color: var(--champagne-gold);
+            color: var(--champagne-gold);
+            transform: translateY(-2px);
+        }
+        .kb_key.kb_current .kb_letter { color: var(--champagne-gold); opacity: 0.75; }
+        /* ===== 【新增】組合鍵的「輔助鍵」提示（例如打全形逗號需要 Ctrl + ,）=====
+           故意跟 .kb_current「實線外框 + 上浮」的樣式不同：
+           虛線外框、不上浮，代表「這顆是按住不放的輔助鍵」，
+           跟主鍵（真正要按下去的那顆、有實線金框並會上浮）在視覺上明確分開。
+           兩顆會「同時」被加上各自的 class（在 Sync_Live_Keyboard 裡一次做完），
+           不是先亮輔助鍵、打完才換主鍵亮，玩家不用分兩次按鍵才看得懂提示。
+           寫在 .kb_current 後面：兩者 class 數量相同（都是兩個 class 疊加），
+           CSS 特異度打平時由「原始碼順序」決定勝負，寫在後面才能確保
+           .kb_inactive 那組「變暗」的樣式不會蓋掉這裡要的金色提示。 */
+        .kb_key.kb_current_modifier {
+            background-color: rgba(201, 168, 76, 0.08);
+            border: 1px dashed var(--champagne-gold);
+            color: var(--champagne-gold);
+        }
+        .kb_key.kb_current_modifier .kb_zhuyin { color: var(--champagne-gold); opacity: 0.85; }
+        .kb_key.kb_flash_correct {
+            background-color: rgba(70, 200, 120, 0.35);
+            border-color: #46c878;
+            color: #d9ffe8;
+        }
+        .kb_key.kb_flash_wrong {
+            background-color: rgba(220, 70, 70, 0.4);
+            border-color: #e05555;
+            color: #ffe0e0;
+        }
+        .kb_key.kb_flash_neutral {
+            background-color: rgba(255,255,255,0.18);
+            border-color: rgba(255,255,255,0.4);
+        }
+        @media (max-width: 720px) {
+            .live_keyboard { display: none !important; }
+            .kb_toggle_btn { display: none !important; }
+        }
     </style>
 </head>
 <body>
@@ -822,8 +971,13 @@
     </nav>
 
 
-    <div class="game_back_btn" onclick="window.location.href='TCTC2-0-main.html'">←</div>
-    <div class="game_rank_floating_btn" id="game_rank_floating_btn" title="查看這關排名（不用打完也能看）" onclick="window.location.href='TCTC2-0-ranking.html?stage=' + encodeURIComponent(stageId) + '&return_to=' + encodeURIComponent(window.location.href)">🏆</div>
+    <div class="game_top_left_controls">
+        <div class="game_back_btn" onclick="window.location.href='TCTC2-0-main.html'">←</div>
+        <div class="game_rank_floating_btn" id="game_rank_floating_btn" title="查看這關排名（不用打完也能看）" onclick="window.location.href='TCTC2-0-ranking.html?stage=' + encodeURIComponent(stageId) + '&return_to=' + encodeURIComponent(window.location.href)">🏆</div>
+        <!-- 【新增】即時反饋鍵盤開關、再試一次：跟返回鍵、排行榜鍵同一排 -->
+        <button type="button" class="kb_toggle_btn" id="kb_toggle_btn" title="顯示/隱藏鍵盤">⌨</button>
+        <div class="game_retry_fixed_btn" id="game_retry_fixed_btn" title="再試一次" onclick="Init()">⟲</div>
+    </div>
 
     <!--外層容器：讓「倒數設定按鈕」跟「計時器」水平並排、同高對齊，整組固定在原本計時器的位置-->
     <div class="game_timer_wrap">
@@ -964,6 +1118,9 @@
         </div>
 
         <div class="game_char_container" id="game_char_container"></div>
+
+        <!-- 【新增】即時反饋鍵盤：印在輸入框正下方，非浮動 -->
+        <div class="live_keyboard" id="live_keyboard"></div>
 
         <div class="game_input_hint">--真正的高手打字從不看鍵盤--<span class="cg_punct_hint_btn" id="game_punct_hint_btn">打不出標點符號？</span></div>
         <button class="game_retry_btn" onclick="Init()">再試一次</button>
@@ -1181,6 +1338,171 @@
         }
 
 
+        // ===== 【新增】即時反饋虛擬鍵盤 =====
+        // 完整實體鍵盤排列（大千式注音鍵位），盡量比照真實鍵盤的位置，
+        // 包含 Backspace / Tab / CapsLock / Shift / Ctrl 這些功能鍵（純視覺，不參與比對）。
+        // type: "zhuyin" 從 bopomofo 對照表取字；"blank" 純功能鍵，固定顯示 label。
+        const kb_layout = [
+            [
+                {key:"1"},{key:"2"},{key:"3"},{key:"4"},{key:"5"},{key:"6"},{key:"7"},{key:"8"},{key:"9"},{key:"0"},{key:"-"},
+                {key:"Backspace", type:"blank", label:"⌫", wide:"kb_wide_2"}
+            ],
+            [
+                {key:"Tab", type:"blank", label:"Tab", wide:"kb_wide_1"},
+                {key:"q"},{key:"w"},{key:"e"},{key:"r"},{key:"t"},{key:"y"},{key:"u"},{key:"i"},{key:"o"},{key:"p"},
+                {key:"["},{key:"]"}
+            ],
+            [
+                {key:"CapsLock", type:"blank", label:"Caps", wide:"kb_wide_1"},
+                {key:"a"},{key:"s"},{key:"d"},{key:"f"},{key:"g"},{key:"h"},{key:"j"},{key:"k"},{key:"l"},{key:";"},
+                {key:"\\"},
+                {key:"Enter", type:"blank", label:"↵ Enter", wide:"kb_wide_2"}
+            ],
+            [
+                {key:"ShiftLeft", type:"blank", label:"Shift", wide:"kb_wide_2"},
+                {key:"z"},{key:"x"},{key:"c"},{key:"v"},{key:"b"},{key:"n"},{key:"m"},{key:","},{key:"."},{key:"/"},
+                {key:"ShiftRight", type:"blank", label:"Shift", wide:"kb_wide_2"}
+            ],
+            [
+                {key:"CtrlLeft", type:"blank", label:"Ctrl", wide:"kb_wide_1"},
+                {key:" ", label_top:"", label_bottom:"SPACE", wide:"kb_space"},
+                {key:"CtrlRight", type:"blank", label:"Ctrl", wide:"kb_wide_1"}
+            ]
+        ]
+
+        // 有些注音符號／標點是「按了會變成另一個字元」才出現在 bopomofo 表裡（例如 Shift+9 產生 "("），
+        // 這裡把那些「產生出來的字元」對應回它實際所在的物理按鍵，鍵盤上才會亮對位置。
+        const kb_physical_alias = {
+            "，": ",", "。": ".",              // 逗號/句號鍵：打標點題目時，物理鍵不變，只是輸出全形符號
+            "(": "9", ")": "0",
+            ":": ";", "!": "1", "?": "/"
+        }
+        function Resolve_Physical_Key(dict_key){
+            return kb_physical_alias[dict_key] || dict_key
+        }
+
+        // ===== 【新增】標點符號的「輔助鍵」對照表 =====
+        // 之前虛擬鍵盤只會亮「主鍵」（例如打，只亮 , 鍵），
+        // 但實際上 Windows 大千注音要打出全形標點，
+        // 逗號/句號要按 Ctrl + 主鍵，冒號/問號/驚嘆號要按 Ctrl + Shift + 主鍵，
+        // 只亮一顆鍵會讓玩家誤以為單壓那顆鍵就能打出標點，所以另外記錄「這顆主鍵
+        // 需要同時按住哪些輔助鍵」，讓 Sync_Live_Keyboard 把輔助鍵也一起亮起來。
+        // key：Resolve_Physical_Key() 之後的「主鍵」字串（跟 kb_key_elements 的 key 一致）
+        // value：需要同時按住的輔助鍵陣列（對應 kb_layout 裡功能鍵的 key，例如 "CtrlLeft"）
+        const kb_punct_modifier_keys = {
+            ",": ["CtrlLeft"],                 // 逗號，：Ctrl + ,
+            ".": ["CtrlLeft"],                 // 句號。：Ctrl + .
+            ";": ["CtrlLeft", "ShiftLeft"],     // 冒號：：Ctrl + Shift + ;
+            "1": ["CtrlLeft", "ShiftLeft"],     // 驚嘆號！：Ctrl + Shift + 1
+            "/": ["CtrlLeft", "ShiftLeft"]      // 問號？：Ctrl + Shift + /
+        }
+
+        let kb_key_elements = {}   // 物理鍵位字串 -> DOM element
+        let kb_current_el = null   // 目前標成金框（下一個要打）的鍵
+        let kb_current_modifier_els = []   // 【新增】目前一起亮起來的輔助鍵（可能不只一顆，例如 Ctrl+Shift）
+        let kb_visible = localStorage.getItem("tctc_kb_hidden") !== "1"
+
+        function Build_Live_Keyboard(){
+            const wrap = document.getElementById("live_keyboard")
+            if(!wrap) return
+
+            kb_layout.forEach(function(row){
+                const row_el = document.createElement("div")
+                row_el.className = "kb_row"
+                row.forEach(function(item){
+                    const key_el = document.createElement("div")
+                    key_el.className = "kb_key" + (item.wide ? " " + item.wide : "")
+
+                    if(item.type === "blank"){
+                        key_el.classList.add("kb_inactive")
+                        key_el.innerHTML = '<span class="kb_zhuyin">' + item.label + '</span>'
+                    } else if(item.label_top){
+                        // 空白鍵：獨立指定顯示文字，不查表
+                        key_el.innerHTML = '<span class="kb_zhuyin">' + item.label_top + '</span><span class="kb_letter">' + item.label_bottom + '</span>'
+                    } else {
+                        const zhuyin = bopomofo[item.key]
+                        if(zhuyin === undefined) return
+                        // 有沒有「Shift 之後會變成另一個符號」的版本（例如 9 鍵：ㄞ / （）
+                        const shift_char = Object.keys(kb_physical_alias).find(function(k){ return kb_physical_alias[k] === item.key })
+                        const shift_html = shift_char ? '<span class="kb_shift_label">' + shift_char + '</span>' : ''
+                        key_el.innerHTML = shift_html + '<span class="kb_zhuyin">' + zhuyin + '</span><span class="kb_letter">' + item.key.toUpperCase() + '</span>'
+                    }
+
+                    row_el.appendChild(key_el)
+                    kb_key_elements[item.key] = key_el
+                })
+                wrap.appendChild(row_el)
+            })
+
+            if(!kb_visible) wrap.classList.add("kb_hidden")
+
+            const toggle_btn = document.getElementById("kb_toggle_btn")
+            if(toggle_btn){
+                if(!kb_visible) toggle_btn.classList.add("kb_off")
+                toggle_btn.addEventListener("click", function(){
+                    kb_visible = !kb_visible
+                    wrap.classList.toggle("kb_hidden", !kb_visible)
+                    toggle_btn.classList.toggle("kb_off", !kb_visible)
+                    localStorage.setItem("tctc_kb_hidden", kb_visible ? "0" : "1")
+                })
+            }
+        }
+
+        // 反查：某個注音符號／聲調／標點對應到哪個「物理按鍵」（給 Sync_Live_Keyboard 用）
+        function Find_Key_For_Zhuyin(expected_char){
+            for(const key in bopomofo){
+                if(bopomofo[key] === expected_char) return Resolve_Physical_Key(key)
+            }
+            return null
+        }
+
+        // 把「下一個要打的字」在鍵盤上標成金框，每次 current 前進/後退都要呼叫
+        function Sync_Live_Keyboard(){
+            if(kb_current_el){
+                kb_current_el.classList.remove("kb_current")
+                kb_current_el = null
+            }
+            // 【新增】先把「上一次」亮著的輔助鍵全部清掉，避免換到不需要輔助鍵的
+            // 目標字時，Ctrl／Shift 還殘留亮著（例如打完「，」換成打注音符號）。
+            kb_current_modifier_els.forEach(function(el){
+                el.classList.remove("kb_current_modifier")
+            })
+            kb_current_modifier_els = []
+
+            if(target === "" || current >= target.length) return
+
+            const expected_zhuyin = target[current]
+            const phys_key = Find_Key_For_Zhuyin(expected_zhuyin)
+            if(phys_key && kb_key_elements[phys_key]){
+                kb_key_elements[phys_key].classList.add("kb_current")
+                kb_current_el = kb_key_elements[phys_key]
+
+                // 【新增】查表看這顆主鍵是不是標點組合鍵，是的話輔助鍵要「同時」
+                // 一起亮起來（跟主鍵在同一個 function 呼叫、同一個畫面更新完成），
+                // 而不是等玩家按下主鍵之後才「再亮一次」輔助鍵 —— 那樣會讓玩家
+                // 誤以為要分兩次按鍵，實際上 Ctrl / Shift 必須全程按住不放。
+                const modifier_keys = kb_punct_modifier_keys[phys_key] || []
+                modifier_keys.forEach(function(mod_key){
+                    const mod_el = kb_key_elements[mod_key]
+                    if(mod_el){
+                        mod_el.classList.add("kb_current_modifier")
+                        kb_current_modifier_els.push(mod_el)
+                    }
+                })
+            }
+        }
+
+        // 按鍵當下閃一下綠色（打對）／紅色（打錯）／灰色（Backspace 等中性操作），
+        // 純視覺回饋，跟 current 的金框邏輯分開處理。
+        function Flash_Keyboard_Key(key, is_correct){
+            const phys_key = Resolve_Physical_Key(key)
+            const el = kb_key_elements[phys_key]
+            if(!el) return
+            const flash_class = is_correct === null ? "kb_flash_neutral" : (is_correct ? "kb_flash_correct" : "kb_flash_wrong")
+            el.classList.add(flash_class)
+            setTimeout(function(){ el.classList.remove(flash_class) }, 150)
+        }
+
         // ===== 遊戲狀態變數 =====
         let target = ""          // 這關要打的字串
         let current = 0          // 目前指到第幾個字（從 0 開始）
@@ -1192,6 +1514,7 @@
         let stuck_mistake_counted = false
         let target_get = 0       // 總共打對幾個字
         let isRunning = false    // 計時是否已經開始
+        let game_over = false    // 【新增】結果畫面是否已經出現；true 之後所有按鍵一律忽略，避免狂按讓成績持續變動
         let startTime = null     // 開始的時間點（毫秒
         // 【新增】最近一次 ShowResult() 算出來的成績摘要，給「分享成績卡」按鈕使用；
         // 之所以要另外存一份，是因為 wpm / acc 這些數字是 ShowResult() 裡的區域變數，
@@ -1539,6 +1862,8 @@
         // 【修正】新增：目前要打的那個字，會自動捲進目標框可視範圍內（scrollIntoView），
         // 避免目標框固定高度（4行）之後，打到後面的字被卡在畫面外看不到。
         function Update_Normal_Mode_Target1_Highlight(){
+            Sync_Live_Keyboard()  // 【新增】每次 current 前進/後退，鍵盤上的金框也要跟著換位置
+
             if(!target1_highlight_valid) return // 防呆：這關的 target（注音）跟 target1（句子）字數對不起來，就不上色，避免上色跑版
 
             const target_box = document.getElementById("game_stage_target1")
@@ -1585,6 +1910,7 @@
         function Check_Text_Input_Match(event){
 
             if(time_up) return   // 【新增】時間到了，忽略後續輸入事件
+            if(game_over) return   // 【新增】結果畫面已經出現，忽略後續輸入事件
 
             // 每次使用者打字都會重新呼叫這個函式，所以要重新抓一次最新的 stage 資料
             const stage = FindStage(stageId)
@@ -2009,6 +2335,7 @@
             // 因此不需要用 event.isComposing 排除任何情況，每次 Backspace 都算數。
             game_container_input.addEventListener("keydown", function(event){
                 if(event.key === "Backspace"){
+                    if(game_over) return   // 【新增】結果畫面已經出現，不再累計錯誤次數
                     wrong_key_times++
                 }
             })
@@ -2042,6 +2369,9 @@
 
             const game_retry_btn = document.querySelector(".game_retry_btn");
             game_retry_btn.display = "block";
+
+            const game_retry_fixed_btn = document.getElementById("game_retry_fixed_btn")   // 【新增】左上角再試一次
+            if(game_retry_fixed_btn) game_retry_fixed_btn.style.display = "flex"
 
             const container_init = document.getElementById("game_char_container")
             container_init.scrollBy({ top: -10000, behavior: "smooth" })
@@ -2087,6 +2417,8 @@
             isRunning = false
             startTime = null
             time_up = false   // 【新增】每次重打/換關都要重置，不然時間到鎖住的狀態會延續到下一關
+            game_over = false   // 【新增】重打/換關，結果畫面的鎖也要解除
+
 
             // 【新增】判斷這一關是不是「教學關」（基本介紹 / 1-9-1 選字教學 / 2-1-0 標點符號教學）
             // 教學關只有文字說明，不需要計時，右上角的計時器 / 倒數設定按鈕在這種關卡很礙眼，所以整組隱藏
@@ -2095,6 +2427,21 @@
             const timer_wrap_el = document.querySelector(".game_timer_wrap")
             if(timer_wrap_el){
                 timer_wrap_el.style.display = is_tutorial_stage ? "none" : "flex"
+            }
+
+            // 【新增】鍵盤只在「逐鍵比對注音」的模式才有意義（初級、中級的逐字注音模式）；
+            // 高級（速度挑戰）、基礎輸入、中級選了「直接輸入」時都是 IME 選字比對，鍵盤沒辦法給即時反饋，直接不出現。
+            const kb_supported = !is_tutorial_stage && !Is_Box_Input_Stage(stage)
+            const kb_toggle_el = document.getElementById("kb_toggle_btn")
+            const kb_wrap_el = document.getElementById("live_keyboard")
+            if(kb_toggle_el) kb_toggle_el.style.display = kb_supported ? "flex" : "none"
+            if(kb_wrap_el){
+                if(kb_supported){
+                    kb_wrap_el.style.display = ""   // 清掉行內樣式，交回給 CSS 類別（.kb_hidden）控制顯示/隱藏
+                    kb_wrap_el.classList.toggle("kb_hidden", !kb_visible)
+                } else {
+                    kb_wrap_el.style.display = "none"   // 這關鍵盤沒用，強制隱藏，不受開關偏好影響
+                }
             }
 
             // ===== 【新增】判斷這一關是否要套用倒數模式 =====
@@ -2181,6 +2528,7 @@
                 hint.style.display = "none";
                 
                 game_retry_btn.style.display = "none";
+                if(game_retry_fixed_btn) game_retry_fixed_btn.style.display = "none"   // 【新增】教學關同樣隱藏左上角再試一次
 
                 if(stage.id === "1-0-1"){
                     game_char_container.innerHTML = `
@@ -2444,6 +2792,8 @@
                     const container = document.getElementById("game_char_container")
                     if(container){
                         container.style.gap = "0.4rem";
+                        container.style.setProperty('--container-max-height', '25vh')
+
                     }
 
                     const box = document.createElement("div")   // 建一個 div
@@ -2461,11 +2811,11 @@
                     
                 })
             }
-            else if(stage.name === "階段驗收" && stage.type === "注音練習"){
+            else if(stage.name === "階段驗收" && stage.type === "注音練習" || stage.name === "基礎符號"){
 
                 const game_container = document.querySelector(".game_char_container")
                 game_container.style.setProperty('--box-overflow', 'auto')
-                game_container.style.setProperty('--container-max-height', '30vh')
+                game_container.style.setProperty('--container-max-height', '25vh')
 
 
                 target.split("").forEach(function(char, i) {
@@ -2518,7 +2868,7 @@
 
                 const game_container = document.querySelector(".game_char_container")
                 game_container.style.setProperty('--box-overflow', 'auto')
-                game_container.style.setProperty('--container-max-height', '30vh')
+                game_container.style.setProperty('--container-max-height', '13vh')
 
                 
                 //圖片單獨處理
@@ -2627,7 +2977,22 @@
                     Update_Normal_Mode_Target1_Highlight()
                 }
             }
-                
+
+            // 【修正】bug：虛擬鍵盤只有在玩家按下「第一個」按鍵、觸發
+            // Update_Normal_Mode_Target1_Highlight() 之後才會亮框，
+            // 導致關卡剛載入、玩家還沒打字時，鍵盤上完全沒有提示。
+            // 原因是上面 if/else 那一長串分支裡，只有「中級逐字注音」
+            // 這個分支會呼叫 Update_Normal_Mode_Target1_Highlight()
+            // （裡面才有包 Sync_Live_Keyboard()），其他關卡類型
+            // （基礎輸入、注音練習、章節/階段驗收…）建完 boxes 之後
+            // 完全沒有呼叫到它，鍵盤自然不會動。
+            // Sync_Live_Keyboard() 只依賴全域變數 target / current
+            // （不吃 boxes、不吃 target1），所以不管是哪種關卡類型，
+            // 在 Init() 最後統一呼叫一次就能涵蓋所有分支，讓鍵盤在
+            // 畫面剛出現時就先亮出「target[0]」對應的那顆鍵。
+            // 呼叫時機沒問題：Build_Live_Keyboard() 已經在頁面載入時
+            // 執行過一次（見檔案最下方），kb_key_elements 一定已經備妥。
+            Sync_Live_Keyboard()
         }
 
         //wpm counter
@@ -2636,6 +3001,10 @@
 
         //ShowResult
         function ShowResult() {
+
+            game_over = true   // 【新增】結果畫面出現後，之後所有按鍵一律忽略，不再影響任何統計數字
+            const kb_wrap_end = document.getElementById("live_keyboard")   // 【新增】結束後自動隱藏鍵盤
+            if(kb_wrap_end) kb_wrap_end.classList.add("kb_hidden")
 
             Stop_Timer() // 關卡結束，停止右上角計時器
 
@@ -2977,6 +3346,7 @@
         document.addEventListener("keydown", function(event) {
 
             if(time_up) return   // 【新增】時間到了，忽略所有按鍵輸入
+            if(game_over) return   // 【新增】結果畫面已經出現，忽略所有按鍵輸入，統計數字不再變動
 
             if (target === "" || boxes.length === 0) return
 
@@ -3016,6 +3386,8 @@
             if (key === "Backspace"){
                 if (current <= 0) return  // 已經在第一格，不能再退
 
+                Flash_Keyboard_Key("Backspace", null)  // 【新增】鍵盤閃灰色（中性提示）
+
                 boxes[current].classList.remove("current")
 
                 current--
@@ -3048,6 +3420,8 @@
             }
             // 判斷對錯 
             if (target[current] === bopomofo[key]) {
+
+                Flash_Keyboard_Key(key, true)  // 【新增】鍵盤閃綠色
 
                 // 【新增】打對音效：空白鍵/Enter 各自有專屬音效，其他一般字用兩種音效隨機混音
                 if(key === " "){
@@ -3096,6 +3470,7 @@
                 if (current === boxes.length - 1) {
                     // 【維持】最後一格沒有下一格可以跳、也不會有「卡住」的問題：
                     // 打錯就直接結束遊戲，不用管這格要標紅還是留金框。
+                    Flash_Keyboard_Key(key, false)  // 【新增】鍵盤閃紅色
                     wrong_key_times++   //錯誤次數 +1
                     Play_Wrong_Sound()   // 【新增】目前無對應音檔，呼叫了不會發出聲音
                     Show_Wrong_Char_Popup(boxes[current], bopomofo[key])
@@ -3112,6 +3487,7 @@
                 const is_stuck_box = current > 0 && boxes[current - 1].classList.contains("wrong")
 
                 if (is_stuck_box) {
+                    Flash_Keyboard_Key(key, false)  // 【新增】鍵盤閃紅色
                     // 卡住：只有「這次卡住之後的第一次」才計入錯誤次數，
                     // 之後狂按同一格只播動畫、不會一直累加，避免正確率被灌爆。
                     if (!stuck_mistake_counted) {
@@ -3127,6 +3503,7 @@
                 // 不是卡住格（第一次犯錯，給一次免費跳過的機會）：
                 // 這格直接標成紅框（wrong），游標直接跳到下一格（變金框 current），
                 // 跟「打對」時的捲動邏輯一致。
+                Flash_Keyboard_Key(key, false)  // 【新增】鍵盤閃紅色
                 wrong_key_times++   //錯誤次數 +1
                 Play_Wrong_Sound()   // 【新增】目前無對應音檔，呼叫了不會發出聲音
                 Show_Wrong_Char_Popup(boxes[current], bopomofo[key])  //跳出打錯的字
@@ -3158,6 +3535,8 @@
 
         // 綁定「打不出標點符號？」說明視窗的事件（只需要綁一次）
         Bind_Punct_Modal_Events()
+
+        Build_Live_Keyboard()  // 【新增】頁面載入時建立一次即時反饋鍵盤
 
         // nit初始化建畫面＃＃＃
         Init()

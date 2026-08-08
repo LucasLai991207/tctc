@@ -902,7 +902,6 @@ function cg_finish_challenge(){
         { label: "修正次數", value: String(cg_correction_count) },
         { label: "瞬時最高CPM", value: String(cg_highest_cpm) },
         { label: "總耗時", value: cg_format_time(elapsedSeconds) },
-        { label: "本次結果", value: finishedEarly ? "✅ 挑戰完成" : "⏱️ 時間到" }
     ]
     if(cg_stage === "word"){
         cg_share_details.splice(7, 0, { label: "跳過次數", value: String(cg_skip_count) })
@@ -968,6 +967,12 @@ function cg_finish_challenge(){
     // 同時把這次成績同步進「玩家總排行榜」（平均WPM／平均正確率／在線時長）
     if(cg_meets_points_threshold && typeof Sync_Player_Stats === "function"){
         cg_sync_promises.push(Sync_Player_Stats(finalWpm, finalAcc))
+    }
+    // 【新增】挑戰模式「自己專屬」的累計平均，另外存一組獨立的雲端欄位（cg_wpm_sum / cg_acc_sum...），
+    // 不影響上面 Sync_Player_Stats 寫的整體平均——這樣切換身份（登入/登出/繼承）之後，
+    // 挑戰大廳卡片上的「挑戰模式累計平均」才有雲端資料可以還原，不會變成本機清空後就永久消失。
+    if(cg_meets_points_threshold && typeof Sync_Challenge_Player_Stats === "function"){
+        cg_sync_promises.push(Sync_Challenge_Player_Stats(finalWpm, finalAcc))
     }
     // 【新增】把這次賺到的積分累加進玩家總積分榜。pointsEarned 在門檻沒過時已經是 0，
     // Sync_Player_Points 內部也會擋掉 <= 0 的呼叫，這裡的 if 只是避免多打一次不必要的雲端請求
