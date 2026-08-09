@@ -356,4 +356,5 @@
 /* ===== Nav 上的帳號項目（未登入顯示「註冊」／已登入顯示「登出」） ===== */
 #auth_nav_item{
     white-space: nowrap;
+    color: black;
 }
