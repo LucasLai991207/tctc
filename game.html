@@ -76,85 +76,93 @@
             gap: 1rem;
             z-index: 100;
         }
+        /* ===== 【修改】返回按鈕：拿掉方框（底色+邊框），改成透明容器只當作
+           <img> 圖示的可點擊熱區。height/width 仍維持舊版的 2.3rem，
+           是為了保留原本的可點擊/觸控範圍，不會因為拿掉方框而縮水 ===== */
         .game_back_btn {
             height: 2.3rem;
             width: 2.3rem;
-            background-color: var(--dark-blue);
-            border: 1px solid rgba(201,168,76,0.6);
-            border-radius: 0.1rem;
+            background-color: transparent;
+            border: none;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2rem;
-            color: #fff;
-            font-weight: 300;
             cursor: pointer;
-            transition: all 250ms ease-in-out;
             flex-shrink: 0;
         }
-        .game_back_btn:hover {
-            background-color: var(--champagne-gold);
-            color: var(--dark-blue);
+        /* 圖示本體：固定高度、寬度 auto 依原始比例縮放，避免圖片被拉伸變形。
+           【修改】不需要 hover 動畫，所以拿掉 transition 屬性——反正沒有變化要「過渡」*/
+        .game_back_btn img {
+            height: 1.6rem;
+            width: auto;
+            display: block;
+            /* 原本圖片本身是金色，這裡改用 filter 把它「洗成白色」：
+               brightness(0) 先把圖片所有不透明的像素壓成純黑，invert(1) 再把黑白反轉成白，
+               這個技巧的好處是不用重新輸出圖片檔案，同一張 PNG 就能透過 CSS 換色。
+               drop-shadow 疊在色彩轉換之後，維持原本的陰影層次感 */
+            filter: brightness(0) invert(1) drop-shadow(0 1px 3px rgba(0,0,0,0.5));
         }
-        /* ===== 【新增】不用打完這關也能看排名的浮動按鈕 ===== */
+        /* ===== 【新增】不用打完這關也能看排名的浮動按鈕（同樣拿掉方框） ===== */
         .game_rank_floating_btn {
             height: 2.3rem;
             width: 2.3rem;
-            background-color: var(--dark-blue);
-            border: 1px solid rgba(201,168,76,0.6);
-            border-radius: 0.1rem;
+            background-color: transparent;
+            border: none;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.1rem;
             cursor: pointer;
-            transition: all 250ms ease-in-out;
             flex-shrink: 0;
         }
-        .game_rank_floating_btn:hover {
-            background-color: var(--champagne-gold);
+        .game_rank_floating_btn img {
+            height: 1.4rem;
+            width: auto;
+            display: block;
+            /* 跟返回鍵同樣的白色轉換技巧，見上方 .game_back_btn img 的註解 */
+            filter: brightness(0) invert(1) drop-shadow(0 1px 3px rgba(0,0,0,0.5));
         }
-        /* ===== 【新增】鍵盤顯示/隱藏切換、再試一次 ===== */
+        /* ===== 【新增】鍵盤顯示/隱藏切換（同樣拿掉方框） ===== */
         .kb_toggle_btn {
             height: 2.3rem;
             width: 2.3rem;
-            background-color: var(--dark-blue);
-            border: 1px solid rgba(201,168,76,0.6);
-            border-radius: 0.1rem;
+            background-color: transparent;
+            border: none;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.8rem;
-            color: #fff;
             cursor: pointer;
-            transition: all 250ms ease-in-out;
             flex-shrink: 0;
         }
-        .kb_toggle_btn:hover {
-            background-color: var(--champagne-gold);
-            color: var(--dark-blue);
+        .kb_toggle_btn img {
+            height: 1.6rem;
+            width: auto;
+            display: block;
+            /* 跟返回鍵同樣的白色轉換技巧，見上方 .game_back_btn img 的註解 */
+            filter: brightness(0) invert(1) drop-shadow(0 1px 3px rgba(0,0,0,0.5));
         }
+        /* 關閉狀態的半透明提示：套在按鈕本身，img 是子元素會一起被影響，
+           不需要另外針對 img 寫規則。這是「開關狀態」不是 hover，所以保留 */
         .kb_toggle_btn.kb_off {
             opacity: 0.45;
         }
+        /* ===== 【修改】再試一次：現在有圖片素材了，比照上面三顆的做法，
+           改成透明容器 + <img>，一樣用 brightness(0) invert(1) 轉成白色 ===== */
         .game_retry_fixed_btn {
             height: 2.3rem;
             width: 2.3rem;
-            background-color: var(--dark-blue);
-            border: 1px solid rgba(201,168,76,0.6);
-            border-radius: 0.1rem;
+            background-color: transparent;
+            border: none;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.7rem;
-            color: #fff;
             cursor: pointer;
-            transition: all 250ms ease-in-out;
             flex-shrink: 0;
         }
-        .game_retry_fixed_btn:hover {
-            background-color: var(--champagne-gold);
-            color: var(--dark-blue);
+        .game_retry_fixed_btn img {
+            height: 1.6rem;
+            width: auto;
+            display: block;
+            filter: brightness(0) invert(1) drop-shadow(0 1px 3px rgba(0,0,0,0.5));
         }
         /* ===== 【新增】外層容器：讓按鈕跟計時器水平並排、固定在畫面右上角 ===== */
         /* 位置跟原本 .game_timer 單獨使用 position:fixed 時完全一樣，只是現在多包一層 */
@@ -205,15 +213,22 @@
             background-color: var(--dark-blue);
             border: 1px solid rgba(201,168,76,0.6);
             border-radius: 50%;
-            color: var(--champagne-gold);
-            font-size: 1.2rem;
             cursor: pointer;
-            transition: transform 200ms ease, border-color 200ms ease;
+            /* 【修改】拿掉 hover 動畫，只留下 is_active 開關切換時的邊框過渡——
+               這個不是「滑鼠移過去」才出現的效果，是「倒數模式有沒有開啟」的
+               狀態指示，屬於功能性提示，不是裝飾性的 hover 動畫，所以保留 */
+            transition: border-color 200ms ease, box-shadow 200ms ease;
         }
-        .countdown_settings_btn:hover {
-            border-color: var(--champagne-gold);
+        /* 【新增】圖示本體：跟其他四顆一樣，用 brightness(0) invert(1) 把
+           alarm.png 轉成白色，維持整組圖示風格一致 */
+        .countdown_settings_btn img {
+            height: 1.3rem;
+            width: auto;
+            display: block;
+            filter: brightness(0) invert(1) drop-shadow(0 1px 3px rgba(0,0,0,0.5));
         }
-        /* 開關開啟時，按鈕邊框亮一點，讓玩家一眼看出目前有沒有套用倒數 */
+        /* 開關開啟時，按鈕邊框亮一點，讓玩家一眼看出目前有沒有套用倒數。
+           這是「狀態」不是「hover」，滑鼠移開之後只要倒數模式還開著，紅框就會繼續顯示 */
         .countdown_settings_btn.is_active {
             border-color: red;
             box-shadow: 0 0 8px red;
@@ -880,6 +895,9 @@
         .kb_key.kb_wide_1 { flex: 1.6 1 0; }
         .kb_key.kb_wide_2 { flex: 2 1 0; }
         .kb_key.kb_space { flex: 6 1 0; }
+        /* 【新增】空白鍵縮窄版本：把原本 flex:6 讓給右邊的方向鍵組騰出空間，
+           讓方向鍵可以跟空白鍵擠在「同一排」，不用另外多開一排撐高整個鍵盤高度。 */
+        .kb_key.kb_space_narrow { flex: 3 1 0; }
         .kb_key.kb_inactive {
             color: rgba(255,255,255,0.25);
             background-color: rgba(255,255,255,0.03);
@@ -903,9 +921,7 @@
         }
         .kb_key.kb_current {
             background-color: rgba(201, 168, 76, 0.18);
-            border-color: var(--champagne-gold);
             color: var(--champagne-gold);
-            transform: translateY(-2px);
         }
         .kb_key.kb_current .kb_letter { color: var(--champagne-gold); opacity: 0.75; }
         /* ===== 【新增】組合鍵的「輔助鍵」提示（例如打全形逗號需要 Ctrl + ,）=====
@@ -923,11 +939,7 @@
             color: var(--champagne-gold);
         }
         .kb_key.kb_current_modifier .kb_zhuyin { color: var(--champagne-gold); opacity: 0.85; }
-        .kb_key.kb_flash_correct {
-            background-color: rgba(70, 200, 120, 0.35);
-            border-color: #46c878;
-            color: #d9ffe8;
-        }
+        
         .kb_key.kb_flash_wrong {
             background-color: rgba(220, 70, 70, 0.4);
             border-color: #e05555;
@@ -936,6 +948,31 @@
         .kb_key.kb_flash_neutral {
             background-color: rgba(255,255,255,0.18);
             border-color: rgba(255,255,255,0.4);
+        }
+        /* ===== 【修改】上下左右方向鍵：不再另外多開兩排（那樣會把整個鍵盤撐高，
+           頁面可能被撐到需要捲動），改成塞進「跟空白鍵同一排」的右下角，
+           在 CtrlRight 後面接一個獨立的小容器 .kb_arrow_cluster，
+           內部自己用兩個矮扁的小排（上排只有 ↑、下排 ← ↓ →）拼成方向鍵的形狀，
+           整體高度控制在跟其他按鍵同一排（44px）差不多，不會多佔一整排的垂直空間。 */
+        .kb_arrow_cluster {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            flex: 0 0 auto;
+            justify-content: center;
+        }
+        .kb_arrow_cluster_row {
+            display: flex;
+            gap: 2px;
+            justify-content: center;
+        }
+        .kb_arrow_cluster .kb_key {
+            flex: 0 0 26px;
+            height: 21px;
+            border-radius: 4px;
+        }
+        .kb_arrow_cluster .kb_zhuyin {
+            font-size: 0.75rem;
         }
         @media (max-width: 720px) {
             .live_keyboard { display: none !important; }
@@ -972,17 +1009,17 @@
 
 
     <div class="game_top_left_controls">
-        <div class="game_back_btn" onclick="window.location.href='TCTC2-0-main.html'">←</div>
-        <div class="game_rank_floating_btn" id="game_rank_floating_btn" title="查看這關排名（不用打完也能看）" onclick="window.location.href='TCTC2-0-ranking.html?stage=' + encodeURIComponent(stageId) + '&return_to=' + encodeURIComponent(window.location.href)">🏆</div>
+        <div class="game_back_btn" onclick="window.location.href='TCTC2-0-main.html'"><img src="back_pointer_gold.png" alt="返回"></div>
+        <div class="game_rank_floating_btn" id="game_rank_floating_btn" title="查看這關排名（不用打完也能看）" onclick="window.location.href='TCTC2-0-ranking.html?stage=' + encodeURIComponent(stageId) + '&return_to=' + encodeURIComponent(window.location.href)"><img src="trophy_gold.png" alt="排行榜"></div>
         <!-- 【新增】即時反饋鍵盤開關、再試一次：跟返回鍵、排行榜鍵同一排 -->
-        <button type="button" class="kb_toggle_btn" id="kb_toggle_btn" title="顯示/隱藏鍵盤">⌨</button>
-        <div class="game_retry_fixed_btn" id="game_retry_fixed_btn" title="再試一次" onclick="Init()">⟲</div>
+        <button type="button" class="kb_toggle_btn" id="kb_toggle_btn" title="顯示/隱藏鍵盤"><img src="keyboard_gold.png" alt="鍵盤開關"></button>
+        <div class="game_retry_fixed_btn" id="game_retry_fixed_btn" title="再試一次" onclick="Init()"><img src="refresh-arrow.png" alt="再試一次"></div>
     </div>
 
     <!--外層容器：讓「倒數設定按鈕」跟「計時器」水平並排、同高對齊，整組固定在原本計時器的位置-->
     <div class="game_timer_wrap">
         <!--中級專用：倒數設定小按鈕，點開才會跳出設定視窗，平常不佔畫面空間-->
-        <button type="button" class="countdown_settings_btn" id="countdown_settings_btn" title="倒數模式設定">⏱</button>
+        <button type="button" class="countdown_settings_btn" id="countdown_settings_btn" title="倒數模式設定"><img src="alarm.png" alt="倒數模式設定"></button>
 
         <div class="game_timer" id="game_timer">00：00</div>
     </div>
@@ -1365,8 +1402,23 @@
             ],
             [
                 {key:"CtrlLeft", type:"blank", label:"Ctrl", wide:"kb_wide_1"},
-                {key:" ", label_top:"", label_bottom:"SPACE", wide:"kb_space"},
-                {key:"CtrlRight", type:"blank", label:"Ctrl", wide:"kb_wide_1"}
+                {key:" ", label_top:"", label_bottom:"SPACE", wide:"kb_space_narrow"},
+                {key:"CtrlRight", type:"blank", label:"Ctrl", wide:"kb_wide_1"},
+                // ===== 【修改】方向鍵改成跟空白鍵「同一排」，不再另外多開兩排——
+                // 多開兩排會讓整個鍵盤變高，頁面可能被撐到需要捲動，跟「鍵盤固定在畫面上、
+                // 不會滾動視窗」的需求牴觸。改成 type:"arrow_cluster"，Build_Live_Keyboard
+                // 看到這個 type 會另外處理：在這一格裡面自己排成上下兩小排矮扁的鍵
+                // （上排只有 ↑、下排 ← ↓ →），塞進跟這排其他按鍵差不多的高度裡。
+                // 空白鍵改用 kb_space_narrow（比原本窄），騰出寬度給方向鍵組使用。
+                {
+                    type: "arrow_cluster",
+                    keys: [
+                        {key:"ArrowUp", label:"↑", row:"up"},
+                        {key:"ArrowLeft", label:"←", row:"down"},
+                        {key:"ArrowDown", label:"↓", row:"down"},
+                        {key:"ArrowRight", label:"→", row:"down"}
+                    ]
+                }
             ]
         ]
 
@@ -1387,14 +1439,29 @@
         // 逗號/句號要按 Ctrl + 主鍵，冒號/問號/驚嘆號要按 Ctrl + Shift + 主鍵，
         // 只亮一顆鍵會讓玩家誤以為單壓那顆鍵就能打出標點，所以另外記錄「這顆主鍵
         // 需要同時按住哪些輔助鍵」，讓 Sync_Live_Keyboard 把輔助鍵也一起亮起來。
-        // key：Resolve_Physical_Key() 之後的「主鍵」字串（跟 kb_key_elements 的 key 一致）
+        //
+        // 【修正bug】key 改成用 bopomofo 對照表裡「原始的 dict key」，不能用
+        // Resolve_Physical_Key() 之後的「物理鍵位」字串！因為同一顆物理鍵在大千注音
+        // 鍵盤上常常「身兼兩用」：例如 , 鍵本身直接打出來是注音 ㄝ（不需要任何輔助鍵），
+        // 但要打出全形逗號「，」則要 Ctrl + ,。如果表用物理鍵位當 key（例如拿 ","
+        // 當 key），Sync_Live_Keyboard 只要目標字落在同一顆物理鍵上，不管目標其實
+        // 是 ㄝ 還是 ，，都會查到同一筆輔助鍵設定，導致打 ㄝ 這種一般注音符號時
+        // 也被誤判成要按 Ctrl（回報的 bug：目標明明是 ㄝ，卻顯示 Ctrl + ㄝ）。
+        // 改成用 dict key 當索引就不會有這個問題：ㄝ 用的 dict key 是 ","；
+        // 全形逗號「，」在 bopomofo 表裡是獨立的另一個 dict key "，"（兩者是不同的
+        // 字串，一定不會互相碰撞），查表天生就不會混到一起。
         // value：需要同時按住的輔助鍵陣列（對應 kb_layout 裡功能鍵的 key，例如 "CtrlLeft"）
         const kb_punct_modifier_keys = {
-            ",": ["CtrlLeft"],                 // 逗號，：Ctrl + ,
-            ".": ["CtrlLeft"],                 // 句號。：Ctrl + .
-            ";": ["CtrlLeft", "ShiftLeft"],     // 冒號：：Ctrl + Shift + ;
-            "1": ["CtrlLeft", "ShiftLeft"],     // 驚嘆號！：Ctrl + Shift + 1
-            "/": ["CtrlLeft", "ShiftLeft"]      // 問號？：Ctrl + Shift + /
+            "，": ["CtrlLeft"],                 // 逗號，：Ctrl + ,
+            "。": ["CtrlLeft"],                 // 句號。：Ctrl + .
+            ":": ["CtrlLeft", "ShiftLeft"],     // 冒號：：Ctrl + Shift + ;
+            "!": ["CtrlLeft", "ShiftLeft"],     // 驚嘆號！：Ctrl + Shift + 1
+            "?": ["CtrlLeft", "ShiftLeft"],     // 問號？：Ctrl + Shift + /
+            "\\": ["CtrlLeft"],                 // 【新增】頓號、：Ctrl + \
+            "[": ["CtrlLeft", "ArrowDown"],     // 【新增】左引號「：Ctrl + [ + ↓
+            "]": ["CtrlLeft", "ArrowDown"],      // 【新增】右引號」：Ctrl + ] + ↓
+            "(": ["ShiftLeft"],                 // 【新增】左括號（：Shift + 9
+            ")": ["ShiftLeft"]                  // 【新增】右括號）：Shift + 0
         }
 
         let kb_key_elements = {}   // 物理鍵位字串 -> DOM element
@@ -1410,6 +1477,33 @@
                 const row_el = document.createElement("div")
                 row_el.className = "kb_row"
                 row.forEach(function(item){
+                    // ===== 【新增】方向鍵組：不是一顆單獨的按鍵，是一個「容器」，
+                    // 裡面自己再排成兩小排（上排 ↑、下排 ← ↓ →），跟其他一般按鍵的
+                    // 渲染方式不一樣，這裡獨立處理完就直接 appendChild + return，
+                    // 不會往下走到後面「假設 item 是一顆單一按鍵」的那段邏輯。
+                    if(item.type === "arrow_cluster"){
+                        const cluster_el = document.createElement("div")
+                        cluster_el.className = "kb_arrow_cluster"
+
+                        const up_row_el = document.createElement("div")
+                        up_row_el.className = "kb_arrow_cluster_row"
+                        const down_row_el = document.createElement("div")
+                        down_row_el.className = "kb_arrow_cluster_row"
+
+                        item.keys.forEach(function(sub_item){
+                            const sub_el = document.createElement("div")
+                            sub_el.className = "kb_key kb_inactive"
+                            sub_el.innerHTML = '<span class="kb_zhuyin">' + sub_item.label + '</span>'
+                            kb_key_elements[sub_item.key] = sub_el
+                            ;(sub_item.row === "up" ? up_row_el : down_row_el).appendChild(sub_el)
+                        })
+
+                        cluster_el.appendChild(up_row_el)
+                        cluster_el.appendChild(down_row_el)
+                        row_el.appendChild(cluster_el)
+                        return
+                    }
+
                     const key_el = document.createElement("div")
                     key_el.className = "kb_key" + (item.wide ? " " + item.wide : "")
 
@@ -1448,10 +1542,15 @@
             }
         }
 
-        // 反查：某個注音符號／聲調／標點對應到哪個「物理按鍵」（給 Sync_Live_Keyboard 用）
+        // 反查：某個注音符號／聲調／標點對應到 bopomofo 表裡的「原始 dict key」
+        // 【修正bug】改成回傳「未經 Resolve_Physical_Key() 轉換」的原始 dict key，
+        // 不要在這裡就先轉成物理鍵位——因為 kb_punct_modifier_keys 現在改成用
+        // dict key 查表（原因見上面 kb_punct_modifier_keys 的註解），呼叫端
+        // Sync_Live_Keyboard 需要保留這個原始 dict key 才能正確查到輔助鍵，
+        // 同時另外呼叫 Resolve_Physical_Key() 算出「主鍵要亮在鍵盤上的哪個物理位置」。
         function Find_Key_For_Zhuyin(expected_char){
             for(const key in bopomofo){
-                if(bopomofo[key] === expected_char) return Resolve_Physical_Key(key)
+                if(bopomofo[key] === expected_char) return key
             }
             return null
         }
@@ -1472,16 +1571,22 @@
             if(target === "" || current >= target.length) return
 
             const expected_zhuyin = target[current]
-            const phys_key = Find_Key_For_Zhuyin(expected_zhuyin)
+            // 【修正bug】dict_key 是 bopomofo 表裡「原始」的 key（例如 ㄝ 對應到 ","，
+            // 全形逗號「，」對應到 "，"，兩者是不同字串，不會混淆）；
+            // phys_key 則是再轉換一次後，這顆鍵實際在鍵盤上的物理位置（","）。
+            // kb_current 的金框要用 phys_key（畫面上只有一顆 , 鍵可以亮），
+            // 但 kb_punct_modifier_keys 的查表一定要用 dict_key，理由見該表的註解。
+            const dict_key = Find_Key_For_Zhuyin(expected_zhuyin)
+            const phys_key = dict_key ? Resolve_Physical_Key(dict_key) : null
             if(phys_key && kb_key_elements[phys_key]){
                 kb_key_elements[phys_key].classList.add("kb_current")
                 kb_current_el = kb_key_elements[phys_key]
 
-                // 【新增】查表看這顆主鍵是不是標點組合鍵，是的話輔助鍵要「同時」
-                // 一起亮起來（跟主鍵在同一個 function 呼叫、同一個畫面更新完成），
-                // 而不是等玩家按下主鍵之後才「再亮一次」輔助鍵 —— 那樣會讓玩家
-                // 誤以為要分兩次按鍵，實際上 Ctrl / Shift 必須全程按住不放。
-                const modifier_keys = kb_punct_modifier_keys[phys_key] || []
+                // 【新增】查表看這個目標字是不是需要輔助鍵才能打出來的標點，是的話
+                // 輔助鍵要「同時」一起亮起來（跟主鍵在同一個 function 呼叫、同一個
+                // 畫面更新完成），而不是等玩家按下主鍵之後才「再亮一次」輔助鍵 ——
+                // 那樣會讓玩家誤以為要分兩次按鍵，實際上 Ctrl / Shift 必須全程按住不放。
+                const modifier_keys = kb_punct_modifier_keys[dict_key] || []
                 modifier_keys.forEach(function(mod_key){
                     const mod_el = kb_key_elements[mod_key]
                     if(mod_el){
@@ -1624,6 +1729,13 @@
 
                 // 【美觀】剩最後 5 秒時，文字變紅、微微放大提醒
                 timerEl.classList.toggle("countdown_warning", remaining <= 5)
+
+                // 【新增】最後 3 秒（3、2、1）各嗶一聲。
+                // Update_Timer_Display 是被 setInterval(1000ms) 固定每秒呼叫一次，
+                // remaining 這裡已經是 Math.ceil 過的整數，所以「remaining <= 3」
+                // 這個條件在整段倒數過程中，剛好只會在 3 / 2 / 1 這三個整數各命中一次，
+                // 不需要另外记录「這一秒有沒有嗶過」來防止重複播放。
+                if(remaining <= 3) Play_Tick_Sound()
             }
             else{
                 timerEl.textContent = Format_Timer(elapsed)
@@ -2337,6 +2449,7 @@
                 if(event.key === "Backspace"){
                     if(game_over) return   // 【新增】結果畫面已經出現，不再累計錯誤次數
                     wrong_key_times++
+                    Play_Wrong_Sound()   // 【新增】打錯時的音效，跟逐字模式的打錯音效一致
                 }
             })
 
@@ -3472,7 +3585,7 @@
                     // 打錯就直接結束遊戲，不用管這格要標紅還是留金框。
                     Flash_Keyboard_Key(key, false)  // 【新增】鍵盤閃紅色
                     wrong_key_times++   //錯誤次數 +1
-                    Play_Wrong_Sound()   // 【新增】目前無對應音檔，呼叫了不會發出聲音
+                    Play_Wrong_Sound()   // 打錯時的音效
                     Show_Wrong_Char_Popup(boxes[current], bopomofo[key])
                     boxes[current].classList.remove("current")
                     boxes[current].classList.add("wrong")
@@ -3494,7 +3607,7 @@
                         wrong_key_times++
                         stuck_mistake_counted = true
                     }
-                    Play_Wrong_Sound()   // 【新增】目前無對應音檔，呼叫了不會發出聲音
+                    Play_Wrong_Sound()   // 打錯時的音效
                     Show_Wrong_Char_Popup(boxes[current], bopomofo[key])  //跳出打錯的字
                     Shake_Wrong_Box()  //金框震動（不會變紅）
                     return
@@ -3505,7 +3618,7 @@
                 // 跟「打對」時的捲動邏輯一致。
                 Flash_Keyboard_Key(key, false)  // 【新增】鍵盤閃紅色
                 wrong_key_times++   //錯誤次數 +1
-                Play_Wrong_Sound()   // 【新增】目前無對應音檔，呼叫了不會發出聲音
+                Play_Wrong_Sound()   // 打錯時的音效
                 Show_Wrong_Char_Popup(boxes[current], bopomofo[key])  //跳出打錯的字
 
                 const current_top = boxes[current].offsetTop

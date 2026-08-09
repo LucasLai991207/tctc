@@ -145,9 +145,12 @@ function Render_Leaderboard(list) {
 
     let self_found_in_list = false
 
-    // 【修改】這份榜單排名的依據是 wpm（跟 Firebase 端 orderBy("wpm") 的排序欄位保持一致）。
+    // 【修改】排名依據改成「先比 wpm，wpm 一樣再比正確率(acc)」——
+    // 只有 wpm 和 acc 都相同才算真正同分、同名次；wpm 一樣但 acc 不同的人名次要分開。
     // 用 Compute_Competition_Ranks 算出「考慮同分」的正確名次陣列，取代原本單純的 index + 1。
-    const ranks = Compute_Competition_Ranks(list, function (entry) { return entry.wpm })
+    // 【重要前提】這裡假設 list 已經是照「wpm 由大到小，wpm 相同再依 acc 由大到小」排序好的
+    // （見 TCTC2-0-firebase.js 的 _Get_Leaderboard），Compute_Competition_Ranks 才能正確判斷同分。
+    const ranks = Compute_Competition_Ranks(list, function (entry) { return entry.wpm + "_" + entry.acc })
 
     list.forEach(function (entry, index) {
         const rank = ranks[index]
