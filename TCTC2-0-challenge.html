@@ -27,6 +27,9 @@
         body{
             padding-top: 63px;
         }
+        /* ===== 【修改】改成跟 game.html 一致的「透明容器 + 圖示」做法，不再用純文字/emoji ←🏆，
+           拿掉方框（底色+邊框），維持原本 2.3rem 的可點擊熱區，只是外觀換成跟主線關卡頁
+           完全一樣的金色圖示（透過 filter 轉白），讓兩個模式的介面語言保持一致。 */
         .game_back_btn {
             position: fixed;
             top: 70px;
@@ -34,26 +37,22 @@
             height: 2.3rem;
             width: 2.3rem;
 
-            background-color: var(--dark-blue);
-            border: 1px solid rgba(201,168,76,0.6);
-            border-radius: 0.1rem;
+            background-color: transparent;
+            border: none;
 
             display: flex;
             align-items: center;
             justify-content: center;
 
-            font-size: 2rem;
-            color: #fff;
-            font-weight: 300;
-
             cursor: pointer;
-            transition: all 250ms ease-in-out;
-            box-shadow: 0 0 1rem rgba(0,0,0,0.8);
             z-index: 100;
         }
-        .game_back_btn:hover {
-            background-color: var(--champagne-gold);
-            color: var(--dark-blue);
+        .game_back_btn img {
+            height: 1.6rem;
+            width: auto;
+            display: block;
+            /* 跟 game.html 同樣的白色轉換技巧：brightness(0) 先壓成純黑，invert(1) 再反轉成白 */
+            filter: brightness(0) invert(1) drop-shadow(0 1px 3px rgba(0,0,0,0.5));
         }
         /* ===== 【新增】挑戰模式左上角的浮動排行榜按鈕 =====
            完全比照 game.html 裡 .game_rank_floating_btn 的樣式與定位邏輯：
@@ -66,20 +65,45 @@
             left: 5.3rem;
             height: 2.3rem;
             width: 2.3rem;
-            background-color: var(--dark-blue);
-            border: 1px solid rgba(201,168,76,0.6);
-            border-radius: 0.1rem;
+            background-color: transparent;
+            border: none;
             display: flex;
             align-items: center;
             justify-content: center;
 
-            font-size: 1.1rem;
             cursor: pointer;
-            transition: all 250ms ease-in-out;
             z-index: 100;
         }
-        .game_rank_floating_btn:hover {
-            background-color: var(--champagne-gold);
+        .game_rank_floating_btn img {
+            height: 1.4rem;
+            width: auto;
+            display: block;
+            filter: brightness(0) invert(1) drop-shadow(0 1px 3px rgba(0,0,0,0.5));
+        }
+        /* ===== 【新增】再試一次：改成跟 game.html 一樣的浮動圖示按鈕，取代原本放在
+           畫面底部 .cg_action_row 裡的文字按鈕「再來一次」。
+           位置比照返回鍵/排行榜鍵，排在排行榜鍵右邊：
+           left: 8.6rem = 5.3rem(排行榜鍵位置) + 2.3rem(排行榜鍵寬度) + 1rem(間距) */
+        .game_retry_fixed_btn {
+            position: fixed;
+            top: 70px;
+            left: 8.6rem;
+            height: 2.3rem;
+            width: 2.3rem;
+            background-color: transparent;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            cursor: pointer;
+            z-index: 100;
+        }
+        .game_retry_fixed_btn img {
+            height: 1.6rem;
+            width: auto;
+            display: block;
+            filter: brightness(0) invert(1) drop-shadow(0 1px 3px rgba(0,0,0,0.5));
         }
         .cg_wrap{
             width: 100vw;
@@ -466,12 +490,15 @@
         </div>
     </nav>
 
-    <div class="game_back_btn" onclick="Confirm_Leave_Challenge()">←</div>
+    <div class="game_back_btn" onclick="Confirm_Leave_Challenge()"><img src="back_pointer_gold.png" alt="返回"></div>
     <!-- ===== 【新增】不用打完這關也能看排名的浮動按鈕，固定貼在返回鍵旁邊 =====
          直接呼叫 challenge.js 裡的 View_Challenge_Ranking()，該函式會用目前這次挑戰的
          cg_difficulty / cg_stage / cg_duration_seconds 組成 comboId，導向對應組合的排行榜，
          跟結算畫面「查看排名」按鈕共用同一份邏輯，不會有兩處寫法不一致的風險。 -->
-    <div class="game_rank_floating_btn" id="cg_rank_floating_btn" title="查看這個組合的排名（不用打完也能看）" onclick="View_Challenge_Ranking()">&nbsp;🏆</div>
+    <div class="game_rank_floating_btn" id="cg_rank_floating_btn" title="查看這個組合的排名（不用打完也能看）" onclick="View_Challenge_Ranking()"><img src="trophy_gold.png" alt="排行榜"></div>
+    <!-- ===== 【修改】再試一次：改成跟 game.html 一樣的浮動圖示按鈕，取代原本
+         畫面底部 .cg_action_row 裡的文字按鈕，直接呼叫跟原本同一個 Restart_Challenge() ===== -->
+    <div class="game_retry_fixed_btn" id="cg_retry_floating_btn" title="再試一次" onclick="Restart_Challenge()"><img src="refresh-arrow.png" alt="再試一次"></div>
 
     <main class="cg_wrap">
         <div class="cg_topbar">
@@ -511,10 +538,7 @@
             <span class="cg_punct_hint_btn" id="cg_punct_hint_btn">打不出標點符號？</span>
         </div>
 
-        <div class="cg_action_row">
-            <button class="cg_btn" onclick="Restart_Challenge()">再來一次</button>
-            <button class="cg_btn" onclick="Confirm_Leave_Challenge()">返回大廳</button>
-        </div>
+        
     </main>
 
 
@@ -618,14 +642,14 @@
 
             <div class="cg_punct_content" style="max-height: none;">
                 單詞模式不用按空白鍵！<br><br>
-                只要把畫面上反白的那個詞打對，並按下Enter，系統就會自動判定完成、清空輸入框、<br>
+                只要把畫面上反白的那個詞打對，並按下Enter，系統就會自動判定完成、清空輸入框。<br>
                 <br>
                 如果卡住打不出來，也可以按輸入框旁邊的「跳過」按鈕直接換下一個詞。
             </div>
 
             <label style="display:flex;align-items:center;gap:0.5rem;margin-top:1.2rem;color:rgba(255,255,255,0.7);font-size:0.85rem;letter-spacing:1px;cursor:pointer;">
                 <input type="checkbox" id="cg_word_intro_dontshow">
-                以後不准顯示這種提醒
+                以後不准顯示這個視窗
             </label>
 
             <div class="cg_action_row" style="justify-content:center;">

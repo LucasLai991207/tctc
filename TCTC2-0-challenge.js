@@ -431,9 +431,12 @@ function cg_init(difficulty, seconds, stage){
     }
 }
 
+let cg_last_tick_second = null   // 【新增】倒數最後3秒嗶聲：記錄「已經嗶過的整數秒數」，避免 250ms 的 interval 在同一秒內重複觸發
+
 function cg_start_timer(){
     if(cg_timer_handle) return
     cg_start_time = Date.now()
+    cg_last_tick_second = null   // 【新增】每次重新開始倒數都要重置，不然下一輪最後3秒不會再嗶
 
     cg_timer_handle = setInterval(function(){
         const elapsedSec = (Date.now() - cg_start_time) / 1000
@@ -441,6 +444,16 @@ function cg_start_timer(){
 
         cg_timer_el.textContent = cg_format_time(remaining)
         if(remaining <= 10) cg_timer_el.classList.add("cg_timer_warn")
+
+        // 【新增】最後 3 秒（3、2、1）各嗶一聲。
+        // 這個 interval 是每 250ms 跑一次（不是每秒），所以同一個整數秒（例如 remaining
+        // 從 2.98 掉到 2.01 之間）會被跑好幾次，這裡用 cg_last_tick_second 記錄
+        // 「這個整數秒是不是已經嗶過了」，確保 3 / 2 / 1 各自只嗶一次，不會連環嗶。
+        const remaining_ceil = Math.ceil(remaining)
+        if(remaining_ceil <= 3 && remaining_ceil >= 1 && remaining_ceil !== cg_last_tick_second){
+            cg_last_tick_second = remaining_ceil
+            Play_Tick_Sound()
+        }
 
         cg_update_live_stats()
 

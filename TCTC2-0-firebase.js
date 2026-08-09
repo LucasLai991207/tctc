@@ -505,7 +505,14 @@ function _Get_Leaderboard(node_path, id, callback, limit) {
                 val._anon_id = child.key
                 list.push(val)
             })
-            list.sort(function (a, b) { return b.wpm - a.wpm })
+            // 【修改】先比 wpm，wpm 相同時再比 acc（正確率）當作第二排序依據，
+            // 這樣「wpm 和 acc 都一樣」的人才會被視為真正同分（交給 ranking.js 的
+            // Compute_Competition_Ranks 判定同名次），單純 wpm 一樣但 acc 不同的人
+            // 不會被誤判成並列。
+            list.sort(function (a, b) {
+                if (b.wpm !== a.wpm) return b.wpm - a.wpm
+                return (b.acc || 0) - (a.acc || 0)
+            })
 
             // 【新增】濾掉選擇隱藏的玩家，濾完之後才裁切成畫面實際要顯示的筆數
             _Filter_Out_Hidden_Players(list, function (visible_list) {
@@ -1013,16 +1020,31 @@ function _Get_Own_Rank_In_Node(node_path, id, callback) {
                 val._anon_id = child.key
                 list.push(val)
             })
-            // 跟 _Get_Leaderboard 一樣，Firebase 排序後還要自己再排一次確保順序正確
-            list.sort(function (a, b) { return b.wpm - a.wpm })
+            // 跟 _Get_Leaderboard 一樣，Firebase 排序後還要自己再排一次確保順序正確：
+            // 先比 wpm，wpm 相同時再比 acc，維持跟排行榜列表完全一致的排序依據。
+            list.sort(function (a, b) {
+                if (b.wpm !== a.wpm) return b.wpm - a.wpm
+                return (b.acc || 0) - (a.acc || 0)
+            })
 
             const own_index = list.findIndex(function (entry) { return entry._anon_id === anon_id })
             if (own_index === -1) {
                 callback(null)
                 return
             }
+
+            // 【新增】套用跟 ranking.js 的 Compute_Competition_Ranks 一樣的「標準競賽排名」規則：
+            // wpm 和 acc 都跟前一名相同才算同分、同名次，並列的名次要「佔掉」後面的位置（1224 制）。
+            // 從自己這筆往前找，只要還是同分就一直把名次往前推，直到遇到分數不同的那一筆為止。
+            let rank = own_index + 1
+            let i = own_index
+            while (i > 0 && list[i].wpm === list[i - 1].wpm && list[i].acc === list[i - 1].acc) {
+                rank--
+                i--
+            }
+
             callback({
-                rank: own_index + 1,
+                rank: rank,
                 total: list.length,
                 name: list[own_index].name,
                 wpm: list[own_index].wpm,

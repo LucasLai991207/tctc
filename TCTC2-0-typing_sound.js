@@ -15,10 +15,12 @@
         - Play_Space_Sound()    打對「空白鍵」那一下
         - Play_Enter_Sound()    打對「Enter」那一下
         - Play_Complete_Sound() 過關（acc >= 90）時播放一次
-        - Play_Wrong_Sound()    打錯時呼叫（目前沒有對應音檔，先當作
-                                 保留的 API，呼叫了也不會發出聲音；
-                                 之後有音檔了直接補進 SOUND_FILES 就會生效，
-                                 呼叫端完全不用改）
+        - Play_Wrong_Sound()    打錯時呼叫（音檔 make_mistake.mp3，內建節流，
+                                 見下方 Play_Wrong_Sound 的說明）
+        - Play_Tick_Sound()     倒數最後幾秒的「嗶」聲，最後 3 秒每秒呼叫一次
+                                 【新增】這個不是讀音檔，是用 Web Audio 的
+                                 OscillatorNode 現場合成一個短促的嗶聲，
+                                 不需要另外準備音檔
 
    4. Set_Typing_Sound_Enabled(true/false)：切換是否要播放音效，
       這個開關會自己存進 localStorage（純本機設定，不同步雲端），
@@ -30,6 +32,7 @@
         TCTC3-0-keyboard-space.mp3
         TCTC3-0-keyboard-enter.mp3
         TCTC3-0-complete.mp3
+        make_mistake.mp3   【新增】打錯字音效，Play_Wrong_Sound() 用
 */
 
 const TYPING_SOUND_ENABLED_KEY = "tctc2.0-typing_sound_enabled"
@@ -40,8 +43,8 @@ const SOUND_FILES = {
     click2:   "TCTC3-0-keyboard-short-click2.mp3",
     space:    "TCTC3-0-keyboard-space.mp3",
     enter:    "TCTC3-0-keyboard-enter.mp3",
-    complete: "TCTC3-0-complete.mp3"
-    // wrong: 目前沒有音檔，之後有了直接在這裡加一行 wrong: "檔名.mp3" 就會自動生效
+    complete: "TCTC3-0-complete.mp3",
+    wrong:    "make_mistake.mp3"   // 【新增】打錯字音效
 }
 
 let typing_sound_ctx = null          // AudioContext 只需要建立一次，整頁共用
@@ -141,10 +144,54 @@ function Play_Complete_Sound(){
     _Play_Buffer("complete")
 }
 
-// 打錯：目前沒有對應音檔，呼叫了就是靜靜地什麼都不做。
-// 保留這個函式是為了讓 game.html / challenge.js 那幾個 wrong_key_times++ 的地方
-// 可以先接上去，之後只要在 SOUND_FILES 補一行 wrong: "檔名.mp3"，
-// 呼叫端完全不用改，就會自動開始有聲音。
+// 打錯時呼叫，播放 make_mistake.mp3
+//
+// ===== 【新增】節流（throttle）=====
+// 玩家「卡住」狂按同一個錯誤格子時，Play_Wrong_Sound() 可能在極短時間內被連續
+// 呼叫非常多次（例如中級的 stuck_mistake_counted 邏輯：卡住格只計一次錯誤次數，
+// 但玩家每按一下都還是會呼叫 Play_Wrong_Sound()），這麼短的間隔內同一個音效疊
+// 好幾層播放，聽起來會變成一片刺耳的雜音。
+// 這裡用一個「最小播放間隔」把它擋掉：距離上次真的播放不到 WRONG_SOUND_MIN_INTERVAL_MS
+// 的呼叫直接略過，玩家狂按時聽起來像穩定的「答、答、答」，而不是疊在一起的噪音。
+let last_wrong_sound_time = 0
+const WRONG_SOUND_MIN_INTERVAL_MS = 150
 function Play_Wrong_Sound(){
+    const now = Date.now()
+    if(now - last_wrong_sound_time < WRONG_SOUND_MIN_INTERVAL_MS) return
+    last_wrong_sound_time = now
     _Play_Buffer("wrong")
+}
+
+// ===== 【新增】倒數計時最後幾秒的提示音 =====
+// 不讀音檔，直接用 Web Audio 的 OscillatorNode 現場合成一個短促的「嗶」聲：
+// 好處是不用額外準備/載入音檔、檔案大小是 0、也不會有 fetch 失敗的問題。
+// 呼叫端（game.html 的 Update_Timer_Display / challenge.js 的 cg_start_timer）
+// 負責判斷「現在是不是該嗶的那一秒」，這裡只單純負責「發出一聲嗶」，
+// 不管節流或是不是最後 3 秒——呼叫端每個倒數秒數只會呼叫一次，不需要再額外節流。
+function Play_Tick_Sound(){
+    if(!typing_sound_enabled) return
+    if(!typing_sound_ctx) return   // 還沒 Init_Typing_Sound()，或瀏覽器不支援
+
+    if(typing_sound_ctx.state === "suspended"){
+        typing_sound_ctx.resume().catch(function(){})
+    }
+
+    const now = typing_sound_ctx.currentTime
+    const osc = typing_sound_ctx.createOscillator()
+    const gain = typing_sound_ctx.createGain()
+
+    osc.type = "sine"
+    osc.frequency.value = 880   // A5，清脆但不刺耳
+
+    // 用 exponentialRamp 做一個很短的「淡入淡出」（不能從 0 開始，exponentialRamp
+    // 不接受 0，所以起始值給一個極小的正數 0.0001），避免音量瞬間跳變產生「喀」的爆音。
+    gain.gain.setValueAtTime(0.0001, now)
+    gain.gain.exponentialRampToValueAtTime(0.25, now + 0.01)
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12)
+
+    osc.connect(gain)
+    gain.connect(typing_sound_ctx.destination)
+
+    osc.start(now)
+    osc.stop(now + 0.13)
 }
