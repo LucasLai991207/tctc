@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>個人榮譽牆 - TCTC 繁體中文打字練習中心</title>
+    <meta name="description" content="查看你的連續登入天數與打字成就，累積屬於你自己的榮譽牆。">
+    <meta name="robots" content="index, follow">
+
+    <meta name="google-site-verification" content="fHfTpW9ouqdLEFGEQhLvwelT1xdZ7Sxmi-iKBHY7S_8" /> <!--google驗證-->
+
+    <!--瀏覽器分頁小圖-->
+    <link rel="icon" href="favicon-32x32.png" type="image/png" sizes="32x32">
+
+    <!-- 社群分享預覽圖-->
+    <meta property="og:image" content="https://lucaslai991207.github.io/tctc/os_image.png">
+    <meta property="og:title" content="TCTC 繁體中文打字中心 - 個人榮譽牆">
+
+    <link rel="stylesheet" href="TCTC2-0-intro_lobby.css">
+    <link rel="stylesheet" href="TCTC2-0-main_lobby.css">
+    <link rel="stylesheet" href="TCTC2-0-achievements.css">
+    <!-- 帳號系統彈窗樣式 -->
+    <link rel="stylesheet" href="TCTC2-0-auth_ui.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@200;300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav id="nav">
+        <img src="TCTC2.0 logo.png" class="logo_style" onclick="window.location.href='TCTC2-0-main.html'">
+        <div class="nav_css">
+            <div onclick="window.location.href='TCTC2-0-details.html'">常見問題</div>
+            <div class="nav_dropdown">
+                模式 <span class="nav_dropdown_arrow">≡</span>
+                <div class="nav_dropdown_menu">
+                    <div class="nav_dropdown_panel">
+                        <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-main.html'">主線模式</div>
+                        <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-challenge_lobby.html'">挑戰模式</div>
+                    </div>
+                </div>
+            </div>
+            <div class="nav_dropdown">
+                更多 <span class="nav_dropdown_arrow">≡</span>
+                <div class="nav_dropdown_menu">
+                    <div class="nav_dropdown_panel">
+                        <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-ranking.html'">排行榜</div>
+                        <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-profile.html'">設定</div>
+                        <!-- 【新增】個人榮譽牆入口 -->
+                        <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-achievements.html'">個人榮譽牆</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="achv_main_style">
+        <section class="achv_first_section">
+            <div class="main_lobby_main_frame">
+                <div class="main_lobby_back_to_intro_button" onclick="window.history.back()">
+                    <img src="back_pointer_gold.png" alt="返回">
+                </div>
+            </div>
+
+            <div class="achv_container">
+                <div class="achv_header">
+                    <p class="achv_page_subtitle">TCTC 繁體中文打字網站</p>
+                    <h1 class="achv_page_title">個人榮譽牆</h1>
+                </div>
+
+                <!-- ===== 內容區：訪客跟已登入玩家都看得到，跟排行榜的 anon_id 機制一致 =====
+                     不像帳號系統那樣要求登入才能用——這裡的資料是綁在瀏覽器的 anon_id
+                     （跟 WPM／正確率／瀏覽次數同一套身分），訪客照樣能累積。
+                     唯一的差別只在於：換瀏覽器/清除資料會變成新的 anon_id、紀錄重新開始，
+                     這點如果想保留紀錄，登入帳號會比較保險（帳號會把 anon_id 綁定起來）。 -->
+                <div class="achv_content" id="achv_content">
+
+                    <!-- 連續登入天數：中央主數字（目前連續）+ 兩側輔助數字 -->
+                    <div class="achv_streak_strip">
+                        <div class="achv_streak_side">
+                            <div class="achv_streak_value_sm" id="achv_longest_streak">—</div>
+                            <div class="achv_streak_label">歷史最長連續</div>
+                        </div>
+                        <div class="achv_streak_center">
+                            <div class="achv_streak_value_lg" id="achv_current_streak">—</div>
+                            <div class="achv_streak_label">目前連續登入</div>
+                        </div>
+                        <div class="achv_streak_side">
+                            <div class="achv_streak_value_sm" id="achv_total_days">—</div>
+                            <div class="achv_streak_label">累積登入天數</div>
+                        </div>
+                    </div>
+
+                    <p class="achv_streak_hint" id="achv_streak_hint"></p>
+
+                    <!-- 徽章牆：里程碑徽章，依 total_login_days / longest_streak 判斷解鎖與否 -->
+                    <div class="achv_badge_section">
+                        <h2 class="achv_section_title">登入里程碑</h2>
+                        <div class="achv_badge_grid" id="achv_badge_grid">
+                            <!-- 由 TCTC2-0-achievements.js 動態產生 -->
+                        </div>
+                    </div>
+
+                    <!-- 佔位區：之後打字相關成就（速度/正確率/挑戰模式）做出來後放這裡 -->
+                    <div class="achv_badge_section">
+                        <h2 class="achv_section_title">打字成就</h2>
+                        <div class="achv_placeholder_panel">
+                            <p class="achv_achievement_empty">尚未開放，敬請期待</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="intro_footer">
+        <div class="footer_div">
+            <div class="footer_col">
+                <p class="footer_col_title">回報問題</p>
+                <a class="footer_link" href="https://forms.gle/xJcvq3AZ4PeNd3eq5" target="_blank" rel="noopener">遇到Bug？點我回報</a>
+            </div>
+            <div class="footer_col">
+                <p class="footer_col_title">聯絡我們</p>
+                <a class="footer_link" href="mailto:tctc.official.tw@gmail.com">✉ tctc.official.tw@gmail.com</a>   
+            </div>
+            <div class="footer_col">
+                <p class="footer_col_title">平台連結</p>
+                <a class="footer_link" href="https://www.youtube.com/channel/UCIA5fwMrvGpvcQbG0ZX2ZLA" target="_blank" rel="noopener">Youtube</a>   
+            </div>
+        </div>
+
+        <div class="footer_copyright">
+            &copy; 2026 TCTC2.0 繁中打字中心. All Rights Reserved.
+        </div>
+    </footer>
+
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+    <script src="TCTC2-0-firebase.js?v=3"></script>
+    <!-- 帳號系統：nav 上的帳號按鈕跟登入/註冊彈窗 -->
+    <script src="TCTC2-0-auth_ui.js"></script>
+
+    <!-- 在線時長追蹤（全站共用） -->
+    <script src="TCTC2-0-online_time.js"></script>
+
+    <!-- 連續登入天數：寫入 + 讀取都在這支檔案裡 -->
+    <script src="TCTC2-0-login_streak.js"></script>
+
+    <script src="TCTC2-0-achievements.js"></script>
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="070df494-4361-4dce-ad65-a25b404811e9"></script>
+</body>
+</html>

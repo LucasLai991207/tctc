@@ -46,6 +46,8 @@
                     <div class="nav_dropdown_panel">
                         <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-ranking.html'">排行榜</div>
                         <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-profile.html'">設定</div>
+                        <!-- 【新增】個人榮譽牆入口 -->
+                        <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-achievements.html'">個人榮譽牆</div>
                     </div>
                 </div>
             </div>
@@ -61,11 +63,12 @@
             </div>
 
             <div class="ranking_container">
+                <p class="ranking_total_views" id="ranking_total_views">網站總瀏覽次數：載入中...</p>
                 <div class="ranking_header">
                     <!-- 【新增】網站總瀏覽次數：放在整個排行榜區塊最上方，不受下面「主線關卡/挑戰模式/玩家總榜」
                          分頁切換影響，隨時都會顯示。初始文字先給「載入中...」，等 TCTC2-0-ranking.js
-                         呼叫 Get_Total_Page_Views() 拿到雲端數字後才會被換掉。 -->
-                    <p class="ranking_total_views" id="ranking_total_views">網站總瀏覽次數：載入中...</p><br>
+                         呼叫 Get_Total_Page_Views() 拿到雲端數字後才會被換掉。
+                         【重新設計】用 align-self: flex-end（見CSS）靠右浮成小徽章，跟下面的標題群組脫鉤 -->
 
                     <h1 class="ranking_title">Top 50 排行榜</h1>
                     <p class="ranking_subtitle" id="ranking_stage_label">載入中...</p>
@@ -92,13 +95,26 @@
                     <select id="ranking_cg_seconds_select" class="ranking_select"></select>
                 </div>
 
-                <div class="ranking_selector_row is_hidden" id="ranking_player_selector_row">
-                    <button type="button" class="ranking_select ranking_select_active" id="ranking_player_metric_wpm" onclick="Switch_Player_Metric('avg_wpm')">平均WPM最高</button>
-                    <button type="button" class="ranking_select" id="ranking_player_metric_acc" onclick="Switch_Player_Metric('avg_acc')">平均正確率最高</button>
-                    <button type="button" class="ranking_select" id="ranking_player_metric_online" onclick="Switch_Player_Metric('online_seconds')">在線時長最長</button>
-                    <button type="button" class="ranking_select" id="ranking_player_metric_points" onclick="Switch_Player_Metric('total_points')">積分最高</button>
-                    <!-- 【新增】瀏覽次數最多榜：跟其他 3 顆按鈕結構完全一樣，只是 metric 參數換成 "page_views" -->
-                    <button type="button" class="ranking_select" id="ranking_player_metric_views" onclick="Switch_Player_Metric('page_views')">瀏覽次數最多</button>
+                <!-- 【重新設計】原本7顆按鈕平鋪一排，長短不一容易折行折得很亂。
+                     現在依語意分成兩組（表現／活躍度），並加上 ranking_player_metric_row
+                     這個 class 讓CSS改成「一組一列、置中」的排法。按鈕的 id / onclick 完全沒動，
+                     JS 是用 getElementById 抓取，不受這裡重新排版的影響。 -->
+                <div class="ranking_selector_row ranking_player_metric_row is_hidden" id="ranking_player_selector_row">
+                    <div class="ranking_metric_group">
+                        <span class="ranking_metric_group_label">表現</span>
+                        <button type="button" class="ranking_select ranking_select_active" id="ranking_player_metric_wpm" onclick="Switch_Player_Metric('avg_wpm')">平均WPM</button>
+                        <button type="button" class="ranking_select" id="ranking_player_metric_acc" onclick="Switch_Player_Metric('avg_acc')">平均正確率</button>
+                        <button type="button" class="ranking_select" id="ranking_player_metric_points" onclick="Switch_Player_Metric('total_points')">積分</button>
+                    </div>
+                    <div class="ranking_metric_group">
+                        <span class="ranking_metric_group_label">活躍度</span>
+                        <button type="button" class="ranking_select" id="ranking_player_metric_online" onclick="Switch_Player_Metric('online_seconds')">在線時長</button>
+                        <!-- 【新增】瀏覽次數最多榜：跟其他按鈕結構完全一樣，只是 metric 參數換成 "page_views" -->
+                        <button type="button" class="ranking_select" id="ranking_player_metric_views" onclick="Switch_Player_Metric('page_views')">瀏覽次數</button>
+                        <!-- 【新增】連續登入天數兩顆：最長連續／累積天數，結構同上 -->
+                        <button type="button" class="ranking_select" id="ranking_player_metric_streak" onclick="Switch_Player_Metric('streak_longest')">連續登入</button>
+                        <button type="button" class="ranking_select" id="ranking_player_metric_login_days" onclick="Switch_Player_Metric('streak_total_days')">累積天數</button>
+                    </div>
                 </div>
 
                 <div class="ranking_list_wrap">
@@ -150,6 +166,8 @@
 
     <!-- 【新增】在線時長追蹤（全站共用，每個頁面都要載入） -->
     <script src="TCTC2-0-online_time.js"></script>
+    <!-- 【新增】連續登入天數：寫入邏輯在這支檔案裡 -->
+    <script src="TCTC2-0-login_streak.js"></script>
     <script src="TCTC2-0-ranking.js"></script>
     <script defer src="https://cloud.umami.is/script.js" data-website-id="070df494-4361-4dce-ad65-a25b404811e9"></script>
 </body>

@@ -55,7 +55,7 @@
             },
             "player_stats": {
               ".read": true,
-              ".indexOn": ["avg_wpm", "avg_acc", "online_seconds", "total_points", "page_views"],
+              ".indexOn": ["avg_wpm", "avg_acc", "online_seconds", "total_points", "page_views", "streak_longest", "streak_total_days"],
               "$anonId": {
                 "name": {
                   ".write": true,
@@ -76,7 +76,23 @@
                 "online_seconds": { ".write": true, ".validate": "newData.isNumber() && newData.val() >= 0" },
                 "total_points": { ".write": true, ".validate": "newData.isNumber() && newData.val() >= 0" },
                 "page_views": { ".write": true, ".validate": "newData.isNumber() && newData.val() >= 0" },
-                "hide_from_leaderboard": { ".write": true, ".validate": "newData.isBoolean()" }
+                "hide_from_leaderboard": { ".write": true, ".validate": "newData.isBoolean()" },
+                "streak_current": {
+                  ".write": true,
+                  ".validate": "newData.isNumber() && ((!data.parent().child('streak_last_ts').exists() && newData.val() == 1) || (data.parent().child('streak_last_ts').exists() && (now - data.parent().child('streak_last_ts').val()) >= 72000000 && (now - data.parent().child('streak_last_ts').val()) < 172800000 && newData.val() == data.val() + 1) || (data.parent().child('streak_last_ts').exists() && (now - data.parent().child('streak_last_ts').val()) >= 172800000 && newData.val() == 1))"
+                },
+                "streak_longest": {
+                  ".write": true,
+                  ".validate": "newData.isNumber() && newData.val() >= newData.parent().child('streak_current').val() && (!data.exists() || newData.val() >= data.val())"
+                },
+                "streak_last_ts": {
+                  ".write": true,
+                  ".validate": "newData.val() == now"
+                },
+                "streak_total_days": {
+                  ".write": true,
+                  ".validate": "newData.isNumber() && ((!data.exists() && newData.val() == 1) || (data.exists() && newData.val() == data.val() + 1))"
+                }
               }
             },
             "site_meta": {
@@ -139,6 +155,36 @@
    如果你的 Firebase 專案是延續舊專案繼續用，記得手動把 player_stats
    這一段規則「補進」你現有的規則物件裡，不要整個覆蓋掉，
    不然原本 leaderboard / challenge_leaderboard 那些規則會不見。
+
+   【新增規則說明・連續登入天數 streak_*】跟其他 player_stats 欄位（avg_wpm、
+   total_points……）最大的不同：那些欄位完全信任前端算好的數字直接寫入
+   （".write": true 沒有任何條件限制），但 streak 這種「玩家自己動手就能
+   瞬間改成 999」的數字，不能用同一套信任模型，所以這 4 個欄位額外加了
+   用 Rules 內建 `now`（Firebase 伺服器收到這次寫入請求當下的真實時間，
+   玩家端無法偽造或預先算好）做的時間差驗證：
+
+   - streak_last_ts：寫入值「必須完全等於 now」，玩家沒辦法自己指定這個
+     時間戳記要變成多少，只能透過 firebase.database.ServerValue.TIMESTAMP
+     這個佔位符讓伺服器代填，這是整套機制的地基。
+   - streak_current：三選一才合法——① 從沒登入過，這次必須是 1；
+     ② 距離上次 streak_last_ts 是 20~48 小時之間，這次必須是「舊值+1」；
+     ③ 距離上次超過 48 小時（斷簽），這次必須重置為 1。
+     不比對「日期字串」是刻意的：Realtime Database Rules 沒有「把 now
+     格式化成 YYYY-MM-DD」的函式，比對「時間差」才是 Rules 語法真的能寫
+     出來、且邏輯等價的做法。
+   - streak_longest：新值不能小於這次的 streak_current，也不能比舊的
+     streak_longest 小（歷史最佳只增不減）。
+   - streak_total_days：每次成功登入只能 +1，不能跳號、不能自己指定成
+     任意數字。
+
+   這 4 個欄位刻意「沒有」限制成只有帳號本人（auth.uid）能寫，理由是
+   要跟同一個 player_stats 節點裡其他欄位（wpm/acc/points/views）的信任
+   模型維持一致——那些欄位本來就沒有身分綁定，任何知道 anon_id 的人理論上
+   都能寫入假資料，這是這個網站目前排行榜系統本來就存在、範圍更大的已知
+   取捨，不是這次 streak 功能新引入的破口，這裡不重複去解決那個更大的
+   架構問題。streak 這裡真正防的，是「開 Console 打一行、瞬間變 999」
+   這種最低成本的作弊方式——想繞過時間差驗證，唯一辦法是寫一支腳本、
+   真的每天固定時間打一次 API，門檻高非常多，且是可被偵測的異常行為模式。
    ============================================================ */
 
 const firebaseConfig = {
@@ -993,6 +1039,24 @@ function Get_Top_Players_By_Page_Views(callback, limit) {
         })
     })
 }
+// 【新增】連續登入最長榜：用「歷史最長連續」排序（不是「目前連續」），
+// 理由是 current_streak 每天都在變動，甚至今天沒登入就會一直卡在原地不動，
+// 拿一個「會隨時間自然衰退」的數字做排行榜很奇怪；longest_streak 是玩家
+// 曾經達到過的最佳紀錄，只增不減，跟 total_points（累積積分最高）同一種
+// 「歷史最佳」語意，排行榜比較合理。不設達標門檻——沒有 wpm_count 那種
+// 「至少測驗 N 次才準」的統計學理由，1 天也是合法的連續天數。
+function Get_Top_Players_By_Streak(callback, limit) {
+    _Get_Top_Players("streak_longest", null, 0, function (list) {
+        callback(list.slice(0, limit || 50))
+    })
+}
+// 【新增】累積登入天數最多榜：不看「有沒有斷過」，單純看「總共登入過幾次」，
+// 邏輯跟 page_views（瀏覽次數最多榜）對稱，同樣不設門檻。
+function Get_Top_Players_By_Total_Login_Days(callback, limit) {
+    _Get_Top_Players("streak_total_days", null, 0, function (list) {
+        callback(list.slice(0, limit || 50))
+    })
+}
 
 /* ============================================================
    【新增】玩家自己的名次（沒有擠進 Top 50 榜單時，畫面底部會用這個顯示浮窗）
@@ -1241,12 +1305,21 @@ function Delete_All_Player_Data(callback) {
     const updates = {}
 
     // ----- player_stats：除了 page_views，其餘全部清成 null（等同刪除該欄位）-----
+    // 【新增】streak_* 4 個欄位一併清空——玩家主動刪除所有資料時，連續登入
+    // 紀錄也要跟著歸零重來，不然會出現「資料都刪了，但 streak 卻莫名其妙
+    // 保留著」的不一致狀態。設成 null 是「刪除」不是「寫入」，Firebase Rules
+    // 的 .validate 只在寫入非 null 值時才會被檢查，刪除操作不受那些時間差
+    // 驗證邏輯限制，能正常清空。
     ;[
         "name", "wpm_sum", "wpm_count", "avg_wpm",
         "acc_sum", "acc_count", "avg_acc",
         "cg_wpm_sum", "cg_wpm_count", "avg_challenge_wpm",
         "cg_acc_sum", "cg_acc_count", "avg_challenge_acc",
-        "online_seconds", "total_points", "hide_from_leaderboard"
+        "online_seconds", "total_points", "hide_from_leaderboard",
+        "streak_current", "streak_longest", "streak_last_ts", "streak_total_days",
+        // 【新增】「斷簽後回歸」徽章用的單一欄位，理由跟其他 streak_* 欄位一樣：
+        // 玩家主動刪除所有資料時要一起歸零
+        "longest_gap_days"
     ].forEach(function (field) {
         updates[`player_stats/${anon_id}/${field}`] = null
     })

@@ -473,7 +473,7 @@ function Load_Own_Challenge_Rank(combo_id) {
    不同的東西（平均WPM、測驗次數、在線時長……），所以欄位標題也要跟著動態改字。
    ============================================================ */
 
-let player_metric = "avg_wpm" // "avg_wpm" | "avg_acc" | "online_seconds" | "total_points" | "page_views"
+let player_metric = "avg_wpm" // "avg_wpm" | "avg_acc" | "online_seconds" | "total_points" | "page_views" | "streak_longest" | "streak_total_days"
 
 const player_metric_buttons = {
     avg_wpm: document.getElementById("ranking_player_metric_wpm"),
@@ -481,7 +481,10 @@ const player_metric_buttons = {
     online_seconds: document.getElementById("ranking_player_metric_online"),
     total_points: document.getElementById("ranking_player_metric_points"),
     // 【新增】瀏覽次數最多榜的按鈕
-    page_views: document.getElementById("ranking_player_metric_views")
+    page_views: document.getElementById("ranking_player_metric_views"),
+    // 【新增】連續登入天數相關的兩顆按鈕
+    streak_longest: document.getElementById("ranking_player_metric_streak"),
+    streak_total_days: document.getElementById("ranking_player_metric_login_days")
 }
 
 // 把「總秒數」轉成「X 小時 Y 分」這種給人看的格式。
@@ -506,6 +509,11 @@ function Get_Player_Metric_Value(entry) {
     if (player_metric === "avg_acc") return entry.avg_acc ?? 0
     if (player_metric === "total_points") return entry.total_points ?? 0
     if (player_metric === "page_views") return entry.page_views ?? 0
+    // 【新增】streak_longest 對應「連續登入最長榜」，streak_total_days 對應「累積登入天數榜」，
+    // 欄位名稱要跟 player_stats/{anon_id} 底下實際存的欄位、以及 firebase.js 的
+    // Get_Top_Players_By_Streak / Get_Top_Players_By_Total_Login_Days 排序用的欄位完全一致
+    if (player_metric === "streak_longest") return entry.streak_longest ?? 0
+    if (player_metric === "streak_total_days") return entry.streak_total_days ?? 0
     return entry.online_seconds ?? 0 // 預設：在線時長榜
 }
 
@@ -557,6 +565,15 @@ function Render_Player_Leaderboard(list) {
             // 跟 online_seconds / total_points 一樣把第二欄留空（用 "—" 佔位）
             metric1_text = `${entry.page_views ?? 0} 次`
             metric2_text = "—"
+        } else if (player_metric === "streak_longest") {
+            // 【新增】連續登入最長榜：主欄顯示歷史最長連續天數，
+            // 第二欄額外帶出「目前連續」，方便玩家一眼比較兩者差異
+            metric1_text = `${entry.streak_longest ?? 0} 天`
+            metric2_text = `${entry.streak_current ?? 0} 天`
+        } else if (player_metric === "streak_total_days") {
+            // 【新增】累積登入天數榜：跟 page_views 一樣不需要第二欄
+            metric1_text = `${entry.streak_total_days ?? 0} 天`
+            metric2_text = "—"
         }
 
         row.innerHTML = `
@@ -578,16 +595,41 @@ function Load_Player_Leaderboard() {
         && typeof Get_Top_Players_By_Avg_Acc === "function"
         && typeof Get_Top_Players_By_Online_Time === "function"
         && typeof Get_Top_Players_By_Points === "function"
-        && typeof Get_Top_Players_By_Page_Views === "function" // 【新增】
+        && typeof Get_Top_Players_By_Page_Views === "function"
+        && typeof Get_Top_Players_By_Streak === "function" // 【新增】
+        && typeof Get_Top_Players_By_Total_Login_Days === "function" // 【新增】
 
     if (!has_firebase_functions) {
         loading_msg_el.textContent = "排行榜載入失敗，請確認 Firebase 設定是否正確。"
         return
     }
 
+    // ===== 【新增】0 天不上榜 =====
+    // 「連續登入最長」「累積登入天數」這兩個指標，如果玩家對應的天數是 0，
+    // 代表這個人根本沒有累積過任何連續登入紀錄，不該出現在榜單裡佔位置。
+    // 這裡用玩家名稱在中文語境的直覺理解「0 天」來判斷是否要濾掉，
+    // 只套用在 streak_longest / streak_total_days 這兩個以「天」計算的指標，
+    // 其他指標（例如 online_seconds 可能等於 0 秒也是合理的「剛進來」狀態）不受影響。
+    //
+    // 【重要限制】這裡是「拿到 Firebase 回傳的 Top 50 資料後」在前端做過濾，
+    // 不是從資料庫查詢階段就排除掉 0 天的玩家。如果 0 天的玩家數量多到把
+    // 「原本該進 Top 50、天數 > 0」的玩家擠出查詢結果之外，這裡的前端過濾
+    // 沒辦法把那些人補回來——真正該修的地方是 TCTC2-0-firebase.js 裡
+    // Get_Top_Players_By_Streak / Get_Top_Players_By_Total_Login_Days 的查詢條件
+    // （這支檔案目前沒有上傳，之後有需要可以再一起調整查詢端的門檻）。
+    const Filter_Out_Zero_Days = function (list) {
+        if (player_metric === "streak_longest") {
+            return list.filter(function (entry) { return (entry.streak_longest ?? 0) > 0 })
+        }
+        if (player_metric === "streak_total_days") {
+            return list.filter(function (entry) { return (entry.streak_total_days ?? 0) > 0 })
+        }
+        return list
+    }
+
     const on_result = function (list) {
         loading_msg_el.classList.add("is_hidden")
-        Render_Player_Leaderboard(list)
+        Render_Player_Leaderboard(Filter_Out_Zero_Days(list))
         // 不管有沒有擠進這份 Top 50 榜單，都額外查一次「自己實際排第幾名」，顯示在底部浮窗
         Load_Own_Player_Rank()
     }
@@ -600,6 +642,10 @@ function Load_Player_Leaderboard() {
         Get_Top_Players_By_Points(on_result)
     } else if (player_metric === "page_views") {
         Get_Top_Players_By_Page_Views(on_result)
+    } else if (player_metric === "streak_longest") {
+        Get_Top_Players_By_Streak(on_result)
+    } else if (player_metric === "streak_total_days") {
+        Get_Top_Players_By_Total_Login_Days(on_result)
     } else {
         Get_Top_Players_By_Online_Time(on_result)
     }
@@ -622,6 +668,13 @@ function Load_Own_Player_Rank() {
     } else if (player_metric === "page_views") {
         // 【新增】瀏覽次數榜不設門檻，邏輯跟 online_seconds 一致
         order_by_field = "page_views"; min_count_field = null; min_count = 0
+    } else if (player_metric === "streak_longest") {
+        // 【修改】0 天不上榜：門檻欄位改成用自己（streak_longest）當門檻，至少要 1 天，
+        // 這樣「自己排名」浮窗才會跟上面 Top 50 榜單的過濾邏輯保持一致
+        order_by_field = "streak_longest"; min_count_field = "streak_longest"; min_count = 1
+    } else if (player_metric === "streak_total_days") {
+        // 【修改】0 天不上榜：邏輯同上
+        order_by_field = "streak_total_days"; min_count_field = "streak_total_days"; min_count = 1
     } else {
         order_by_field = "online_seconds"; min_count_field = null; min_count = 0
     }
@@ -633,7 +686,9 @@ function Load_Own_Player_Rank() {
         if (player_metric === "avg_wpm") value_text = `${result.value ?? 0} WPM`
         else if (player_metric === "avg_acc") value_text = `${result.value ?? 0}%`
         else if (player_metric === "total_points") value_text = `${result.value ?? 0} 積分`
-        else if (player_metric === "page_views") value_text = `${result.value ?? 0} 次` // 【新增】
+        else if (player_metric === "page_views") value_text = `${result.value ?? 0} 次`
+        else if (player_metric === "streak_longest") value_text = `連續 ${result.value ?? 0} 天` // 【新增】
+        else if (player_metric === "streak_total_days") value_text = `${result.value ?? 0} 天` // 【新增】
         else value_text = Format_Online_Seconds(result.value)
 
         Show_Self_Rank_Bar(result.rank, result.name, value_text)
@@ -679,6 +734,23 @@ function Switch_Player_Metric(metric) {
         stage_label_el.textContent = "玩家總榜｜瀏覽次數最多"
         stage_label_el2.textContent = "採計標準：不限測驗次數，累積這個玩家造成的所有頁面載入次數（含重新整理與換頁）"
         col_header_metric1_el.textContent = "瀏覽次數"
+        col_header_metric2_el.textContent = ""
+    } else if (metric === "streak_longest") {
+        // 【新增】連續登入最長榜：文案要點出「用歷史最長，不是目前這一段」，
+        // 避免玩家誤以為斷簽後這個數字也會跟著歸零
+        stage_label_el2.style.display = "block"
+
+        stage_label_el.textContent = "玩家總榜｜連續登入最長"
+        stage_label_el2.textContent = "採計標準：取歷史最長連續登入天數(不會因斷簽而歸零)，每日登入須間隔 20~48 小時才算連續"
+        col_header_metric1_el.textContent = "最長連續"
+        col_header_metric2_el.textContent = "目前連續"
+    } else if (metric === "streak_total_days") {
+        // 【新增】累積登入天數榜：文案風格比照瀏覽次數最多榜（不設門檻、不看連續性）
+        stage_label_el2.style.display = "block"
+
+        stage_label_el.textContent = "玩家總榜｜累積登入天數"
+        stage_label_el2.textContent = "採計標準：需至少累積 1 天登入才會上榜，不看有沒有斷過，單純累積這個玩家總共登入過幾天"
+        col_header_metric1_el.textContent = "登入天數"
         col_header_metric2_el.textContent = ""
     } else {
         stage_label_el2.style.display = "block"
@@ -794,7 +866,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     //網址明講 mode=player，就進玩家總榜（可選帶 metric 參數直接定位到某個指標）
     if (url_mode === "player") {
-        const valid_metrics = ["avg_wpm", "avg_acc", "online_seconds", "total_points", "page_views"]
+        const valid_metrics = ["avg_wpm", "avg_acc", "online_seconds", "total_points", "page_views", "streak_longest", "streak_total_days"]
         player_metric = valid_metrics.includes(url_metric) ? url_metric : "avg_wpm"
         Switch_Ranking_Mode("player")
         return
