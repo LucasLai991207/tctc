@@ -26,23 +26,42 @@
 }
 
 .ranking_header{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     text-align: center;
-    margin-bottom: 1.8rem;
+    margin-bottom: 2.2rem;
 }
-/* ===== 【新增】網站總瀏覽次數 =====
-   刻意用比較低調的淺灰色（不是搶眼的金色），因為這只是背景資訊，
-   不該搶走「Top 50 排行榜」標題的視覺焦點 */
+/* ===== 【重新設計】網站總瀏覽次數 =====
+   從「標題正上方、置中、獨立一行」改成右上角一顆低調的小徽章，
+   讓它從「跟標題搶第一眼視線」的隊伍裡脫鉤，變成隨時看得到、
+   但不會干擾主標題視覺焦點的背景資訊。align-self: flex-end
+   讓它靠右對齊，不佔用置中欄的視覺重量。 */
 .ranking_total_views{
+    position: fixed;
+    align-self: flex-end;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+
+    background-color: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(201, 168, 76, 0.18);
+    border-radius: 999px;
+
+    padding: 0.3rem 0.85rem;
+    margin: 0 0 1.6rem;
+
     color: rgba(255, 255, 255, 0.5);
-    font-size: 0.85rem;
-    letter-spacing: 1px;
-    margin: 0 0 0.8rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.5px;
+    top: 6rem;
+    right: 2rem;
 }
 .ranking_title{
     color: whitesmoke;
     font-size: 2.4rem;
     letter-spacing: 4px;
-    margin-bottom: 2.5rem;
+    margin-bottom: 0.7rem;
     font-weight: 400;
 }
 .ranking_subtitle{
@@ -50,11 +69,25 @@
     font-size: 1rem;
     letter-spacing: 2px;
 }
+/* ===== 【重新設計】副標2（採計標準說明）=====
+   原本跟副標同一種「一行文字置中」的排法，只是字變小變灰，
+   但視覺上還是「標題堆疊裡的第三層」，感覺很多行字疊在一起。
+   改成膠囊提示框，讓它讀起來像「附加說明」而不是「另一行標題」，
+   跟上面的標題群組明確分開一個層級。 */
 .ranking_subtitle2{
-    margin-top: 1.5rem;
-    color: lightgray;
-    font-size: 0.8rem;
-    letter-spacing: 2px;
+    display: inline-block;
+
+    margin-top: 1.1rem;
+    padding: 0.4rem 0.6rem;
+
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+    
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 0.72rem;
+    letter-spacing: 1px;
+    line-height: 1.6;
 }
 
 .ranking_mode_tabs{
@@ -126,6 +159,37 @@
 .ranking_select:focus{
     outline: none;
     border-color: var(--champagne-gold);
+}
+
+/* ===== 【重新設計】玩家總榜的 7 顆指標按鈕 =====
+   原本 7 顆按鈕直接平鋪在同一個 flex-wrap 列裡，長短不一
+   （「積分」vs「平均正確率最高」），折行位置每次都不一樣，看起來很亂。
+   改成依語意分兩組：「表現」（跟單次測驗表現有關）、「活躍度」（跟
+   使用網站的頻率/時長有關），每組前面掛一個小標籤當視覺錨點，
+   按鈕文字也同步精簡（詳細採計標準本來就會另外顯示在副標2），
+   讓每顆按鈕長度更接近、排起來更整齊。 */
+.ranking_player_metric_row{
+    flex-direction: column;
+    align-items: center;
+    gap: 0.9rem;
+}
+.ranking_metric_group{
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+}
+.ranking_metric_group_label{
+    color: rgba(255, 255, 255, 0.38);
+    font-size: 0.72rem;
+    letter-spacing: 3px;
+    margin-right: 0.4rem;
+    white-space: nowrap;
+}
+.ranking_metric_group .ranking_select{
+    padding: 0.45rem 0.85rem;
+    font-size: 0.82rem;
 }
 
 .ranking_list_wrap{
@@ -221,4 +285,3 @@
 .is_hidden{
     display: none !important;
 }
-

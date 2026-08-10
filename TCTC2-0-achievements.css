@@ -1,0 +1,252 @@
+:root{
+    --darker-blue : #0b1a37;
+    --dark-blue : #0B1E36;
+    --light-blue : #0e243e;
+    --champagne-gold : #c9a84c;
+    --error-red : #c0392b;
+}
+
+.achv_main_style{
+    background-color: var(--darker-blue);
+    min-height: 100vh;
+
+    display: flex;
+    justify-content: center;
+
+    padding-bottom: 4rem;
+}
+
+.achv_first_section{
+    width: 100%;
+}
+
+.achv_container{
+    max-width: 46rem;
+    margin: 0 auto;
+    padding: 0 1.2rem;
+}
+
+/* ===== 頁首：沿用 profile.html 「小金字副標 + serif 大標題」的排版語彙，跟全站一致 ===== */
+.achv_header{
+    text-align: center;
+    margin: 1rem 0 2.4rem;
+}
+.achv_page_subtitle{
+    color: var(--champagne-gold);
+    font-size: 0.78rem;
+    letter-spacing: 4px;
+    margin: 4rem 0 0.6rem;
+}
+.achv_page_title{
+    color: whitesmoke;
+    font-size: 2.2rem;
+    font-weight: 500;
+    letter-spacing: 3px;
+    margin: 0;
+}
+
+/* ===== 訪客提示卡 ===== */
+.achv_guest_notice{
+    background-color: var(--dark-blue);
+    border: 1px solid rgba(201, 168, 76, 0.25);
+    border-radius: 8px;
+
+    padding: 2.2rem 1.8rem;
+    text-align: center;
+}
+.achv_guest_notice_title{
+    color: var(--champagne-gold);
+    font-size: 1.15rem;
+    font-weight: 500;
+    letter-spacing: 2px;
+    margin: 0 0 0.8rem;
+}
+.achv_guest_notice_text{
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 0.9rem;
+    line-height: 1.8;
+    letter-spacing: 0.5px;
+    margin: 0 auto;
+    max-width: 30rem;
+}
+
+.is_hidden{
+    display: none !important;
+}
+
+/* ============================================================
+   連續登入天數 —— 原本是三格「等重量」統計卡，跟一般後台儀表板
+   沒兩樣。改成一條「中央主數字 + 兩側輔助數字」的橫幅：目前連續
+   登入天數是玩家最在意、最想一眼看到的數字，讓它明顯比另外兩個大，
+   資訊的視覺權重才跟它的重要性對得起來，而不是三個一樣大小的方塊。
+   ============================================================ */
+.achv_streak_strip{
+    display: flex;
+    align-items: center;
+    background-color: var(--dark-blue);
+    border: 1px solid rgba(201, 168, 76, 0.25);
+    border-radius: 10px;
+    padding: 1.7rem 1rem;
+    margin-bottom: 0.8rem;
+}
+.achv_streak_side{
+    flex: 1;
+    position: relative;
+    text-align: center;
+    padding: 0 0.8rem;
+}
+.achv_streak_side::after{
+    content: "";
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 55%;
+    width: 1px;
+    background-color: rgba(201, 168, 76, 0.25);
+}
+.achv_streak_side:first-child::after{ right: 0; }
+.achv_streak_side:last-child::after{ left: 0; }
+
+.achv_streak_center{
+    flex: 1.4;
+    text-align: center;
+    padding: 0 1rem;
+}
+.achv_streak_value_lg{
+    color: var(--champagne-gold);
+    font-family: "Noto Serif TC", serif;
+    font-size: 3.1rem;
+    font-weight: 500;
+    line-height: 1;
+}
+.achv_streak_value_sm{
+    color: var(--champagne-gold);
+    font-family: "Noto Serif TC", serif;
+    font-size: 1.5rem;
+    font-weight: 500;
+    line-height: 1;
+    opacity: 0.7;
+}
+.achv_streak_label{
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.74rem;
+    letter-spacing: 1px;
+    margin-top: 0.55rem;
+}
+
+.achv_streak_hint{
+    text-align: center;
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 0.78rem;
+    letter-spacing: 0.5px;
+    margin: 0 0 2.4rem;
+}
+
+/* ===== 徽章區塊 ===== */
+.achv_badge_section{
+    margin-bottom: 2.2rem;
+}
+.achv_section_title{
+    color: whitesmoke;
+    font-size: 1.1rem;
+    font-weight: 500;
+    letter-spacing: 2px;
+
+    margin: 0 0 1.2rem;
+    padding-bottom: 0.7rem;
+    border-bottom: 1px solid rgba(201, 168, 76, 0.2);
+}
+
+.achv_badge_grid{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(7.6rem, 1fr));
+    gap: 1.6rem 1rem;
+}
+
+/* ============================================================
+   徽章卡 —— 原本是方形卡片裡塞一個 emoji，跟一般遊戲成就系統
+   的樣板長得一模一樣。改成「勳章」造型：圓形金框 + 底下刻名字，
+   已解鎖是實線金框，未解鎖是虛線灰框（象徵「輪廓已經畫出來，
+   但還沒刻上去」），比單純調透明度更能表達「尚未達成」這件事。
+   ============================================================ */
+.achv_badge_card{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.55rem;
+}
+
+.achv_medal{
+    width: 4.6rem;
+    height: 4.6rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.7rem;
+    line-height: 1;
+    background-color: rgba(201, 168, 76, 0.07);
+    border: 2px solid var(--champagne-gold);
+    box-shadow: 0 0 0 4px rgba(201, 168, 76, 0.08);
+    transition: transform 200ms ease;
+}
+.achv_badge_card:hover .achv_medal{
+    transform: translateY(-3px);
+}
+
+.achv_badge_card.achv_badge_locked .achv_medal{
+    border: 2px dashed rgba(201, 168, 76, 0.32);
+    background-color: transparent;
+    box-shadow: none;
+    filter: grayscale(1);
+    opacity: 0.55;
+}
+.achv_badge_card.achv_badge_locked{
+    opacity: 0.6;
+}
+
+.achv_badge_name{
+    color: whitesmoke;
+    font-size: 0.82rem;
+    font-weight: 500;
+    letter-spacing: 1px;
+    margin: 0;
+}
+.achv_badge_desc{
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.7rem;
+    letter-spacing: 0.5px;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* ===== 尚未開放的成就分類：用虛線框當「封存中」的視覺語言，
+   取代原本一行灰字孤零零放在那裡的樣子 ===== */
+.achv_placeholder_panel{
+    border: 1px dashed rgba(201, 168, 76, 0.3);
+    border-radius: 8px;
+    padding: 1.8rem 1rem;
+    text-align: center;
+}
+.achv_achievement_empty{
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+    text-align: center;
+    margin: 0;
+}
+
+@media (max-width: 30rem){
+    .achv_streak_strip{
+        flex-direction: column;
+        gap: 1.4rem;
+        padding: 1.6rem 1rem;
+    }
+    .achv_streak_side::after{
+        display: none;
+    }
+    .achv_streak_side, .achv_streak_center{
+        width: 100%;
+    }
+}
