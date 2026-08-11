@@ -55,7 +55,7 @@
             },
             "player_stats": {
               ".read": true,
-              ".indexOn": ["avg_wpm", "avg_acc", "online_seconds", "total_points", "page_views", "streak_longest", "streak_total_days"],
+              ".indexOn": ["avg_wpm", "avg_acc", "online_seconds", "total_points", "page_views", "streak_longest", "streak_total_days", "stages_completed_easy", "stages_completed_medium", "stages_completed_hard"],
               "$anonId": {
                 "name": {
                   ".write": true,
@@ -70,6 +70,7 @@
                 "cg_wpm_sum": { ".write": true, ".validate": "newData.isNumber() && newData.val() >= 0" },
                 "cg_wpm_count": { ".write": true, ".validate": "newData.isNumber() && newData.val() >= 0" },
                 "avg_challenge_wpm": { ".write": true, ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() < 1000" },
+                "best_challenge_wpm": { ".write": true, ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() < 1000" },
                 "cg_acc_sum": { ".write": true, ".validate": "newData.isNumber() && newData.val() >= 0" },
                 "cg_acc_count": { ".write": true, ".validate": "newData.isNumber() && newData.val() >= 0" },
                 "avg_challenge_acc": { ".write": true, ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100" },
@@ -92,6 +93,18 @@
                 "streak_total_days": {
                   ".write": true,
                   ".validate": "newData.isNumber() && ((!data.exists() && newData.val() == 1) || (data.exists() && newData.val() == data.val() + 1))"
+                },
+                "stages_completed_easy": {
+                  ".write": true,
+                  ".validate": "newData.isNumber() && newData.val() == (data.val() || 0) + 1"
+                },
+                "stages_completed_medium": {
+                  ".write": true,
+                  ".validate": "newData.isNumber() && newData.val() == (data.val() || 0) + 1"
+                },
+                "stages_completed_hard": {
+                  ".write": true,
+                  ".validate": "newData.isNumber() && newData.val() == (data.val() || 0) + 1"
                 }
               }
             },
@@ -156,6 +169,14 @@
    這一段規則「補進」你現有的規則物件裡，不要整個覆蓋掉，
    不然原本 leaderboard / challenge_leaderboard 那些規則會不見。
 
+   【新增規則說明・關卡完成度 stages_completed_easy/medium/hard】
+   給榮譽牆「關卡完成度」成就分類用，依難度分開累計「第一次過關的關卡數」。
+   跟 page_views／online_seconds 那種單純累加的計數器不一樣，這裡額外要求
+   newData 必須等於「舊值 + 1」才合法（".validate" 裡的
+   newData.val() == (data.val() || 0) + 1），目的是防止玩家直接在瀏覽器
+   Console 手動把數字改成 9999 洗成就——因為這個數字會拿去算完成度百分比，
+   比單純的瀏覽次數更需要防呆。前端寫入邏輯見 Sync_Stage_Completion()。
+
    【新增規則說明・連續登入天數 streak_*】跟其他 player_stats 欄位（avg_wpm、
    total_points……）最大的不同：那些欄位完全信任前端算好的數字直接寫入
    （".write": true 沒有任何條件限制），但 streak 這種「玩家自己動手就能
@@ -185,6 +206,15 @@
    架構問題。streak 這裡真正防的，是「開 Console 打一行、瞬間變 999」
    這種最低成本的作弊方式——想繞過時間差驗證，唯一辦法是寫一支腳本、
    真的每天固定時間打一次 API，門檻高非常多，且是可被偵測的異常行為模式。
+
+   【新增規則說明・best_challenge_wpm】給榮譽牆「挑戰 WPM 達標」成就用的
+   欄位——跟 avg_challenge_wpm（挑戰模式累計平均值）是不同東西，這個存的
+   是「這個玩家打過的所有挑戰組合裡，單次最高的那一次 WPM」，只要有一次
+   達標就永久解鎖，不會因為打太多次把平均拉低而拿不到。
+   跟 avg_wpm / total_points 等欄位一樣走「前端信任模型」（".write": true
+   沒有時間差那種額外驗證），因為寫入端（Submit_Challenge_Score_To_Leaderboard）
+   本來就是用 transaction() 只在「新值 > 舊值」時才更新，跟 leaderboard 分數
+   造假的風險等級相同，不需要另外加驗證邏輯。
    ============================================================ */
 
 const firebaseConfig = {
@@ -245,16 +275,7 @@ function Get_Anon_Id() {
 /* ------------------------------------------------------------
    訪客編號系統（不會重複取名）
    ------------------------------------------------------------
-   還沒去 profile 設定名字的玩家，上榜時會顯示「訪客#N」，N 是全站唯一、
-   依序遞增的編號（用 Firebase transaction 保證不會有兩個人同時搶到同一號）。
-
-   規則：
-   - 每個瀏覽器（用 tctc_anon_id 代表）第一次「需要用到訪客編號」時，
-     才會跟雲端要一個新號碼，之後永遠固定用這個號碼，不會變來變去。
-   - 玩家如果之後去 profile 設定了真實名字，畫面上就會改顯示那個名字，
-     原本分到的編號不會被收回、也不會給別人用——所以「#1 消失後，
-     下一個沒設定名字的新玩家會拿到 #2」，號碼永遠只增不減、不重複使用。
-   ------------------------------------------------------------ */
+*/
 function Get_Guest_Number(callback) {
     const anon_id = Get_Anon_Id()
 
@@ -589,6 +610,23 @@ function Get_Stage_Leaderboard(stageId, callback, limit) {
    comboId：難度-模式-秒數 組合，例如 "easy-article-30"
    ------------------------------------------------------------ */
 function Submit_Challenge_Score_To_Leaderboard(comboId, wpm, acc, raw_stats) {
+    // 【新增】同步更新這個玩家「所有挑戰組合裡」單次最高 WPM，
+    // 寫進 player_stats/{anon_id}/best_challenge_wpm，給榮譽牆的
+    // 「挑戰 WPM 達標」成就用（不是累計平均，是單次最佳紀錄）。
+    // 用 transaction() 只在破紀錄時才真的寫入（Math.max 保留較大值），
+    // 理由跟 _Submit_Best_Score 內部「只有破紀錄才更新」一致：
+    // 避免每次挑戰結束都無條件覆寫，也讓多分頁同時遊玩時不會互相蓋掉
+    // 對方剛寫入的紀錄。這裡不等它完成、不影響原本的排行榜上傳流程，
+    // 兩個寫入互相獨立，其中一個失敗不會拖累另一個。
+    const anon_id = Get_Anon_Id()
+    if (anon_id && typeof wpm === "number" && !isNaN(wpm)) {
+        tctc_db.ref(`player_stats/${anon_id}/best_challenge_wpm`).transaction(function (current) {
+            return Math.max(current || 0, wpm)
+        }).catch(function (error) {
+            console.log("[player_stats] best_challenge_wpm 同步失敗：", error)
+        })
+    }
+
     return _Submit_Best_Score("challenge_leaderboard", comboId, wpm, acc, raw_stats)
 }
 function Get_Challenge_Leaderboard(comboId, callback, limit) {
@@ -686,6 +724,58 @@ function Sync_Player_Stats(wpm, acc) {
     })
 
     return Promise.all([wpm_chain_promise, acc_chain_promise, name_promise])
+}
+
+// ===== 【新增】把「這關第一次過關」同步進雲端的難度別完成計數 =====
+// 給榮譽牆「關卡完成度」成就分類用。只在「第一次通過」時呼叫（由呼叫端
+// game.html 先判斷 is_first_time_clear 之後才呼叫這裡，這支函式本身不重複判斷），
+// 避免玩家反覆重打同一關把數字洗高。
+// 用 transaction() 而不是 set()，是為了避免多分頁同時完成時互相蓋掉
+// 對方剛寫入的 +1 結果（跟 best_challenge_wpm 用 transaction 的理由一致）。
+function Sync_Stage_Completion(stageId){
+    if(typeof get_difficulty_by_stageid !== "function"){
+        console.warn("[player_stats] 找不到 get_difficulty_by_stageid，請確認有先載入 TCTC2-0-level_data.js")
+        return Promise.resolve()
+    }
+
+    const difficulty = get_difficulty_by_stageid(stageId)   // "easy" / "medium" / "hard"
+    const anon_id = Get_Anon_Id()
+    if(!anon_id || !difficulty) return Promise.resolve()
+
+    const field = `stages_completed_${difficulty}`
+
+    return tctc_db.ref(`player_stats/${anon_id}/${field}`).transaction(function(current){
+        return (current || 0) + 1
+    }).catch(function(error){
+        console.warn(`[player_stats] ${field} 同步失敗（很可能是 Firebase Rules 還沒加上這個欄位的規則）：`, error.message)
+    })
+}
+
+// ===== 【新增】累積打字字數（榮譽牆「累積字數」成就用）=====
+// 算的是「這次打對的字數」（跟結果畫面「正確字數」同一個數字），不算錯字，
+// 避免玩家亂打灌數字。呼叫時機比照 Sync_Player_Stats：只有「這次成績有
+// 算進排行榜/平均值」的情況下才呼叫（主線模式看 counts_for_leaderboard，
+// 挑戰模式看 cg_meets_points_threshold），跟其他統計欄位採計標準一致。
+// 用 transaction() 累加。Rules 沒辦法驗證「這次加的量剛好等於玩家真的打對
+// 幾個字」（那需要額外一個欄位把這次的量也公開寫出來給 Rules 讀，等於給
+// 玩家看到怎麼繞過），所以退而求其次：Rules 只擋「新值必須比舊值大，且
+// 單次漲幅不能超過一個合理上限（見 database.rules.json）」，防的是「一次
+// 把數字改成天文數字」這種明顯作弊，擋不住「每次多打幾個字之類」的小額
+// 灌水——這個成就本來就偏「累積量」而非「精準防作弊」的性質，跟 Rules
+// 現有其他欄位的防護強度是一致的取捨。
+function Sync_Chars_Typed(charCount){
+    if(typeof charCount !== "number" || isNaN(charCount) || charCount <= 0) return Promise.resolve()
+
+    const anon_id = Get_Anon_Id()
+    if(!anon_id) return Promise.resolve()
+
+    const rounded = Math.round(charCount)
+
+    return tctc_db.ref(`player_stats/${anon_id}/total_chars_typed`).transaction(function(current){
+        return (current || 0) + rounded
+    }).catch(function(error){
+        console.warn("[player_stats] total_chars_typed 同步失敗（很可能是 Firebase Rules 還沒加上這個欄位的規則）：", error.message)
+    })
 }
 
 // ===== 【新增】把「這次挑戰模式測驗的 WPM / 正確率」另外累加進「挑戰模式專屬」的平均值 =====
@@ -1788,3 +1878,60 @@ function Logout_And_Clear_Guest_Backup(callback) {
         if (callback) callback(false)
     })
 }
+
+// ===== 【新增】既有玩家的關卡完成度「一次性回填」=====
+// 這功能上線前，玩家可能本機已經累積一堆 stage_progress[stageId] = true，
+// 但 Firebase 端的 stages_completed_easy/medium/hard 全部從 0 開始。
+// 如果不做這段回填，那些「早就完成」的關卡會因為 Sync_Stage_Completion()
+// 只在「第一次通過」才呼叫，永遠不會被同步，成就會被錯誤地卡在低分。
+
+function TCTC_Migrate_Existing_Stage_Progress(){
+    // 換成 v2：v1 這把旗標曾經對一批「回填被舊版 Rules 拒絕、但程式碼誤判
+    // 成功」的玩家寫下錯誤的 "1"，讓他們的瀏覽器永遠跳過回填。換一把新
+    // key，讓所有人在這次修正部署後都會自動重跑一次，不用手動清 localStorage。
+    const MIGRATION_FLAG_KEY = "tctc_stage_migration_v2_done"
+    // 本機旗標純粹是省一次不必要的 Firebase 讀寫，不是防作弊的關鍵，
+    // 真正擋住重複洗數字的防線是上面 Rules 的 "!data.exists()" 判斷
+    if(localStorage.getItem(MIGRATION_FLAG_KEY) === "1") return
+    if(typeof get_difficulty_by_stageid !== "function") return   // 這頁沒載入 level_data.js，之後造訪有載入的頁面再補跑
+
+    const progress = JSON.parse(localStorage.getItem("stage_progress")) || {}
+    const counts = { easy: 0, medium: 0, hard: 0 }
+
+    Object.keys(progress).forEach(function(stageId){
+        if(progress[stageId] !== true) return
+        const difficulty = get_difficulty_by_stageid(stageId)
+        if(difficulty && counts.hasOwnProperty(difficulty)) counts[difficulty] += 1
+    })
+
+    const anon_id = Get_Anon_Id()
+    if(!anon_id) return
+
+    // 只有全部寫入真的成功才標記完成；任何一筆失敗，旗標就不設，
+    // 下次造訪任何有載入這支檔案的頁面時會自動再試一次
+    let allSucceeded = true
+
+    const writes = ["easy", "medium", "hard"].map(function(difficulty){
+        if(counts[difficulty] === 0) return Promise.resolve()   // 沒有東西要回填，省一次寫入
+        return tctc_db.ref(`player_stats/${anon_id}/stages_completed_${difficulty}`).transaction(function(current){
+            // 回傳 undefined = 中止交易，不送出任何寫入，不會被 Rules 驗證卡住；
+            // 不能回傳 current（跟原值一樣），那樣還是會真的送一次寫入給 Rules 驗證，
+            // 已存在的值的 Rules 規定只能寫「原值+1」，寫「跟原值相同」會被判定不合法
+            if(current !== null) return undefined
+            return counts[difficulty]
+        }).catch(function(error){
+            console.warn(`[player_stats] stages_completed_${difficulty} 回填失敗：`, error.message)
+            allSucceeded = false
+        })
+    })
+
+    Promise.all(writes).then(function(){
+        if(allSucceeded){
+            localStorage.setItem(MIGRATION_FLAG_KEY, "1")
+        }
+    })
+}
+
+document.addEventListener("DOMContentLoaded", function(){
+    TCTC_Migrate_Existing_Stage_Progress()
+})

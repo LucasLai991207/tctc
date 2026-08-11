@@ -105,6 +105,32 @@
             display: block;
             filter: brightness(0) invert(1) drop-shadow(0 1px 3px rgba(0,0,0,0.5));
         }
+        /* ===== 【新增】挑戰模式左上角的打字音效開關 =====
+           完全比照旁邊「再試一次」（.game_retry_fixed_btn）的定位邏輯，排在它右邊：
+           left: 11.9rem = 8.6rem(再試一次位置) + 2.3rem(再試一次寬度) + 1rem(間距)。
+           跟 game.html 的 .sound_toggle_btn 不同的是，這裡是 position:fixed 單顆浮動按鈕
+           （跟返回鍵/排行榜鍵/再試一次同一套做法），不是包在同一個 flex 容器裡。 */
+        .game_sound_toggle_btn {
+            position: fixed;
+            top: 70px;
+            left: 11.9rem;
+            height: 2.3rem;
+            width: 2.3rem;
+            background-color: transparent;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            cursor: pointer;
+            z-index: 100;
+        }
+        .game_sound_toggle_btn img {
+            height: 1.6rem;
+            width: auto;
+            display: block;
+            filter: brightness(0) invert(1) drop-shadow(0 1px 3px rgba(0,0,0,0.5));
+        }
         .cg_wrap{
             width: 100vw;
             min-height: calc(100vh - 63px);
@@ -500,6 +526,9 @@
     <!-- ===== 【修改】再試一次：改成跟 game.html 一樣的浮動圖示按鈕，取代原本
          畫面底部 .cg_action_row 裡的文字按鈕，直接呼叫跟原本同一個 Restart_Challenge() ===== -->
     <div class="game_retry_fixed_btn" id="cg_retry_floating_btn" title="再試一次" onclick="Restart_Challenge()"><img src="refresh-arrow.png" alt="再試一次"></div>
+    <!-- ===== 【新增】打字音效開關：排在再試一次右邊，圖示會依照目前開/關狀態
+         換成 medium-volume.png（有聲）或 mute.png（靜音），初始圖示由 challenge.js 在頁面載入時決定 ===== -->
+    <div class="game_sound_toggle_btn" id="cg_sound_toggle_btn" title="開啟/關閉打字音效"><img id="cg_sound_toggle_icon" src="mute.png" alt="音效開關"></div>
 
     <main class="cg_wrap">
         <div class="cg_topbar">
