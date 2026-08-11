@@ -75,10 +75,7 @@
 }
 
 /* ============================================================
-   連續登入天數 —— 原本是三格「等重量」統計卡，跟一般後台儀表板
-   沒兩樣。改成一條「中央主數字 + 兩側輔助數字」的橫幅：目前連續
-   登入天數是玩家最在意、最想一眼看到的數字，讓它明顯比另外兩個大，
-   資訊的視覺權重才跟它的重要性對得起來，而不是三個一樣大小的方塊。
+   連續登入天數 —— 中央主數字 + 兩側輔助數字的橫幅（沿用原設計，不變動）
    ============================================================ */
 .achv_streak_strip{
     display: flex;
@@ -142,87 +139,326 @@
     margin: 0 0 2.4rem;
 }
 
-/* ===== 徽章區塊 ===== */
-.achv_badge_section{
-    margin-bottom: 2.2rem;
+/* ============================================================
+   【新增】總覽進度條 —— 頁面最上方「已解鎖 X / 總數」
+   放在 streak 橫幅上方，因為這是整個成就系統的總覽，權重要比
+   任何單一分類都高。數字用大字體、進度條用細長條，
+   刻意跟下面每個分類自己的小進度條做出「主從」的視覺差異
+   （這條寬、粗、置中；分類那條窄、細、靠左）。
+   ============================================================ */
+.achv_overview_card{
+
+
+    padding: 1.6rem 1.6rem 1.4rem;
+    margin-bottom: 1.6rem;
+
+    text-align: center;
 }
-.achv_section_title{
-    color: whitesmoke;
-    font-size: 1.1rem;
+.achv_overview_label{
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.76rem;
+    letter-spacing: 3px;
+    margin: 0 0 0.4rem;
+}
+.achv_overview_count{
+    color: var(--champagne-gold);
+    font-family: "Noto Serif TC", serif;
+    font-size: 2rem;
     font-weight: 500;
-    letter-spacing: 2px;
+    line-height: 1;
+    margin: 0 0 0.9rem;
+}
+.achv_overview_count span{
+    /* 分母（總數）用比較低調的顏色，讓分子（已解鎖）維持視覺主角 */
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 1.1rem;
+}
+
+.achv_progress_track{
+    width: 100%;
+    height: 0.55rem;
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+}
+.achv_progress_fill{
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #b08d57, var(--champagne-gold));
+    /* 進度條變化用 transition 而不是瞬間跳到定位，數字改變時才有「填滿」的動態感，
+       但只做這一個屬性的漸變，避免變成你之前提醒過的「多餘裝飾動畫」 */
+    transition: width 400ms ease;
+}
+
+/* ===== 徽章區塊：橫排列表（不是格線）=====
+   原本用 grid 排小方卡，分類項目少（例如「堅持」只有3項）時會被拉開留白，
+   長句子在窄欄位裡也容易強制換行。改成一項一列、佔滿卡片寬度，
+   讓文字跟進度條有足夠橫向空間，不管分類底下有幾項都不會留白或跑版。 */
+.achv_badge_list{
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+/* ============================================================
+   【新增】分類區塊 —— 每個分類（堅持／打字／速度／精準／特殊）
+   一個區塊，區塊標題右側掛一條小進度條 + X/Y 文字，
+   讓玩家不用點開就知道「這個分類我做得怎麼樣」。
+   ============================================================ */
+.achv_category_block{
+    margin-bottom: 2.4rem;
+}
+.achv_category_head{
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
 
     margin: 0 0 1.2rem;
     padding-bottom: 0.7rem;
     border-bottom: 1px solid rgba(201, 168, 76, 0.2);
 }
+.achv_category_title{
+    color: whitesmoke;
+    font-size: 1.1rem;
+    font-weight: 500;
+    letter-spacing: 2px;
+    white-space: nowrap;
+}
+.achv_category_title_icon{
+    /* 分類標題前面的小圖示，跟徽章卡片的圖示共用同一份 SVG 定義，
+       只是尺寸縮小、顏色固定用金色，不隨位階變化
+       （分類標題本身不代表「達成等級」，只是分類的視覺錨點） */
 
-.achv_badge_grid{
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(7.6rem, 1fr));
-    gap: 1.6rem 1rem;
+    /* ===== 修正：SVG 異常上浮 =====
+       inline SVG 預設用「文字基線」對齊同一行文字，但 SVG 沒有真正的
+       基線，瀏覽器只能用 SVG 下緣去猜測，導致視覺上偏高。
+       改成 inline-flex + align-items:center 後，圖示是相對於「自己的
+       容器方框」置中，不再依賴容易跑掉的基線猜測與手動微調的偏移值。 */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 1.05rem;
+    height: 1.05rem;
+    stroke: var(--champagne-gold);
+    margin-right: 0.5rem;
+
+    vertical-align: middle;   /* 容器本身相對於文字行也置中，兩層對齊疊加才會準 */
+}
+.achv_category_title_icon svg{
+    /* SVG 本身也設成 block，避免它自己又帶著 inline 的基線行為，
+       跟外層的 flex 置中互相打架 */
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+.achv_category_progress_wrap{
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex: 1;
+    max-width: 12rem;
+}
+.achv_category_progress_track{
+    flex: 1;
+    height: 0.32rem;
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+}
+.achv_category_progress_fill{
+    height: 100%;
+    border-radius: 999px;
+    background-color: var(--champagne-gold);
+    transition: width 400ms ease;
+}
+.achv_category_progress_text{
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 0.72rem;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
 }
 
 /* ============================================================
-   徽章卡 —— 原本是方形卡片裡塞一個 emoji，跟一般遊戲成就系統
-   的樣板長得一模一樣。改成「勳章」造型：圓形金框 + 底下刻名字，
-   已解鎖是實線金框，未解鎖是虛線灰框（象徵「輪廓已經畫出來，
-   但還沒刻上去」），比單純調透明度更能表達「尚未達成」這件事。
+   徽章列 —— 統一位階系統：銅／銀／金／白金圓框，圖示用 currentColor
+   概念（stroke 不寫死，交給 .pach_tier_xxx svg 決定），
+   全站所有分類共用這一套，不再另外開一套 emoji 版本。
+
+   排版是「圖示在左、名稱＋進度條在右」的橫排列，卡片本身給一個
+   跟全站卡片一致的深底＋金邊框（呼應 .profile_card / .ranking_row
+   的視覺語言），一項成就＝一整條，不會被格線硬性拆成方塊。
    ============================================================ */
-.achv_badge_card{
+.achv_badge_row{
     display: flex;
-    flex-direction: column;
     align-items: center;
-    text-align: center;
-    gap: 0.55rem;
+    gap: 1rem;
+
+
+
+    padding: 0.6rem 1.1rem;
+
+    transition: border-color 200ms ease;
+}
+.achv_badge_row:hover{
+    border-color: rgba(201, 168, 76, 0.35);
 }
 
-.achv_medal{
+.pach_medal{
     width: 4.6rem;
     height: 4.6rem;
     border-radius: 50%;
+    flex-shrink: 0;
+
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.7rem;
-    line-height: 1;
+
     background-color: rgba(201, 168, 76, 0.07);
-    border: 2px solid var(--champagne-gold);
-    box-shadow: 0 0 0 4px rgba(201, 168, 76, 0.08);
-    transition: transform 200ms ease;
+    border: 2px solid rgba(201, 168, 76, 0.25);
+
+    transition: border-color 200ms ease, box-shadow 200ms ease;
 }
-.achv_badge_card:hover .achv_medal{
-    transform: translateY(-3px);
+/* 橫排列用的圖示縮小一號，直排卡片（若之後還有地方沿用）維持原尺寸 */
+.pach_medal.achv_medal_row{
+    width: 3.4rem;
+    height: 3.4rem;
+}
+.pach_medal svg{
+    width: 1.9rem;
+    height: 1.9rem;
+}
+.pach_medal.achv_medal_row svg{
+    width: 1.5rem;
+    height: 1.5rem;
 }
 
-.achv_badge_card.achv_badge_locked .achv_medal{
+/* 未達標：虛線灰框 + 灰階 + 降低透明度 —— 這是「未解鎖」最主要的視覺語言，
+   跟「已解鎖」的實線金框、彩色圖示做出明顯區隔（符合你要求的「明顯視覺差異」） */
+.pach_medal.pach_tier_locked{
     border: 2px dashed rgba(201, 168, 76, 0.32);
     background-color: transparent;
-    box-shadow: none;
-    filter: grayscale(1);
+}
+.pach_medal.pach_tier_locked svg{
+    stroke: rgba(255, 255, 255, 0.28);
+}
+.achv_badge_row.achv_badge_is_locked{
     opacity: 0.55;
 }
-.achv_badge_card.achv_badge_locked{
-    opacity: 0.6;
+.achv_badge_row.achv_badge_is_locked .pach_medal{
+    filter: grayscale(1);
 }
 
+.pach_medal.pach_tier_bronze{
+    border-color: #b08d57;
+    box-shadow: 0 0 0 4px rgba(176, 141, 87, 0.14);
+}
+.pach_medal.pach_tier_bronze svg{
+    stroke: #cd9b6a;
+}
+
+.pach_medal.pach_tier_silver{
+    border-color: #c7ced6;
+    box-shadow: 0 0 0 4px rgba(199, 206, 214, 0.16);
+}
+.pach_medal.pach_tier_silver svg{
+    stroke: #dde3e9;
+}
+
+.pach_medal.pach_tier_gold{
+    border-color: var(--champagne-gold);
+    box-shadow: 0 0 0 4px rgba(201, 168, 76, 0.2);
+}
+.pach_medal.pach_tier_gold svg{
+    stroke: var(--champagne-gold);
+}
+
+/* 白金：比金牌多一圈更亮的暈光，做出明確的視覺區隔 */
+.pach_medal.pach_tier_platinum{
+    border-color: #eaf3ff;
+    box-shadow: 0 0 0 4px rgba(234, 243, 255, 0.22), 0 0 14px rgba(234, 243, 255, 0.4);
+}
+.pach_medal.pach_tier_platinum svg{
+    stroke: #eaf3ff;
+}
+
+/* ===== 徽章右側資訊區：名稱列 + 進度條 + 一行極簡的數字說明 ===== */
+.achv_badge_info{
+    flex: 1;
+    min-width: 0;   /* 讓內部文字在窄螢幕能正常換行/截斷，不會撐爆 flex 容器 */
+}
+.achv_badge_info_top{
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.6rem;
+    margin-bottom: 0.45rem;
+}
 .achv_badge_name{
     color: whitesmoke;
-    font-size: 0.82rem;
+    font-size: 0.9rem;
     font-weight: 500;
     letter-spacing: 1px;
-    margin: 0;
 }
-.achv_badge_desc{
-    color: rgba(255, 255, 255, 0.4);
-    font-size: 0.7rem;
-    letter-spacing: 0.5px;
-    line-height: 1.5;
-    margin: 0;
+.achv_badge_tier_inline{
+    color: var(--champagne-gold);
+    font-size: 0.74rem;
+    font-weight: 500;
+    letter-spacing: 1px;
+    white-space: nowrap;
 }
 
-/* ===== 尚未開放的成就分類：用虛線框當「封存中」的視覺語言，
-   取代原本一行灰字孤零零放在那裡的樣子 ===== */
+/* 單項成就自己的進度條：填色的 class 直接沿用跟徽章邊框同一組
+   .pach_tier_xxx，所以「進度越高、徽章顏色越高階」跟「這條進度條的顏色」
+   永遠對得起來，不用另外維護一組顏色對照表 */
+.achv_badge_progress_track{
+    width: 100%;
+    height: 0.4rem;
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.07);
+    overflow: hidden;
+}
+.achv_badge_progress_fill{
+    height: 100%;
+    border-radius: 999px;
+    transition: width 400ms ease;
+
+    background-color: rgba(255, 255, 255, 0.25);   /* 預設值，locked 狀態用這個暗灰色 */
+}
+.achv_badge_progress_fill.pach_tier_bronze{ background-color: #b08d57; }
+.achv_badge_progress_fill.pach_tier_silver{ background-color: #c7ced6; }
+.achv_badge_progress_fill.pach_tier_gold{ background-color: var(--champagne-gold); }
+.achv_badge_progress_fill.pach_tier_platinum{ background-color: #eaf3ff; }
+
+.achv_badge_caption{
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.72rem;
+    letter-spacing: 0.3px;
+    margin: 0.35rem 0 0;
+}
+
+/* ============================================================
+   【新增】「尚未開放」列 —— 給還沒有資料來源的成就用
+   （累積字數／完成關卡／完成課程／連續高WPM／100%正確／連續高準確率）。
+   跟一般 locked 狀態故意做出區隔：一般 locked 是「還沒達成，但看得到目標」，
+   這個是「連目標都還沒真正開放」，用小標籤明講，避免玩家誤會是網站壞了。
+   ============================================================ */
+.achv_badge_row.achv_badge_pending .pach_medal{
+    border: 2px dashed rgba(255, 255, 255, 0.15);
+    opacity: 0.35;
+}
+.achv_badge_pending_tag{
+    display: inline-block;
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 0.64rem;
+    letter-spacing: 1px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 3px;
+    padding: 0.1rem 0.4rem;
+    white-space: nowrap;
+}
+
+/* ===== 尚未開放的成就分類（特殊）：整區用虛線框當「封存中」的視覺語言 ===== */
 .achv_placeholder_panel{
     border: 1px dashed rgba(201, 168, 76, 0.3);
     border-radius: 8px;
@@ -247,6 +483,15 @@
         display: none;
     }
     .achv_streak_side, .achv_streak_center{
+        width: 100%;
+    }
+    .achv_category_head{
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.6rem;
+    }
+    .achv_category_progress_wrap{
+        max-width: none;
         width: 100%;
     }
 }

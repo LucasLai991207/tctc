@@ -987,6 +987,11 @@ function cg_finish_challenge(){
     if(cg_meets_points_threshold && typeof Sync_Challenge_Player_Stats === "function"){
         cg_sync_promises.push(Sync_Challenge_Player_Stats(finalWpm, finalAcc))
     }
+    // 【新增】累積字數成就：跟主線模式用同一套邏輯，只是門檻換成挑戰模式
+    // 自己的 cg_meets_points_threshold，累加這次打對的字數（correct）
+    if(cg_meets_points_threshold && typeof Sync_Chars_Typed === "function"){
+        cg_sync_promises.push(Sync_Chars_Typed(correct))
+    }
     // 【新增】把這次賺到的積分累加進玩家總積分榜。pointsEarned 在門檻沒過時已經是 0，
     // Sync_Player_Points 內部也會擋掉 <= 0 的呼叫，這裡的 if 只是避免多打一次不必要的雲端請求
     if(pointsEarned > 0 && typeof Sync_Player_Points === "function"){
@@ -1196,6 +1201,35 @@ if(cg_word_intro_modal){
 // ===== 頁面載入時，讀取網址上的 ?difficulty= 與 ?seconds= 開始測驗 =====
 document.addEventListener("DOMContentLoaded", function(){
     Init_Typing_Sound()   // 【新增】頁面一載入就準備好打字音效
+    Init_Sound_Toggle_Btn()   // 【新增】左上角打字音效開關，跟設定頁的開關共用同一份 localStorage 狀態
     const settings = cg_get_settings_from_url()
     cg_init(settings.difficulty, settings.seconds, settings.stage)
 })
+
+// ===== 【新增】左上角打字音效開關 =====
+// 邏輯跟 game.html 裡的同名按鈕完全一樣：不是自己管理開關狀態，是共用
+// TCTC2-0-typing_sound.js 的 Get_Typing_Sound_Enabled() / Set_Typing_Sound_Enabled()，
+// 圖示直接換成 medium-volume.png（有聲）或 mute.png（靜音），跟設定頁的開關互相同步。
+function Init_Sound_Toggle_Btn(){
+    const btn = document.getElementById("cg_sound_toggle_btn")
+    const icon = document.getElementById("cg_sound_toggle_icon")
+    if(!btn || !icon) return
+
+    // 打字音效模組要是還沒載入（例如載入順序出問題），按鈕先保持原樣不掛行為，
+    // 避免呼叫不存在的函式直接報錯
+    if(typeof Get_Typing_Sound_Enabled !== "function"){
+        console.log("[typing_sound] 打字音效模組尚未載入，音效開關維持預設圖示")
+        return
+    }
+
+    function Update_Sound_Icon(){
+        icon.src = Get_Typing_Sound_Enabled() ? "medium-volume.png" : "mute.png"
+    }
+
+    Update_Sound_Icon()   // 頁面載入時先依照目前設定顯示正確的圖示
+
+    btn.addEventListener("click", function(){
+        Set_Typing_Sound_Enabled(!Get_Typing_Sound_Enabled())
+        Update_Sound_Icon()
+    })
+}

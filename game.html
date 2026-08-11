@@ -145,6 +145,27 @@
         .kb_toggle_btn.kb_off {
             opacity: 0.45;
         }
+        /* ===== 【新增】打字音效開關：外觀比照上面幾顆浮動圖示按鈕，
+           但狀態表現方式跟鍵盤開關不一樣——鍵盤開關是「同一張圖 + opacity 變淡」，
+           這顆是「直接換成另一張圖」（有聲/靜音兩張圖示），所以不需要額外的 .xxx_off 樣式 ===== */
+        .sound_toggle_btn {
+            height: 2.3rem;
+            width: 2.3rem;
+            background-color: transparent;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .sound_toggle_btn img {
+            height: 1.6rem;
+            width: auto;
+            display: block;
+            /* 跟返回鍵同樣的白色轉換技巧，見上方 .game_back_btn img 的註解 */
+            filter: brightness(0) invert(1) drop-shadow(0 1px 3px rgba(0,0,0,0.5));
+        }
         /* ===== 【修改】再試一次：現在有圖片素材了，比照上面三顆的做法，
            改成透明容器 + <img>，一樣用 brightness(0) invert(1) 轉成白色 ===== */
         .game_retry_fixed_btn {
@@ -546,6 +567,8 @@
             color: gray;
             font-size: 0.9rem;
             letter-spacing: 2px;
+
+            margin-bottom: 3rem;
         }
         /* 結果畫面預設隱藏，加上 .show 才顯示 */
         .game_result {
@@ -978,6 +1001,60 @@
             .live_keyboard { display: none !important; }
             .kb_toggle_btn { display: none !important; }
         }
+
+        /* ===== 【新增】新按鍵互動教學畫面 ===== */
+        .key_intro_wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.8rem;
+            padding: 2rem 1rem;
+            font-family: 'Noto Serif TC', serif;
+        }
+        .key_intro_progress {
+            color: rgba(255,255,255,0.55);
+            font-size: 0.95rem;
+            letter-spacing: 1px;
+        }
+        .key_intro_glyph {
+            font-size: 5rem;
+            font-weight: 600;
+            color: var(--champagne-gold);
+            line-height: 1.1;
+            min-width: 5rem;
+            text-align: center;
+        }
+        .key_intro_glyph_shake {
+            animation: key_intro_shake 300ms ease;
+        }
+        @keyframes key_intro_shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-8px); }
+            40% { transform: translateX(8px); }
+            60% { transform: translateX(-6px); }
+            80% { transform: translateX(6px); }
+        }
+        .key_intro_hint {
+            color: #ffffff;
+            font-size: 1.05rem;
+            font-weight: 300;
+        }
+        .key_intro_feedback {
+            min-height: 1.6rem;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+        .key_intro_feedback_ok {
+            color: rgb(140,220,140);
+        }
+        .key_intro_feedback_bad {
+            color: rgb(240,120,120);
+        }
+        /* 【新增】教學說明頁裡的「示範／示範按鈕」共用 hover 效果 */
+        .tut_demo_btn:hover {
+            background-color: rgba(201, 168, 76, 0.18) !important;
+        }
     </style>
 </head>
 <body>
@@ -1014,6 +1091,9 @@
         <div class="game_rank_floating_btn" id="game_rank_floating_btn" title="查看這關排名（不用打完也能看）" onclick="window.location.href='TCTC2-0-ranking.html?stage=' + encodeURIComponent(stageId) + '&return_to=' + encodeURIComponent(window.location.href)"><img src="trophy_gold.png" alt="排行榜"></div>
         <!-- 【新增】即時反饋鍵盤開關、再試一次：跟返回鍵、排行榜鍵同一排 -->
         <button type="button" class="kb_toggle_btn" id="kb_toggle_btn" title="顯示/隱藏鍵盤"><img src="keyboard_gold.png" alt="鍵盤開關"></button>
+        <!-- 【新增】打字音效開關：同一排最後一顆，圖示會依照目前開/關狀態換成
+             medium-volume.png（有聲）或 mute.png（靜音），初始圖示由 JS 在頁面載入時決定 -->
+        <button type="button" class="sound_toggle_btn" id="sound_toggle_btn" title="開啟/關閉打字音效"><img id="sound_toggle_icon" src="mute.png" alt="音效開關"></button>
         <div class="game_retry_fixed_btn" id="game_retry_fixed_btn" title="再試一次" onclick="Init()"><img src="refresh-arrow.png" alt="再試一次"></div>
     </div>
 
@@ -1337,6 +1417,38 @@
 
         // 【新增】頁面一載入就準備好打字音效（建立 AudioContext + 非同步載入音效檔）
         Init_Typing_Sound()
+        // 【新增】左上角打字音效開關，跟設定頁的開關共用同一份 localStorage 狀態
+        Init_Sound_Toggle_Btn()
+
+        // ===== 【新增】左上角打字音效開關 =====
+        // 外觀邏輯比照 kb_toggle_btn，只是這裡不是用「同一張圖 + opacity 變淡」表現關閉狀態，
+        // 而是直接把 <img> 的 src 換成另一張圖（medium-volume.png / mute.png），
+        // 一眼就看得出目前是有聲還是靜音。實際的開關狀態不是這顆按鈕自己管理，
+        // 是共用 TCTC2-0-typing_sound.js 裡的 Get_Typing_Sound_Enabled() / Set_Typing_Sound_Enabled()，
+        // 所以在這裡按跟在設定頁按 checkbox 效果完全一樣，兩邊狀態會同步。
+        function Init_Sound_Toggle_Btn(){
+            const btn = document.getElementById("sound_toggle_btn")
+            const icon = document.getElementById("sound_toggle_icon")
+            if(!btn || !icon) return
+
+            // 打字音效模組要是還沒載入（例如載入順序出問題），按鈕先保持原樣不掛行為，
+            // 避免呼叫不存在的函式直接報錯
+            if(typeof Get_Typing_Sound_Enabled !== "function"){
+                console.log("[typing_sound] 打字音效模組尚未載入，音效開關維持預設圖示")
+                return
+            }
+
+            function Update_Sound_Icon(){
+                icon.src = Get_Typing_Sound_Enabled() ? "medium-volume.png" : "mute.png"
+            }
+
+            Update_Sound_Icon()   // 頁面載入時先依照目前設定顯示正確的圖示
+
+            btn.addEventListener("click", function(){
+                Set_Typing_Sound_Enabled(!Get_Typing_Sound_Enabled())
+                Update_Sound_Icon()
+            })
+        }
 
         // ===== 讀取 URL 參數 =====
         // window.location.search 是網址裡 ? 之後的部分，例如 "?stage=1-2-1"
@@ -1608,6 +1720,538 @@
             el.classList.add(flash_class)
             setTimeout(function(){ el.classList.remove(flash_class) }, 150)
         }
+
+        // ===== 【新增】新按鍵互動教學 =====
+        // 目的：像 typing.com 一樣，關卡如果有教新的注音符號/聲調/標點，
+        // 要先讓玩家在鍵盤上「實際按過一次」，有即時反饋，之後才正式進入計時練習，
+        // 不要再用一大段純文字說明帶過。
+        let key_intro_active = false          // true 時，下面兩個既有的 keydown 監聽器要整個忽略，不能影響正式練習的判斷邏輯
+        let key_intro_shown_for_stage = false // 這次進到這一關，教學是否已經顯示過（「再試一次」/ 調整WPM 重跑 Init() 時不用再播一次）
+        let key_intro_keys = []               // 這一關要教的新鍵，依序陣列，例如 ["ㄑ","ㄨ"]
+        let key_intro_idx = 0                 // 目前教到第幾顆（從 0 開始）
+        let key_intro_on_done = null          // 教完之後要呼叫的 callback（會是「重新呼叫一次 Init()」）
+        let key_intro_render_target = null    // 【新增】這次要把教學步驟畫在哪個容器；null 代表用預設的 game_char_container（整頁教學關新按鍵）
+        let key_intro_is_inline = false       // 【新增】true 代表這是「教學說明頁內嵌的互動練習」（1-0-1 / 1-9-1 / 2-1-0 等），
+                                               // 跟正式關卡教新鍵的整頁流程分開處理收尾動作（不用還原鍵盤開關按鈕等頁面元件）
+        let key_intro_title = "新按鍵教學"     // 【新增】這次練習要顯示的標題文字，inline 模式可以自訂（例如「標點符號練習」）
+
+        // 特殊鍵給玩家看的顯示文字（避免直接印出 "↵" 這種不容易懂的符號）
+        function Key_Intro_Label(char){
+            if(char === "↵") return "Enter"
+            if(char === " ") return "空白鍵"
+            return char
+        }
+
+        // 如果這顆鍵需要輔助鍵（Ctrl / Shift）才能打出來，組一句提示文字
+        function Get_Punct_Modifier_Hint(dict_key){
+            const mods = kb_punct_modifier_keys[dict_key]
+            if(!mods || mods.length === 0) return ""
+            const mod_labels = mods.map(function(m){
+                if(m === "CtrlLeft") return "Ctrl"
+                if(m === "ShiftLeft") return "Shift"
+                if(m === "ArrowDown") return "↓"
+                return m
+            })
+            return "同時按住 " + mod_labels.join(" + ") + "，再"
+        }
+
+        // 跟 Sync_Live_Keyboard 邏輯幾乎一樣，差別是直接吃「教學目前教到哪個字」，
+        // 不吃全域的 target / current（教學開始時，正式練習的 target 可能都還沒設定好）
+        function Highlight_Key_Intro_Target(dict_key){
+            if(kb_current_el){
+                kb_current_el.classList.remove("kb_current")
+                kb_current_el = null
+            }
+            kb_current_modifier_els.forEach(function(el){
+                el.classList.remove("kb_current_modifier")
+            })
+            kb_current_modifier_els = []
+
+            const phys_key = Resolve_Physical_Key(dict_key)
+            if(phys_key && kb_key_elements[phys_key]){
+                kb_key_elements[phys_key].classList.add("kb_current")
+                kb_current_el = kb_key_elements[phys_key]
+
+                const modifier_keys = kb_punct_modifier_keys[dict_key] || []
+                modifier_keys.forEach(function(mod_key){
+                    const mod_el = kb_key_elements[mod_key]
+                    if(mod_el){
+                        mod_el.classList.add("kb_current_modifier")
+                        kb_current_modifier_els.push(mod_el)
+                    }
+                })
+            }
+        }
+
+        // 畫面上的「按對了 / 再試一次」文字反饋
+        function Show_Key_Intro_Feedback(is_correct){
+            const fb = document.getElementById("key_intro_feedback")
+            const glyph = document.getElementById("key_intro_glyph")
+            if(!fb) return
+            if(is_correct){
+                fb.textContent = "✓ 按對了！"
+                fb.className = "key_intro_feedback key_intro_feedback_ok"
+            } else {
+                fb.textContent = "不是這顆，再試一次(可以參考底下小鍵盤)"
+                fb.className = "key_intro_feedback key_intro_feedback_bad"
+                if(glyph){
+                    glyph.classList.remove("key_intro_glyph_shake")
+                    void glyph.offsetWidth   // 強制 reflow，讓動畫可以重新播放
+                    glyph.classList.add("key_intro_glyph_shake")
+                }
+            }
+        }
+
+        // 畫出教學目前這一步（第幾顆新鍵、要按哪個符號），並把鍵盤上對應的鍵標成金框
+        function Render_Key_Intro_Step(){
+            const char = key_intro_keys[key_intro_idx]
+            const container = key_intro_render_target || document.getElementById("game_char_container")
+            if(!container) return
+
+            const dict_key = Find_Key_For_Zhuyin(char) || char
+            const modifier_hint = Get_Punct_Modifier_Hint(dict_key)
+
+            if(!key_intro_is_inline) container.removeAttribute("style")
+            container.innerHTML =
+                '<div class="key_intro_wrap">' +
+                    '<div class="key_intro_progress">' + key_intro_title + '　' + (key_intro_idx + 1) + ' / ' + key_intro_keys.length + '</div>' +
+                    '<div class="key_intro_glyph" id="key_intro_glyph">' + Key_Intro_Label(char) + '</div>' +
+                    '<div class="key_intro_hint">請在鍵盤上' + modifier_hint + '按下這個鍵</div>' +
+                    '<div class="key_intro_feedback" id="key_intro_feedback"></div>' +
+                '</div>'
+
+            Highlight_Key_Intro_Target(dict_key)
+        }
+
+        // 進入互動教學：把平常練習才需要的東西先藏起來，畫出第一步
+        function Start_Key_Intro(stage, on_done){
+            key_intro_active = true
+            key_intro_keys = stage.new_keys.slice()
+            key_intro_idx = 0
+            key_intro_on_done = on_done
+            key_intro_render_target = null   // 用預設的 game_char_container
+            key_intro_is_inline = false
+            key_intro_title = "新按鍵教學"
+
+            const game_retry_btn = document.querySelector(".game_retry_btn")
+            if(game_retry_btn) game_retry_btn.style.display = "none"
+            const game_retry_fixed_btn = document.getElementById("game_retry_fixed_btn")
+            if(game_retry_fixed_btn) game_retry_fixed_btn.style.display = "none"
+            const hint_el = document.querySelector(".game_input_hint")
+            if(hint_el) hint_el.style.display = "none"
+            const timer_wrap_el = document.querySelector(".game_timer_wrap")
+            if(timer_wrap_el) timer_wrap_el.style.display = "none"
+            const countdown_btn = document.getElementById("countdown_settings_btn")
+            if(countdown_btn) countdown_btn.style.display = "none"
+
+            // 教學一定要看得到鍵盤才有意義，就算玩家平常把鍵盤關掉了，這裡也先強制打開
+            const kb_wrap_el = document.getElementById("live_keyboard")
+            if(kb_wrap_el){
+                kb_wrap_el.style.display = ""
+                kb_wrap_el.classList.remove("kb_hidden")
+            }
+            const kb_toggle_el = document.getElementById("kb_toggle_btn")
+            if(kb_toggle_el) kb_toggle_el.style.display = "none"
+
+            const result_el = document.getElementById("game_result")
+            if(result_el) result_el.classList.remove("show")
+            const next_btn = document.querySelector(".next_game_btn")
+            if(next_btn) next_btn.style.display = "none"
+
+            Render_Key_Intro_Step()
+        }
+
+        // 教完最後一顆鍵：清掉金框、把畫面交回去給正式的 Init() 流程
+        function Finish_Key_Intro(){
+            key_intro_active = false
+            const callback = key_intro_on_done
+            const was_inline = key_intro_is_inline
+            key_intro_on_done = null
+            key_intro_render_target = null
+            key_intro_is_inline = false
+
+            if(kb_current_el){
+                kb_current_el.classList.remove("kb_current")
+                kb_current_el = null
+            }
+            kb_current_modifier_els.forEach(function(el){
+                el.classList.remove("kb_current_modifier")
+            })
+            kb_current_modifier_els = []
+
+            // 【新增】inline 模式（教學說明頁內嵌練習）不去動鍵盤開關按鈕，
+            // 因為那顆按鈕在教學說明頁本來就依 is_tutorial_stage 被隱藏，不該被這裡重新打開
+            if(!was_inline){
+                const kb_toggle_el = document.getElementById("kb_toggle_btn")
+                if(kb_toggle_el) kb_toggle_el.style.display = ""
+            }
+
+            if(typeof callback === "function") callback()
+        }
+
+        // ===== 【新增】教學說明頁內嵌互動練習 =====
+        // 跟 Start_Key_Intro 共用同一套 key_intro_* 狀態機／鍵盤反饋／判斷邏輯，
+        // 差別只在於：不是整頁接管（不隱藏計時器、再試一次等頁面元件——那些教學說明頁本來就沒顯示），
+        // 而是把每一步的畫面畫進呼叫端指定的 container_el 裡，教完呼叫 on_done。
+        function Start_Inline_Key_Practice(container_el, keys, on_done, title){
+            if(!container_el || !keys || keys.length === 0) return
+
+            key_intro_active = true
+            key_intro_keys = keys.slice()
+            key_intro_idx = 0
+            key_intro_on_done = on_done
+            key_intro_render_target = container_el
+            key_intro_is_inline = true
+            key_intro_title = title || "互動練習"
+
+            // 教學一定要看得到鍵盤，不管平常開關偏好、也不管這是教學說明頁（預設會把鍵盤整組隱藏），
+            // 這裡強制打開，讓玩家可以對照鍵盤位置
+            const kb_wrap_el = document.getElementById("live_keyboard")
+            if(kb_wrap_el){
+                kb_wrap_el.style.display = ""
+                kb_wrap_el.classList.remove("kb_hidden")
+            }
+
+            Render_Key_Intro_Step()
+        }
+
+        // ===== 【新增】1-9-1 專用：選字流程模擬器 =====
+        // 用假的「選字視窗」畫面，帶玩家實際按過一次「↓ 叫出選字視窗」「按數字選字」
+        // 「方向鍵移動游標＋選字修正錯字」，而不是只用文字描述這些操作。
+        let ime_sim_active = false
+        let ime_sim_state = 0
+        let ime_sim_container = null
+        let ime_sim_left_count = 0     // state 2 用：已經按了幾次 ←
+        let ime_sim_on_done = null
+
+        function Start_IME_Selection_Sim(container_el, on_done){
+            if(!container_el) return
+            ime_sim_container = container_el
+            ime_sim_state = 0
+            ime_sim_left_count = 0
+            ime_sim_on_done = on_done
+            ime_sim_active = true
+            Render_IME_Sim_State()
+        }
+
+        function Ime_Sim_Wrap(progress_text, instruction_html, body_html, feedback_html){
+            return '<div class="key_intro_wrap" style="max-width:500px;">' +
+                '<div class="key_intro_progress">選字流程模擬　' + progress_text + '</div>' +
+                (body_html || '') +
+                '<div class="key_intro_hint" style="margin-top:0.6rem;">' + instruction_html + '</div>' +
+                '<div class="key_intro_feedback" id="ime_sim_feedback">' + (feedback_html || '') + '</div>' +
+                '</div>'
+        }
+
+        function Ime_Sim_Candidate_Html(candidates, highlight_num){
+            let html = '<div style="display:flex; gap:0.5rem; justify-content:center; flex-wrap:wrap; margin:0.6rem 0;">'
+            candidates.forEach(function(c, i){
+                const num = i + 1
+                const is_target = highlight_num === num
+                html += '<div style="min-width:2.6rem; padding:0.4rem 0.3rem; border-radius:6px; text-align:center; font-size:1.1rem; ' +
+                    'border:1px solid ' + (is_target ? '#c9a84c' : 'rgba(255,255,255,0.3)') + '; ' +
+                    'background:' + (is_target ? 'rgba(201,168,76,0.18)' : 'transparent') + '; color:white;">' +
+                    '<div>' + c + '</div>' +
+                    '<div style="font-size:0.75rem; color:#c9a84c; margin-top:0.2rem;">' + num + '</div>' +
+                    '</div>'
+            })
+            html += '</div>'
+            return html
+        }
+
+        function Render_IME_Sim_State(){
+            if(!ime_sim_container) return
+
+            if(ime_sim_state === 0){
+                ime_sim_container.innerHTML = Ime_Sim_Wrap(
+                    "1 / 5",
+                    "請按 <b style='color:#c9a84c;'>↓（方向鍵下）</b>，叫出選字視窗",
+                    '<div style="text-align:center; font-size:1.3rem; color:#eee;">你打了 <b style="color:#c9a84c;">ㄉㄚˇ</b>，系統自動選成了「<span style="text-decoration:underline wavy #ff6b6b;">大</span>」（打錯了）</div>'
+                )
+            } else if(ime_sim_state === 1){
+                ime_sim_container.innerHTML = Ime_Sim_Wrap(
+                    "2 / 5",
+                    "選字視窗跳出來了！請按數字鍵 <b style='color:#c9a84c;'>2</b>，選出正確的字",
+                    Ime_Sim_Candidate_Html(["大","打","答","dá","搭"], 2)
+                )
+            } else if(ime_sim_state === 2){
+                ime_sim_container.innerHTML = Ime_Sim_Wrap(
+                    "3 / 5",
+                    "接著練習改錯字：請按 <b style='color:#c9a84c;'>←（左方向鍵）兩次</b>，把游標移到錯字「門」後面（目前已按 " + ime_sim_left_count + " / 2 次）",
+                    '<div style="text-align:center; font-size:1.3rem; color:#eee;">我<span style="text-decoration:underline wavy #ff6b6b;">門</span>要打字<span style="opacity:0.5;">|</span></div>'
+                )
+            } else if(ime_sim_state === 3){
+                ime_sim_container.innerHTML = Ime_Sim_Wrap(
+                    "4 / 5",
+                    "游標已經移到「門」後面了！請按 <b style='color:#c9a84c;'>↓（方向鍵下）</b>，叫出這個字的選字視窗",
+                    '<div style="text-align:center; font-size:1.3rem; color:#eee;">我門<span style="opacity:0.5;">|</span>要打字</div>'
+                )
+            } else if(ime_sim_state === 4){
+                ime_sim_container.innerHTML = Ime_Sim_Wrap(
+                    "5 / 5",
+                    "請按數字鍵 <b style='color:#c9a84c;'>3</b>，選出正確的字「們」",
+                    Ime_Sim_Candidate_Html(["門","悶","們","聞"], 3)
+                )
+            } else {
+                ime_sim_active = false
+                ime_sim_container.innerHTML =
+                    '<div style="text-align:center; padding:0.8rem 0;">' +
+                        '<div style="color:#c9a84c; font-size:1.2rem; margin-bottom:0.3rem;">✓ 太棒了，修正完成！</div>' +
+                        '<div style="font-size:1.2rem; color:#eee;">我們要打字</div>' +
+                    '</div>'
+                if(typeof ime_sim_on_done === "function") ime_sim_on_done()
+            }
+        }
+
+        document.addEventListener("keydown", function(event){
+            if(!ime_sim_active) return
+
+            const fb = document.getElementById("ime_sim_feedback")
+
+            if(ime_sim_state === 0 || ime_sim_state === 3){
+                if(event.key !== "ArrowDown") return
+                event.preventDefault()
+                if(typeof Play_Correct_Sound === "function") Play_Correct_Sound()
+                ime_sim_state++
+                Render_IME_Sim_State()
+                return
+            }
+
+            if(ime_sim_state === 1 || ime_sim_state === 4){
+                const expect = (ime_sim_state === 1) ? "2" : "3"
+                if(event.key === expect){
+                    if(typeof Play_Correct_Sound === "function") Play_Correct_Sound()
+                    ime_sim_state++
+                    Render_IME_Sim_State()
+                } else if(/^[0-9]$/.test(event.key)){
+                    if(fb){
+                        fb.textContent = "不是這個編號喔，再看看選字視窗裡標示金框的那個"
+                        fb.className = "key_intro_feedback key_intro_feedback_bad"
+                    }
+                    if(typeof Play_Wrong_Sound === "function") Play_Wrong_Sound()
+                }
+                return
+            }
+
+            if(ime_sim_state === 2){
+                if(event.key !== "ArrowLeft") return
+                event.preventDefault()
+                ime_sim_left_count++
+                if(typeof Play_Correct_Sound === "function") Play_Correct_Sound()
+                if(ime_sim_left_count >= 2){
+                    ime_sim_state++
+                    ime_sim_left_count = 0
+                }
+                Render_IME_Sim_State()
+                return
+            }
+        })
+
+        // ===== 【新增】1-0-3 專用：手指分工小測驗 =====
+        // 跟 key_intro 系統分開一套獨立的狀態機（不影響其他頁面／不會互相干擾），
+        // 隨機出題「這個注音符號該用哪根手指」，玩家直接在鍵盤上按下對應的鍵作答，
+        // 答對答錯都會告訴玩家正確答案是哪根手指，最後顯示總結分數。
+        const finger_quiz_map = [
+            {key:"1",finger:"左手小指"},{key:"q",finger:"左手小指"},{key:"a",finger:"左手小指"},{key:"z",finger:"左手小指"},
+            {key:"2",finger:"左手無名指"},{key:"w",finger:"左手無名指"},{key:"s",finger:"左手無名指"},
+            {key:"3",finger:"左手中指"},{key:"e",finger:"左手中指"},{key:"d",finger:"左手中指"},{key:"x",finger:"左手中指"},
+            {key:"4",finger:"左手食指"},{key:"r",finger:"左手食指"},{key:"f",finger:"左手食指"},{key:"c",finger:"左手食指"},
+            {key:"5",finger:"左手食指"},{key:"t",finger:"左手食指"},{key:"g",finger:"左手食指"},{key:"v",finger:"左手食指"},{key:"6",finger:"左手食指"},
+            {key:"7",finger:"右手食指"},{key:"y",finger:"右手食指"},{key:"h",finger:"右手食指"},{key:"b",finger:"右手食指"},
+            {key:"u",finger:"右手食指"},{key:"j",finger:"右手食指"},{key:"n",finger:"右手食指"},{key:"m",finger:"右手食指"},
+            {key:"8",finger:"右手中指"},{key:"i",finger:"右手中指"},{key:"k",finger:"右手中指"},{key:",",finger:"右手中指"},
+            {key:"9",finger:"右手無名指"},{key:"o",finger:"右手無名指"},{key:"l",finger:"右手無名指"},{key:".",finger:"右手無名指"},
+            {key:"-",finger:"右手小指"},{key:"p",finger:"右手小指"},{key:";",finger:"右手小指"},{key:"/",finger:"右手小指"}
+        ]
+        let finger_quiz_active = false
+        let finger_quiz_items = []
+        let finger_quiz_idx = 0
+        let finger_quiz_correct = 0
+        let finger_quiz_container = null
+        let finger_quiz_awaiting_next = false   // 答完一題、等玩家看完反饋再進下一題的緩衝期，避免這期間誤判成下一題的答案
+
+        function Shuffle_Array(arr){
+            const a = arr.slice()
+            for(let i = a.length - 1; i > 0; i--){
+                const j = Math.floor(Math.random() * (i + 1))
+                ;[a[i], a[j]] = [a[j], a[i]]
+            }
+            return a
+        }
+
+        function Start_Finger_Quiz(container_el, num_rounds){
+            if(!container_el) return
+            finger_quiz_container = container_el
+            finger_quiz_items = Shuffle_Array(finger_quiz_map).slice(0, num_rounds)
+            finger_quiz_idx = 0
+            finger_quiz_correct = 0
+            finger_quiz_active = true
+            finger_quiz_awaiting_next = false
+            Render_Finger_Quiz_Round()
+        }
+
+        function Render_Finger_Quiz_Round(){
+            if(!finger_quiz_container) return
+            if(finger_quiz_idx >= finger_quiz_items.length){
+                finger_quiz_active = false
+                if(kb_current_el){
+                    kb_current_el.classList.remove("kb_current")
+                    kb_current_el = null
+                }
+                finger_quiz_container.innerHTML =
+                    '<div style="text-align:center; padding:0.8rem 0;">' +
+                        '<div style="color:#c9a84c; font-size:1.1rem; margin-bottom:1.5rem;">測驗完成！答對 ' + finger_quiz_correct + ' / ' + finger_quiz_items.length + ' 題</div>' +
+                        '<button style="font-size:0.85rem; padding:0.4rem 1rem; background:transparent; border:1px solid #c9a84c; color:#c9a84c; border-radius:4px; cursor:pointer;" onclick="Start_Finger_Quiz(finger_quiz_container, ' + finger_quiz_items.length + ')">再試一次</button>' +
+                    '</div>'
+                return
+            }
+            const item = finger_quiz_items[finger_quiz_idx]
+            const glyph = bopomofo[item.key]
+            finger_quiz_container.innerHTML =
+                '<div class="key_intro_wrap">' +
+                    '<div class="key_intro_progress">手指小測驗　' + (finger_quiz_idx + 1) + ' / ' + finger_quiz_items.length + '</div>' +
+                    '<div class="key_intro_glyph" id="finger_quiz_glyph">' + glyph + '</div>' +
+                    '<div class="key_intro_hint">這個符號該用哪根手指？直接按下對應的鍵作答</div>' +
+                    '<div class="key_intro_feedback" id="finger_quiz_feedback"></div>' +
+                '</div>'
+
+            if(kb_current_el){
+                kb_current_el.classList.remove("kb_current")
+                kb_current_el = null
+            }
+            const el = kb_key_elements[item.key]
+            if(el){
+                el.classList.add("kb_current")
+                kb_current_el = el
+            }
+        }
+
+        document.addEventListener("keydown", function(event){
+            if(!finger_quiz_active) return
+            if(finger_quiz_awaiting_next) return
+            if(finger_quiz_idx >= finger_quiz_items.length) return
+
+            const item = finger_quiz_items[finger_quiz_idx]
+            let key = event.key
+            // 跟其他監聽一樣，, . 這兩顆物理鍵要用 code 判斷，這裡測驗只考基本注音，一律當一般鍵處理
+            if(event.code === "Comma") key = ","
+            if(event.code === "Period") key = "."
+            if(bopomofo[key] === undefined) return
+            if(key === " ") event.preventDefault()
+
+            const fb = document.getElementById("finger_quiz_feedback")
+            const glyph_el = document.getElementById("finger_quiz_glyph")
+            const is_correct = (key === item.key)
+
+            if(is_correct) finger_quiz_correct++
+            if(fb){
+                fb.textContent = (is_correct ? "✓ 答對了！" : "✗ 差一點，") + "正確答案是「" + item.finger + "」"
+                fb.className = "key_intro_feedback " + (is_correct ? "key_intro_feedback_ok" : "key_intro_feedback_bad")
+            }
+            if(!is_correct && glyph_el){
+                glyph_el.classList.remove("key_intro_glyph_shake")
+                void glyph_el.offsetWidth
+                glyph_el.classList.add("key_intro_glyph_shake")
+            }
+            if(typeof Flash_Keyboard_Key === "function") Flash_Keyboard_Key(item.key, is_correct)
+            if(is_correct){
+                if(typeof Play_Correct_Sound === "function") Play_Correct_Sound()
+            } else {
+                if(typeof Play_Wrong_Sound === "function") Play_Wrong_Sound()
+            }
+
+            finger_quiz_awaiting_next = true
+            finger_quiz_idx++
+            setTimeout(function(){
+                finger_quiz_awaiting_next = false
+                Render_Finger_Quiz_Round()
+            }, 700)
+        })
+
+        // ===== 【新增】教學說明頁用：把幾顆鍵暫時亮在即時鍵盤上做示範 =====
+        // keys：物理鍵位字串陣列（對照 kb_layout 裡的 key，例如 "1","q","a","z"）
+        // sequential：true 代表一顆一顆依序亮起再暗掉（示範「順序」用，例如「由上往下、由左往右」）
+        //             false 代表全部同時亮起、停留一段時間再一起暗掉（示範「一整群」用，例如「韻母都在右手邊」）
+        let tutorial_highlight_timers = []   // 記錄目前排隊中的 timeout，重複點擊時要先清掉，避免亮燈疊在一起亂跳
+        function Highlight_Keys_Temporarily(keys, sequential){
+            window.scrollBy(0, 9999)
+            tutorial_highlight_timers.forEach(function(t){ clearTimeout(t) })
+            tutorial_highlight_timers = []
+
+            // 保險起見，先把上一輪可能還亮著的都關掉
+            keys.forEach(function(k){
+                const el = kb_key_elements[Resolve_Physical_Key(k)]
+                if(el) el.classList.remove("kb_current")
+            })
+
+            if(sequential){
+                keys.forEach(function(k, i){
+                    const el = kb_key_elements[Resolve_Physical_Key(k)]
+                    if(!el) return
+                    tutorial_highlight_timers.push(setTimeout(function(){
+                        el.classList.add("kb_current")
+                        tutorial_highlight_timers.push(setTimeout(function(){
+                            el.classList.remove("kb_current")
+                        }, 500))
+                    }, i * 550))
+                })
+            } else {
+                keys.forEach(function(k){
+                    const el = kb_key_elements[Resolve_Physical_Key(k)]
+                    if(el) el.classList.add("kb_current")
+                })
+                tutorial_highlight_timers.push(setTimeout(function(){
+                    keys.forEach(function(k){
+                        const el = kb_key_elements[Resolve_Physical_Key(k)]
+                        if(el) el.classList.remove("kb_current")
+                    })
+                }, 2000))
+            }
+        }
+
+        // 教學期間專用的按鍵監聽：跟正式練習完全分開判斷，不會動到 target / current
+        document.addEventListener("keydown", function(event){
+            if(!key_intro_active) return
+            if(key_intro_idx >= key_intro_keys.length) return
+
+            const expected_char = key_intro_keys[key_intro_idx]
+
+            let key = event.key
+            // 跟正式練習同一套處理：, 和 . 這兩顆物理鍵身兼兩用（一般注音 / 全形標點），
+            // 要看這一步教的是不是全形逗號、句號，才能判斷玩家按下去代表哪個字元
+            if(event.code === "Comma"){
+                key = (expected_char === "，") ? "，" : ","
+            }
+            if(event.code === "Period"){
+                key = (expected_char === "。") ? "。" : "."
+            }
+
+            if(key === " ") event.preventDefault()      // 空白鍵預設會捲動頁面
+            if(key === "Enter") event.preventDefault()   // 避免觸發其他監聽 Enter 的副作用
+
+            // 不在對照表裡的鍵（Shift / Ctrl / Alt 等功能鍵本身送出的 keydown）直接忽略，不算打錯
+            if(bopomofo[key] === undefined) return
+
+            const dict_key = Find_Key_For_Zhuyin(expected_char) || expected_char
+
+            if(bopomofo[key] === expected_char){
+                Flash_Keyboard_Key(dict_key, true)
+                Show_Key_Intro_Feedback(true)
+                if(typeof Play_Correct_Sound === "function") Play_Correct_Sound()
+                key_intro_idx++
+                setTimeout(function(){
+                    if(key_intro_idx >= key_intro_keys.length){
+                        Finish_Key_Intro()
+                    } else {
+                        Render_Key_Intro_Step()
+                    }
+                }, 450)
+            } else {
+                Flash_Keyboard_Key(dict_key, false)
+                Show_Key_Intro_Feedback(false)
+                if(typeof Play_Wrong_Sound === "function") Play_Wrong_Sound()
+            }
+        })
 
         // ===== 遊戲狀態變數 =====
         let target = ""          // 這關要打的字串
@@ -2509,6 +3153,17 @@
             document.getElementById("game_stage_id").textContent = stage.id
             document.getElementById("game_stage_name").textContent = stage.name + (stage.name2 ? " " + stage.name2 : "")
 
+            // 【新增】如果這一關有教新按鍵（level data 裡的 new_keys），
+            // 且這次進到這一關還沒顯示過教學，就先跳出「按過一次新鍵才正式開始」的
+            // 互動教學，教完才繼續往下跑正式的 Init 流程。
+            // 用 key_intro_shown_for_stage 擋住，這樣「再試一次」／調整WPM 重跑 Init()
+            // 才不會每次都重播一次教學。
+            if(stage.new_keys && stage.new_keys.length > 0 && !key_intro_shown_for_stage){
+                key_intro_shown_for_stage = true
+                Start_Key_Intro(stage, function(){ Init() })
+                return
+            }
+
             // 【新增】這關如果不是計分關卡（不會採計平均值），排行榜永遠不會有資料，
             // 乾脆連按鈕都不顯示，不要讓玩家點進一個永遠空白的頁面
             const rank_floating_btn = document.getElementById("game_rank_floating_btn")
@@ -2651,32 +3306,58 @@
                             開始打字的第一步：摸到那條「線」
                         </p>
                         
-                        <p style="margin-bottom: 1.2rem; color: #ffffff;font-weight: 100;">
+                        <p style="margin-bottom: 1.2rem; color: #ffffff;font-weight: 300;">
                             所有打字高手在打字時，眼睛是不看鍵盤的。他們之所以不會按錯，是因為雙手食指隨時都靠在<b style="font-weight: 400;color: #c9a84c">「基準鍵（Home Row）」</b>上。
                         </p>
 
                         <div style="background-color: rgba(14, 36, 62, 0.6); padding: 1rem; border-radius: 8px; border-left: 4px solid #c9a84c; margin-bottom: 1.5rem;">
-                            <b style="color: #c9a84c;">請現在跟著做：</b><br>
+                            <b style="color: #c9a84c;line-height: 2rem">請現在跟著做：</b><br>
                             1. 將左手食指放在鍵盤的 <b style=" color: #c9a84c;font-size: 1.1rem">F</b> 鍵上（注音 <b style=" color: #c9a84c;font-size: 1.1rem">ㄑ</b>）<br>
                             2. 將右手食指放在鍵盤的 <b style=" color: #c9a84c;font-size: 1.1rem">J</b> 鍵上（注音 <b style=" color: #c9a84c;font-size: 1.1rem">ㄨ</b>）
                         </div>
 
+                        
+
+                        <p style="color: #c9a84c; font-size: 1.2rem; text-align: center; margin-top: 1.5rem; margin-bottom: 0.8rem;font-weight: 300">
+                            請依照畫面指示，依序按下 F 鍵、再按下 J 鍵（請切換到英文輸入法）
+                        </p>
+                        <div id="tut101_practice"></div>
+
                         <p style="margin-bottom: 1.2rem; line-height: 1.8rem;">
                             💡 <b>摸到了嗎？</b> <br>
-                            這兩個按鍵上有一個<b style="font-weight: 400;color: #c9a84c">凸起的小橫線</b>。這條橫線就是盲打的基礎。不論你的手指移到多遠去按別的字，按完後，兩隻食指都必須立刻<b>「彈回」</b>這兩個定位點。
+                            這兩個按鍵上有一個<b style="font-weight: 500;color: #c9a84c">凸起的小橫線</b>。這條橫線就是盲打的基礎。不論你的手指移到多遠去按別的字，按完後，兩隻食指都必須立刻<b>「彈回」</b>這兩個定位點。
                         </p>
 
-                        <p style="color: gray; font-size: 0.9.rem; text-align: center; margin-top: 2rem;">
-                            準備好將雙手放到正確位置了嗎？
+                        <p id="tut101_next_hint" style="color: gray; font-size: 0.9rem; text-align: center; margin-top: 2rem;">
+                            完成上面的練習後，就可以進入下一頁囉！
                         </p>
-                        <button style="width: 10rem; height: 3rem; margin: auto; margin-top: 1.5rem; background-color: #c9a84c; display: flex; justify-content: center; align-items: center; color: var(--dark-blue); font-family: 'Noto Serif TC', serif; font-size: 1rem; letter-spacing: 2px; border: none; border-radius: 4px; cursor: pointer; transition: all 200ms ease;""
+                        <button id="tut101_next_btn" style="display:none; width: 10rem; height: 3rem; margin: auto; margin-top: 1.5rem; background-color: #c9a84c; display: flex; justify-content: center; align-items: center; color: var(--dark-blue); font-family: 'Noto Serif TC', serif; font-size: 1rem; letter-spacing: 2px; border: none; border-radius: 4px; cursor: pointer; transition: all 200ms ease;""
                                 onclick="window.location.href='game.html?stage=1-0-2'">
                             下一頁 →
                         </button>                    
                         </div>`
                     let progress = JSON.parse(localStorage.getItem("stage_progress")) || {} 
+                    // 【新增】補上防重複判斷——這裡原本沒有任何 is_first_time_clear 檢查，
+                    // 每次重新造訪這關都會無條件寫 true，如果不擋，Firebase 完成數會被重複灌水
+                    const is_first_time_clear_101 = progress[stageId] !== true
+                    if(is_first_time_clear_101 && typeof Sync_Stage_Completion === "function"){
+                        Sync_Stage_Completion(stageId)
+                    }
                     progress[stageId] = true
                     localStorage.setItem("stage_progress", JSON.stringify(progress))
+
+                    // 【新增】內嵌互動練習：依序按 F（ㄑ）、J（ㄨ），完成後才讓「下一頁」按鈕出現
+                    Start_Inline_Key_Practice(
+                        document.getElementById("tut101_practice"),
+                        ["ㄑ", "ㄨ"],
+                        function(){
+                            const next_btn = document.getElementById("tut101_next_btn")
+                            const next_hint = document.getElementById("tut101_next_hint")
+                            if(next_hint) next_hint.textContent = "太棒了！雙手已經找到基準鍵的位置了 🎉"
+                            if(next_btn) next_btn.style.display = "flex"
+                        },
+                        "基準鍵練習"
+                    )
                 }
                 else if(stage.id === "1-0-2"){
                     game_char_container.innerHTML = `
@@ -2689,10 +3370,13 @@
                                 大千式排列是由大千公司設計、後來成為台灣國家標準（CNS 2690）的注音輸入法鍵盤排列方式。<br>市面上99%的鍵盤佈局都為此種形式，掌握他的排列規則，能有效提升打字速度。                            </p>
 
                             <div style="background-color: rgba(14, 36, 62, 0.6); padding: 1.2rem; border-radius: 8px; border-left: 4px solid #c9a84c; margin-bottom: 1.5rem; line-height: 1.8rem;">
-                                <b style="color: #c9a84c; font-size: 1.1rem;">．三大排列隱藏規則：</b><br>
-                                <span style="color: #c9a84c;font-size: 1rem;font-weight: 500;">1. 聲母由上往下排：</span> 鍵盤最左邊那一縱列，<b>1➔Q➔A➔Z</b>，剛好對應 <b style="font-size: 1rem;">ㄅㄆㄇㄈ</b>接著往右看第二列 <b>&nbsp &nbsp &nbsp2➔W➔S➔X</b>，就是 <b style="font-size: 1rem;">ㄉㄊㄋㄌ</b>。它是「由上往下、再由左往右」整齊排列的。<br>                                
-                                <span style="color: #c9a84c;font-size: 1rem;font-weight: 500;"">2. 韻母藏在右手邊：</span> 介音（ㄧㄨㄩ）和韻母（ㄚㄛㄜㄝ...）幾乎全部集中在鍵盤的<b>右手邊</b>。<br>
+                                <b style="color: #c9a84c; font-size: 1.1rem;line-height:2rem">．三大排列隱藏規則：</b><br>
+                                <span style="color: #c9a84c;font-size: 1rem;font-weight: 500;">1. 聲母由上往下排：</span> 鍵盤最左邊那一縱列，<b>1➔Q➔A➔Z</b>，剛好對應 <b style="font-size: 1rem;">ㄅㄆㄇㄈ</b>接著往右看第二列 <b>&nbsp &nbsp &nbsp2➔W➔S➔X</b>，就是 <b style="font-size: 1rem;">ㄉㄊㄋㄌ</b>。它是「由上往下、再由左往右」整齊排列的。<br>
+                                <button class="tut_demo_btn" style="margin-left:0.5rem; font-size:0.8rem; padding:0.2rem 0.6rem; background:transparent; border:1px solid #c9a84c; color:#c9a84c; border-radius:4px; cursor:pointer;margin-bottom:1rem;" onclick="Highlight_Keys_Temporarily(['1','q','a','z','2','w','s','x'], true)">👆 在鍵盤上示範</button><br>
+                                <span style="color: #c9a84c;font-size: 1rem;font-weight: 500;"">2. 韻母藏在右手邊：</span> 介音（ㄧㄨㄩ）和韻母（ㄚㄛㄜㄝ...）幾乎全部集中在鍵盤的<b>右手邊</b>。
+                                <button class="tut_demo_btn" style="margin-left:0.5rem; font-size:0.8rem; padding:0.2rem 0.6rem; background:transparent; border:1px solid #c9a84c; color:#c9a84c; border-radius:4px; cursor:pointer;margin-bottom:1rem;" onclick="Highlight_Keys_Temporarily(['u','i','o','p','j','k','l',';','m',',','.','/'], false)">👆 在鍵盤上示範</button><br>
                                 <span style="color: #c9a84c;font-size: 1rem;font-weight: 500;"">3. 聲調在鍵盤上排：</span> 輕聲、二聲、三聲、四聲（˙ ˊ ˇ ˋ）整齊地排在數字鍵 7、6、3、4。
+                                <button class="tut_demo_btn" style="margin-left:0.5rem; font-size:0.8rem; padding:0.2rem 0.6rem; background:transparent; border:1px solid #c9a84c; color:#c9a84c; border-radius:4px; cursor:pointer;margin-bottom:1rem;" onclick="Highlight_Keys_Temporarily(['7','6','3','4'], false)">👆 在鍵盤上示範</button>
                             </div>
 
                             <p style="margin-bottom: 1.2rem; line-height: 1.8rem;">
@@ -2710,8 +3394,22 @@
                             </button>
                         </div>`
                     let progress = JSON.parse(localStorage.getItem("stage_progress")) || {} 
+                    // 【新增】補上防重複判斷，理由跟 1-0-1 那處完全一樣
+                    const is_first_time_clear_102 = progress[stageId] !== true
+                    if(is_first_time_clear_102 && typeof Sync_Stage_Completion === "function"){
+                        Sync_Stage_Completion(stageId)
+                    }
                     progress[stageId] = true
                     localStorage.setItem("stage_progress", JSON.stringify(progress))
+
+                    // 【新增】這頁的「在鍵盤上示範」按鈕需要看得到即時鍵盤，強制打開
+                    {
+                        const kb_wrap_el = document.getElementById("live_keyboard")
+                        if(kb_wrap_el){
+                            kb_wrap_el.style.display = ""
+                            kb_wrap_el.classList.remove("kb_hidden")
+                        }
+                    }
                 }
                 else if(stage.id === "1-0-3"){
                     game_char_container.innerHTML = `
@@ -2720,29 +3418,44 @@
                                 鍵盤指法：十指的「守備範圍」
                             </p>
                             
-                            <p style="margin-bottom: 1.2rem; color: #ffffff; font-weight: 100; line-height: 1.8rem;">
+                            <p style="margin-bottom: 1.2rem; color: #ffffff; font-weight: 300; line-height: 1.8rem;">
                                 想提升打字速度，<b>「各司其職」</b>至關重要。鍵盤上的按鍵不是垂直的，而是向左傾斜。每隻手指都有自己專屬管轄的「傾斜縱列」！
                             </p>
 
                             <div style="background-color: rgba(14, 36, 62, 0.6); padding: 1.2rem; border-radius: 8px; border-left: 4px solid #c9a84c; margin-bottom: 1.5rem; line-height: 1.8rem;">
-                                <b style="color: #c9a84c; font-size: 1.1rem;">✋ 雙手手指正確分工：</b><br>
+                                <b style="color: #c9a84c; font-size: 1.1rem;">雙手手指正確分工：</b> <br>
                                 <span style="color: #c9a84c; font-size: 1rem;">1. 左手四指（由外往內）：</span> <br>
-                                 • 小指專管：<b style="font-size: 1.2rem">ㄅ ㄆ ㄇ ㄈ</b><br>
-                                 • 無名指管：<b style="font-size: 1.2rem">ㄉ ㄊ ㄋ</b><br>
-                                 • 中指專管：<b style="font-size: 1.2rem"> ˇ ㄍ ㄎ ㄌ</b><br>
-                                 • 食指管轄：<b style="font-size: 1.2rem">4 ㄐ ㄑ ㄏ 5 ㄔ ㄕ ㄒ 6</b><br>
+                                 • 小指專管：<b style="font-size: 1.2rem">ㄅ ㄆ ㄇ ㄈ</b>
+                                 <button class="tut_demo_btn" style="margin-left:0.4rem; font-size:0.75rem; padding:0.15rem 0.5rem; background:transparent; border:1px solid #c9a84c; color:#c9a84c; border-radius:4px; cursor:pointer;" onclick="Highlight_Keys_Temporarily(['1','q','a','z'], false)">👆 示範</button><br>
+                                 • 無名指管：<b style="font-size: 1.2rem">ㄉ ㄊ ㄋ</b>
+                                 <button class="tut_demo_btn" style="margin-left:0.4rem; font-size:0.75rem; padding:0.15rem 0.5rem; background:transparent; border:1px solid #c9a84c; color:#c9a84c; border-radius:4px; cursor:pointer;" onclick="Highlight_Keys_Temporarily(['2','w','s'], false)">👆 示範</button><br>
+                                 • 中指專管：<b style="font-size: 1.2rem"> ˇ ㄍ ㄎ ㄌ</b>
+                                 <button class="tut_demo_btn" style="margin-left:0.4rem; font-size:0.75rem; padding:0.15rem 0.5rem; background:transparent; border:1px solid #c9a84c; color:#c9a84c; border-radius:4px; cursor:pointer;" onclick="Highlight_Keys_Temporarily(['3','e','d','x'], false)">👆 示範</button><br>
+                                 • 食指管轄：<b style="font-size: 1.2rem">4 ㄐ ㄑ ㄏ 5 ㄔ ㄕ ㄒ 6</b>
+                                 <button class="tut_demo_btn" style="margin-left:0.4rem; font-size:0.75rem; padding:0.15rem 0.5rem; background:transparent; border:1px solid #c9a84c; color:#c9a84c; border-radius:4px; cursor:pointer;" onclick="Highlight_Keys_Temporarily(['4','r','f','c','5','t','g','v','6'], false)">👆 示範</button><br>
                                 <span style="color: #c9a84c; font-size: 1rem;">2. 右手四指（由內往外）：</span> <br>
-                                 • 食指管轄：<b style="font-size: 1.2rem">7 ㄗ ㄘ ㄖ ˙ ㄧ ㄨ ㄙ ㄩ</b><br>
-                                 • 中指專管：<b style="font-size: 1.2rem">ㄚ ㄛ ㄜ ㄝ</b><br>
-                                 • 無名指管：<b style="font-size: 1.2rem">ㄞ ㄟ ㄠ ㄡ 0</b><br>
-                                 • 小指專管：<b style="font-size: 1.2rem">ㄦ ㄣ ㄤ ㄥ</b> 以及右側所有標點符號與功能鍵。<br>
+                                 • 食指管轄：<b style="font-size: 1.2rem">7 ㄗ ㄘ ㄖ ˙ ㄧ ㄨ ㄙ ㄩ</b>
+                                 <button class="tut_demo_btn" style="margin-left:0.4rem; font-size:0.75rem; padding:0.15rem 0.5rem; background:transparent; border:1px solid #c9a84c; color:#c9a84c; border-radius:4px; cursor:pointer;" onclick="Highlight_Keys_Temporarily(['7','y','h','b','u','j','n','m'], false)">👆 示範</button><br>
+                                 • 中指專管：<b style="font-size: 1.2rem">ㄚ ㄛ ㄜ ㄝ</b>
+                                 <button class="tut_demo_btn" style="margin-left:0.4rem; font-size:0.75rem; padding:0.15rem 0.5rem; background:transparent; border:1px solid #c9a84c; color:#c9a84c; border-radius:4px; cursor:pointer;" onclick="Highlight_Keys_Temporarily(['8','i','k',','], false)">👆 示範</button><br>
+                                 • 無名指管：<b style="font-size: 1.2rem">ㄞ ㄟ ㄠ ㄡ 0</b>
+                                 <button class="tut_demo_btn" style="margin-left:0.4rem; font-size:0.75rem; padding:0.15rem 0.5rem; background:transparent; border:1px solid #c9a84c; color:#c9a84c; border-radius:4px; cursor:pointer;" onclick="Highlight_Keys_Temporarily(['9','o','l','.','0'], false)">👆 示範</button><br>
+                                 • 小指專管：<b style="font-size: 1.2rem">ㄦ ㄣ ㄤ ㄥ</b> 以及右側所有標點符號與功能鍵。
+                                 <button class="tut_demo_btn" style="margin-left:0.4rem; font-size:0.75rem; padding:0.15rem 0.5rem; background:transparent; border:1px solid #c9a84c; color:#c9a84c; border-radius:4px; cursor:pointer;" onclick="Highlight_Keys_Temporarily(['-','p',';','/','[',']','\\\\','Backspace'], false)">👆 示範</button><br>
                                 <span style="color: #c9a84c; font-size: 1rem;">3. 大拇指：</span> 雙手大拇指只專職負責敲擊<b>空白鍵</b>。
+                                 <button class="tut_demo_btn" style="margin-left:0.4rem; font-size:0.75rem; padding:0.15rem 0.5rem; background:transparent; border:1px solid #c9a84c; color:#c9a84c; border-radius:4px; cursor:pointer;" onclick="Highlight_Keys_Temporarily([' '], false)">👆 示範</button>
                             </div>
 
                             <p style="margin-bottom: 1.2rem; line-height: 1.8rem;">
                                 💡 <b>盲打的核心心法：</b> <br>
                                 當某一隻手指移開基準鍵去按別的字時，<b>其他手指要盡量留在原位</b>，按完的那隻手指要立刻「彈回」定位點（F 和 J）。只要保持這個節奏，打字速度就會開始暴增！
                             </p>
+
+                            <div style="background-color: rgba(14, 36, 62, 0.6); padding: 1.2rem; border-radius: 8px; border-left: 4px solid #c9a84c; margin-bottom: 1.5rem;">
+                                <b style="color: #c9a84c;">小測驗：考考你的手指分工</b><br>
+                                <p style="margin:0.5rem 0; color:#ccc; font-size:0.85rem;">畫面會隨機出一個注音符號，想好該用哪根手指後，直接在鍵盤上按下對應的鍵就好！</p>
+                                <div id="tut103_quiz"></div>
+                            </div>
 
                             <p style="color: gray; font-size: 1.5rem; text-align: center; margin-top: 2rem;">
                                 切記，正確率大於速度!！永遠記住這點 然後開始你的打字旅程吧~
@@ -2760,14 +3473,27 @@
                     if(is_first_time_clear){
                        increase_stage_count(get_difficulty_by_stageid(stage.id))
 
+                        // 【新增】跟本機的 increase_stage_count() 並列，兩邊互不影響——
+                        // 這行負責同步進 Firebase player_stats，給榮譽牆的關卡完成度成就用
+                        if(typeof Sync_Stage_Completion === "function"){
+                            Sync_Stage_Completion(stage.id)
+                        }
+
                         progress[stageId] = true
                         localStorage.setItem("stage_progress", JSON.stringify(progress))
                     }
 
-                    
+                    // 【新增】這頁的「示範」按鈕跟下面的小測驗都需要看得到即時鍵盤，強制打開
+                    {
+                        const kb_wrap_el = document.getElementById("live_keyboard")
+                        if(kb_wrap_el){
+                            kb_wrap_el.style.display = ""
+                            kb_wrap_el.classList.remove("kb_hidden")
+                        }
+                    }
 
-
-                    
+                    // 【新增】手指分工小測驗：隨機出 5 題注音符號，讓玩家直接在鍵盤上按對應鍵
+                    Start_Finger_Quiz(document.getElementById("tut103_quiz"), 5)
                 }
                 else if(stage.id === "1-9-1"){
                     game_char_container.innerHTML = `
@@ -2809,13 +3535,10 @@
 
                             </div>
 
-        
 
-                            <p style="color: gray; font-size: 1.5rem; text-align: center; margin-top: 2rem;">
-                                切記，正確率大於速度!！正確率大於速度!！正確率大於速度!！
-                            </p>
                             
-                            <button style="width: 10rem; height: 3rem; margin: auto; margin-top: 1.5rem; background-color: #c9a84c; display: flex; justify-content: center; align-items: center; color: var(--dark-blue); font-family: 'Noto Serif TC', serif; font-size: 1rem; letter-spacing: 2px; border: none; border-radius: 4px; cursor: pointer; transition: all 200ms ease;" 
+                            
+                            <button id="tut191_next_btn" style="display:none; width: 10rem; height: 3rem; margin: auto; margin-top: 1.5rem; background-color: #c9a84c; display: flex; justify-content: center; align-items: center; color: var(--dark-blue); font-family: 'Noto Serif TC', serif; font-size: 1rem; letter-spacing: 2px; border: none; border-radius: 4px; cursor: pointer; transition: all 200ms ease;" 
                                     onmouseover="this.style.backgroundColor='#fff'; this.style.boxShadow='0 0 10px #c9a84c';" 
                                     onmouseout="this.style.backgroundColor='#c9a84c'; this.style.boxShadow='none';"
                                     onclick="window.location.href='game.html?stage=1-9-2'">
@@ -2829,10 +3552,32 @@
                     if(is_first_time_clear){
                        increase_stage_count(get_difficulty_by_stageid(stage.id))
 
+                        // 【新增】跟本機的 increase_stage_count() 並列，兩邊互不影響——
+                        // 這行負責同步進 Firebase player_stats，給榮譽牆的關卡完成度成就用
+                        if(typeof Sync_Stage_Completion === "function"){
+                            Sync_Stage_Completion(stage.id)
+                        }
+
                         progress[stageId] = true
                         localStorage.setItem("stage_progress", JSON.stringify(progress))
                     }
-                    
+
+                    // 【新增】模擬練習需要看得到即時鍵盤，強制打開
+                    {
+                        const kb_wrap_el = document.getElementById("live_keyboard")
+                        if(kb_wrap_el){
+                            kb_wrap_el.style.display = ""
+                            kb_wrap_el.classList.remove("kb_hidden")
+                        }
+                    }
+
+                    // 【新增】選字流程模擬：完成後才讓「進入輸入練習」按鈕出現
+                    Start_IME_Selection_Sim(document.getElementById("tut191_sim"), function(){
+                        const next_btn = document.getElementById("tut191_next_btn")
+                        const next_hint = document.getElementById("tut191_next_hint")
+                        if(next_hint) next_hint.textContent = "熟悉整套流程了嗎？以後手不用離開鍵盤，選字改字都能一氣呵成 🎉"
+                        if(next_btn) next_btn.style.display = "flex"
+                    })
                 }
                 else if(stage.id === "2-1-0"){
                     game_char_container.innerHTML = `
@@ -2877,11 +3622,17 @@
 
         
 
-                            <p style="color: gray; font-size: 1.5rem; text-align: center; margin-top: 2rem;">
-                                以上符號在之後的關卡都會陸續接觸，請務必熟記！!！
+                            <div style="background-color: rgba(14, 36, 62, 0.6); padding: 1.2rem; border-radius: 8px; border-left: 4px solid #c9a84c; margin-bottom: 1.5rem;">
+                                <b style="color: #c9a84c;">⌨️ 實際打打看：標點符號互動練習</b><br>
+                                <p style="margin:0.5rem 0; color:#ccc; font-size:0.85rem;">依序出現「」、、：？！，。這幾個標點，跟著鍵盤上的金框提示，實際按一次組合鍵。</p>
+                                <div id="tut210_practice"></div>
+                            </div>
+
+                            <p id="tut210_next_hint" style="color: gray; font-size: 1.2rem; text-align: center; margin-top: 2rem;">
+                                完成上面的互動練習後，就可以進入下一頁囉！
                             </p>
                             
-                            <button style="width: 10rem; height: 3rem; margin: auto; margin-top: 1.5rem; background-color: #c9a84c; display: flex; justify-content: center; align-items: center; color: var(--dark-blue); font-family: 'Noto Serif TC', serif; font-size: 1rem; letter-spacing: 2px; border: none; border-radius: 4px; cursor: pointer; transition: all 200ms ease;" 
+                            <button id="tut210_next_btn" style="display:none; width: 10rem; height: 3rem; margin: auto; margin-top: 1.5rem; background-color: #c9a84c; display: flex; justify-content: center; align-items: center; color: var(--dark-blue); font-family: 'Noto Serif TC', serif; font-size: 1rem; letter-spacing: 2px; border: none; border-radius: 4px; cursor: pointer; transition: all 200ms ease;" 
                                     onclick="window.location.href='game.html?stage=1-9-2'">
                                 進入輸入練習 →
                             </button>
@@ -2893,10 +3644,28 @@
                     if(is_first_time_clear){
                        increase_stage_count(get_difficulty_by_stageid(stage.id))
 
+                        // 【新增】跟本機的 increase_stage_count() 並列，兩邊互不影響——
+                        // 這行負責同步進 Firebase player_stats，給榮譽牆的關卡完成度成就用
+                        if(typeof Sync_Stage_Completion === "function"){
+                            Sync_Stage_Completion(stage.id)
+                        }
+
                         progress[stageId] = true
                         localStorage.setItem("stage_progress", JSON.stringify(progress))
                     }
-                    
+
+                    // 【新增】標點符號互動練習：完成後才讓「進入輸入練習」按鈕出現
+                    Start_Inline_Key_Practice(
+                        document.getElementById("tut210_practice"),
+                        ["「", "」", "、", "：", "？", "！", "，", "。"],
+                        function(){
+                            const next_btn = document.getElementById("tut210_next_btn")
+                            const next_hint = document.getElementById("tut210_next_hint")
+                            if(next_hint) next_hint.textContent = "太棒了！這些標點符號的組合鍵你都打過一次了 🎉"
+                            if(next_btn) next_btn.style.display = "flex"
+                        },
+                        "標點符號練習"
+                    )
                 }
             }
             
@@ -3226,6 +3995,11 @@
                 if(typeof Sync_Player_Stats === "function"){
                     Sync_Player_Stats(wpm, acc)
                 }
+                // 【新增】累積字數成就：跟 Sync_Player_Stats 用同一個門檻
+                // （counts_for_leaderboard），累加這次打對的字數
+                if(typeof Sync_Chars_Typed === "function"){
+                    Sync_Chars_Typed(target_get)
+                }
             }
             // 這關本來就不計分/這次沒過關門檻，排行榜也不會有這次的資料，按鈕就不顯示，
             // 避免玩家點進去看到空的以為壞掉了
@@ -3284,6 +4058,15 @@
                 document.getElementById("game_result").style.border = "2px solid #c9a84c"
                 //過關標記 沒拿到就給空字串
                 let progress = JSON.parse(localStorage.getItem("stage_progress")) || {} 
+
+                // 【新增】只有「這關是第一次通過」才同步進 Firebase 難度完成計數，
+                // 必須在 progress[stageId] = true 覆蓋掉舊值「之前」先讀出來判斷，
+                // 不然每次重打都會讀到剛寫入的 true，變成永遠都是「第一次」
+                const is_first_time_clear_main = progress[stageId] !== true
+                if(is_first_time_clear_main && typeof Sync_Stage_Completion === "function"){
+                    Sync_Stage_Completion(stageId)
+                }
+
                 progress[stageId] = true
                 localStorage.setItem("stage_progress", JSON.stringify(progress))
             }
@@ -3355,6 +4138,7 @@
 
         //按下enter自動跳關
         document.addEventListener("keydown", function(event){
+            if(key_intro_active) return   // 【新增】新按鍵教學進行中，Enter 交給教學專用的監聽器處理
             if(event.key === "Enter"){
                 const next_btn = document.querySelector(".next_game_btn")
                 const result_showing = document.getElementById("game_result").classList.contains("show")
@@ -3459,6 +4243,7 @@
 
         document.addEventListener("keydown", function(event) {
 
+            if(key_intro_active) return   // 【新增】新按鍵教學進行中，這個監聽器完全不處理，交給教學專用的監聽器
             if(time_up) return   // 【新增】時間到了，忽略所有按鍵輸入
             if(game_over) return   // 【新增】結果畫面已經出現，忽略所有按鍵輸入，統計數字不再變動
 
