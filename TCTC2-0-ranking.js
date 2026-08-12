@@ -473,7 +473,7 @@ function Load_Own_Challenge_Rank(combo_id) {
    不同的東西（平均WPM、測驗次數、在線時長……），所以欄位標題也要跟著動態改字。
    ============================================================ */
 
-let player_metric = "avg_wpm" // "avg_wpm" | "avg_acc" | "online_seconds" | "total_points" | "page_views" | "streak_longest" | "streak_total_days"
+let player_metric = "avg_wpm" // "avg_wpm" | "avg_acc" | "online_seconds" | "total_points" | "page_views" | "streak_longest" | "streak_total_days" | "achievements_unlocked"
 
 const player_metric_buttons = {
     avg_wpm: document.getElementById("ranking_player_metric_wpm"),
@@ -484,7 +484,9 @@ const player_metric_buttons = {
     page_views: document.getElementById("ranking_player_metric_views"),
     // 【新增】連續登入天數相關的兩顆按鈕
     streak_longest: document.getElementById("ranking_player_metric_streak"),
-    streak_total_days: document.getElementById("ranking_player_metric_login_days")
+    streak_total_days: document.getElementById("ranking_player_metric_login_days"),
+    // 【新增】解鎖成就數量榜的按鈕
+    achievements_unlocked: document.getElementById("ranking_player_metric_achv")
 }
 
 // 把「總秒數」轉成「X 小時 Y 分」這種給人看的格式。
@@ -514,6 +516,10 @@ function Get_Player_Metric_Value(entry) {
     // Get_Top_Players_By_Streak / Get_Top_Players_By_Total_Login_Days 排序用的欄位完全一致
     if (player_metric === "streak_longest") return entry.streak_longest ?? 0
     if (player_metric === "streak_total_days") return entry.streak_total_days ?? 0
+    // 【新增】achievements_unlocked 對應「解鎖成就數量榜」，欄位名稱要跟
+    // player_stats/{anon_id} 底下實際存的欄位、以及 firebase.js 的
+    // Get_Top_Players_By_Achievements_Unlocked 排序用的欄位完全一致
+    if (player_metric === "achievements_unlocked") return entry.achievements_unlocked ?? 0
     return entry.online_seconds ?? 0 // 預設：在線時長榜
 }
 
@@ -574,6 +580,10 @@ function Render_Player_Leaderboard(list) {
             // 【新增】累積登入天數榜：跟 page_views 一樣不需要第二欄
             metric1_text = `${entry.streak_total_days ?? 0} 天`
             metric2_text = "—"
+        } else if (player_metric === "achievements_unlocked") {
+            // 【新增】解鎖成就數量榜：跟 page_views 一樣沒有適合搭配顯示的第二欄
+            metric1_text = `${entry.achievements_unlocked ?? 0} 項`
+            metric2_text = "—"
         }
 
         row.innerHTML = `
@@ -598,6 +608,7 @@ function Load_Player_Leaderboard() {
         && typeof Get_Top_Players_By_Page_Views === "function"
         && typeof Get_Top_Players_By_Streak === "function" // 【新增】
         && typeof Get_Top_Players_By_Total_Login_Days === "function" // 【新增】
+        && typeof Get_Top_Players_By_Achievements_Unlocked === "function" // 【新增】
 
     if (!has_firebase_functions) {
         loading_msg_el.textContent = "排行榜載入失敗，請確認 Firebase 設定是否正確。"
@@ -646,6 +657,8 @@ function Load_Player_Leaderboard() {
         Get_Top_Players_By_Streak(on_result)
     } else if (player_metric === "streak_total_days") {
         Get_Top_Players_By_Total_Login_Days(on_result)
+    } else if (player_metric === "achievements_unlocked") {
+        Get_Top_Players_By_Achievements_Unlocked(on_result)
     } else {
         Get_Top_Players_By_Online_Time(on_result)
     }
@@ -675,6 +688,12 @@ function Load_Own_Player_Rank() {
     } else if (player_metric === "streak_total_days") {
         // 【修改】0 天不上榜：邏輯同上
         order_by_field = "streak_total_days"; min_count_field = "streak_total_days"; min_count = 1
+    } else if (player_metric === "achievements_unlocked") {
+        // 【修改】0 項不上榜：門檻欄位改成用自己（achievements_unlocked）當門檻，
+        // 至少要解鎖 1 項，邏輯跟 total_points 榜、以及上面 streak_longest/
+        // streak_total_days 的「0 不上榜」規則一致，這樣「自己排名」浮窗才會
+        // 跟 Get_Top_Players_By_Achievements_Unlocked 的過濾邏輯保持一致
+        order_by_field = "achievements_unlocked"; min_count_field = "achievements_unlocked"; min_count = 1
     } else {
         order_by_field = "online_seconds"; min_count_field = null; min_count = 0
     }
@@ -689,6 +708,7 @@ function Load_Own_Player_Rank() {
         else if (player_metric === "page_views") value_text = `${result.value ?? 0} 次`
         else if (player_metric === "streak_longest") value_text = `連續 ${result.value ?? 0} 天` // 【新增】
         else if (player_metric === "streak_total_days") value_text = `${result.value ?? 0} 天` // 【新增】
+        else if (player_metric === "achievements_unlocked") value_text = `${result.value ?? 0} 項` // 【新增】
         else value_text = Format_Online_Seconds(result.value)
 
         Show_Self_Rank_Bar(result.rank, result.name, value_text)
@@ -751,6 +771,14 @@ function Switch_Player_Metric(metric) {
         stage_label_el.textContent = "玩家總榜｜累積登入天數"
         stage_label_el2.textContent = "採計標準：需至少累積 1 天登入才會上榜，不看有沒有斷過，單純累積這個玩家總共登入過幾天"
         col_header_metric1_el.textContent = "登入天數"
+        col_header_metric2_el.textContent = ""
+    } else if (metric === "achievements_unlocked") {
+        // 【新增】解鎖成就數量榜：文案風格比照瀏覽次數最多榜（不設門檻、無須額外條件）
+        stage_label_el2.style.display = "block"
+
+        stage_label_el.textContent = "玩家總榜｜解鎖成就數量最多"
+        stage_label_el2.textContent = "採計標準：不限測驗次數，統計個人榮譽牆目前累積解鎖的成就總數（銅/銀/金/白金各算一項），需造訪過榮譽牆頁面才會同步最新數字"
+        col_header_metric1_el.textContent = "解鎖成就"
         col_header_metric2_el.textContent = ""
     } else {
         stage_label_el2.style.display = "block"
@@ -866,7 +894,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     //網址明講 mode=player，就進玩家總榜（可選帶 metric 參數直接定位到某個指標）
     if (url_mode === "player") {
-        const valid_metrics = ["avg_wpm", "avg_acc", "online_seconds", "total_points", "page_views", "streak_longest", "streak_total_days"]
+        const valid_metrics = ["avg_wpm", "avg_acc", "online_seconds", "total_points", "page_views", "streak_longest", "streak_total_days", "achievements_unlocked"]
         player_metric = valid_metrics.includes(url_metric) ? url_metric : "avg_wpm"
         Switch_Ranking_Mode("player")
         return
