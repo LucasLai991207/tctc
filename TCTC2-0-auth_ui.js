@@ -32,6 +32,10 @@
     let guest_preview_stats = null
     let guest_preview_should_prompt = false
 
+    // 【新增】記住開窗前使用者焦點在哪個元素，關窗時要還原回去，
+    // 是鍵盤操作/無障礙的基本禮貌，不然關窗後焦點會憑空消失
+    let last_focused_element = null
+
     /* ============================================================
        建立 Modal 的 DOM 結構，一次建好、預設隱藏，之後只切換 class
        ============================================================ */
@@ -135,7 +139,13 @@
             el.classList.add("is_hidden")
         })
         const target = document.getElementById(view_id)
-        if (target) target.classList.remove("is_hidden")
+        if (target) {
+            target.classList.remove("is_hidden")
+            // 【新增】切換到的畫面如果有輸入框，自動把焦點放上去，
+            // 這樣切過去馬上就能打字，Enter 送出也才找得到「現在是哪個畫面」
+            const first_input = target.querySelector("input")
+            if (first_input) first_input.focus()
+        }
     }
 
     function Open_Auth_Modal(default_view) {
@@ -145,6 +155,11 @@
         Show_Auth_View(default_view || "auth_view_register")
         Clear_Auth_Errors()
 
+        // 【新增】視窗開著的時候鎖住背景捲動，避免滾輪/方向鍵讓視窗後面的頁面偷偷動，
+        // 同時記住現在的焦點在哪，關窗後要還原回去
+        last_focused_element = document.activeElement
+        document.body.style.overflow = "hidden"
+
         // 一打開就先預讀訪客資料，理由見 Preload_Guest_Preview() 的註解
         Preload_Guest_Preview()
     }
@@ -152,6 +167,74 @@
         const overlay = document.getElementById("auth_modal_overlay")
         if (overlay) overlay.classList.add("is_hidden")
         pending_register = null
+
+        // 【新增】還原背景捲動 + 焦點還給開窗前使用者原本在操作的元素
+        document.body.style.overflow = ""
+        if (last_focused_element && typeof last_focused_element.focus === "function") {
+            last_focused_element.focus()
+        }
+        last_focused_element = null
+    }
+
+    /* ============================================================
+       【新增】視窗開著時的鍵盤行為：
+       - Esc：直接關閉視窗
+       - Enter：如果焦點正在輸入框裡，等同按下當下畫面的送出按鈕
+       - Tab：把焦點鎖在視窗裡循環，不會跳到背景頁面的按鈕/連結
+       全部包在同一支函式裡，靠「視窗有沒有被 is_hidden」來判斷要不要處理，
+       所以不用在開窗/關窗時額外 add/removeEventListener，少一種要同步的狀態。
+       ============================================================ */
+    function Handle_Modal_Keydown(event) {
+        const overlay = document.getElementById("auth_modal_overlay")
+        if (!overlay || overlay.classList.contains("is_hidden")) return // 視窗沒開，不處理
+
+        if (event.key === "Escape") {
+            event.preventDefault()
+            Close_Auth_Modal()
+            return
+        }
+
+        if (event.key === "Enter") {
+            // 只有「正在輸入框裡」按 Enter 才觸發送出，避免焦點在關閉按鈕或
+            // 切換連結上時被誤觸（那些元素該用 Enter 觸發自己原本的 click 行為）
+            if (!event.target.classList || !event.target.classList.contains("auth_input")) return
+            event.preventDefault()
+
+            if (!document.getElementById("auth_view_login").classList.contains("is_hidden")) {
+                Handle_Login_Submit()
+            } else if (!document.getElementById("auth_view_register").classList.contains("is_hidden")) {
+                Handle_Register_Submit()
+            }
+            return
+        }
+
+        if (event.key === "Tab") {
+            Trap_Focus_In_Modal(event)
+        }
+    }
+
+    function Trap_Focus_In_Modal(event) {
+        const box = document.querySelector(".auth_modal_box")
+        if (!box) return
+
+        const candidates = box.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')
+        // offsetParent 為 null 代表元素本身或祖先被 display:none 藏起來（例如另一個
+        // is_hidden 的 .auth_view），Tab 不該跳到看不見的欄位上
+        const visible = Array.prototype.filter.call(candidates, function (el) {
+            return el.offsetParent !== null
+        })
+        if (visible.length === 0) return
+
+        const first = visible[0]
+        const last = visible[visible.length - 1]
+
+        if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault()
+            last.focus()
+        } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault()
+            first.focus()
+        }
     }
     function Clear_Auth_Errors() {
         ;["auth_register_error", "auth_login_error", "auth_inherit_error"].forEach(function (id) {
@@ -398,6 +481,9 @@
 
         document.getElementById("auth_inherit_yes_btn").addEventListener("click", function () { Execute_Register(true) })
         document.getElementById("auth_inherit_no_btn").addEventListener("click", function () { Execute_Register(false) })
+
+        // 【新增】Esc關閉／Enter送出／Tab焦點鎖定，見 Handle_Modal_Keydown 說明
+        document.addEventListener("keydown", Handle_Modal_Keydown)
     }
 
     document.addEventListener("DOMContentLoaded", function () {

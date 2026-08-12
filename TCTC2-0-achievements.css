@@ -3,7 +3,10 @@
     --dark-blue : #0B1E36;
     --light-blue : #0e243e;
     --champagne-gold : #c9a84c;
+    --accent-rgb : 201, 168, 76;
     --error-red : #c0392b;
+    --error-rgb : 192, 57, 43;
+    --text-rgb : 255, 255, 255;
 }
 
 .achv_main_style{
@@ -38,7 +41,7 @@
     margin: 4rem 0 0.6rem;
 }
 .achv_page_title{
-    color: whitesmoke;
+    color: rgba(var(--text-rgb), 0.92);
     font-size: 2.2rem;
     font-weight: 500;
     letter-spacing: 3px;
@@ -48,7 +51,7 @@
 /* ===== 訪客提示卡 ===== */
 .achv_guest_notice{
     background-color: var(--dark-blue);
-    border: 1px solid rgba(201, 168, 76, 0.25);
+    border: 1px solid rgba(var(--accent-rgb), 0.25);
     border-radius: 8px;
 
     padding: 2.2rem 1.8rem;
@@ -62,7 +65,7 @@
     margin: 0 0 0.8rem;
 }
 .achv_guest_notice_text{
-    color: rgba(255, 255, 255, 0.55);
+    color: rgba(var(--text-rgb), 0.55);
     font-size: 0.9rem;
     line-height: 1.8;
     letter-spacing: 0.5px;
@@ -81,7 +84,7 @@
     display: flex;
     align-items: center;
     background-color: var(--dark-blue);
-    border: 1px solid rgba(201, 168, 76, 0.25);
+    border: 1px solid rgba(var(--accent-rgb), 0.25);
     border-radius: 10px;
     padding: 1.7rem 1rem;
     margin-bottom: 0.8rem;
@@ -99,7 +102,7 @@
     transform: translateY(-50%);
     height: 55%;
     width: 1px;
-    background-color: rgba(201, 168, 76, 0.25);
+    background-color: rgba(var(--accent-rgb), 0.25);
 }
 .achv_streak_side:first-child::after{ right: 0; }
 .achv_streak_side:last-child::after{ left: 0; }
@@ -125,7 +128,7 @@
     opacity: 0.7;
 }
 .achv_streak_label{
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(var(--text-rgb), 0.5);
     font-size: 0.74rem;
     letter-spacing: 1px;
     margin-top: 0.55rem;
@@ -133,7 +136,7 @@
 
 .achv_streak_hint{
     text-align: center;
-    color: rgba(255, 255, 255, 0.35);
+    color: rgba(var(--text-rgb), 0.35);
     font-size: 0.78rem;
     letter-spacing: 0.5px;
     margin: 0 0 2.4rem;
@@ -155,7 +158,7 @@
     text-align: center;
 }
 .achv_overview_label{
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(var(--text-rgb), 0.5);
     font-size: 0.76rem;
     letter-spacing: 3px;
     margin: 0 0 0.4rem;
@@ -170,7 +173,7 @@
 }
 .achv_overview_count span{
     /* 分母（總數）用比較低調的顏色，讓分子（已解鎖）維持視覺主角 */
-    color: rgba(255, 255, 255, 0.4);
+    color: rgba(var(--text-rgb), 0.4);
     font-size: 1.1rem;
 }
 
@@ -178,7 +181,7 @@
     width: 100%;
     height: 0.55rem;
     border-radius: 999px;
-    background-color: rgba(255, 255, 255, 0.08);
+    background-color: rgba(var(--text-rgb), 0.08);
     overflow: hidden;
 }
 .achv_progress_fill{
@@ -216,10 +219,10 @@
 
     margin: 0 0 1.2rem;
     padding-bottom: 0.7rem;
-    border-bottom: 1px solid rgba(201, 168, 76, 0.2);
+    border-bottom: 1px solid rgba(var(--accent-rgb), 0.2);
 }
 .achv_category_title{
-    color: whitesmoke;
+    color: rgba(var(--text-rgb), 0.92);
     font-size: 1.1rem;
     font-weight: 500;
     letter-spacing: 2px;
@@ -264,7 +267,7 @@
     flex: 1;
     height: 0.32rem;
     border-radius: 999px;
-    background-color: rgba(255, 255, 255, 0.08);
+    background-color: rgba(var(--text-rgb), 0.08);
     overflow: hidden;
 }
 .achv_category_progress_fill{
@@ -274,7 +277,7 @@
     transition: width 400ms ease;
 }
 .achv_category_progress_text{
-    color: rgba(255, 255, 255, 0.45);
+    color: rgba(var(--text-rgb), 0.45);
     font-size: 0.72rem;
     letter-spacing: 0.5px;
     white-space: nowrap;
@@ -301,7 +304,7 @@
     transition: border-color 200ms ease;
 }
 .achv_badge_row:hover{
-    border-color: rgba(201, 168, 76, 0.35);
+    border-color: rgba(var(--accent-rgb), 0.35);
 }
 
 .pach_medal{
@@ -314,8 +317,8 @@
     align-items: center;
     justify-content: center;
 
-    background-color: rgba(201, 168, 76, 0.07);
-    border: 2px solid rgba(201, 168, 76, 0.25);
+    background-color: rgba(var(--accent-rgb), 0.07);
+    border: 2px solid rgba(var(--accent-rgb), 0.25);
 
     transition: border-color 200ms ease, box-shadow 200ms ease;
 }
@@ -336,11 +339,11 @@
 /* 未達標：虛線灰框 + 灰階 + 降低透明度 —— 這是「未解鎖」最主要的視覺語言，
    跟「已解鎖」的實線金框、彩色圖示做出明顯區隔（符合你要求的「明顯視覺差異」） */
 .pach_medal.pach_tier_locked{
-    border: 2px dashed rgba(201, 168, 76, 0.32);
+    border: 2px dashed rgba(var(--accent-rgb), 0.32);
     background-color: transparent;
 }
 .pach_medal.pach_tier_locked svg{
-    stroke: rgba(255, 255, 255, 0.28);
+    stroke: rgba(var(--text-rgb), 0.28);
 }
 .achv_badge_row.achv_badge_is_locked{
     opacity: 0.55;
@@ -367,7 +370,7 @@
 
 .pach_medal.pach_tier_gold{
     border-color: var(--champagne-gold);
-    box-shadow: 0 0 0 4px rgba(201, 168, 76, 0.2);
+    box-shadow: 0 0 0 4px rgba(var(--accent-rgb), 0.2);
 }
 .pach_medal.pach_tier_gold svg{
     stroke: var(--champagne-gold);
@@ -395,7 +398,7 @@
     margin-bottom: 0.45rem;
 }
 .achv_badge_name{
-    color: whitesmoke;
+    color: rgba(var(--text-rgb), 0.92);
     font-size: 0.9rem;
     font-weight: 500;
     letter-spacing: 1px;
@@ -415,7 +418,7 @@
     width: 100%;
     height: 0.4rem;
     border-radius: 999px;
-    background-color: rgba(255, 255, 255, 0.07);
+    background-color: rgba(var(--text-rgb), 0.07);
     overflow: hidden;
 }
 .achv_badge_progress_fill{
@@ -423,7 +426,7 @@
     border-radius: 999px;
     transition: width 400ms ease;
 
-    background-color: rgba(255, 255, 255, 0.25);   /* 預設值，locked 狀態用這個暗灰色 */
+    background-color: rgba(var(--text-rgb), 0.25);   /* 預設值，locked 狀態用這個暗灰色 */
 }
 .achv_badge_progress_fill.pach_tier_bronze{ background-color: #b08d57; }
 .achv_badge_progress_fill.pach_tier_silver{ background-color: #c7ced6; }
@@ -431,7 +434,7 @@
 .achv_badge_progress_fill.pach_tier_platinum{ background-color: #eaf3ff; }
 
 .achv_badge_caption{
-    color: rgba(255, 255, 255, 0.4);
+    color: rgba(var(--text-rgb), 0.4);
     font-size: 0.72rem;
     letter-spacing: 0.3px;
     margin: 0.35rem 0 0;
@@ -444,15 +447,15 @@
    這個是「連目標都還沒真正開放」，用小標籤明講，避免玩家誤會是網站壞了。
    ============================================================ */
 .achv_badge_row.achv_badge_pending .pach_medal{
-    border: 2px dashed rgba(255, 255, 255, 0.15);
+    border: 2px dashed rgba(var(--text-rgb), 0.15);
     opacity: 0.35;
 }
 .achv_badge_pending_tag{
     display: inline-block;
-    color: rgba(255, 255, 255, 0.35);
+    color: rgba(var(--text-rgb), 0.35);
     font-size: 0.64rem;
     letter-spacing: 1px;
-    border: 1px solid rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(var(--text-rgb), 0.18);
     border-radius: 3px;
     padding: 0.1rem 0.4rem;
     white-space: nowrap;
@@ -460,13 +463,13 @@
 
 /* ===== 尚未開放的成就分類（特殊）：整區用虛線框當「封存中」的視覺語言 ===== */
 .achv_placeholder_panel{
-    border: 1px dashed rgba(201, 168, 76, 0.3);
+    border: 1px dashed rgba(var(--accent-rgb), 0.3);
     border-radius: 8px;
     padding: 1.8rem 1rem;
     text-align: center;
 }
 .achv_achievement_empty{
-    color: rgba(255, 255, 255, 0.4);
+    color: rgba(var(--text-rgb), 0.4);
     font-size: 0.9rem;
     letter-spacing: 1px;
     text-align: center;

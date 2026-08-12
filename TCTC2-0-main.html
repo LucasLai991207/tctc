@@ -24,6 +24,8 @@
     <link rel="stylesheet" href="TCTC2-0-main_lobby.css">
     <!-- 【新增】帳號系統彈窗樣式 -->
     <link rel="stylesheet" href="TCTC2-0-auth_ui.css">
+    <!-- 【新增】全站配色主題系統：務必放在 CSS 之後、其他 script 之前，同步載入避免換色閃爍 -->
+    <script src="TCTC2-0-theme.js"></script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -82,12 +84,12 @@
                             <p class="main_lobby_main_frame_player_profile_left_div_rank">初學者</p>
                         </div>
                         <div class="main_lobby_main_frame_profileblock_wpm">
-                            <div id="main_lobby_main_frame_wpm"style="font-size: 1.4rem;color: #c9a84c;letter-spacing:3px">0</div>
-                            <div style="color: lightgray;">字/分</div>
+                            <div id="main_lobby_main_frame_wpm"style="font-size: 1.4rem;color: var(--champagne-gold);letter-spacing:3px">0</div>
+                            <div style="color: rgba(var(--text-rgb), 0.75);">字/分</div>
                         </div>
                         <div class="main_lobby_main_frame_profileblock_acc">
-                            <div id="main_lobby_main_frame_acc"style="font-size: 1.4rem;color: #c9a84c;letter-spacing:3px">0%</div>
-                            <div style="color: lightgray;">正確率</div>
+                            <div id="main_lobby_main_frame_acc"style="font-size: 1.4rem;color: var(--champagne-gold);letter-spacing:3px">0%</div>
+                            <div style="color: rgba(var(--text-rgb), 0.75);">正確率</div>
                         </div>
                         
                     </div>
@@ -213,7 +215,7 @@
                         <h6 class="main_lobby_difficulty_selector_text1-2">＃可在之後更改</h6>
                     </div>
                     <div class="main_lobby_difficulty_selector_row">
-                        <div class="main_lobby_difficulty_seletor_easy" id="main_lobby_easy_mode" onclick="Exit_mode_selector();Difficulty_Choose_Easy();">
+                        <div class="main_lobby_difficulty_seletor_easy" id="main_lobby_easy_mode" tabindex="0" onclick="Exit_mode_selector();Difficulty_Choose_Easy();">
                             <p class="main_lobby_difficulty_Level2_style">
                                 初級<span class="main_lobby_difficulty_Level_style">LEVEL I</span>
                             </p>
@@ -226,7 +228,7 @@
                                 <div class="main_lobby_difficulty_easy_intro2-1">節奏寬鬆無壓力</div>                                
                             </div>
                         </div>
-                        <div class="main_lobby_difficulty_seletor_medium" id="main_lobby_medium_mode" onclick="Exit_mode_selector();Difficulty_Choose_Medium();">
+                        <div class="main_lobby_difficulty_seletor_medium" id="main_lobby_medium_mode" tabindex="0" onclick="Exit_mode_selector();Difficulty_Choose_Medium();">
                             <p class="main_lobby_difficulty_Level2_style">
                                 中級<span class="main_lobby_difficulty_Level_style">LEVEL II</span>
                             </p>
@@ -239,7 +241,7 @@
                                 <div class="main_lobby_difficulty_easy_intro2-1">開放計時模式</div>                                
                             </div>
                         </div>
-                        <div class="main_lobby_difficulty_seletor_hard" id="main_lobby_hard_mode" onclick="Exit_mode_selector();Difficulty_Choose_Hard();">
+                        <div class="main_lobby_difficulty_seletor_hard" id="main_lobby_hard_mode" tabindex="0" onclick="Exit_mode_selector();Difficulty_Choose_Hard();">
                             <p class="main_lobby_difficulty_Level2_style">
                                 高級<span class="main_lobby_difficulty_Level_style">LEVEL III</span>
                             </p>
@@ -348,8 +350,8 @@
             if (!stageEl) return
 
             stageEl.scrollIntoView({ behavior: "smooth", block: "center" })
-            stageEl.style.outline = "2px solid #c9a84c"
-            stageEl.style.boxShadow = "0 0 10px rgba(201,168,76,0.6)"
+            stageEl.style.outline = "2px solid var(--champagne-gold)"
+            stageEl.style.boxShadow = "0 0 10px rgba(var(--accent-rgb),0.6)"
         })
     </script>
     <script defer src="https://cloud.umami.is/script.js" data-website-id="070df494-4361-4dce-ad65-a25b404811e9"></script>

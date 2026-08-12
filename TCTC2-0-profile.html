@@ -26,6 +26,8 @@
         <link rel="stylesheet" href="TCTC2-0-profile.css">
         <!-- 【新增】帳號系統彈窗樣式 -->
         <link rel="stylesheet" href="TCTC2-0-auth_ui.css">
+        <!-- 【新增】全站配色主題系統：務必放在 CSS 之後、其他 script 之前，同步載入避免換色閃爍 -->
+        <script src="TCTC2-0-theme.js"></script>
 
 
         <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -235,9 +237,14 @@
                         </div>
                     </div>
 
-                    <div class="profile_card profile_card_achievement">
-                        <p class="profile_card_title">成就</p>
-                        <p class="profile_achievement_empty">成就系統還沒開發完</p>
+                    <!-- ===== 【新增】外觀主題選色卡 =====
+                         色票清單由 TCTC2-0-theme.js 的 TCTC_THEME.THEMES 動態產生，
+                         這裡不寫死任何一顆色票，之後新增主題只需要改 theme.js 裡的資料表。
+                         點下去會立刻套用（呼叫 TCTC_THEME.save()），不用按「更新資料」，
+                         語意上比較接近開關/偏好設定，跟排行榜顯示開關的「即點即生效」一致。 -->
+                    <div class="profile_card profile_card_theme">
+                        <p class="profile_card_title">外觀主題（測試版</p>
+                        <div class="profile_theme_grid" id="profile_theme_grid"></div>
                     </div>
                 </div>
             </section>

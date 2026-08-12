@@ -18,6 +18,8 @@
     <link rel="stylesheet" href="TCTC2-0-main_lobby.css">
     <!-- 【新增】帳號系統彈窗樣式 -->
     <link rel="stylesheet" href="TCTC2-0-auth_ui.css">
+    <!-- 【新增】全站配色主題系統：務必放在 CSS 之後、其他 script 之前，同步載入避免換色閃爍 -->
+    <script src="TCTC2-0-theme.js"></script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -151,10 +153,10 @@
         }
         .cg_duration_tag{
             font-family: "Noto Serif TC", serif;
-            color: #C9A84C;
+            color: var(--champagne-gold);
             font-size: 0.95rem;
             letter-spacing: 2px;
-            border: 1px solid rgba(201,168,76,0.4);
+            border: 1px solid rgba(var(--accent-rgb),0.4);
             border-radius: 20px;
             padding: 0.35rem 1rem;
         }
@@ -180,7 +182,7 @@
             text-align: right;
         }
         .cg_stat span{
-            color: #C9A84C;
+            color: var(--champagne-gold);
             font-size: 1.2rem;
             margin-left: 0.3rem;
         }
@@ -190,7 +192,7 @@
             max-width: 1400px;
 
             background-color: var(--dark-blue);
-            border: 1px solid rgba(201,168,76,0.25);
+            border: 1px solid rgba(var(--accent-rgb),0.25);
             border-radius: 8px;
 
             padding: 1rem 2rem;
@@ -226,7 +228,7 @@
         }
         .cg_char.current{
             outline: 2px solid var(--champagne-gold);
-            background-color: rgba(201,168,76,0.15);
+            background-color: rgba(var(--accent-rgb),0.15);
         }
 
         /* ===== 【新增】單詞模式：每個詞彙是一張獨立的「詞卡」，不用像文章模式那樣逐字接在一起 ===== */
@@ -248,8 +250,8 @@
             color: rgb(170,170,170);
         }
         .cg_word_current{
-            background-color: rgba(201,168,76,0.15);
-            outline: 1px solid rgba(201,168,76,0.5);
+            background-color: rgba(var(--accent-rgb),0.15);
+            outline: 1px solid rgba(var(--accent-rgb),0.5);
         }
 
 
@@ -260,7 +262,7 @@
             box-sizing: border-box;
 
             background-color: var(--dark-blue);
-            border: 1px solid rgba(201,168,76,0.25);
+            border: 1px solid rgba(var(--accent-rgb),0.25);
             border-radius: 6px;
 
             padding: 0.2rem 1rem;
@@ -313,7 +315,7 @@
             width: 6px;
         }
         .cg_input_textarea::-webkit-scrollbar-thumb{
-            background-color: rgba(201,168,76,0.5);
+            background-color: rgba(var(--accent-rgb),0.5);
             border-radius: 4px;
         }
         .cg_input_textarea::-webkit-scrollbar-track{
@@ -334,8 +336,8 @@
             white-space: nowrap;
 
             background-color: transparent;
-            color: rgba(201,168,76,0.75);
-            border: 1px solid rgba(201,168,76,0.4);
+            color: rgba(var(--accent-rgb),0.75);
+            border: 1px solid rgba(var(--accent-rgb),0.4);
             border-radius: 4px;
             padding: 0.35rem 0.9rem;
 
@@ -377,12 +379,12 @@
             overflow-y: auto;
         }
         .cg_punct_content_title{
-            color: #c9a84c;
+            color: var(--champagne-gold);
             font-size: 1.1rem;
             padding-bottom: 0.3rem;
         }
         .cg_punct_item_name{
-            color: #c9a84c;
+            color: var(--champagne-gold);
             font-size: 1rem;
         }
 
@@ -413,8 +415,8 @@
             transition: all 300ms ease;
         }
         .cg_btn:hover{
-            background-color: #C9A84C;
-            color: #0B1E36;
+            background-color: var(--champagne-gold);
+            color: var(--dark-blue);
         }
 
         .cm_window{
@@ -433,7 +435,7 @@
             position: relative;
             width: 60vw;
             max-width: 720px;
-            background-color: var(--dark-blue, #0B1E36);
+            background-color: var(--dark-blue, var(--dark-blue));
             opacity: 0.97;
             border-radius: 8px;
             padding: 2rem 2.2rem 1rem;
@@ -443,7 +445,7 @@
         .cm_header_sub{
             font-size: small;
             font-family: "Noto Serif TC", serif;
-            color: #C9A84C;
+            color: var(--champagne-gold);
             font-weight: 400;
             letter-spacing: 2px;
         }
@@ -477,7 +479,7 @@
             letter-spacing: 2px;
         }
         .cg_result_item_value{
-            color: #C9A84C;
+            color: var(--champagne-gold);
             font-size: 2.6rem;
             font-weight: 300;
             margin-top: 0.3rem;
