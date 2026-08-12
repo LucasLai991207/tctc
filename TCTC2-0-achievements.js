@@ -14,6 +14,8 @@ const ACHV_ICON_SHIELD = `<svg viewBox="0 0 24 24" stroke-width="1.7" stroke-lin
 const ACHV_ICON_EYE = `<svg viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`
 const ACHV_ICON_CLOCK = `<svg viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="12" cy="12" r="9"/><polyline points="12,7 12,12 16,14"/></svg>`
 const ACHV_ICON_PULSE = `<svg viewBox="0 0 24 24" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"><polyline points="2,12 7,12 9,6 13,18 16,12 22,12"/></svg>`
+// 【新增】積分成就用的星星圖示
+const ACHV_ICON_STAR = `<svg viewBox="0 0 24 24" stroke-width="1.6" stroke-linejoin="round" fill="none"><polygon points="12,3 14.9,9.1 21.5,9.9 16.8,14.5 18,21 12,17.7 6,21 7.2,14.5 2.5,9.9 9.1,9.1"/></svg>`
 
 const ACHV_TIER_CLASSES = ["pach_tier_locked", "pach_tier_bronze", "pach_tier_silver", "pach_tier_gold", "pach_tier_platinum"]
 const ACHV_TIER_TITLES_DEFAULT = ["未達標", "銅牌", "銀牌", "金牌", "白金"]
@@ -48,7 +50,7 @@ const ACHV_CATEGORIES = [
             {
                 key: "comeback", name: "中斷後回歸", icon: ACHV_ICON_COMPASS,
                 dataSource: "streak", metric: "longest_gap_days",
-                thresholds: [1, 3, 5, 10],
+                thresholds: [1, 7, 15, 30],
                 condition: (t) => `隔了 ${t} 天後回來`,
                 format: (v) => `${Math.round(v)} 天`
             }
@@ -70,7 +72,7 @@ const ACHV_CATEGORIES = [
             {
                 key: "page_views", name: "瀏覽次數", icon: ACHV_ICON_EYE,
                 dataSource: "stats", metric: "page_views",
-                thresholds: [100, 500, 1000, 2000],
+                thresholds: [100, 500, 1000, 2500],
                 condition: (t) => `網站瀏覽次數累積達 ${t.toLocaleString("zh-TW")} 次`,
                 format: (v) => `${Math.round(v).toLocaleString("zh-TW")} 次`
             },
@@ -86,6 +88,20 @@ const ACHV_CATEGORIES = [
                 thresholds: [1800, 3600, 10800, 36000],
                 condition: (t) => `累積在線時長達到 ${ACHV_Format_Duration(t)}`,
                 format: (v) => ACHV_Format_Duration(v)
+            },
+            {
+                // 【新增】積分累積：跟瀏覽次數/遊玩時長放同一個分類，理由是
+                // total_points 本質上也是「玩得越多、越認真就會累積越多」的
+                // 活躍度指標（積分公式是時長×難度倍率，不是單次爆發力），
+                // 跟「速度」「精準」那種看單次最佳表現的分類語意不同。
+                // total_points 這個欄位本來就已經在同步（排行榜「積分榜」
+                // 一直在用），這裡不用改 firebase.js，純粹是把既有資料
+                // 接上榮譽牆而已。
+                key: "total_points", name: "積分累積", icon: ACHV_ICON_STAR,
+                dataSource: "stats", metric: "total_points",
+                thresholds: [50, 200, 600, 1500],
+                condition: (t) => `挑戰模式累積積分達到 ${t.toLocaleString("zh-TW")} 分`,
+                format: (v) => `${Math.round(v).toLocaleString("zh-TW")} 分`
             }
         ]
     },
@@ -186,11 +202,17 @@ const ACHV_CATEGORIES = [
                 format: (v) => `${Math.round(v)} WPM`
             },
             {
+                // 【修改】原本是「連續次數」當變數（3/7/15/30 場），現在改成
+                // 固定連續 7 場、變數換成 WPM 門檻（35/70/100/150）。
+                // 資料源 high_wpm_streak 現在存的是「歷史上連續 7 場挑戰模式
+                // 裡，最低那一場曾經有過的最高紀錄」，見 firebase.js 的
+                // Submit_Challenge_Score_To_Leaderboard——用滑動視窗取最近
+                // 7 筆的最小值，不是任何一場達標就算數，也不是平均。
                 key: "wpm_streak", name: "連續維持高速", icon: ACHV_ICON_TRENDING_UP,
-                dataSource: "stats", metric: "high_wpm_streak", pending: true,
-                thresholds: [3, 7, 15, 30],
-                condition: (t) => `連續 ${t} 場測驗 WPM 達標`,
-                format: (v) => `${Math.round(v)} 場`
+                dataSource: "stats", metric: "high_wpm_streak",
+                thresholds: [35, 70, 100, 150],
+                condition: (t) => `挑戰模式連續 7 場 WPM 都達到 ${t} 以上`,
+                format: (v) => `${Math.round(v)} WPM`
             }
         ]
     },
