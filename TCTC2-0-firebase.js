@@ -395,6 +395,36 @@ function Submit_Challenge_Score_To_Leaderboard(comboId, wpm, acc, raw_stats) {
         }).catch(function (error) {
             console.log("[player_stats] best_challenge_wpm 同步失敗：", error)
         })
+
+        // ===== 【修改】榮譽牆「速度」分類的「連續維持高速」成就 =====
+        // 固定視窗長度 7：只保留「最近 7 次挑戰模式」的 WPM，存進
+        // recent_challenge_wpm_window（陣列，超過 7 筆就把最舊的擠掉）。
+        // 每次挑戰結束後，如果視窗已經滿 7 筆，就算出這 7 筆裡「最低」的
+        // 那個 WPM（代表這連續 7 次裡最弱的一次），拿去跟歷史紀錄
+        // Math.max 一次，寫進 high_wpm_streak——要拿到高階牌，
+        // 必須連續 7 次「每一次」都不能低於門檻，不是任何一次達標就算數，
+        // 也不是平均，這樣「連續維持」才有意義。門檻本身（35/70/100/150）
+        // 交給 achievements.js 的 thresholds 陣列比對，這裡只負責算出
+        // 「歷史上連續 7 次裡最低那次曾經有過的最高紀錄」這個數值。
+        const CHALLENGE_WPM_STREAK_LENGTH = 7 // 要跟 achievements.js 裡 wpm_streak 成就文案的「連續 7 場」保持一致
+
+        tctc_db.ref(`player_stats/${anon_id}/recent_challenge_wpm_window`).transaction(function (current) {
+            const window = Array.isArray(current) ? current.slice() : []
+            window.push(wpm)
+            if (window.length > CHALLENGE_WPM_STREAK_LENGTH) window.shift()
+            return window
+        }).then(function (result) {
+            if (!result.committed) return
+            const window = result.snapshot.val() || []
+            if (window.length < CHALLENGE_WPM_STREAK_LENGTH) return   // 還沒累積滿 7 次，先不更新紀錄
+
+            const windowMin = Math.min.apply(null, window)
+            return tctc_db.ref(`player_stats/${anon_id}/high_wpm_streak`).transaction(function (current) {
+                return Math.max(current || 0, windowMin)
+            })
+        }).catch(function (error) {
+            console.log("[player_stats] WPM 連續紀錄同步失敗：", error)
+        })
     }
 
     // ===== 【新增】榮譽牆「精準」分類三項挑戰模式單次正確率成就 =====
