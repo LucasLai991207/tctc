@@ -1,222 +1,3 @@
-/* ============================================================
-   TCTC 打字排行榜 - Firebase 共用模組（訪客模式，不需登入）
-   ============================================================
-   使用方式：
-   1. 在使用到排行榜功能的 HTML 裡，先載入 Firebase compat SDK
-      （順序要在這個檔案「之前」）：
-
-        <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
-        <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
-        <script src="TCTC2-0-firebase.js"></script>
-
-   2. 把下面 firebaseConfig 換成你在 Firebase 控制台
-      「專案設定(齒輪) → 一般 → 你的應用程式 → SDK 設定與設定」
-      裡面那一整包物件（直接複製貼上蓋掉下面這個佔位物件就好）。
-
-      注意 databaseURL 要跟你「Realtime Database 建立時選的地區」一致，
-      在 Firebase 控制台的 Realtime Database 頁面最上面可以看到完整網址。
-
-   3. 建議把 Realtime Database 的規則（Rules）從 test mode 換成下面這組，
-      避免任何人可以塞奇怪的資料格式進去洗版排行榜：
-
-        {
-          "rules": {
-            "leaderboard": {
-              "$stageId": {
-                ".read": true,
-                ".indexOn": ["wpm"],
-                "$entryId": {
-                  ".write": true,
-                  ".validate": "newData.hasChildren(['name','wpm','acc','timestamp']) && newData.child('wpm').isNumber() && newData.child('wpm').val() >= 0 && newData.child('wpm').val() < 1000 && newData.child('name').isString() && newData.child('name').val().length <= 20"
-                }
-              }
-            },
-            "challenge_leaderboard": {
-              "$comboId": {
-                ".read": true,
-                ".indexOn": ["wpm"],
-                "$entryId": {
-                  ".write": true,
-                  ".validate": "newData.hasChildren(['name','wpm','acc','timestamp']) && newData.child('wpm').isNumber() && newData.child('wpm').val() >= 0 && newData.child('wpm').val() < 1000 && newData.child('name').isString() && newData.child('name').val().length <= 20"
-                }
-              }
-            },
-            "guest_counter": {
-              ".read": true,
-              ".write": true,
-              ".validate": "newData.isNumber()"
-            },
-            "guest_numbers": {
-              "$anonId": {
-                ".read": true,
-                ".write": true,
-                ".validate": "newData.isNumber()"
-              }
-            },
-            "player_stats": {
-              ".read": true,
-              ".indexOn": ["avg_wpm", "avg_acc", "online_seconds", "total_points", "page_views", "streak_longest", "streak_total_days", "stages_completed_easy", "stages_completed_medium", "stages_completed_hard"],
-              "$anonId": {
-                "name": {
-                  ".write": true,
-                  ".validate": "newData.isString() && newData.val().length <= 20"
-                },
-                "wpm_sum": { ".write": true, ".validate": "newData.isNumber() && newData.val() >= 0" },
-                "wpm_count": { ".write": true, ".validate": "newData.isNumber() && newData.val() >= 0" },
-                "avg_wpm": { ".write": true, ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() < 1000" },
-                "acc_sum": { ".write": true, ".validate": "newData.isNumber() && newData.val() >= 0" },
-                "acc_count": { ".write": true, ".validate": "newData.isNumber() && newData.val() >= 0" },
-                "avg_acc": { ".write": true, ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100" },
-                "cg_wpm_sum": { ".write": true, ".validate": "newData.isNumber() && newData.val() >= 0" },
-                "cg_wpm_count": { ".write": true, ".validate": "newData.isNumber() && newData.val() >= 0" },
-                "avg_challenge_wpm": { ".write": true, ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() < 1000" },
-                "best_challenge_wpm": { ".write": true, ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() < 1000" },
-                "cg_acc_sum": { ".write": true, ".validate": "newData.isNumber() && newData.val() >= 0" },
-                "cg_acc_count": { ".write": true, ".validate": "newData.isNumber() && newData.val() >= 0" },
-                "avg_challenge_acc": { ".write": true, ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100" },
-                "online_seconds": { ".write": true, ".validate": "newData.isNumber() && newData.val() >= 0" },
-                "total_points": { ".write": true, ".validate": "newData.isNumber() && newData.val() >= 0" },
-                "page_views": { ".write": true, ".validate": "newData.isNumber() && newData.val() >= 0" },
-                "hide_from_leaderboard": { ".write": true, ".validate": "newData.isBoolean()" },
-                "streak_current": {
-                  ".write": true,
-                  ".validate": "newData.isNumber() && ((!data.parent().child('streak_last_ts').exists() && newData.val() == 1) || (data.parent().child('streak_last_ts').exists() && (now - data.parent().child('streak_last_ts').val()) >= 72000000 && (now - data.parent().child('streak_last_ts').val()) < 172800000 && newData.val() == data.val() + 1) || (data.parent().child('streak_last_ts').exists() && (now - data.parent().child('streak_last_ts').val()) >= 172800000 && newData.val() == 1))"
-                },
-                "streak_longest": {
-                  ".write": true,
-                  ".validate": "newData.isNumber() && newData.val() >= newData.parent().child('streak_current').val() && (!data.exists() || newData.val() >= data.val())"
-                },
-                "streak_last_ts": {
-                  ".write": true,
-                  ".validate": "newData.val() == now"
-                },
-                "streak_total_days": {
-                  ".write": true,
-                  ".validate": "newData.isNumber() && ((!data.exists() && newData.val() == 1) || (data.exists() && newData.val() == data.val() + 1))"
-                },
-                "stages_completed_easy": {
-                  ".write": true,
-                  ".validate": "newData.isNumber() && newData.val() == (data.val() || 0) + 1"
-                },
-                "stages_completed_medium": {
-                  ".write": true,
-                  ".validate": "newData.isNumber() && newData.val() == (data.val() || 0) + 1"
-                },
-                "stages_completed_hard": {
-                  ".write": true,
-                  ".validate": "newData.isNumber() && newData.val() == (data.val() || 0) + 1"
-                }
-              }
-            },
-            "site_meta": {
-              "total_page_views": {
-                ".read": true,
-                ".write": true,
-                ".validate": "newData.isNumber() && newData.val() >= 0"
-              }
-            },
-            "accounts": {
-              "$uid": {
-                ".read": "auth != null && auth.uid === $uid",
-                ".write": "auth != null && auth.uid === $uid",
-                ".validate": "newData.hasChildren(['anon_id', 'provider', 'created_at'])",
-                "anon_id": { ".validate": "newData.isString()" },
-                "email": { ".validate": "newData.val() === null || newData.isString()" },
-                "provider": { ".validate": "newData.isString()" },
-                "created_at": { ".validate": true }
-              }
-            }
-          }
-        }
-
-   【新增規則說明・帳號系統】新增了 accounts/{uid} 這個節點，用來存放
-   「一個已登入帳號的 uid，對應到哪一組 anon_id」，是整個登入/註冊功能
-   能不能正常運作的關鍵資料。跟其他節點不一樣的地方：
-   - .read / .write 都限定 auth.uid === $uid，也就是「只有這個帳號本人
-     能讀寫自己的這一筆對照資料」，不像 leaderboard 那樣任何登入過的人
-     都能寫。理由：這筆資料一旦被亂改（例如把 anon_id 改成別人的），
-     等於能冒充讀到別人的所有雲端資料，必須鎖到最嚴。
-   - 如果你的 Firebase 專案是延續舊專案繼續用，記得手動把這個 accounts
-     區塊「補進」你現有的規則物件裡，不要整個覆蓋掉，不然舊規則會不見
-     （這句提醒跟上面每一段新增規則的提醒完全一樣，重要的事再說一次）。
-
-   【新增規則說明・網站瀏覽次數】新增了「網站瀏覽次數」功能，需要兩塊新規則：
-   1. site_meta/total_page_views：全站瀏覽總數，不分訪客或已登入玩家，
-      每次有人載入任何一個頁面就 +1，用來顯示在排行榜頁面最上方。
-   2. player_stats/$anonId/page_views：延續原本 player_stats 的設計，
-      每個玩家（不管有沒有設定 username）自己的瀏覽次數，用來做「瀏覽次數最多」
-      這個新的玩家總榜指標。跟 online_seconds 一樣不設定任何門檻。
-   同樣提醒：如果你的 Firebase 專案是延續舊的規則繼續用，記得手動把
-   site_meta 這一段、以及 player_stats 底下的 page_views 這一行「補進」你
-   現有的規則物件裡，不要整個覆蓋掉，不然舊規則會不見。
-
-   【重要】.indexOn 要放在 player_stats 這一層（不是塞在 $anonId 裡面）。
-   排序查詢是對 player_stats 這個父節點的「每個子節點裡的某個欄位」做排序，
-   索引要宣告在被排序的那些子節點的「共同父節點」上，塞在 $anonId 底下沒作用，
-   Firebase 只會当作沒設定索引，continue 全量下載＋前端排序（雖然結果還是對的，
-   但資料一多會變慢，Console 也會一直跳「Using an unspecified index」的警告）。
-
-   【重要】上面 player_stats 那段特別多了一行 ".read": true 直接寫在 player_stats
-   這一層（不是只寫在 $anonId 底下）。這是因為「玩家總排行榜」的查詢方式，是
-   直接對 player_stats 這個父節點做 orderByChild().once("value")，把所有玩家
-   一次抓出來排序——而 Firebase 的讀取權限不會從子節點的規則「往上」套用到父節點，
-   只有子節點自己的 .read 規則的話，讀父節點會直接 permission_denied。
-   如果你是照舊版規則貼的、只有 $anonId 底下有 .read，記得補上這一行。
-
-   【重要】上面這組規則是「新增」的 player_stats 節點，對應「玩家總排行榜」
-   （平均WPM最高／平均正確率最高／在線時長最長）這個新功能。
-   如果你的 Firebase 專案是延續舊專案繼續用，記得手動把 player_stats
-   這一段規則「補進」你現有的規則物件裡，不要整個覆蓋掉，
-   不然原本 leaderboard / challenge_leaderboard 那些規則會不見。
-
-   【新增規則說明・關卡完成度 stages_completed_easy/medium/hard】
-   給榮譽牆「關卡完成度」成就分類用，依難度分開累計「第一次過關的關卡數」。
-   跟 page_views／online_seconds 那種單純累加的計數器不一樣，這裡額外要求
-   newData 必須等於「舊值 + 1」才合法（".validate" 裡的
-   newData.val() == (data.val() || 0) + 1），目的是防止玩家直接在瀏覽器
-   Console 手動把數字改成 9999 洗成就——因為這個數字會拿去算完成度百分比，
-   比單純的瀏覽次數更需要防呆。前端寫入邏輯見 Sync_Stage_Completion()。
-
-   【新增規則說明・連續登入天數 streak_*】跟其他 player_stats 欄位（avg_wpm、
-   total_points……）最大的不同：那些欄位完全信任前端算好的數字直接寫入
-   （".write": true 沒有任何條件限制），但 streak 這種「玩家自己動手就能
-   瞬間改成 999」的數字，不能用同一套信任模型，所以這 4 個欄位額外加了
-   用 Rules 內建 `now`（Firebase 伺服器收到這次寫入請求當下的真實時間，
-   玩家端無法偽造或預先算好）做的時間差驗證：
-
-   - streak_last_ts：寫入值「必須完全等於 now」，玩家沒辦法自己指定這個
-     時間戳記要變成多少，只能透過 firebase.database.ServerValue.TIMESTAMP
-     這個佔位符讓伺服器代填，這是整套機制的地基。
-   - streak_current：三選一才合法——① 從沒登入過，這次必須是 1；
-     ② 距離上次 streak_last_ts 是 20~48 小時之間，這次必須是「舊值+1」；
-     ③ 距離上次超過 48 小時（斷簽），這次必須重置為 1。
-     不比對「日期字串」是刻意的：Realtime Database Rules 沒有「把 now
-     格式化成 YYYY-MM-DD」的函式，比對「時間差」才是 Rules 語法真的能寫
-     出來、且邏輯等價的做法。
-   - streak_longest：新值不能小於這次的 streak_current，也不能比舊的
-     streak_longest 小（歷史最佳只增不減）。
-   - streak_total_days：每次成功登入只能 +1，不能跳號、不能自己指定成
-     任意數字。
-
-   這 4 個欄位刻意「沒有」限制成只有帳號本人（auth.uid）能寫，理由是
-   要跟同一個 player_stats 節點裡其他欄位（wpm/acc/points/views）的信任
-   模型維持一致——那些欄位本來就沒有身分綁定，任何知道 anon_id 的人理論上
-   都能寫入假資料，這是這個網站目前排行榜系統本來就存在、範圍更大的已知
-   取捨，不是這次 streak 功能新引入的破口，這裡不重複去解決那個更大的
-   架構問題。streak 這裡真正防的，是「開 Console 打一行、瞬間變 999」
-   這種最低成本的作弊方式——想繞過時間差驗證，唯一辦法是寫一支腳本、
-   真的每天固定時間打一次 API，門檻高非常多，且是可被偵測的異常行為模式。
-
-   【新增規則說明・best_challenge_wpm】給榮譽牆「挑戰 WPM 達標」成就用的
-   欄位——跟 avg_challenge_wpm（挑戰模式累計平均值）是不同東西，這個存的
-   是「這個玩家打過的所有挑戰組合裡，單次最高的那一次 WPM」，只要有一次
-   達標就永久解鎖，不會因為打太多次把平均拉低而拿不到。
-   跟 avg_wpm / total_points 等欄位一樣走「前端信任模型」（".write": true
-   沒有時間差那種額外驗證），因為寫入端（Submit_Challenge_Score_To_Leaderboard）
-   本來就是用 transaction() 只在「新值 > 舊值」時才更新，跟 leaderboard 分數
-   造假的風險等級相同，不需要另外加驗證邏輯。
-   ============================================================ */
-
 const firebaseConfig = {
     apiKey: "AIzaSyCoizdcDbOjUjsx1UNjbEzm2Px2YP7-S1Q",
     authDomain: "tctc-official.firebaseapp.com",
@@ -234,18 +15,7 @@ if (!firebase.apps.length) {
 const tctc_db = firebase.database()
 
 /* ============================================================
-   【新增】匿名登入（Firebase Anonymous Auth）
-   ------------------------------------------------------------
-   跟原本 Get_Anon_Id() 產生的那組「自己土法煉鋼存在 localStorage 的
-   anon_id」不一樣：這裡拿到的是 Firebase 伺服器簽發、沒辦法偽造的登入狀態。
-   目的不是要換掉 anon_id 的用法（那個改動比較大，之後再處理），
-   單純是先讓 Rules 能檢查「這次寫入，是不是真的從一個有效的匿名登入
-   送出來的」，擋掉完全沒開過網站、直接對 Firebase REST API 亂打的攻擊。
-
-   呼叫這裡就好，不用等它 resolve 才能繼續──玩家實際觸發寫入的動作
-   （送出成績、改名字、按下更新資料）本來就會在頁面完全載入好一陣子之後
-   才發生，這中間的時間差已經足夠讓匿名登入完成，不需要刻意用
-   onAuthStateChanged 卡住其他邏輯。
+   【新增】匿名登入
    ============================================================ */
 if (typeof firebase.auth === "function") {
     firebase.auth().signInAnonymously().catch(function (error) {
@@ -627,6 +397,45 @@ function Submit_Challenge_Score_To_Leaderboard(comboId, wpm, acc, raw_stats) {
         })
     }
 
+    // ===== 【新增】榮譽牆「精準」分類三項挑戰模式單次正確率成就 =====
+    // 跟上面 best_challenge_wpm 一樣，這三個都不等它完成、不影響原本排行榜上傳流程，
+    // 各自獨立，其中一個失敗不會拖累另一個或拖累主要的 _Submit_Best_Score。
+    const CHALLENGE_ACC_STREAK_THRESHOLD = 90 // 要跟 achievements.js 裡 acc_streak 成就文案的「90% 以上」保持一致
+
+    if (anon_id && typeof acc === "number" && !isNaN(acc)) {
+        // 1) 單次最高正確率（只增不減，跟 best_challenge_wpm 同一套 transaction+Math.max 寫法）
+        tctc_db.ref(`player_stats/${anon_id}/best_challenge_acc`).transaction(function (current) {
+            return Math.max(current || 0, acc)
+        }).catch(function (error) {
+            console.log("[player_stats] best_challenge_acc 同步失敗：", error)
+        })
+
+        // 2) 正確率剛好 100% 的次數，累加型計數器
+        if (acc >= 100) {
+            tctc_db.ref(`player_stats/${anon_id}/perfect_challenge_count`).transaction(function (current) {
+                return (current || 0) + 1
+            }).catch(function (error) {
+                console.log("[player_stats] perfect_challenge_count 同步失敗：", error)
+            })
+        }
+
+        // 3) 連續正確率達標（≥90%）次數：先更新「目前這一段連續」的暫存欄位，
+        // 再拿這次 transaction 真正結算出來的值（result.snapshot.val()）去更新「歷史最長」，
+        // 兩個欄位分開存的理由跟 login_streak.js 的 streak_current / streak_longest 一致——
+        // 「目前連續」會因為某次沒達標而歸零，但「歷史最長」只增不減，成就用後者才不會被收回。
+        tctc_db.ref(`player_stats/${anon_id}/challenge_acc_streak_current`).transaction(function (current) {
+            return acc >= CHALLENGE_ACC_STREAK_THRESHOLD ? (current || 0) + 1 : 0
+        }).then(function (result) {
+            if (!result.committed) return
+            const newStreak = result.snapshot.val() || 0
+            return tctc_db.ref(`player_stats/${anon_id}/high_acc_challenge_streak`).transaction(function (current) {
+                return Math.max(current || 0, newStreak)
+            })
+        }).catch(function (error) {
+            console.log("[player_stats] 正確率連續紀錄同步失敗：", error)
+        })
+    }
+
     return _Submit_Best_Score("challenge_leaderboard", comboId, wpm, acc, raw_stats)
 }
 function Get_Challenge_Leaderboard(comboId, callback, limit) {
@@ -776,6 +585,40 @@ function Sync_Chars_Typed(charCount){
     }).catch(function(error){
         console.warn("[player_stats] total_chars_typed 同步失敗（很可能是 Firebase Rules 還沒加上這個欄位的規則）：", error.message)
     })
+}
+
+// ===== 【新增】把「榮譽牆目前解鎖的成就總數」同步進雲端 =====
+// 給玩家總榜「解鎖成就數量」這個新指標用。呼叫端是 TCTC2-0-achievements.js
+// 的 ACHV_Render_All()，在每次渲染榮譽牆頁面、算完總覽進度條之後呼叫一次。
+//
+// 【為什麼用 set() 而不是 transaction()】
+// 上面 Sync_Stage_Completion() / Sync_Chars_Typed() 用 transaction()，是因為
+// 它們寫入的是「這次事件要 +N」的累加值，需要先讀到目前的舊值才能算出
+// 新值，多分頁同時觸發時也要避免互相蓋掉對方剛寫入的結果。
+// 這裡不一樣：achievements_unlocked 是「現場重新算一次的完整結果」
+// （呼叫端已經把所有分類的 unlocked 加總完了），不是「+1」這種相對量，
+// 邏輯跟 avg_wpm 用 wpm_sum/wpm_count 算出平均值後直接 set() 寫入完全對稱，
+// 用 transaction() 反而沒有意義（沒有「舊值」可以參照著累加）。
+//
+// 【信任模型限制，見 firebase.js 開頭 Rules 範例裡 achievements_unlocked
+// 那一段的完整說明】這裡的 Rules 只驗證「新值不超過上限」跟「只增不減」，
+// 沒辦法在伺服器端重新驗證這個數字是否真的由玩家目前的統計資料算出來，
+// 屬於這個網站排行榜系統一貫的取捨，不是這個函式的疏漏。
+function Sync_Achievements_Unlocked(count){
+    if(typeof count !== "number" || isNaN(count) || count < 0) return Promise.resolve()
+
+    const anon_id = Get_Anon_Id()
+    if(!anon_id) return Promise.resolve()
+
+    return tctc_db.ref(`player_stats/${anon_id}/achievements_unlocked`).set(Math.round(count))
+        .catch(function(error){
+            // 最常見的失敗原因會是 Rules 的「只增不減」驗證擋下來——例如玩家
+            // 剛好開兩個分頁，一個分頁先同步了比較新的數字，另一個分頁比較晚
+            // 算完、算出來的反而比較舊（理論上不該發生，但多分頁本來就有
+            // 這種競態可能），這種情況安靜記在 console 就好，不用跳錯誤通知
+            // 給玩家——反正下次造訪榮譽牆頁面就會用最新資料重算一次。
+            console.warn("[player_stats] achievements_unlocked 同步失敗（很可能是 Firebase Rules 還沒加上這個欄位的規則）：", error.message)
+        })
 }
 
 // ===== 【新增】把「這次挑戰模式測驗的 WPM / 正確率」另外累加進「挑戰模式專屬」的平均值 =====
@@ -1144,6 +987,18 @@ function Get_Top_Players_By_Streak(callback, limit) {
 // 邏輯跟 page_views（瀏覽次數最多榜）對稱，同樣不設門檻。
 function Get_Top_Players_By_Total_Login_Days(callback, limit) {
     _Get_Top_Players("streak_total_days", null, 0, function (list) {
+        callback(list.slice(0, limit || 50))
+    })
+}
+// 【修改】解鎖成就數量最多榜：要求 achievements_unlocked >= 1，濾掉「一項成就都
+// 還沒解鎖」的玩家不該佔用榜單名額——道理跟 total_points 要求 >= 1 積分一致
+// （0 積分/0 項成就都代表「這個指標上其實還沒有任何實質成績」，不該上榜）。
+// 用 achievements_unlocked 自己當 min_count_field，是同一個查詢欄位兼當門檻欄位，
+// 跟 Get_Top_Players_By_Points("total_points", "total_points", 1, ...) 的寫法完全對稱。
+// 排序用的 achievements_unlocked 欄位由 TCTC2-0-achievements.js 頁面
+// 造訪時同步寫入，見 Sync_Achievements_Unlocked() 上方的完整說明。
+function Get_Top_Players_By_Achievements_Unlocked(callback, limit) {
+    _Get_Top_Players("achievements_unlocked", "achievements_unlocked", 1, function (list) {
         callback(list.slice(0, limit || 50))
     })
 }

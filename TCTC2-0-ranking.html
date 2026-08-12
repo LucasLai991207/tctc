@@ -107,6 +107,8 @@
                         <button type="button" class="ranking_select ranking_select_active" id="ranking_player_metric_wpm" onclick="Switch_Player_Metric('avg_wpm')">平均WPM</button>
                         <button type="button" class="ranking_select" id="ranking_player_metric_acc" onclick="Switch_Player_Metric('avg_acc')">平均正確率</button>
                         <button type="button" class="ranking_select" id="ranking_player_metric_points" onclick="Switch_Player_Metric('total_points')">積分</button>
+                        <!-- 【新增】解鎖成就數量榜：結構跟其他按鈕完全一樣，只是 metric 參數換成 "achievements_unlocked" -->
+                        <button type="button" class="ranking_select" id="ranking_player_metric_achv" onclick="Switch_Player_Metric('achievements_unlocked')">解鎖成就數</button>
                     </div>
                     <div class="ranking_metric_group">
                         <span class="ranking_metric_group_label">活躍度</span>
