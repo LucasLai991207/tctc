@@ -109,7 +109,7 @@ function CGL_Build_Progress_Chart_HTML(matched){
         const tooltipText = `${dateLabel}｜${r.wpm} WPM`
 
         return `
-            <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5" fill="#C9A84C" pointer-events="none" />
+            <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5" fill="var(--champagne-gold)" pointer-events="none" />
             <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="9" fill="transparent" style="cursor:pointer;">
                 <title>${tooltipText}</title>
             </circle>
@@ -124,7 +124,7 @@ function CGL_Build_Progress_Chart_HTML(matched){
             <polyline
                 points="${points}"
                 fill="none"
-                stroke="#C9A84C"
+                stroke="var(--champagne-gold)"
                 stroke-width="2.5"
                 stroke-linejoin="round"
                 stroke-linecap="round"

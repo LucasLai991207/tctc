@@ -3,7 +3,10 @@
     --dark-blue : #0B1E36;
     --light-blue : #0e243e;
     --champagne-gold : #c9a84c;
+    --accent-rgb : 201, 168, 76;
     --error-red : #c0392b;
+    --error-rgb : 192, 57, 43;
+    --text-rgb : 255, 255, 255;
 }
 
 .profile_main_style{
@@ -29,7 +32,7 @@
     text-align: center;
 }
 .profile_page_title{
-    color: whitesmoke;
+    color: rgba(var(--text-rgb), 0.92);
     font-size: 2.2rem;
     font-weight: 500;
     letter-spacing: 3px;
@@ -55,11 +58,13 @@
     grid-template-columns: 1.2fr 1fr;
     grid-template-areas:
         "edit   stats"
+        "theme  theme"
         "achievement achievement";
     gap: 1.5rem;
 }
 .profile_card_edit{ grid-area: edit; }
 .profile_card_stats{ grid-area: stats; }
+.profile_card_theme{ grid-area: theme; }
 .profile_card_achievement{ grid-area: achievement; }
 
 @media (max-width: 46rem){
@@ -68,19 +73,106 @@
         grid-template-areas:
             "edit"
             "stats"
+            "theme"
             "achievement";
     }
 }
 
+/* ============================================================
+   【新增】外觀主題選色卡
+   每個主題用一顆圓形色票代表（左半深底、右半強調色，斜切成兩色），
+   跟徽章系統的「圓框」視覺語言呼應，選中的那顆用金邊 + 打勾標記，
+   沒選中的維持一圈淡邊框即可，不需要額外的文字說明就能分辨深淺配色。
+   ============================================================ */
+.profile_theme_grid{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(7.4rem, 1fr));
+    gap: 0.9rem;
+}
+.profile_theme_option{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.45rem;
+
+    padding: 0.9rem 0.5rem 0.3rem;
+
+    background-color: var(--darker-blue);
+    border: 1px solid rgba(var(--text-rgb), 0.1);
+    border-radius: 6px;
+
+    cursor: pointer;
+    transition: border-color 150ms ease, background-color 150ms ease;
+}
+.profile_theme_option:hover{
+    border-color: rgba(var(--accent-rgb), 0.4);
+}
+.profile_theme_option.profile_theme_option_active{
+    border-color: var(--champagne-gold);
+    background-color: rgba(var(--accent-rgb), 0.08);
+}
+
+.profile_theme_swatch{
+    position: relative;
+
+    width: 2.8rem;
+    height: 2.8rem;
+    border-radius: 50%;
+
+    border: 1px solid rgba(var(--text-rgb), 0.15);
+    overflow: hidden;
+
+    box-shadow: 0 0 0 3px transparent;
+    transition: box-shadow 150ms ease;
+}
+.profile_theme_option_active .profile_theme_swatch{
+    box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.35);
+}
+/* 色票本體用 conic-gradient 切成兩半，左邊深底色、右邊強調色，
+   inline style 由 JS 依每個主題的 darker/accent 直接帶入，
+   這裡只定義共用的形狀跟邊框 */
+.profile_theme_swatch_fill{
+    position: absolute;
+    inset: 0;
+}
+.profile_theme_swatch_check{
+    position: absolute;
+    inset: 0;
+
+    display: none;
+    align-items: center;
+    justify-content: center;
+
+    color: rgba(var(--text-rgb), 0.92);
+    font-size: 1.1rem;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+}
+.profile_theme_option_active .profile_theme_swatch_check{
+    display: flex;
+}
+
+.profile_theme_name{
+    color: rgba(var(--text-rgb), 0.92);
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+}
+.profile_theme_desc{
+    color: rgba(var(--text-rgb), 0.4);
+    font-size: 0.68rem;
+    letter-spacing: 0.5px;
+    text-align: center;
+    line-height: 1.4;
+}
+
 .profile_card{
     background-color: var(--dark-blue);
-    border: 1px solid rgba(201, 168, 76, 0.25);
+    border: 1px solid rgba(var(--accent-rgb), 0.25);
     border-radius: 8px;
 
     padding: 1.8rem 1.6rem;
 }
 .profile_card_title{
-    color: whitesmoke;
+    color: rgba(var(--text-rgb), 0.92);
     font-size: 1.25rem;
     font-weight: 500;
     letter-spacing: 2px;
@@ -88,7 +180,7 @@
     margin: 0 0 1.4rem;
     padding-bottom: 0.8rem;
 
-    border-bottom: 1px solid rgba(201, 168, 76, 0.2);
+    border-bottom: 1px solid rgba(var(--accent-rgb), 0.2);
 }
 
 /* ===== 【新增】自訂頭像 ===== */
@@ -111,7 +203,7 @@
     border-radius: 50%;
 
     background-color: var(--darker-blue);
-    border: 1px solid rgba(201, 168, 76, 0.4);
+    border: 1px solid rgba(var(--accent-rgb), 0.4);
 
     display: flex;
     align-items: center;
@@ -119,7 +211,7 @@
     overflow: hidden;
 }
 #profile_avatar_placeholder{
-    color: rgba(255, 255, 255, 0.4);
+    color: rgba(var(--text-rgb), 0.4);
     font-size: 0.7rem;
     letter-spacing: 1px;
     text-align: center;
@@ -165,9 +257,9 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
 
     background-color: transparent;
-    color: rgb(190, 190, 190);
+    color: rgba(var(--text-rgb), 0.75);
 
-    border: 1px solid rgba(201, 168, 76, 0.3);
+    border: 1px solid rgba(var(--accent-rgb), 0.3);
     border-radius: 5px;
 
     cursor: pointer;
@@ -182,7 +274,7 @@
     width: 100%;
     margin: 0;
 
-    color: rgba(255, 255, 255, 0.45);
+    color: rgba(var(--text-rgb), 0.45);
     font-size: 0.75rem;
     line-height: 1.5;
 }
@@ -191,7 +283,7 @@
 .profile_field_label{
     display: block;
 
-    color: rgb(190, 190, 190);
+    color: rgba(var(--text-rgb), 0.75);
     font-size: 0.85rem;
     letter-spacing: 1px;
 
@@ -203,9 +295,9 @@
     box-sizing: border-box;
 
     background-color: var(--darker-blue);
-    color: whitesmoke;
+    color: rgba(var(--text-rgb), 0.92);
 
-    border: 1px solid rgba(201, 168, 76, 0.4);
+    border: 1px solid rgba(var(--accent-rgb), 0.4);
     border-radius: 5px;
 
     padding: 0.6rem 0.8rem;
@@ -273,7 +365,7 @@
     margin-top: 1.4rem;
     padding-top: 1.4rem;
 
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid rgba(var(--text-rgb), 0.1);
 }
 .profile_danger_btn{
     padding: 0.8rem 1.2rem;
@@ -293,21 +385,21 @@
 }
 .profile_danger_btn:hover{
     background-color: var(--error-red);
-    color: whitesmoke;
+    color: rgba(var(--text-rgb), 0.92);
 }
 
 .profile_danger_confirm{
     margin-top: 1rem;
     padding: 1rem 1.1rem;
 
-    background-color: rgba(192, 57, 43, 0.08);
-    border: 1px solid rgba(192, 57, 43, 0.4);
+    background-color: rgba(var(--error-rgb), 0.08);
+    border: 1px solid rgba(var(--error-rgb), 0.4);
     border-radius: 6px;
 }
 .profile_danger_confirm_text{
     margin: 0 0 1rem;
 
-    color: rgb(220, 200, 200);
+    color: rgba(var(--text-rgb), 0.75);
     font-size: 0.85rem;
     line-height: 1.7;
     letter-spacing: 0.5px;
@@ -324,9 +416,9 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
 
     background-color: transparent;
-    color: rgb(190, 190, 190);
+    color: rgba(var(--text-rgb), 0.75);
 
-    border: 1px solid rgba(255, 255, 255, 0.25);
+    border: 1px solid rgba(var(--text-rgb), 0.25);
     border-radius: 2px;
 
     cursor: pointer;
@@ -340,7 +432,7 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
 
     background-color: var(--error-red);
-    color: whitesmoke;
+    color: rgba(var(--text-rgb), 0.92);
 
     border: 1px solid var(--error-red);
     border-radius: 2px;
@@ -368,7 +460,7 @@
 .profile_toggle_hint{
     margin: 0.35rem 0 0;
 
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(var(--text-rgb), 0.5);
     font-size: 0.78rem;
     line-height: 1.5;
 }
@@ -397,7 +489,7 @@
     cursor: pointer;
 
     background-color: var(--darker-blue);
-    border: 1px solid rgba(201, 168, 76, 0.4);
+    border: 1px solid rgba(var(--accent-rgb), 0.4);
     border-radius: 1rem;
 
     transition: background-color 150ms ease;
@@ -413,7 +505,7 @@
     height: 1.15rem;
     border-radius: 50%;
 
-    background-color: rgba(255, 255, 255, 0.6);
+    background-color: rgba(var(--text-rgb), 0.6);
     transition: transform 150ms ease, background-color 150ms ease;
 }
 .profile_toggle_switch input:checked + .profile_toggle_slider{
@@ -442,14 +534,14 @@
     align-items: baseline;
 
     padding-bottom: 0.9rem;
-    border-bottom: 1px solid rgba(201, 168, 76, 0.12);
+    border-bottom: 1px solid rgba(var(--accent-rgb), 0.12);
 }
 .profile_stat_row:last-child{
     border-bottom: none;
     padding-bottom: 0;
 }
 .profile_stat_label{
-    color: rgb(180, 180, 180);
+    color: rgba(var(--text-rgb), 0.7);
     font-size: 0.9rem;
     letter-spacing: 1px;
 }
@@ -461,7 +553,7 @@
 
 /* ===== 成就（先放佔位內容，之後功能做出來再換掉） ===== */
 .profile_achievement_empty{
-    color: rgb(150, 150, 150);
+    color: rgba(var(--text-rgb), 0.6);
     font-size: 0.9rem;
     letter-spacing: 1px;
     text-align: center;
@@ -480,7 +572,7 @@
     transform: translateX(-50%) translateY(0.6rem);
 
     background-color: var(--dark-blue);
-    color: whitesmoke;
+    color: rgba(var(--text-rgb), 0.92);
 
     border: 1px solid var(--champagne-gold);
     border-radius: 2px;

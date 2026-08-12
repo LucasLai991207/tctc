@@ -410,7 +410,60 @@ document.addEventListener("DOMContentLoaded", function(){
     Load_Cloud_Player_Stats()
     Init_Logout_Zone_Visibility()
     Init_Typing_Sound_Toggle()   // 【新增】純本機設定，不用等雲端資料，直接讀 localStorage 初始化
+    Init_Theme_Picker()          // 【新增】外觀主題選色卡，純本機設定，直接讀 localStorage 初始化
 })
+
+/* ============================================================
+   【新增】外觀主題選色卡 —— 純本機設定（localStorage），不同步雲端
+   ------------------------------------------------------------
+   色票清單完全來自 TCTC2-0-theme.js 掛在 window.TCTC_THEME 上的
+   THEMES 資料表，這裡不寫死任何一個主題的名稱或顏色，之後新增/調整
+   主題只需要改 theme.js，這支檔案跟 profile.html 都不用動。
+
+   點下去立刻套用＋存檔（TCTC_THEME.save()），不用等按「更新資料」，
+   跟排行榜顯示開關一樣屬於「即點即生效」的偏好設定，不是表單欄位。
+   ============================================================ */
+function Init_Theme_Picker(){
+    const gridEl = document.getElementById("profile_theme_grid")
+    if(!gridEl) return
+
+    if(typeof TCTC_THEME === "undefined"){
+        console.log("[theme] 主題模組尚未載入，跳過選色卡初始化")
+        return
+    }
+
+    const themes = TCTC_THEME.THEMES
+    const currentId = TCTC_THEME.getCurrent()
+
+    gridEl.innerHTML = Object.keys(themes).map(function(id){
+        const t = themes[id]
+        const isActive = (id === currentId)
+        return `
+            <div class="profile_theme_option${isActive ? " profile_theme_option_active" : ""}"
+                 data-theme-id="${id}"
+                 role="button"
+                 aria-label="切換為${t.name}主題">
+                <div class="profile_theme_swatch">
+                    <div class="profile_theme_swatch_fill" style="background: linear-gradient(135deg, ${t.darker} 0%, ${t.darker} 50%, ${t.accent} 50%, ${t.accent} 100%);"></div>
+                </div>
+                <div class="profile_theme_name">${t.name}</div>
+                <div class="profile_theme_desc">${t.desc}</div>
+            </div>
+        `
+    }).join("")
+
+    gridEl.querySelectorAll(".profile_theme_option").forEach(function(el){
+        el.addEventListener("click", function(){
+            const themeId = el.dataset.themeId
+            TCTC_THEME.save(themeId)
+
+            gridEl.querySelectorAll(".profile_theme_option").forEach(function(opt){
+                opt.classList.remove("profile_theme_option_active")
+            })
+            el.classList.add("profile_theme_option_active")
+        })
+    })
+}
 
 /* ============================================================
    【新增】打字音效開關 —— 純本機設定（localStorage），不同步雲端

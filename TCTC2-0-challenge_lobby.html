@@ -40,6 +40,8 @@
 
     <!-- 【新增】帳號系統彈窗樣式 -->
     <link rel="stylesheet" href="TCTC2-0-auth_ui.css">
+    <!-- 【新增】全站配色主題系統：務必放在 CSS 之後、其他 script 之前，同步載入避免換色閃爍 -->
+    <script src="TCTC2-0-theme.js"></script>
 
     <!-- ===== 【新增】挑戰模式專用樣式：難度選擇卡（簡單／普通／困難／極限）=====
          獨立寫在這裡（不動 main_lobby.css），避免影響主線模式原本的三卡難度選單版型 -->
@@ -63,7 +65,7 @@
             background-color: var(--dark-blue);
 
             border-radius: 6px;
-            border: 2px solid rgba(201, 168, 76, 0.5);
+            border: 2px solid rgba(var(--accent-rgb), 0.5);
             border-left: 3px solid var(--champagne-gold);
 
             cursor: pointer;
@@ -166,7 +168,7 @@
             margin-bottom: 1rem;
 
             background-color: var(--dark-blue);
-            border: 1px solid rgba(201,168,76,0.25);
+            border: 1px solid rgba(var(--accent-rgb),0.25);
             border-radius: 6px;
             padding: 1rem 1.2rem;
         }
@@ -243,15 +245,15 @@
 
                         <!-- ===== 【新增】WPM / 正確率 / 積分（跟主線大廳同款式）===== -->
                         <div class="main_lobby_main_frame_profileblock_wpm">
-                            <div id="cg_profile_wpm" style="font-size: 1.4rem;color: #c9a84c;letter-spacing:3px">0</div>
+                            <div id="cg_profile_wpm" style="font-size: 1.4rem;color: var(--champagne-gold);letter-spacing:3px">0</div>
                             <div style="color: lightgray;">字/分</div>
                         </div>
                         <div class="main_lobby_main_frame_profileblock_acc">
-                            <div id="cg_profile_acc" style="font-size: 1.4rem;color: #c9a84c;letter-spacing:3px">0%</div>
+                            <div id="cg_profile_acc" style="font-size: 1.4rem;color: var(--champagne-gold);letter-spacing:3px">0%</div>
                             <div style="color: lightgray;">正確率</div>
                         </div>
                         <div class="cg_profileblock_points">
-                            <div id="cg_profile_points" style="font-size: 1.4rem;color: #c9a84c;letter-spacing:3px">0</div>
+                            <div id="cg_profile_points" style="font-size: 1.4rem;color: var(--champagne-gold);letter-spacing:3px">0</div>
                             <div style="color: lightgray;">積分</div>
                         </div>
                     </div>

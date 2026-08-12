@@ -23,6 +23,8 @@
     <link rel="stylesheet" href="TCTC2-0-profile.css">
     <!-- 【新增】帳號系統彈窗樣式 -->
     <link rel="stylesheet" href="TCTC2-0-auth_ui.css">
+    <!-- 【新增】全站配色主題系統：務必放在 CSS 之後、其他 script 之前，同步載入避免換色閃爍 -->
+    <script src="TCTC2-0-theme.js"></script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -31,13 +33,15 @@
 
     <style>
         :root{
-            --darker-blue : #0b1a37;
-            --dark-blue : #0B1E36;
-            --light-blue : #0e243e;
-            --champagne-gold : #c9a84c;
+            --darker-blue : var(--darker-blue);
+            --dark-blue : var(--dark-blue);
+            --light-blue : var(--light-blue);
+            --champagne-gold : var(--champagne-gold);
+            --accent-rgb : 201, 168, 76;
             --light-gray : lightgray;
-            --gold-soft : rgba(201, 168, 76, 0.15);
-            --gold-line : rgba(201, 168, 76, 0.35);
+            --gold-soft : rgba(var(--accent-rgb), 0.15);
+            --gold-line : rgba(var(--accent-rgb), 0.35);
+                    --error-rgb : 192, 57, 43;
         }
         body h1{
             color: #ffffff;

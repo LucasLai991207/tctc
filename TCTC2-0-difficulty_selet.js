@@ -101,12 +101,27 @@ function Save_and_HighLight(difficulty){
 function Exit_mode_selector(){
     if (!mode_selector_window) return
     mode_selector_window.classList.add("is_hidden")
+
+    // 【新增】跟 Show_difficulty_selector() 對應，關窗時把背景捲動鎖定還原、
+    // 焦點還給開窗前使用者原本在操作的元素
+    document.body.style.overflow = ""
+    if (mode_selector_last_focused && typeof mode_selector_last_focused.focus === "function") {
+        mode_selector_last_focused.focus()
+    }
+    mode_selector_last_focused = null
 }
 
 //display
 
+// 【新增】記住開窗前的焦點，關窗時要還原（同一套做法跟 auth_ui.js 的登入視窗一致）
+let mode_selector_last_focused = null
+
 function Show_difficulty_selector(){
     mode_selector_window.classList.remove("is_hidden")
+
+    // 【新增】鎖住背景捲動 + 記住原本焦點，跟登入視窗同一套邏輯
+    mode_selector_last_focused = document.activeElement
+    document.body.style.overflow = "hidden"
 }
 
 function Difficulty_Choose_Easy(){
@@ -185,3 +200,52 @@ if(saved_username){
     // 補零成固定 4 位數，跟 TCTC2-0-firebase.js 的 Get_Player_Display_Name() 格式保持一致
     username.textContent = "訪客#" + String(cached_guest_number).padStart(4, "0")
 }
+
+/* ============================================================
+   【新增】難度選擇視窗的鍵盤行為：Esc 直接關閉、Tab 把焦點鎖在視窗裡，
+   跟 auth_ui.js 的登入視窗是同一套邏輯，只是這裡沒有輸入框，不需要
+   Enter 送出的部分。這個視窗本身沒有另外的「關閉」按鈕——原本只能靠
+   點選三個難度卡片其中一個才會關閉，Esc 之後等同多一種「先不選、
+   關掉視窗」的方式（跟原本點難度卡片一樣，只是呼叫 Exit_mode_selector()
+   不會連帶呼叫 Difficulty_Choose_X()）。
+   ============================================================ */
+document.addEventListener("keydown", function(event){
+    if (!mode_selector_window || mode_selector_window.classList.contains("is_hidden")) return // 視窗沒開，不處理
+
+    if (event.key === "Escape"){
+        event.preventDefault()
+        Exit_mode_selector()
+        return
+    }
+
+    if (event.key === "Tab"){
+        const candidates = mode_selector_window.querySelectorAll('button, [href], input, select, textarea, [onclick], [tabindex]:not([tabindex="-1"])')
+        const visible = Array.prototype.filter.call(candidates, function(el){
+            return el.offsetParent !== null
+        })
+        if (visible.length === 0) return
+
+        const first = visible[0]
+        const last = visible[visible.length - 1]
+
+        if (event.shiftKey && document.activeElement === first){
+            event.preventDefault()
+            last.focus()
+        } else if (!event.shiftKey && document.activeElement === last){
+            event.preventDefault()
+            first.focus()
+        }
+        return
+    }
+
+    // 【新增】三張難度卡片是 <div tabindex="0" onclick="...">，補上 tabindex 只讓它們
+    // 能被 Tab 選到、但瀏覽器不會像 <button> 一樣自動幫 div 處理 Enter/Space 觸發，
+    // 要自己判斷「目前聚焦的是不是這三張卡片之一」再手動呼叫 .click()
+    if (event.key === "Enter" || event.key === " "){
+        const focused = document.activeElement
+        if (focused && focused.hasAttribute("onclick") && mode_selector_window.contains(focused)){
+            event.preventDefault()
+            focused.click()
+        }
+    }
+})

@@ -23,15 +23,19 @@
     <link rel="stylesheet" href="TCTC2-0-main_lobby.css">
     <!-- 【新增】帳號系統彈窗樣式 -->
     <link rel="stylesheet" href="TCTC2-0-auth_ui.css">
+    <!-- 【新增】全站配色主題系統：務必放在 CSS 之後、其他 script 之前，同步載入避免換色閃爍 -->
+    <script src="TCTC2-0-theme.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@200;300;400;500;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --darker-blue: #0b1a37;
-            --dark-blue: #0B1E36;
-            --light-blue: #0e243e;
-            --champagne-gold: #c9a84c;
+            --darker-blue: var(--darker-blue);
+            --dark-blue: var(--dark-blue);
+            --light-blue: var(--light-blue);
+            --champagne-gold: var(--champagne-gold);
+            --accent-rgb : 201, 168, 76;
+                    --error-rgb : 192, 57, 43;
         }
         body {
             background-color: var(--dark-blue);
@@ -47,7 +51,7 @@
             top: 0; left: 0; right: 0;
             background-color: rgba(245, 243, 243, 0.85);
             padding: 0.1rem;
-            border-bottom: 2px solid #C9A84C;
+            border-bottom: 2px solid var(--champagne-gold);
             box-shadow: 0px 4px 15px rgba(0,0,0,0.7);
             height: 58px;
             z-index: 9999;
@@ -201,7 +205,7 @@
 
             padding: 0 1rem;
             background-color: var(--dark-blue);
-            border: 1px solid rgba(201,168,76,0.6);
+            border: 1px solid rgba(var(--accent-rgb),0.6);
             border-radius: 10rem;
 
             display: flex;
@@ -215,7 +219,7 @@
         }
         /* 剩最後 5 秒的警示樣式：文字變紅、微微放大提醒（幅度縮小，避免太搶眼）*/
         .game_timer.countdown_warning {
-            color: #ff5c5c;
+            color: var(--error-red);
             animation: countdown_pulse 700ms ease-in-out infinite;
         }
         @keyframes countdown_pulse {
@@ -232,7 +236,7 @@
             justify-content: center;
 
             background-color: var(--dark-blue);
-            border: 1px solid rgba(201,168,76,0.6);
+            border: 1px solid rgba(var(--accent-rgb),0.6);
             border-radius: 50%;
             cursor: pointer;
             /* 【修改】拿掉 hover 動畫，只留下 is_active 開關切換時的邊框過渡——
@@ -271,7 +275,7 @@
         .countdown_modal {
             width: min(26rem, 110vw);
             background-color: var(--dark-blue);
-            border: 1px solid rgba(201,168,76,0.5);
+            border: 1px solid rgba(var(--accent-rgb),0.5);
             border-radius: 8px;
             padding: 1.5rem 2.7rem;
             box-shadow: 0 10px 40px rgba(0,0,0,0.4);
@@ -314,7 +318,7 @@
         .countdown_modal_hint {
             margin: 1rem 0 0 0;
             padding-top: 0.8rem;
-            border-top: 1px solid rgba(201,168,76,0.2); /* 跟上面的設定列做出區隔，不會擠在一起 */
+            border-top: 1px solid rgba(var(--accent-rgb),0.2); /* 跟上面的設定列做出區隔，不會擠在一起 */
             font-size: 0.78rem;
             line-height: 1.6;
             color: gray;
@@ -330,7 +334,7 @@
             width: 4rem;
             padding: 0.35rem 0.5rem;
             background-color: var(--darker-blue);
-            border: 1px solid rgba(201,168,76,0.3);
+            border: 1px solid rgba(var(--accent-rgb),0.3);
             border-radius: 6px;
             color: #fff;
             font-size: 0.9rem;
@@ -375,12 +379,12 @@
             overflow-y: auto;
         }
         .cg_punct_content_title{
-            color: #c9a84c;
+            color: var(--champagne-gold);
             font-size: 1.1rem;
             padding-bottom: 0.3rem;
         }
         .cg_punct_item_name{
-            color: #c9a84c;
+            color: var(--champagne-gold);
             font-size: 1rem;
         }
 
@@ -441,8 +445,8 @@
 
             background-color: var(--darker-blue);
             border-radius: 12px;
-            border: 1px solid rgba(201,168,76,0.);
-            border-bottom: 2px solid #1d3450;
+            border: 1px solid rgba(var(--accent-rgb),0.);
+            border-bottom: 2px solid var(--light-blue);
 
             box-shadow: var(--container-box-shadow, inset 0 0 10px rgba(0,0,0,0.8));
 
@@ -456,7 +460,7 @@
             height: 5rem;
 
             background-color: var(--light-blue);
-            border: 1px solid rgba(201,168,76,0.3);
+            border: 1px solid rgba(var(--accent-rgb),0.3);
 
             border-radius: 6px;
 
@@ -494,7 +498,7 @@
         /* 目前要打的那格：金框發光 */
         .game_char_box.current {
             outline: 2px solid var(--champagne-gold);
-            box-shadow: 0 0 6px rgba(201,168,76,0.5);
+            box-shadow: 0 0 6px rgba(var(--accent-rgb),0.5);
 
             background-color: var(--darker-blue)
         }
@@ -585,7 +589,7 @@
             background-color: var(--darker-blue);
 
             border-radius: 8px;
-            border: 1px solid rgba(201,168,76,0.3);
+            border: 1px solid rgba(var(--accent-rgb),0.3);
         }
         .game_result.show { display: flex; }
         .game_result_title {
@@ -723,7 +727,7 @@
         .mode_toggle_switch {
             display: flex;
             background-color: var(--darker-blue);
-            border: 1px solid rgba(201,168,76,0.3);
+            border: 1px solid rgba(var(--accent-rgb),0.3);
             border-radius: 999px;
             padding: 0.25rem;
             gap: 0.25rem;
@@ -777,7 +781,7 @@
             background-color: var(--dark-blue); /* 原本 var(--light-blue)，改成挑戰模式那種深藍卡片底色 */
             color: rgb(170,170,170);            /* 原本 #ffffff，改成挑戰模式「還沒打到的字」那種灰色 */
 
-            border: 1px solid rgba(201,168,76,0.25); /* 原本是 2px 邊框 + 額外的金色 border-top 裝飾線，
+            border: 1px solid rgba(var(--accent-rgb),0.25); /* 原本是 2px 邊框 + 額外的金色 border-top 裝飾線，
                                                           改成挑戰模式那種細邊框、四邊一致，不特別強調頂部 */
             border-radius: 12px;                      /* 原本 5px */
 
@@ -816,11 +820,11 @@
            id-based 樣式維持一致的寫法習慣。 */
         #game_container_input_id{
             scrollbar-width: thin;
-            scrollbar-color: rgba(201,168,76,0.5) transparent;
+            scrollbar-color: rgba(var(--accent-rgb),0.5) transparent;
             outline: none;
         }
         #game_container_input_id::-webkit-scrollbar-thumb{
-            background-color: rgba(201,168,76,0.5);
+            background-color: rgba(var(--accent-rgb),0.5);
             border-radius: 4px;
         }
         #game_container_input_id::-webkit-scrollbar-track{
@@ -842,7 +846,7 @@
         /* 玩家目前該打的下一個字：金框提示位置 */
         .target1_char.current {
             outline: 2px solid var(--champagne-gold);
-            background-color: rgba(201,168,76,0.15);
+            background-color: rgba(var(--accent-rgb),0.15);
         }
         /* 括號注音提示（例如：他摒（ㄅㄧㄥˋ）棄了...）：不用打，維持灰色不參與比對 */
         .target1_annotation {
@@ -876,7 +880,7 @@
         }
         .bopomofo_char.current {
             outline: 2px solid var(--champagne-gold);
-            background-color: rgba(201,168,76,0.15);
+            background-color: rgba(var(--accent-rgb),0.15);
         }
         /* ===== 【新增】即時反饋鍵盤（印在輸入框底下，非浮動）===== */
         .live_keyboard {
@@ -888,8 +892,8 @@
             gap: 6px;
             padding: 12px;
             box-sizing: border-box;
-            background-color: rgba(11, 26, 55, 0.6);
-            border: 1px solid rgba(201, 168, 76, 0.3);
+            background-color: var(--dark-blue);
+            border: 1px solid rgba(var(--accent-rgb), 0.3);
             border-radius: 10px;
         }
         .live_keyboard.kb_hidden {
@@ -943,7 +947,7 @@
             margin-top: 1px;
         }
         .kb_key.kb_current {
-            background-color: rgba(201, 168, 76, 0.18);
+            background-color: rgba(var(--accent-rgb), 0.18);
             color: var(--champagne-gold);
         }
         .kb_key.kb_current .kb_letter { color: var(--champagne-gold); opacity: 0.75; }
@@ -957,15 +961,15 @@
            CSS 特異度打平時由「原始碼順序」決定勝負，寫在後面才能確保
            .kb_inactive 那組「變暗」的樣式不會蓋掉這裡要的金色提示。 */
         .kb_key.kb_current_modifier {
-            background-color: rgba(201, 168, 76, 0.08);
+            background-color: rgba(var(--accent-rgb), 0.08);
             border: 1px dashed var(--champagne-gold);
             color: var(--champagne-gold);
         }
         .kb_key.kb_current_modifier .kb_zhuyin { color: var(--champagne-gold); opacity: 0.85; }
         
         .kb_key.kb_flash_wrong {
-            background-color: rgba(220, 70, 70, 0.4);
-            border-color: #e05555;
+            background-color: rgba(var(--error-rgb), 0.4);
+            border-color: var(--error-red);
             color: #ffe0e0;
         }
         .kb_key.kb_flash_neutral {
@@ -1053,7 +1057,7 @@
         }
         /* 【新增】教學說明頁裡的「示範／示範按鈕」共用 hover 效果 */
         .tut_demo_btn:hover {
-            background-color: rgba(201, 168, 76, 0.18) !important;
+            background-color: rgba(var(--accent-rgb), 0.18) !important;
         }
     </style>
 </head>
@@ -1294,7 +1298,7 @@
             transform: translate(-50%, -50%);
             background-color: var(--darker-blue);
 
-            border: 1px solid #c9a84c;
+            border: 1px solid var(--champagne-gold);
             border-radius: 12px;
 
             padding: 2rem 2.5rem;
@@ -1309,13 +1313,13 @@
         ">
             <div style="font-size: 5rem; margin-bottom: 1rem;">⌨️</div>
 
-            <p style="color: #c9a84c; font-size: 1.1rem; letter-spacing: 3px; margin-bottom: 1.2rem;">
+            <p style="color: var(--champagne-gold); font-size: 1.1rem; letter-spacing: 3px; margin-bottom: 1.2rem;">
                 !!!  開始前請注意  !!!
             </p>
 
             <div style="
-                background-color: rgba(14,36,62,0.6);
-                border-left: 3px solid #c9a84c;
+                background-color: var(--light-blue);
+                border-left: 3px solid var(--champagne-gold);
                 border-radius: 6px;
                 padding: 0.8rem 1.2rem;
                 text-align: left;
@@ -1327,16 +1331,16 @@
                 font-size: 0.9rem;
                 color: #ddd;
             ">
-                1. 請切換至<b style="color: #c9a84c;">英文輸入法</b><br>
-                2. 確認 <b style="color: #c9a84c;">Caps Lock 未開啟</b><br>
-                3. 如果打錯字（框框變成紅色） <b style="color: #c9a84c;">會自動跳到下一格；若連續兩格都打錯，就會卡在金框上震動，打對才能繼續</b>
+                1. 請切換至<b style="color: var(--champagne-gold);">英文輸入法</b><br>
+                2. 確認 <b style="color: var(--champagne-gold);">Caps Lock 未開啟</b><br>
+                3. 如果打錯字（框框變成紅色） <b style="color: var(--champagne-gold);">會自動跳到下一格；若連續兩格都打錯，就會卡在金框上震動，打對才能繼續</b>
             </div>
 
             <button onclick="
                 document.getElementById('ime_warning_popup').style.display='none';
                 document.getElementById('black_overlay').style.display='none';
             " style="
-                background-color: #c9a84c;
+                background-color: var(--champagne-gold);
 
                 border: none;
 
@@ -1367,17 +1371,17 @@
             left:50%;
             transform:translate(-50%,-50%);
             background-color:var(--darker-blue);
-            border:1px solid #c9a84c;
+            border:1px solid var(--champagne-gold);
             border-radius:12px;
             padding:2rem; z-index:9999;
             width:30rem;
             ">
 
-            <p style="color:#c9a84c; font-size:1.2rem; margin-bottom:1rem;">名詞解釋</p>
+            <p style="color:var(--champagne-gold); font-size:1.2rem; margin-bottom:1rem;">名詞解釋</p>
             <p style="color:white; line-height:2rem;">
-                <b style="color:#c9a84c;">WPM</b>（每分鐘字數）<br>
+                <b style="color:var(--champagne-gold);">WPM</b>（每分鐘字數）<br>
                 每分鐘打幾個中文字，以每個字平均3個注音計算。<br><br>
-                <b style="color:#c9a84c;">準確率</b><br>
+                <b style="color:var(--champagne-gold);">準確率</b><br>
                 正確按鍵 ÷ 總按鍵次數，越高代表打字越穩定。
             </p>
             <button onclick="
@@ -1385,15 +1389,15 @@
                 document.getElementById('black_overlay').style.display = 'none'
                 "
                 style="margin-top:1.5rem;
-                background-color:#c9a84c;
+                background-color:var(--champagne-gold);
                 border:none;
                 padding:0.5rem 1.5rem;
                 border-radius:4px;
                 cursor:pointer;
                 transition: all 200ms ease-in-out;
                 "
-                onmouseover="this.style.backgroundColor='#fff'; this.style.boxShadow='0 0 10px #c9a84c';"
-                onmouseout="this.style.backgroundColor='#c9a84c'; this.style.boxShadow='none';"
+                onmouseover="this.style.backgroundColor='#fff'; this.style.boxShadow='0 0 10px var(--champagne-gold)';"
+                onmouseout="this.style.backgroundColor='var(--champagne-gold)'; this.style.boxShadow='none';"
             >
                 我知道了
             </button>
@@ -1949,10 +1953,10 @@
                 const num = i + 1
                 const is_target = highlight_num === num
                 html += '<div style="min-width:2.6rem; padding:0.4rem 0.3rem; border-radius:6px; text-align:center; font-size:1.1rem; ' +
-                    'border:1px solid ' + (is_target ? '#c9a84c' : 'rgba(255,255,255,0.3)') + '; ' +
-                    'background:' + (is_target ? 'rgba(201,168,76,0.18)' : 'transparent') + '; color:white;">' +
+                    'border:1px solid ' + (is_target ? 'var(--champagne-gold)' : 'rgba(255,255,255,0.3)') + '; ' +
+                    'background:' + (is_target ? 'rgba(var(--accent-rgb),0.18)' : 'transparent') + '; color:white;">' +
                     '<div>' + c + '</div>' +
-                    '<div style="font-size:0.75rem; color:#c9a84c; margin-top:0.2rem;">' + num + '</div>' +
+                    '<div style="font-size:0.75rem; color:var(--champagne-gold); margin-top:0.2rem;">' + num + '</div>' +
                     '</div>'
             })
             html += '</div>'
@@ -1965,38 +1969,38 @@
             if(ime_sim_state === 0){
                 ime_sim_container.innerHTML = Ime_Sim_Wrap(
                     "1 / 5",
-                    "請按 <b style='color:#c9a84c;'>↓（方向鍵下）</b>，叫出選字視窗",
-                    '<div style="text-align:center; font-size:1.3rem; color:#eee;">你打了 <b style="color:#c9a84c;">ㄉㄚˇ</b>，系統自動選成了「<span style="text-decoration:underline wavy #ff6b6b;">大</span>」（打錯了）</div>'
+                    "請按 <b style='color:var(--champagne-gold);'>↓（方向鍵下）</b>，叫出選字視窗",
+                    '<div style="text-align:center; font-size:1.3rem; color:#eee;">你打了 <b style="color:var(--champagne-gold);">ㄉㄚˇ</b>，系統自動選成了「<span style="text-decoration:underline wavy var(--error-red);">大</span>」（打錯了）</div>'
                 )
             } else if(ime_sim_state === 1){
                 ime_sim_container.innerHTML = Ime_Sim_Wrap(
                     "2 / 5",
-                    "選字視窗跳出來了！請按數字鍵 <b style='color:#c9a84c;'>2</b>，選出正確的字",
+                    "選字視窗跳出來了！請按數字鍵 <b style='color:var(--champagne-gold);'>2</b>，選出正確的字",
                     Ime_Sim_Candidate_Html(["大","打","答","dá","搭"], 2)
                 )
             } else if(ime_sim_state === 2){
                 ime_sim_container.innerHTML = Ime_Sim_Wrap(
                     "3 / 5",
-                    "接著練習改錯字：請按 <b style='color:#c9a84c;'>←（左方向鍵）兩次</b>，把游標移到錯字「門」後面（目前已按 " + ime_sim_left_count + " / 2 次）",
-                    '<div style="text-align:center; font-size:1.3rem; color:#eee;">我<span style="text-decoration:underline wavy #ff6b6b;">門</span>要打字<span style="opacity:0.5;">|</span></div>'
+                    "接著練習改錯字：請按 <b style='color:var(--champagne-gold);'>←（左方向鍵）兩次</b>，把游標移到錯字「門」後面（目前已按 " + ime_sim_left_count + " / 2 次）",
+                    '<div style="text-align:center; font-size:1.3rem; color:#eee;">我<span style="text-decoration:underline wavy var(--error-red);">門</span>要打字<span style="opacity:0.5;">|</span></div>'
                 )
             } else if(ime_sim_state === 3){
                 ime_sim_container.innerHTML = Ime_Sim_Wrap(
                     "4 / 5",
-                    "游標已經移到「門」後面了！請按 <b style='color:#c9a84c;'>↓（方向鍵下）</b>，叫出這個字的選字視窗",
+                    "游標已經移到「門」後面了！請按 <b style='color:var(--champagne-gold);'>↓（方向鍵下）</b>，叫出這個字的選字視窗",
                     '<div style="text-align:center; font-size:1.3rem; color:#eee;">我門<span style="opacity:0.5;">|</span>要打字</div>'
                 )
             } else if(ime_sim_state === 4){
                 ime_sim_container.innerHTML = Ime_Sim_Wrap(
                     "5 / 5",
-                    "請按數字鍵 <b style='color:#c9a84c;'>3</b>，選出正確的字「們」",
+                    "請按數字鍵 <b style='color:var(--champagne-gold);'>3</b>，選出正確的字「們」",
                     Ime_Sim_Candidate_Html(["門","悶","們","聞"], 3)
                 )
             } else {
                 ime_sim_active = false
                 ime_sim_container.innerHTML =
                     '<div style="text-align:center; padding:0.8rem 0;">' +
-                        '<div style="color:#c9a84c; font-size:1.2rem; margin-bottom:0.3rem;">✓ 太棒了，修正完成！</div>' +
+                        '<div style="color:var(--champagne-gold); font-size:1.2rem; margin-bottom:0.3rem;">✓ 太棒了，修正完成！</div>' +
                         '<div style="font-size:1.2rem; color:#eee;">我們要打字</div>' +
                     '</div>'
                 if(typeof ime_sim_on_done === "function") ime_sim_on_done()
@@ -2100,8 +2104,8 @@
                 }
                 finger_quiz_container.innerHTML =
                     '<div style="text-align:center; padding:0.8rem 0;">' +
-                        '<div style="color:#c9a84c; font-size:1.1rem; margin-bottom:1.5rem;">測驗完成！答對 ' + finger_quiz_correct + ' / ' + finger_quiz_items.length + ' 題</div>' +
-                        '<button style="font-size:0.85rem; padding:0.4rem 1rem; background:transparent; border:1px solid #c9a84c; color:#c9a84c; border-radius:4px; cursor:pointer;" onclick="Start_Finger_Quiz(finger_quiz_container, ' + finger_quiz_items.length + ')">再試一次</button>' +
+                        '<div style="color:var(--champagne-gold); font-size:1.1rem; margin-bottom:1.5rem;">測驗完成！答對 ' + finger_quiz_correct + ' / ' + finger_quiz_items.length + ' 題</div>' +
+                        '<button style="font-size:0.85rem; padding:0.4rem 1rem; background:transparent; border:1px solid var(--champagne-gold); color:var(--champagne-gold); border-radius:4px; cursor:pointer;" onclick="Start_Finger_Quiz(finger_quiz_container, ' + finger_quiz_items.length + ')">再試一次</button>' +
                     '</div>'
                 return
             }
@@ -2960,7 +2964,7 @@
             game_container.style.maxWidth = "900px"
             game_container.style.margin = "1.2rem auto 0"
             game_container.style.backgroundColor = "var(--dark-blue)"
-            game_container.style.border = "1px solid rgba(201,168,76,0.25)"
+            game_container.style.border = "1px solid rgba(var(--accent-rgb),0.25)"
             game_container.style.borderRadius = "12px"
             game_container.style.boxShadow = "none"
             game_container.style.padding = "0.2rem 1rem"
@@ -3302,36 +3306,36 @@
                 if(stage.id === "1-0-1"){
                     game_char_container.innerHTML = `
                     <div style="text-align: left; max-width: 900px; margin: 0 auto; font-family: 'Noto Serif TC', serif;color: white;font-weight: 150;position: relative;font-size: 0.9rem">
-                        <p style="font-size: 1.4rem; color: #c9a84c; text-align: center; margin-bottom: 1.5rem; font-weight: 500;">
+                        <p style="font-size: 1.4rem; color: var(--champagne-gold); text-align: center; margin-bottom: 1.5rem; font-weight: 500;">
                             開始打字的第一步：摸到那條「線」
                         </p>
                         
                         <p style="margin-bottom: 1.2rem; color: #ffffff;font-weight: 300;">
-                            所有打字高手在打字時，眼睛是不看鍵盤的。他們之所以不會按錯，是因為雙手食指隨時都靠在<b style="font-weight: 400;color: #c9a84c">「基準鍵（Home Row）」</b>上。
+                            所有打字高手在打字時，眼睛是不看鍵盤的。他們之所以不會按錯，是因為雙手食指隨時都靠在<b style="font-weight: 400;color: var(--champagne-gold)">「基準鍵（Home Row）」</b>上。
                         </p>
 
-                        <div style="background-color: rgba(14, 36, 62, 0.6); padding: 1rem; border-radius: 8px; border-left: 4px solid #c9a84c; margin-bottom: 1.5rem;">
-                            <b style="color: #c9a84c;line-height: 2rem">請現在跟著做：</b><br>
-                            1. 將左手食指放在鍵盤的 <b style=" color: #c9a84c;font-size: 1.1rem">F</b> 鍵上（注音 <b style=" color: #c9a84c;font-size: 1.1rem">ㄑ</b>）<br>
-                            2. 將右手食指放在鍵盤的 <b style=" color: #c9a84c;font-size: 1.1rem">J</b> 鍵上（注音 <b style=" color: #c9a84c;font-size: 1.1rem">ㄨ</b>）
+                        <div style="background-color: var(--light-blue); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--champagne-gold); margin-bottom: 1.5rem;">
+                            <b style="color: var(--champagne-gold);line-height: 2rem">請現在跟著做：</b><br>
+                            1. 將左手食指放在鍵盤的 <b style=" color: var(--champagne-gold);font-size: 1.1rem">F</b> 鍵上（注音 <b style=" color: var(--champagne-gold);font-size: 1.1rem">ㄑ</b>）<br>
+                            2. 將右手食指放在鍵盤的 <b style=" color: var(--champagne-gold);font-size: 1.1rem">J</b> 鍵上（注音 <b style=" color: var(--champagne-gold);font-size: 1.1rem">ㄨ</b>）
                         </div>
 
                         
 
-                        <p style="color: #c9a84c; font-size: 1.2rem; text-align: center; margin-top: 1.5rem; margin-bottom: 0.8rem;font-weight: 300">
+                        <p style="color: var(--champagne-gold); font-size: 1.2rem; text-align: center; margin-top: 1.5rem; margin-bottom: 0.8rem;font-weight: 300">
                             請依照畫面指示，依序按下 F 鍵、再按下 J 鍵（請切換到英文輸入法）
                         </p>
                         <div id="tut101_practice"></div>
 
                         <p style="margin-bottom: 1.2rem; line-height: 1.8rem;">
                             💡 <b>摸到了嗎？</b> <br>
-                            這兩個按鍵上有一個<b style="font-weight: 500;color: #c9a84c">凸起的小橫線</b>。這條橫線就是盲打的基礎。不論你的手指移到多遠去按別的字，按完後，兩隻食指都必須立刻<b>「彈回」</b>這兩個定位點。
+                            這兩個按鍵上有一個<b style="font-weight: 500;color: var(--champagne-gold)">凸起的小橫線</b>。這條橫線就是盲打的基礎。不論你的手指移到多遠去按別的字，按完後，兩隻食指都必須立刻<b>「彈回」</b>這兩個定位點。
                         </p>
 
                         <p id="tut101_next_hint" style="color: gray; font-size: 0.9rem; text-align: center; margin-top: 2rem;">
                             完成上面的練習後，就可以進入下一頁囉！
                         </p>
-                        <button id="tut101_next_btn" style="display:none; width: 10rem; height: 3rem; margin: auto; margin-top: 1.5rem; background-color: #c9a84c; display: flex; justify-content: center; align-items: center; color: var(--dark-blue); font-family: 'Noto Serif TC', serif; font-size: 1rem; letter-spacing: 2px; border: none; border-radius: 4px; cursor: pointer; transition: all 200ms ease;""
+                        <button id="tut101_next_btn" style="display:none; width: 10rem; height: 3rem; margin: auto; margin-top: 1.5rem; background-color: var(--champagne-gold); display: flex; justify-content: center; align-items: center; color: var(--dark-blue); font-family: 'Noto Serif TC', serif; font-size: 1rem; letter-spacing: 2px; border: none; border-radius: 4px; cursor: pointer; transition: all 200ms ease;""
                                 onclick="window.location.href='game.html?stage=1-0-2'">
                             下一頁 →
                         </button>                    
@@ -3362,25 +3366,25 @@
                 else if(stage.id === "1-0-2"){
                     game_char_container.innerHTML = `
                         <div style="text-align: left; max-width: 900px; margin: 0 auto; font-family: 'Noto Serif TC', serif; color: white; font-weight: 150; position: relative;font-size: 0.9rem">
-                            <p style="font-size: 1.4rem; color: #c9a84c; text-align: center; margin-bottom: 1.5rem; font-weight: 500;">
+                            <p style="font-size: 1.4rem; color: var(--champagne-gold); text-align: center; margin-bottom: 1.5rem; font-weight: 500;">
                                 探索鍵盤：什麼是「大千式排列」？
                             </p>
                             
                             <p style="margin-bottom: 1.2rem; color: #ffffff; font-weight: 250; line-height: 1.8rem;">
                                 大千式排列是由大千公司設計、後來成為台灣國家標準（CNS 2690）的注音輸入法鍵盤排列方式。<br>市面上99%的鍵盤佈局都為此種形式，掌握他的排列規則，能有效提升打字速度。                            </p>
 
-                            <div style="background-color: rgba(14, 36, 62, 0.6); padding: 1.2rem; border-radius: 8px; border-left: 4px solid #c9a84c; margin-bottom: 1.5rem; line-height: 1.8rem;">
-                                <b style="color: #c9a84c; font-size: 1.1rem;line-height:2rem">．三大排列隱藏規則：</b><br>
-                                <span style="color: #c9a84c;font-size: 1rem;font-weight: 500;">1. 聲母由上往下排：</span> 鍵盤最左邊那一縱列，<b>1➔Q➔A➔Z</b>，剛好對應 <b style="font-size: 1rem;">ㄅㄆㄇㄈ</b>接著往右看第二列 <b>&nbsp &nbsp &nbsp2➔W➔S➔X</b>，就是 <b style="font-size: 1rem;">ㄉㄊㄋㄌ</b>。它是「由上往下、再由左往右」整齊排列的。<br>
-                                <button class="tut_demo_btn" style="margin-left:0.5rem; font-size:0.8rem; padding:0.2rem 0.6rem; background:transparent; border:1px solid #c9a84c; color:#c9a84c; border-radius:4px; cursor:pointer;margin-bottom:1rem;" onclick="Highlight_Keys_Temporarily(['1','q','a','z','2','w','s','x'], true)">👆 在鍵盤上示範</button><br>
-                                <span style="color: #c9a84c;font-size: 1rem;font-weight: 500;"">2. 韻母藏在右手邊：</span> 介音（ㄧㄨㄩ）和韻母（ㄚㄛㄜㄝ...）幾乎全部集中在鍵盤的<b>右手邊</b>。
-                                <button class="tut_demo_btn" style="margin-left:0.5rem; font-size:0.8rem; padding:0.2rem 0.6rem; background:transparent; border:1px solid #c9a84c; color:#c9a84c; border-radius:4px; cursor:pointer;margin-bottom:1rem;" onclick="Highlight_Keys_Temporarily(['u','i','o','p','j','k','l',';','m',',','.','/'], false)">👆 在鍵盤上示範</button><br>
-                                <span style="color: #c9a84c;font-size: 1rem;font-weight: 500;"">3. 聲調在鍵盤上排：</span> 輕聲、二聲、三聲、四聲（˙ ˊ ˇ ˋ）整齊地排在數字鍵 7、6、3、4。
-                                <button class="tut_demo_btn" style="margin-left:0.5rem; font-size:0.8rem; padding:0.2rem 0.6rem; background:transparent; border:1px solid #c9a84c; color:#c9a84c; border-radius:4px; cursor:pointer;margin-bottom:1rem;" onclick="Highlight_Keys_Temporarily(['7','6','3','4'], false)">👆 在鍵盤上示範</button>
+                            <div style="background-color: var(--light-blue); padding: 1.2rem; border-radius: 8px; border-left: 4px solid var(--champagne-gold); margin-bottom: 1.5rem; line-height: 1.8rem;">
+                                <b style="color: var(--champagne-gold); font-size: 1.1rem;line-height:2rem">．三大排列隱藏規則：</b><br>
+                                <span style="color: var(--champagne-gold);font-size: 1rem;font-weight: 500;">1. 聲母由上往下排：</span> 鍵盤最左邊那一縱列，<b>1➔Q➔A➔Z</b>，剛好對應 <b style="font-size: 1rem;">ㄅㄆㄇㄈ</b>接著往右看第二列 <b>&nbsp &nbsp &nbsp2➔W➔S➔X</b>，就是 <b style="font-size: 1rem;">ㄉㄊㄋㄌ</b>。它是「由上往下、再由左往右」整齊排列的。<br>
+                                <button class="tut_demo_btn" style="margin-left:0.5rem; font-size:0.8rem; padding:0.2rem 0.6rem; background:transparent; border:1px solid var(--champagne-gold); color:var(--champagne-gold); border-radius:4px; cursor:pointer;margin-bottom:1rem;" onclick="Highlight_Keys_Temporarily(['1','q','a','z','2','w','s','x'], true)">👆 在鍵盤上示範</button><br>
+                                <span style="color: var(--champagne-gold);font-size: 1rem;font-weight: 500;"">2. 韻母藏在右手邊：</span> 介音（ㄧㄨㄩ）和韻母（ㄚㄛㄜㄝ...）幾乎全部集中在鍵盤的<b>右手邊</b>。
+                                <button class="tut_demo_btn" style="margin-left:0.5rem; font-size:0.8rem; padding:0.2rem 0.6rem; background:transparent; border:1px solid var(--champagne-gold); color:var(--champagne-gold); border-radius:4px; cursor:pointer;margin-bottom:1rem;" onclick="Highlight_Keys_Temporarily(['u','i','o','p','j','k','l',';','m',',','.','/'], false)">👆 在鍵盤上示範</button><br>
+                                <span style="color: var(--champagne-gold);font-size: 1rem;font-weight: 500;"">3. 聲調在鍵盤上排：</span> 輕聲、二聲、三聲、四聲（˙ ˊ ˇ ˋ）整齊地排在數字鍵 7、6、3、4。
+                                <button class="tut_demo_btn" style="margin-left:0.5rem; font-size:0.8rem; padding:0.2rem 0.6rem; background:transparent; border:1px solid var(--champagne-gold); color:var(--champagne-gold); border-radius:4px; cursor:pointer;margin-bottom:1rem;" onclick="Highlight_Keys_Temporarily(['7','6','3','4'], false)">👆 在鍵盤上示範</button>
                             </div>
 
                             <p style="margin-bottom: 1.2rem; line-height: 1.8rem;">
-                                💡 <b style="color: #c9a84c;font-size: 1rem;">為什麼要這樣設計？</b> <br>
+                                💡 <b style="color: var(--champagne-gold);font-size: 1rem;">為什麼要這樣設計？</b> <br>
                                 因為打一個完整的中文字，順序一定是<b>「聲母 ➔ 介音 ➔ 韻母 ➔ 聲調」</b>。這種排列讓你的雙手在打字時，自然會形成<b>「左右交替」</b>的流暢節奏，打起來速度最快、最省力。
                             </p>
 
@@ -3388,7 +3392,7 @@
                                 初步理解大千式鍵盤後，我們要準備正式敲下第一個字了！
                             </p>
                             
-                            <button style="width: 10rem; height: 3rem; margin: auto; margin-top: 1.5rem; background-color: #c9a84c; display: flex; justify-content: center; align-items: center; color: var(--dark-blue); font-family: 'Noto Serif TC', serif; font-size: 1rem; letter-spacing: 2px; border: none; border-radius: 4px; cursor: pointer; transition: all 200ms ease;" 
+                            <button style="width: 10rem; height: 3rem; margin: auto; margin-top: 1.5rem; background-color: var(--champagne-gold); display: flex; justify-content: center; align-items: center; color: var(--dark-blue); font-family: 'Noto Serif TC', serif; font-size: 1rem; letter-spacing: 2px; border: none; border-radius: 4px; cursor: pointer; transition: all 200ms ease;" 
                                     onclick="window.location.href='game.html?stage=1-0-3'">
                                 下一頁 →
                             </button>
@@ -3414,7 +3418,7 @@
                 else if(stage.id === "1-0-3"){
                     game_char_container.innerHTML = `
                         <div style="text-align: left; max-width: 900px; margin: 0 auto; font-family: 'Noto Serif TC', serif; color: white; font-weight: 150; position: relative; font-size: 0.9rem">
-                            <p style="font-size: 1.4rem; color: #c9a84c; text-align: center; margin-bottom: 1.5rem; font-weight: 500;">
+                            <p style="font-size: 1.4rem; color: var(--champagne-gold); text-align: center; margin-bottom: 1.5rem; font-weight: 500;">
                                 鍵盤指法：十指的「守備範圍」
                             </p>
                             
@@ -3422,28 +3426,28 @@
                                 想提升打字速度，<b>「各司其職」</b>至關重要。鍵盤上的按鍵不是垂直的，而是向左傾斜。每隻手指都有自己專屬管轄的「傾斜縱列」！
                             </p>
 
-                            <div style="background-color: rgba(14, 36, 62, 0.6); padding: 1.2rem; border-radius: 8px; border-left: 4px solid #c9a84c; margin-bottom: 1.5rem; line-height: 1.8rem;">
-                                <b style="color: #c9a84c; font-size: 1.1rem;">雙手手指正確分工：</b> <br>
-                                <span style="color: #c9a84c; font-size: 1rem;">1. 左手四指（由外往內）：</span> <br>
+                            <div style="background-color: var(--light-blue); padding: 1.2rem; border-radius: 8px; border-left: 4px solid var(--champagne-gold); margin-bottom: 1.5rem; line-height: 1.8rem;">
+                                <b style="color: var(--champagne-gold); font-size: 1.1rem;">雙手手指正確分工：</b> <br>
+                                <span style="color: var(--champagne-gold); font-size: 1rem;">1. 左手四指（由外往內）：</span> <br>
                                  • 小指專管：<b style="font-size: 1.2rem">ㄅ ㄆ ㄇ ㄈ</b>
-                                 <button class="tut_demo_btn" style="margin-left:0.4rem; font-size:0.75rem; padding:0.15rem 0.5rem; background:transparent; border:1px solid #c9a84c; color:#c9a84c; border-radius:4px; cursor:pointer;" onclick="Highlight_Keys_Temporarily(['1','q','a','z'], false)">👆 示範</button><br>
+                                 <button class="tut_demo_btn" style="margin-left:0.4rem; font-size:0.75rem; padding:0.15rem 0.5rem; background:transparent; border:1px solid var(--champagne-gold); color:var(--champagne-gold); border-radius:4px; cursor:pointer;" onclick="Highlight_Keys_Temporarily(['1','q','a','z'], false)">👆 示範</button><br>
                                  • 無名指管：<b style="font-size: 1.2rem">ㄉ ㄊ ㄋ</b>
-                                 <button class="tut_demo_btn" style="margin-left:0.4rem; font-size:0.75rem; padding:0.15rem 0.5rem; background:transparent; border:1px solid #c9a84c; color:#c9a84c; border-radius:4px; cursor:pointer;" onclick="Highlight_Keys_Temporarily(['2','w','s'], false)">👆 示範</button><br>
+                                 <button class="tut_demo_btn" style="margin-left:0.4rem; font-size:0.75rem; padding:0.15rem 0.5rem; background:transparent; border:1px solid var(--champagne-gold); color:var(--champagne-gold); border-radius:4px; cursor:pointer;" onclick="Highlight_Keys_Temporarily(['2','w','s'], false)">👆 示範</button><br>
                                  • 中指專管：<b style="font-size: 1.2rem"> ˇ ㄍ ㄎ ㄌ</b>
-                                 <button class="tut_demo_btn" style="margin-left:0.4rem; font-size:0.75rem; padding:0.15rem 0.5rem; background:transparent; border:1px solid #c9a84c; color:#c9a84c; border-radius:4px; cursor:pointer;" onclick="Highlight_Keys_Temporarily(['3','e','d','x'], false)">👆 示範</button><br>
+                                 <button class="tut_demo_btn" style="margin-left:0.4rem; font-size:0.75rem; padding:0.15rem 0.5rem; background:transparent; border:1px solid var(--champagne-gold); color:var(--champagne-gold); border-radius:4px; cursor:pointer;" onclick="Highlight_Keys_Temporarily(['3','e','d','x'], false)">👆 示範</button><br>
                                  • 食指管轄：<b style="font-size: 1.2rem">4 ㄐ ㄑ ㄏ 5 ㄔ ㄕ ㄒ 6</b>
-                                 <button class="tut_demo_btn" style="margin-left:0.4rem; font-size:0.75rem; padding:0.15rem 0.5rem; background:transparent; border:1px solid #c9a84c; color:#c9a84c; border-radius:4px; cursor:pointer;" onclick="Highlight_Keys_Temporarily(['4','r','f','c','5','t','g','v','6'], false)">👆 示範</button><br>
-                                <span style="color: #c9a84c; font-size: 1rem;">2. 右手四指（由內往外）：</span> <br>
+                                 <button class="tut_demo_btn" style="margin-left:0.4rem; font-size:0.75rem; padding:0.15rem 0.5rem; background:transparent; border:1px solid var(--champagne-gold); color:var(--champagne-gold); border-radius:4px; cursor:pointer;" onclick="Highlight_Keys_Temporarily(['4','r','f','c','5','t','g','v','6'], false)">👆 示範</button><br>
+                                <span style="color: var(--champagne-gold); font-size: 1rem;">2. 右手四指（由內往外）：</span> <br>
                                  • 食指管轄：<b style="font-size: 1.2rem">7 ㄗ ㄘ ㄖ ˙ ㄧ ㄨ ㄙ ㄩ</b>
-                                 <button class="tut_demo_btn" style="margin-left:0.4rem; font-size:0.75rem; padding:0.15rem 0.5rem; background:transparent; border:1px solid #c9a84c; color:#c9a84c; border-radius:4px; cursor:pointer;" onclick="Highlight_Keys_Temporarily(['7','y','h','b','u','j','n','m'], false)">👆 示範</button><br>
+                                 <button class="tut_demo_btn" style="margin-left:0.4rem; font-size:0.75rem; padding:0.15rem 0.5rem; background:transparent; border:1px solid var(--champagne-gold); color:var(--champagne-gold); border-radius:4px; cursor:pointer;" onclick="Highlight_Keys_Temporarily(['7','y','h','b','u','j','n','m'], false)">👆 示範</button><br>
                                  • 中指專管：<b style="font-size: 1.2rem">ㄚ ㄛ ㄜ ㄝ</b>
-                                 <button class="tut_demo_btn" style="margin-left:0.4rem; font-size:0.75rem; padding:0.15rem 0.5rem; background:transparent; border:1px solid #c9a84c; color:#c9a84c; border-radius:4px; cursor:pointer;" onclick="Highlight_Keys_Temporarily(['8','i','k',','], false)">👆 示範</button><br>
+                                 <button class="tut_demo_btn" style="margin-left:0.4rem; font-size:0.75rem; padding:0.15rem 0.5rem; background:transparent; border:1px solid var(--champagne-gold); color:var(--champagne-gold); border-radius:4px; cursor:pointer;" onclick="Highlight_Keys_Temporarily(['8','i','k',','], false)">👆 示範</button><br>
                                  • 無名指管：<b style="font-size: 1.2rem">ㄞ ㄟ ㄠ ㄡ 0</b>
-                                 <button class="tut_demo_btn" style="margin-left:0.4rem; font-size:0.75rem; padding:0.15rem 0.5rem; background:transparent; border:1px solid #c9a84c; color:#c9a84c; border-radius:4px; cursor:pointer;" onclick="Highlight_Keys_Temporarily(['9','o','l','.','0'], false)">👆 示範</button><br>
+                                 <button class="tut_demo_btn" style="margin-left:0.4rem; font-size:0.75rem; padding:0.15rem 0.5rem; background:transparent; border:1px solid var(--champagne-gold); color:var(--champagne-gold); border-radius:4px; cursor:pointer;" onclick="Highlight_Keys_Temporarily(['9','o','l','.','0'], false)">👆 示範</button><br>
                                  • 小指專管：<b style="font-size: 1.2rem">ㄦ ㄣ ㄤ ㄥ</b> 以及右側所有標點符號與功能鍵。
-                                 <button class="tut_demo_btn" style="margin-left:0.4rem; font-size:0.75rem; padding:0.15rem 0.5rem; background:transparent; border:1px solid #c9a84c; color:#c9a84c; border-radius:4px; cursor:pointer;" onclick="Highlight_Keys_Temporarily(['-','p',';','/','[',']','\\\\','Backspace'], false)">👆 示範</button><br>
-                                <span style="color: #c9a84c; font-size: 1rem;">3. 大拇指：</span> 雙手大拇指只專職負責敲擊<b>空白鍵</b>。
-                                 <button class="tut_demo_btn" style="margin-left:0.4rem; font-size:0.75rem; padding:0.15rem 0.5rem; background:transparent; border:1px solid #c9a84c; color:#c9a84c; border-radius:4px; cursor:pointer;" onclick="Highlight_Keys_Temporarily([' '], false)">👆 示範</button>
+                                 <button class="tut_demo_btn" style="margin-left:0.4rem; font-size:0.75rem; padding:0.15rem 0.5rem; background:transparent; border:1px solid var(--champagne-gold); color:var(--champagne-gold); border-radius:4px; cursor:pointer;" onclick="Highlight_Keys_Temporarily(['-','p',';','/','[',']','\\\\','Backspace'], false)">👆 示範</button><br>
+                                <span style="color: var(--champagne-gold); font-size: 1rem;">3. 大拇指：</span> 雙手大拇指只專職負責敲擊<b>空白鍵</b>。
+                                 <button class="tut_demo_btn" style="margin-left:0.4rem; font-size:0.75rem; padding:0.15rem 0.5rem; background:transparent; border:1px solid var(--champagne-gold); color:var(--champagne-gold); border-radius:4px; cursor:pointer;" onclick="Highlight_Keys_Temporarily([' '], false)">👆 示範</button>
                             </div>
 
                             <p style="margin-bottom: 1.2rem; line-height: 1.8rem;">
@@ -3451,8 +3455,8 @@
                                 當某一隻手指移開基準鍵去按別的字時，<b>其他手指要盡量留在原位</b>，按完的那隻手指要立刻「彈回」定位點（F 和 J）。只要保持這個節奏，打字速度就會開始暴增！
                             </p>
 
-                            <div style="background-color: rgba(14, 36, 62, 0.6); padding: 1.2rem; border-radius: 8px; border-left: 4px solid #c9a84c; margin-bottom: 1.5rem;">
-                                <b style="color: #c9a84c;">小測驗：考考你的手指分工</b><br>
+                            <div style="background-color: var(--light-blue); padding: 1.2rem; border-radius: 8px; border-left: 4px solid var(--champagne-gold); margin-bottom: 1.5rem;">
+                                <b style="color: var(--champagne-gold);">小測驗：考考你的手指分工</b><br>
                                 <p style="margin:0.5rem 0; color:#ccc; font-size:0.85rem;">畫面會隨機出一個注音符號，想好該用哪根手指後，直接在鍵盤上按下對應的鍵就好！</p>
                                 <div id="tut103_quiz"></div>
                             </div>
@@ -3461,7 +3465,7 @@
                                 切記，正確率大於速度!！永遠記住這點 然後開始你的打字旅程吧~
                             </p>
                             
-                            <button style="width: 10rem; height: 3rem; margin: auto; margin-top: 1.5rem; background-color: #c9a84c; display: flex; justify-content: center; align-items: center; color: var(--dark-blue); font-family: 'Noto Serif TC', serif; font-size: 1rem; letter-spacing: 2px; border: none; border-radius: 4px; cursor: pointer; transition: all 200ms ease;" 
+                            <button style="width: 10rem; height: 3rem; margin: auto; margin-top: 1.5rem; background-color: var(--champagne-gold); display: flex; justify-content: center; align-items: center; color: var(--dark-blue); font-family: 'Noto Serif TC', serif; font-size: 1rem; letter-spacing: 2px; border: none; border-radius: 4px; cursor: pointer; transition: all 200ms ease;" 
                                     onclick="window.location.href='game.html?stage=1-2-1'">
                                 進入實戰練習 →
                             </button>
@@ -3498,7 +3502,7 @@
                 else if(stage.id === "1-9-1"){
                     game_char_container.innerHTML = `
                         <div style="text-align: left; max-width: 900px; margin: 0 auto; font-family: 'Noto Serif TC', serif; color: white; font-weight: 150; position: relative; font-size: 0.9rem">
-                            <p style="font-size: 1.4rem; color: #c9a84c; text-align: center; margin-bottom: 1.5rem; font-weight: 500;">
+                            <p style="font-size: 1.4rem; color: var(--champagne-gold); text-align: center; margin-bottom: 1.5rem; font-weight: 500;">
                                 注音「選字」流暢度教學：手不離鍵盤的關鍵訣竅
                             </p>
                             
@@ -3506,19 +3510,19 @@
                                 打注音要快，核心原則就是：「絕對不要用滑鼠去點選字視窗」。以下是從選字、改字到記憶字詞的必學操作。
                             </p>
 
-                            <div style="background-color: rgba(14, 36, 62, 0.6); padding: 1.2rem; border-radius: 8px; border-left: 4px solid #c9a84c; margin-bottom: 1.5rem; line-height: 1.9rem;">
-                                <div style="color: #c9a84c; font-size: 1.1rem;padding-bottom: 0.3rem;">選字輸入法的秘訣：</div>
-                                <span style="color: #c9a84c; font-size: 1rem;">1.快速叫出選字視窗 ：</span> <br>
+                            <div style="background-color: rgba(14, 36, 62, 0.6); padding: 1.2rem; border-radius: 8px; border-left: 4px solid var(--champagne-gold); margin-bottom: 1.5rem; line-height: 1.9rem;">
+                                <div style="color: var(--champagne-gold); font-size: 1.1rem;padding-bottom: 0.3rem;">選字輸入法的秘訣：</div>
+                                <span style="color: var(--champagne-gold); font-size: 1rem;">1.快速叫出選字視窗 ：</span> <br>
                                     <b> 當你打完一串注音，發現系統自動選的字是錯的：</b><br>
                                         • 微軟注音 (Windows)：按 ↓ (方向鍵下) 或者是 Space (空白鍵)，就會直接彈出選字清單。<br>
                                         • Mac 內建注音：按 Space (空白鍵)，就會彈出選字清單。<br><br>
                                         
-                                <span style="color: #c9a84c; font-size: 1rem;">2.新手地雷－滑鼠挑字：</span> <br>
+                                <span style="color: var(--champagne-gold); font-size: 1rem;">2.新手地雷－滑鼠挑字：</span> <br>
                                     <b> 選字清單有很多頁、很多字時，請用以下鍵盤按鍵來選：</b><br>
                                         • 看下一頁 / 上一頁：按 Page Down / Page Up，或是按 ↓ / ↑ 一行一行找。<br>
                                         • 直接按數字選字：選字清單的字旁邊都有編號，直接按鍵盤最上方的數字鍵，就會自動填入。<br><br>
                                 
-                                <span style="color: #c9a84c; font-size: 1rem;">3.其中一個字選錯了怎麼改：</span> <br>
+                                <span style="color: var(--champagne-gold); font-size: 1rem;">3.其中一個字選錯了怎麼改：</span> <br>
                                     <b> 很多人打了一長串字，發現中間有一個字錯了，就全部刪掉重打，這樣超慢..</b><br>
                                     <p>正確做法：<br>
                                         • 先不要按 Enter，字底下還有虛線時。<br>
@@ -3526,7 +3530,7 @@
                                         • 按 ↓ (方向鍵下) 叫出該字的選字窗。<br>
                                         • 按數字鍵選對的字，修正完後，再把游標移到最後面繼續打。<br><br>
 
-                                <span style="color: #c9a84c; font-size: 1rem;">4.一定要照注音順序打嗎(重要！！)：</span> <br>
+                                <span style="color: var(--champagne-gold); font-size: 1rem;">4.一定要照注音順序打嗎(重要！！)：</span> <br>
                                     <b> 傳統打「強」字（ㄑㄧㄤˊ），手指必須強制順序：左手按 ㄑ ➔ 右手按 ㄧ ➔ 右手按 ㄤˊ</b><br>
                                     <p>偷吃步做法：<br>
                                         • 你可以兩隻手同時一起按下去。即使你先按了 ㄤ，再按 ㄧ，最後才按 ㄑ（鍵盤顯示 ㄤㄧㄑ），只要你在這三個符號後面直接按空白鍵或接著打下一個字，輸入法會自動在後台「重新排列組合」，100% 精準自動選出「強」這個字。<br>
@@ -3538,9 +3542,9 @@
 
                             
                             
-                            <button id="tut191_next_btn" style="display:none; width: 10rem; height: 3rem; margin: auto; margin-top: 1.5rem; background-color: #c9a84c; display: flex; justify-content: center; align-items: center; color: var(--dark-blue); font-family: 'Noto Serif TC', serif; font-size: 1rem; letter-spacing: 2px; border: none; border-radius: 4px; cursor: pointer; transition: all 200ms ease;" 
-                                    onmouseover="this.style.backgroundColor='#fff'; this.style.boxShadow='0 0 10px #c9a84c';" 
-                                    onmouseout="this.style.backgroundColor='#c9a84c'; this.style.boxShadow='none';"
+                            <button id="tut191_next_btn" style="display:none; width: 10rem; height: 3rem; margin: auto; margin-top: 1.5rem; background-color: var(--champagne-gold); display: flex; justify-content: center; align-items: center; color: var(--dark-blue); font-family: 'Noto Serif TC', serif; font-size: 1rem; letter-spacing: 2px; border: none; border-radius: 4px; cursor: pointer; transition: all 200ms ease;" 
+                                    onmouseover="this.style.backgroundColor='#fff'; this.style.boxShadow='0 0 10px var(--champagne-gold)';" 
+                                    onmouseout="this.style.backgroundColor='var(--champagne-gold)'; this.style.boxShadow='none';"
                                     onclick="window.location.href='game.html?stage=1-9-2'">
                                 進入輸入練習 →
                             </button>
@@ -3582,7 +3586,7 @@
                 else if(stage.id === "2-1-0"){
                     game_char_container.innerHTML = `
                         <div style="text-align: left; max-width: 900px; margin: 0 auto; font-family: 'Noto Serif TC', serif; color: white; font-weight: 150; position: relative; font-size: 0.9rem">
-                            <p style="font-size: 1.4rem; color: #c9a84c; text-align: center; margin-bottom: 1.5rem; font-weight: 500;">
+                            <p style="font-size: 1.4rem; color: var(--champagne-gold); text-align: center; margin-bottom: 1.5rem; font-weight: 500;">
                                 標點符號輸入教學（重要‼️）
                             </p>
                             
@@ -3591,30 +3595,30 @@
                                 (以下教學皆為全形符號)
                             </p>
 
-                            <div style="background-color: rgba(14, 36, 62, 0.6); padding: 1.2rem; border-radius: 8px; border-left: 4px solid #c9a84c; margin-bottom: 1.5rem; line-height: 1.9rem;">
-                                <div style="color: #c9a84c; font-size: 1.1rem;padding-bottom: 0.2rem;font-weight: 350;">各種符號輸入的指法：</div><br>
-                                <span style="color: #c9a84c; font-size: 1rem;font-weight: 400;"> 引號「」</span> <br>
+                            <div style="background-color: var(--light-blue); padding: 1.2rem; border-radius: 8px; border-left: 4px solid var(--champagne-gold); margin-bottom: 1.5rem; line-height: 1.9rem;">
+                                <div style="color: var(--champagne-gold); font-size: 1.1rem;padding-bottom: 0.2rem;font-weight: 350;">各種符號輸入的指法：</div><br>
+                                <span style="color: var(--champagne-gold); font-size: 1rem;font-weight: 400;"> 引號「」</span> <br>
                                         • Windows ：Ctrl + [ + ↓選擇 ，就會直接彈出選字清單。(持續按住ctrl 點一下 [ 之後使用方向鍵調整至需要的符號)<br>
                                         • Mac ：直接按下鍵盤右上角的符號即可打出<br><br>
                                         
-                                <span style="color: #c9a84c; font-size: 1rem;font-weight: 400;">頓號、</span> <br>
+                                <span style="color: var(--champagne-gold); font-size: 1rem;font-weight: 400;">頓號、</span> <br>
                                         •  Windows ：Ctrl + '（'為上引號，在Enter鍵左邊）。<br>
                                         •  Mac ：直接按下鍵盤右上角的符號即可打出<br><br>
                                 
-                                <span style="color: #c9a84c; font-size: 1rem;font-weight: 400;">冒號：</span> <br>
+                                <span style="color: var(--champagne-gold); font-size: 1rem;font-weight: 400;">冒號：</span> <br>
                                         •  Windows ：Ctrl + shift + ; （;為注音ㄤ的按鍵）<br>
                                         •  Mac ：shift + ;<br><br>
 
-                                <span style="color: #c9a84c; font-size: 1rem;font-weight: 400;">問號？</span> <br>
+                                <span style="color: var(--champagne-gold); font-size: 1rem;font-weight: 400;">問號？</span> <br>
                                         •  Windows ：Ctrl + shift + / （/為注音ㄥ的按鍵）<br>
                                         •  Mac ：shift + /<br><br>
-                                <span style="color: #c9a84c; font-size: 1rem;font-weight: 400;">驚嘆號！</span> <br>
+                                <span style="color: var(--champagne-gold); font-size: 1rem;font-weight: 400;">驚嘆號！</span> <br>
                                         •  Windows ：Ctrl + shift + 1 （1為注音ㄅ的按鍵）<br>
                                         •  Mac ：shift + 1<br><br>
-                                <span style="color: #c9a84c; font-size: 1rem;font-weight: 400;">逗號，</span> <br>
+                                <span style="color: var(--champagne-gold); font-size: 1rem;font-weight: 400;">逗號，</span> <br>
                                         •  Windows ：Ctrl + ,（,為注音ㄝ的按鍵）<br>
                                         •  Mac ：shift + ,<br><br>
-                                <span style="color: #c9a84c; font-size: 1rem;font-weight: 400;">句號。</span> <br>
+                                <span style="color: var(--champagne-gold); font-size: 1rem;font-weight: 400;">句號。</span> <br>
                                         •  Windows ：Ctrl + . （1為注音ㄡ的按鍵）<br>
                                         •  Mac ：shift + .<br><br>
 
@@ -3622,8 +3626,8 @@
 
         
 
-                            <div style="background-color: rgba(14, 36, 62, 0.6); padding: 1.2rem; border-radius: 8px; border-left: 4px solid #c9a84c; margin-bottom: 1.5rem;">
-                                <b style="color: #c9a84c;">⌨️ 實際打打看：標點符號互動練習</b><br>
+                            <div style="background-color: var(--light-blue); padding: 1.2rem; border-radius: 8px; border-left: 4px solid var(--champagne-gold); margin-bottom: 1.5rem;">
+                                <b style="color: var(--champagne-gold);">⌨️ 實際打打看：標點符號互動練習</b><br>
                                 <p style="margin:0.5rem 0; color:#ccc; font-size:0.85rem;">依序出現「」、、：？！，。這幾個標點，跟著鍵盤上的金框提示，實際按一次組合鍵。</p>
                                 <div id="tut210_practice"></div>
                             </div>
@@ -3632,7 +3636,7 @@
                                 完成上面的互動練習後，就可以進入下一頁囉！
                             </p>
                             
-                            <button id="tut210_next_btn" style="display:none; width: 10rem; height: 3rem; margin: auto; margin-top: 1.5rem; background-color: #c9a84c; display: flex; justify-content: center; align-items: center; color: var(--dark-blue); font-family: 'Noto Serif TC', serif; font-size: 1rem; letter-spacing: 2px; border: none; border-radius: 4px; cursor: pointer; transition: all 200ms ease;" 
+                            <button id="tut210_next_btn" style="display:none; width: 10rem; height: 3rem; margin: auto; margin-top: 1.5rem; background-color: var(--champagne-gold); display: flex; justify-content: center; align-items: center; color: var(--dark-blue); font-family: 'Noto Serif TC', serif; font-size: 1rem; letter-spacing: 2px; border: none; border-radius: 4px; cursor: pointer; transition: all 200ms ease;" 
                                     onclick="window.location.href='game.html?stage=1-9-2'">
                                 進入輸入練習 →
                             </button>
@@ -3788,7 +3792,7 @@
                         container.style.maxWidth = "900px";
                         container.style.margin = "1.2rem auto 0";
                         container.style.backgroundColor = "var(--dark-blue)";
-                        container.style.border = "1px solid rgba(201,168,76,0.25)";
+                        container.style.border = "1px solid rgba(var(--accent-rgb),0.25)";
                         container.style.boxShadow = "none";
                         container.style.padding = "0.2rem 1rem";
                     }
@@ -4048,14 +4052,14 @@
             if(errors_label){
                 errors_label.textContent = Is_Box_Input_Stage(stage) ? "修正次數" : "錯誤次數"
             }
-            document.getElementById("game_result").style.boxShadow = "0px 0px 15px #c9a84c"
-            document.getElementById("game_result").style.border = "2px solid #c9a84c"
+            document.getElementById("game_result").style.boxShadow = "0px 0px 15px var(--champagne-gold)"
+            document.getElementById("game_result").style.border = "2px solid var(--champagne-gold)"
 
             //顯示結果畫面
             document.getElementById("game_result").classList.add("show")
             if(stage_is_passed){
-                document.getElementById("game_result").style.boxShadow = "0px 0px 15px #c9a84c"
-                document.getElementById("game_result").style.border = "2px solid #c9a84c"
+                document.getElementById("game_result").style.boxShadow = "0px 0px 15px var(--champagne-gold)"
+                document.getElementById("game_result").style.border = "2px solid var(--champagne-gold)"
                 //過關標記 沒拿到就給空字串
                 let progress = JSON.parse(localStorage.getItem("stage_progress")) || {} 
 

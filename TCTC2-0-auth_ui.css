@@ -3,9 +3,12 @@
     --dark-blue : #0B1E36;
     --light-blue : #0e243e;
     --champagne-gold : #c9a84c;
-    --gold-soft : rgba(201, 168, 76, 0.15);
-    --gold-line : rgba(201, 168, 76, 0.35);
+    --accent-rgb : 201, 168, 76;
+    --gold-soft : rgba(var(--accent-rgb), 0.15);
+    --gold-line : rgba(var(--accent-rgb), 0.35);
     --error-red : #c0392b;
+    --error-rgb : 192, 57, 43;
+    --text-rgb : 255, 255, 255;
 }
 
 /* ===== 半透明背景遮罩，蓋住整個畫面 =====
@@ -82,7 +85,7 @@
     align-items: center;
     justify-content: center;
 
-    color: rgba(255, 255, 255, 0.45);
+    color: rgba(var(--text-rgb), 0.45);
     font-size: 0.95rem;
     cursor: pointer;
 
@@ -90,8 +93,8 @@
     transition: color 150ms ease, background-color 150ms ease;
 }
 .auth_modal_close:hover{
-    color: whitesmoke;
-    background-color: rgba(255, 255, 255, 0.06);
+    color: rgba(var(--text-rgb), 0.92);
+    background-color: rgba(var(--text-rgb), 0.06);
 }
 
 .auth_view.is_hidden{
@@ -111,7 +114,7 @@
     opacity: 0.85;
 }
 .auth_modal_title{
-    color: whitesmoke;
+    color: rgba(var(--text-rgb), 0.92);
     font-size: 1.55rem;
     font-weight: 500;
     letter-spacing: 2px;
@@ -121,7 +124,7 @@
 }
 
 .auth_modal_subtitle{
-    color: rgba(255, 255, 255, 0.55);
+    color: rgba(var(--text-rgb), 0.55);
     font-size: 0.85rem;
     letter-spacing: 0.5px;
     line-height: 1.6;
@@ -129,7 +132,7 @@
     margin: 0.4rem 0 0.5rem;
 }
 .auth_modal_subtitle_2{
-    color: rgba(255, 255, 255, 0.55);
+    color: rgba(var(--text-rgb), 0.55);
     text-shadow: 0 0 2px var(--champagne-gold);
     font-size: 0.9rem;
     letter-spacing: 0.5px;
@@ -152,10 +155,10 @@
 
     padding: 0.75rem 1rem;
 
-    background-color: rgba(255, 255, 255, 0.03);
-    color: whitesmoke;
+    background-color: rgba(var(--text-rgb), 0.03);
+    color: rgba(var(--text-rgb), 0.92);
 
-    border: 1px solid rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(var(--text-rgb), 0.16);
     border-radius: 4px;
 
     font-size: 0.88rem;
@@ -168,7 +171,7 @@
 }
 .auth_google_btn:hover{
     border-color: var(--gold-line);
-    background-color: rgba(255, 255, 255, 0.06);
+    background-color: rgba(var(--text-rgb), 0.06);
 }
 .auth_google_icon{
     width: 1.05rem;
@@ -182,7 +185,7 @@
 
     margin: 1.2rem 0;
 
-    color: rgba(255, 255, 255, 0.3);
+    color: rgba(var(--text-rgb), 0.3);
     font-size: 0.72rem;
     letter-spacing: 2px;
 }
@@ -191,7 +194,7 @@
     content: "";
     flex: 1;
     height: 1px;
-    background-color: rgba(255, 255, 255, 0.12);
+    background-color: rgba(var(--text-rgb), 0.12);
 }
 .auth_divider span{
     padding: 0 0.9rem;
@@ -203,7 +206,7 @@
 .auth_field_label{
     display: block;
 
-    color: rgba(255, 255, 255, 0.45);
+    color: rgba(var(--text-rgb), 0.45);
     font-size: 0.74rem;
     letter-spacing: 2px;
 
@@ -213,11 +216,11 @@
     width: 100%;
     box-sizing: border-box;
 
-    background-color: rgba(255, 255, 255, 0.03);
-    color: whitesmoke;
+    background-color: rgba(var(--text-rgb), 0.03);
+    color: rgba(var(--text-rgb), 0.92);
 
     border: none;
-    border-bottom: 1px solid rgba(201, 168, 76, 0.3);
+    border-bottom: 1px solid rgba(var(--accent-rgb), 0.3);
     border-radius: 2px 2px 0 0;
 
     padding: 0.65rem 0.7rem;
@@ -229,11 +232,11 @@
     transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
 }
 .auth_input::placeholder{
-    color: rgba(255, 255, 255, 0.28);
+    color: rgba(var(--text-rgb), 0.28);
 }
 .auth_input:focus{
     outline: none;
-    background-color: rgba(201, 168, 76, 0.05);
+    background-color: rgba(var(--accent-rgb), 0.05);
 }
 
 .auth_error_text{
@@ -267,7 +270,7 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
 
     cursor: pointer;
-    box-shadow: 0 6px 18px rgba(201, 168, 76, 0.18);
+    box-shadow: 0 6px 18px rgba(var(--accent-rgb), 0.18);
     transition: all 200ms ease;
 }
 
@@ -280,9 +283,9 @@
     margin-top: 0.8rem;
 
     background-color: transparent;
-    color: rgba(255, 255, 255, 0.55);
+    color: rgba(var(--text-rgb), 0.55);
 
-    border: 1px solid rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(var(--text-rgb), 0.18);
     border-radius: 3px;
 
     font-size: 0.88rem;
@@ -301,7 +304,7 @@
     margin: 1.4rem 0 0;
     text-align: center;
 
-    color: rgba(255, 255, 255, 0.42);
+    color: rgba(var(--text-rgb), 0.42);
     font-size: 0.8rem;
     letter-spacing: 0.5px;
 }
@@ -317,7 +320,7 @@
 
 /* ===== 繼承確認畫面的統計數字列表 ===== */
 .auth_inherit_stats{
-    background-color: rgba(255, 255, 255, 0.02);
+    background-color: rgba(var(--text-rgb), 0.02);
     border: 1px solid var(--gold-line);
     border-radius: 3px;
 
@@ -329,9 +332,9 @@
     justify-content: space-between;
 
     padding: 0.5rem 0;
-    border-bottom: 1px solid rgba(201, 168, 76, 0.12);
+    border-bottom: 1px solid rgba(var(--accent-rgb), 0.12);
 
-    color: rgba(255, 255, 255, 0.65);
+    color: rgba(var(--text-rgb), 0.65);
     font-size: 0.86rem;
     letter-spacing: 0.5px;
 }
@@ -346,7 +349,7 @@
 
 .auth_loading_text{
     text-align: center;
-    color: rgba(255, 255, 255, 0.6);
+    color: rgba(var(--text-rgb), 0.6);
     font-family: "Noto Serif TC", serif;
     font-size: 1rem;
     letter-spacing: 3px;
