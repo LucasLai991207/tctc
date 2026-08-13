@@ -110,6 +110,14 @@ function Update_profile(){
             console.log("[intro]並未輸入或改變資料")
         }
 
+        // ===== 【新增】把簡介也同步上雲端，不然只存在這台裝置的 localStorage，
+        // 其他玩家點進你的個人資料頁（view_profile.html）永遠看不到 =====
+        // 就算這次輸入是空字串（玩家把簡介清空），一樣要同步上去蓋掉舊值，
+        // 不能因為 falsy 就跳過，不然「清空簡介」這個操作在雲端永遠不會生效。
+        if(typeof Set_Own_Intro === "function"){
+            Set_Own_Intro(profile_intro_input_value)
+        }
+
         Show_Profile_Toast("資料已更新", false)
         if(btnEl){
             btnEl.disabled = false
@@ -184,6 +192,7 @@ function Load_Cloud_Player_Stats(){
     const totalPointsEl = document.getElementById("profile_history_total_points")
     const pageViewsEl = document.getElementById("profile_history_page_views")
     const leaderboardToggleEl = document.getElementById("profile_leaderboard_toggle") // 【新增】
+    const profileViewToggleEl = document.getElementById("profile_view_toggle") // 【新增】
 
     // 這個頁面萬一 Firebase 沒載入成功（例如 CDN 被擋、網路問題），
     // Get_Own_Player_Stats 這個函式就不會存在，三個欄位改顯示明確的錯誤訊息，
@@ -227,6 +236,14 @@ function Load_Cloud_Player_Stats(){
             leaderboardToggleEl.checked = !(stats.hide_from_leaderboard === true)
             leaderboardToggleEl.disabled = false
         }
+
+        // ===== 【新增】個人資料頁公開開關，邏輯跟上面排行榜開關完全對稱 =====
+        // stats.hide_profile_view 同樣包含在這次讀回來的 player_stats/{anon_id}
+        // 節點裡，不需要另外呼叫 Get_Own_Profile_Visibility() 多打一次 Firebase。
+        if(profileViewToggleEl){
+            profileViewToggleEl.checked = !(stats.hide_profile_view === true)
+            profileViewToggleEl.disabled = false
+        }
     })
 }
 
@@ -262,6 +279,38 @@ function Toggle_Leaderboard_Visibility(is_visible){
         }
 
         Show_Profile_Toast(should_hide ? "已從排行榜隱藏你的成績" : "已恢復在排行榜上顯示", false)
+    })
+}
+
+/* ============================================================
+   【新增】個人資料頁公開開關：切換就立刻同步上雲端，寫法完全比照
+   上面的 Toggle_Leaderboard_Visibility，只是換一組欄位/函式名稱。
+   ------------------------------------------------------------
+   is_public：目前 checkbox 切換「之後」的狀態（true = 開關被扳成「公開」）。
+   ============================================================ */
+function Toggle_Profile_Visibility(is_public){
+    const toggleEl = document.getElementById("profile_view_toggle")
+
+    if(typeof Set_Own_Profile_Visibility !== "function"){
+        console.log("[profile] Firebase 尚未載入，無法更新個人資料公開設定")
+        Show_Profile_Toast("更新失敗，請重新整理頁面再試一次", true)
+        if(toggleEl) toggleEl.checked = !is_public
+        return
+    }
+
+    // hide_profile_view 這個雲端欄位的語意跟 checkbox 剛好相反：
+    // checkbox 打勾 = 公開（is_public = true），所以要寫入的值要取反
+    const should_hide = !is_public
+
+    Set_Own_Profile_Visibility(should_hide, function(success){
+        if(!success){
+            console.log("[profile] 更新個人資料公開設定失敗")
+            Show_Profile_Toast("更新個人資料公開設定失敗，請稍後再試", true)
+            if(toggleEl) toggleEl.checked = !is_public
+            return
+        }
+
+        Show_Profile_Toast(should_hide ? "已將個人資料設為不公開" : "已將個人資料設為公開", false)
     })
 }
 

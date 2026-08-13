@@ -1,0 +1,110 @@
+/* ============================================================
+   TCTC2-0-view_profile.css
+   點排行榜名字進來的「唯讀公開個人資料頁」
+
+   配色變數跟 profile.css / achievements.css 完全一致，這裡不重複
+   宣告一次 :root（profile.css 已經載入、已經宣告過了），只補這個
+   頁面特有的版面（頭像式標題區、狀態卡片、自我預覽提示條）。
+   ============================================================ */
+
+.vp_main_style{
+    background-color: var(--darker-blue);
+    min-height: 100vh;
+
+    display: flex;
+    justify-content: center;
+
+    padding-bottom: 4rem;
+}
+
+.vp_first_section{
+    width: 100%;
+}
+
+.vp_container{
+    max-width: 46rem;
+    margin: 0 auto;
+    padding: 0 1.2rem;
+}
+
+/* ===== 載入中 / 找不到 / 未公開 —— 共用同一張置中卡片 ===== */
+.vp_status_card{
+    margin-top: 4rem;
+
+    background-color: var(--dark-blue);
+    border: 1px solid rgba(var(--accent-rgb), 0.25);
+    border-radius: 8px;
+
+    padding: 2.4rem 1.8rem;
+    text-align: center;
+}
+.vp_status_title{
+    color: var(--champagne-gold);
+    font-size: 1.15rem;
+    font-weight: 500;
+    letter-spacing: 2px;
+    margin: 0 0 0.8rem;
+}
+.vp_status_text{
+    color: rgba(var(--text-rgb), 0.55);
+    font-size: 0.9rem;
+    line-height: 1.8;
+    letter-spacing: 0.5px;
+    margin: 0 auto;
+    max-width: 30rem;
+}
+
+/* ===== 自己預覽自己公開頁時的提示條 ===== */
+.vp_self_banner{
+    background-color: rgba(var(--accent-rgb), 0.08);
+    border: 1px solid rgba(var(--accent-rgb), 0.3);
+    border-radius: 6px;
+
+    padding: 0.9rem 1.1rem;
+    margin: 1.6rem 0 1.6rem;
+
+    color: rgba(var(--text-rgb), 0.7);
+    font-size: 0.82rem;
+    line-height: 1.7;
+    letter-spacing: 0.5px;
+    text-align: center;
+}
+.vp_self_banner a{
+    color: var(--champagne-gold);
+    text-decoration: underline;
+}
+
+/* ===== 頁首：玩家名字 + LV 標籤 + 簡介 ===== */
+.vp_header{
+    text-align: center;
+    margin: 1.4rem 0 2rem;
+}
+.vp_player_name{
+    color: rgba(var(--text-rgb), 0.92);
+    font-family: "Noto Serif TC", serif;
+    font-size: 2rem;
+    font-weight: 500;
+    letter-spacing: 2px;
+    margin: 0;
+    display: inline;
+}
+.vp_level_badge_slot{
+    margin-left: 0.5rem;
+    vertical-align: middle;
+}
+.vp_player_intro{
+    color: rgba(var(--text-rgb), 0.55);
+    font-size: 0.88rem;
+    line-height: 1.7;
+    letter-spacing: 0.5px;
+
+    max-width: 32rem;
+    margin: 0.8rem auto 0;
+
+    white-space: pre-wrap;   /* 簡介可能有換行，保留玩家原本輸入的排版 */
+    word-break: break-word;
+}
+
+.is_hidden{
+    display: none !important;
+}

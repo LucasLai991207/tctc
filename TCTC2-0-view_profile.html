@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>玩家個人資料 - TCTC 繁體中文打字練習中心</title>
+    <meta name="description" content="查看其他玩家公開的打字成就與統計資料。">
+    <meta name="robots" content="noindex, nofollow"> <!-- 個人資料頁不需要被搜尋引擎索引 -->
+
+    <meta name="google-site-verification" content="fHfTpW9ouqdLEFGEQhLvwelT1xdZ7Sxmi-iKBHY7S_8" /> <!--google驗證-->
+
+    <link rel="icon" href="favicon-32x32.png" type="image/png" sizes="32x32">
+
+    <meta property="og:image" content="https://lucaslai991207.github.io/tctc/os_image.png">
+    <meta property="og:title" content="TCTC 繁體中文打字中心 - 玩家個人資料">
+
+    <link rel="stylesheet" href="TCTC2-0-intro_lobby.css">
+    <link rel="stylesheet" href="TCTC2-0-main_lobby.css">
+    <!-- 沿用 profile.html 的卡片樣式（統計列）跟 achievements.html 的徽章樣式，
+         這個頁面本身只需要補一份很小的 view_profile.css 處理版面差異 -->
+    <link rel="stylesheet" href="TCTC2-0-profile.css">
+    <link rel="stylesheet" href="TCTC2-0-achievements.css">
+    <link rel="stylesheet" href="TCTC2-0-view_profile.css">
+    <!-- 全站配色主題系統：務必放在 CSS 之後、其他 script 之前，同步載入避免換色閃爍 -->
+    <script src="TCTC2-0-theme.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@200;300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav id="nav">
+        <img src="TCTC2.0 logo.png" class="logo_style" onclick="window.location.href='TCTC2-0-main.html'">
+        <div class="nav_css">
+            <div onclick="window.location.href='TCTC2-0-details.html'">常見問題</div>
+            <div class="nav_dropdown">
+                模式 <span class="nav_dropdown_arrow">≡</span>
+                <div class="nav_dropdown_menu">
+                    <div class="nav_dropdown_panel">
+                        <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-main.html'">主線模式</div>
+                        <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-challenge_lobby.html'">挑戰模式</div>
+                    </div>
+                </div>
+            </div>
+            <div class="nav_dropdown">
+                更多 <span class="nav_dropdown_arrow">≡</span>
+                <div class="nav_dropdown_menu">
+                    <div class="nav_dropdown_panel">
+                        <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-ranking.html'">排行榜</div>
+                        <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-profile.html'">設定</div>
+                        <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-achievements.html'">個人榮譽牆</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="vp_main_style">
+        <section class="vp_first_section">
+            <div class="main_lobby_main_frame">
+                <div class="main_lobby_back_to_intro_button" onclick="window.history.back()">
+                    <img src="back_pointer_gold.png" alt="返回">
+                </div>
+            </div>
+
+            <div class="vp_container">
+
+                <!-- ===== 載入中 ===== -->
+                <div id="vp_loading_state" class="vp_status_card">
+                    <p class="vp_status_text">載入中...</p>
+                </div>
+
+                <!-- ===== 找不到這個玩家 / 讀取失敗 / 對方設為不公開 ===== -->
+                <div id="vp_blocked_state" class="vp_status_card is_hidden">
+                    <p class="vp_status_title" id="vp_blocked_title">此玩家沒有公開個人資料</p>
+                    <p class="vp_status_text" id="vp_blocked_text">這位玩家已將個人資料設為不公開，或這個連結有誤。</p>
+                </div>
+
+                <!-- ===== 正常內容 ===== -->
+                <div id="vp_content" class="is_hidden">
+
+                    <!-- 自己查看自己的公開頁時顯示的提示條 -->
+                    <div class="vp_self_banner is_hidden" id="vp_self_banner">
+                        這是你自己的公開個人資料預覽，其他玩家點你的名字時看到的畫面就長這樣。
+                        想調整是否公開、或編輯暱稱／簡介，請到
+                        <a href="TCTC2-0-profile.html">設定頁</a>。
+                    </div>
+
+                    <div class="vp_header">
+                        <h1 class="vp_player_name" id="vp_player_name">—</h1>
+                        <span class="vp_level_badge_slot" id="vp_level_badge_slot"></span>
+                        <p class="vp_player_intro" id="vp_player_intro"></p>
+                    </div>
+
+                    <div class="profile_card" style="margin-bottom: 1.6rem;">
+                        <p class="profile_card_title">統計資料</p>
+                        <div class="profile_stat_list">
+                            <div class="profile_stat_row">
+                                <span class="profile_stat_label">主線平均WPM</span>
+                                <span class="profile_stat_value" id="vp_stat_avg_wpm">0 WPM</span>
+                            </div>
+                            <div class="profile_stat_row">
+                                <span class="profile_stat_label">主線平均正確率</span>
+                                <span class="profile_stat_value" id="vp_stat_avg_acc">0%</span>
+                            </div>
+                            <div class="profile_stat_row">
+                                <span class="profile_stat_label">在線時長</span>
+                                <span class="profile_stat_value" id="vp_stat_online_time">0 分鐘</span>
+                            </div>
+                            <div class="profile_stat_row">
+                                <span class="profile_stat_label">累積積分</span>
+                                <span class="profile_stat_value" id="vp_stat_points">0 積分</span>
+                            </div>
+                            <div class="profile_stat_row">
+                                <span class="profile_stat_label">目前連續登入</span>
+                                <span class="profile_stat_value" id="vp_stat_streak">0 天</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 成就區塊：由 view_profile.js 動態產生，跟榮譽牆共用同一份
+                         TCTC2-0-achv_data.js 資料表跟徽章樣式，只是這裡是唯讀顯示 -->
+                    <div class="achv_overview_card">
+                        <p class="achv_overview_label">已解鎖成就</p>
+                        <p class="achv_overview_count" id="vp_overview_count">— <span>/ —</span></p>
+                        <div class="achv_progress_track">
+                            <div class="achv_progress_fill" id="vp_overview_fill" style="width:0%;"></div>
+                        </div>
+                    </div>
+
+                    <div id="vp_categories"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="intro_footer">
+        <div class="footer_div">
+            <div class="footer_col">
+                <p class="footer_col_title">回報問題</p>
+                <a class="footer_link" href="https://forms.gle/xJcvq3AZ4PeNd3eq5" target="_blank" rel="noopener">遇到Bug？點我回報</a>
+            </div>
+            <div class="footer_col">
+                <p class="footer_col_title">聯絡我們</p>
+                <a class="footer_link" href="mailto:tctc.official.tw@gmail.com">✉ tctc.official.tw@gmail.com</a>
+            </div>
+            <div class="footer_col">
+                <p class="footer_col_title">平台連結</p>
+                <a class="footer_link" href="https://www.youtube.com/channel/UCIA5fwMrvGpvcQbG0ZX2ZLA" target="_blank" rel="noopener">Youtube</a>
+            </div>
+        </div>
+
+        <div class="footer_copyright">
+            &copy; 2026 TCTC2.0 繁中打字中心. All Rights Reserved.
+        </div>
+    </footer>
+
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+    <script src="TCTC2-0-firebase.js?v=3"></script>
+
+    <!-- 全站共用 -->
+    <script src="TCTC2-0-online_time.js"></script>
+
+    <!-- 成就資料表（需要 Level_Data 才能算「關卡完成度」分類） -->
+    <script src="TCTC2-0-level_data.js"></script>
+    <script src="TCTC2-0-xp_data.js"></script>
+    <script src="TCTC2-0-achv_data.js"></script>
+
+    <script src="TCTC2-0-view_profile.js"></script>
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="070df494-4361-4dce-ad65-a25b404811e9"></script>
+</body>
+</html>

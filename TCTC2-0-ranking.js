@@ -115,6 +115,34 @@ function Escape_Html(text) {
 // 用 assume_zero_if_missing 這個參數區分兩種情境：
 //   true  → 沒有 xp 就當作 0（玩家總榜用這個）
 //   false → 沒有 xp 就不顯示（主線關卡／挑戰模式維持這個，預設值）
+// ===== 【新增】排行榜點名字 → 查看該玩家的個人資料頁 =====
+// 統一由這個函式組出名字欄位的 HTML，兩種榜（Render_Leaderboard /
+// Render_Player_Leaderboard）都呼叫這裡，不要各自重複寫一份判斷邏輯。
+//
+// 點自己的名字：導去 profile.html（設定頁），因為「編輯」對自己來說
+// 比「唯讀預覽」更有用，且自己一定看得到自己完整的資料，不需要走
+// view_profile.html 那套「可能被 hide_profile_view 擋掉」的唯讀邏輯。
+// 點別人的名字：導去 view_profile.html?id={anon_id}，由該頁面自己
+// 去檢查對方有沒有把個人資料設為公開。
+//
+// 沒有 _anon_id（理論上不該發生，兩種榜的資料來源都會帶這個欄位）就
+// 不加 onclick，退回純文字顯示，避免點下去導向一個 id=undefined 的爛連結。
+function Get_Player_Name_Link_HTML(entry, display_name_html){
+    if(!entry || !entry._anon_id){
+        return display_name_html
+    }
+
+    const is_self = typeof Get_Anon_Id === "function" && entry._anon_id === Get_Anon_Id()
+    const target_url = is_self
+        ? "TCTC2-0-profile.html"
+        : `TCTC2-0-view_profile.html?id=${encodeURIComponent(entry._anon_id)}`
+
+    // onclick 直接跳轉，不用 <a href>：整個 rank_col_name 裡面還包著 LV 標籤
+    // 跟「你」標籤，用 <a> 包住這些子元素在既有樣式下比較容易跑版，
+    // 沿用這個網站其他地方（例如 logo、返回按鈕）慣用的 onclick 導頁寫法即可。
+    return `<span class="rank_player_name_link" onclick="window.location.href='${target_url}'" title="查看個人資料">${display_name_html}</span>`
+}
+
 function Get_Level_Badge_HTML(entry, assume_zero_if_missing) {
     if (typeof XP_Get_Level !== "function") return "" // 沒載入 xp_data.js 就安靜跳過，不噴錯
 
@@ -197,9 +225,11 @@ function Render_Leaderboard(list) {
             self_found_in_list = true
         }
 
+        const name_html = Get_Player_Name_Link_HTML(entry, Escape_Html(entry.name || "訪客"))
+
         row.innerHTML = `
             <div class="rank_col_rank">${medal_by_rank[rank] || rank}</div>
-            <div class="rank_col_name">${Escape_Html(entry.name || "訪客")}${Get_Level_Badge_HTML(entry)}${is_self ? ' <span class="ranking_self_tag">你</span>' : ""}</div>
+            <div class="rank_col_name">${name_html}${Get_Level_Badge_HTML(entry)}${is_self ? ' <span class="ranking_self_tag">你</span>' : ""}</div>
             <div class="rank_col_wpm">${entry.wpm}</div>
             <div class="rank_col_acc">${typeof entry.acc === "number" ? entry.acc + "%" : "-"}</div>
         `
@@ -617,9 +647,11 @@ function Render_Player_Leaderboard(list) {
             metric2_text = "—"
         }
 
+        const name_html = Get_Player_Name_Link_HTML(entry, Escape_Html(entry.name || "訪客"))
+
         row.innerHTML = `
             <div class="rank_col_rank">${medal_by_rank[rank] || rank}</div>
-            <div class="rank_col_name">${Escape_Html(entry.name || "訪客")}${Get_Level_Badge_HTML(entry, true)}${is_self ? ' <span class="ranking_self_tag">你</span>' : ""}</div>
+            <div class="rank_col_name">${name_html}${Get_Level_Badge_HTML(entry, true)}${is_self ? ' <span class="ranking_self_tag">你</span>' : ""}</div>
             <div class="rank_col_wpm">${metric1_text}</div>
             <div class="rank_col_acc">${metric2_text}</div>
         `
