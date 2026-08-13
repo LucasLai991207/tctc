@@ -270,6 +270,29 @@
     padding-left: 0.5rem;
     word-break: break-all;
 }
+
+/* ===== 【新增】玩家名字旁邊的 LV 小標籤 =====
+   跟 .ranking_self_tag（「你」標籤）刻意做出區隔：那個是實心金底、搶眼，
+   這個只是「背景資訊」，用空心金邊框 + 金字，份量比「你」標籤輕，
+   兩者同時出現時（自己又剛好有等級）不會互相搶視覺焦點。
+   目前只有「玩家總榜」的資料會帶這個標籤，見 ranking.js 的
+   Get_Level_Badge_HTML() 註解說明。 */
+.rank_level_badge{
+    display: inline-block;
+    vertical-align: middle;
+
+    margin-left: 0.4rem;
+    padding: 0.05rem 0.4rem;
+
+    color: var(--champagne-gold);
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+
+    border: 1px solid rgba(var(--accent-rgb), 0.4);
+    border-radius: 3px;
+}
 .rank_col_wpm,
 .rank_col_acc{
     text-align: center;

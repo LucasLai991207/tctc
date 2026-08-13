@@ -5,6 +5,7 @@
    - 「挑戰模式」：難度/文章單詞/時間長度三個獨立選單 + 讀取該組合的雲端排行榜
    依賴：TCTC2-0-level_data.js（拿 Level_Data 關卡資料，主線關卡模式用）
         TCTC2-0-firebase.js（Get_Stage_Leaderboard / Get_Challenge_Leaderboard）
+        TCTC2-0-xp_data.js（【新增】XP_Get_Level()，玩家名字旁邊的 LV 小標籤用）
    ============================================================ */
 
 // ===== 【修改】排行榜返回鍵：改成用網址帶的 return_to 參數記住「真正的入口」 =====
@@ -97,6 +98,36 @@ function Escape_Html(text) {
     return div.innerHTML
 }
 
+// ===== 【新增】玩家名字旁邊的 LV 小標籤 =====
+//
+// 【重要】entry 沒有 xp 欄位分成兩種完全不同的意思，不能用同一種方式處理：
+//   (1) 玩家總榜：entry 直接來自 player_stats/{anon_id} 整包記錄，
+//       xp 欄位「不存在」代表這個玩家從來沒有任何 XP 進帳（例如根本沒打過字），
+//       這是一個真實、有意義的狀態——就是 LV 0，不該被隱藏不顯示。
+//   (2) 主線關卡／挑戰模式：entry 來自 leaderboard/{stageId} 或
+//       challenge_leaderboard/{comboId} 這兩個獨立節點，資料庫規則只允許
+//       這兩個節點存 name/wpm/acc/timestamp，「根本沒有 xp 這個欄位可以查」，
+//       不存在代表「不知道」，不是「這個人是 LV 0」——如果這裡也顯示 LV 0，
+//       等於是編造一個可能是錯的數字。要讓這兩個模式也能正確顯示 LV，
+//       需要另外修改 TCTC2-0-firebase.js，讓上傳分數時順便存一份 xp 快照
+//       進那兩個節點，這支檔案目前沒有調整那一段。
+//
+// 用 assume_zero_if_missing 這個參數區分兩種情境：
+//   true  → 沒有 xp 就當作 0（玩家總榜用這個）
+//   false → 沒有 xp 就不顯示（主線關卡／挑戰模式維持這個，預設值）
+function Get_Level_Badge_HTML(entry, assume_zero_if_missing) {
+    if (typeof XP_Get_Level !== "function") return "" // 沒載入 xp_data.js 就安靜跳過，不噴錯
+
+    let xp = entry && entry.xp
+    if (typeof xp !== "number") {
+        if (!assume_zero_if_missing) return "" // 資料源頭本來就沒有這個欄位，不捏造數字
+        xp = 0 // 資料源頭保證正確，缺值代表「真的是 0 XP」
+    }
+
+    const level = XP_Get_Level(xp)
+    return `<span class="rank_level_badge">LV ${level}</span>`
+}
+
 //======= 渲染排行榜列表（兩種模式共用）=======
 const medal_by_rank = { 1: "🥇", 2: "🥈", 3: "🥉" }
 
@@ -168,7 +199,7 @@ function Render_Leaderboard(list) {
 
         row.innerHTML = `
             <div class="rank_col_rank">${medal_by_rank[rank] || rank}</div>
-            <div class="rank_col_name">${Escape_Html(entry.name || "訪客")}${is_self ? ' <span class="ranking_self_tag">你</span>' : ""}</div>
+            <div class="rank_col_name">${Escape_Html(entry.name || "訪客")}${Get_Level_Badge_HTML(entry)}${is_self ? ' <span class="ranking_self_tag">你</span>' : ""}</div>
             <div class="rank_col_wpm">${entry.wpm}</div>
             <div class="rank_col_acc">${typeof entry.acc === "number" ? entry.acc + "%" : "-"}</div>
         `
@@ -588,7 +619,7 @@ function Render_Player_Leaderboard(list) {
 
         row.innerHTML = `
             <div class="rank_col_rank">${medal_by_rank[rank] || rank}</div>
-            <div class="rank_col_name">${Escape_Html(entry.name || "訪客")}${is_self ? ' <span class="ranking_self_tag">你</span>' : ""}</div>
+            <div class="rank_col_name">${Escape_Html(entry.name || "訪客")}${Get_Level_Badge_HTML(entry, true)}${is_self ? ' <span class="ranking_self_tag">你</span>' : ""}</div>
             <div class="rank_col_wpm">${metric1_text}</div>
             <div class="rank_col_acc">${metric2_text}</div>
         `
