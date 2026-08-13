@@ -18,6 +18,9 @@
     <link rel="stylesheet" href="TCTC2-0-main_lobby.css">
     <!-- 【新增】帳號系統彈窗樣式 -->
     <link rel="stylesheet" href="TCTC2-0-auth_ui.css">
+
+    <link rel="stylesheet" href="TCTC2-0-achv_notify.css">
+
     <!-- 【新增】全站配色主題系統：務必放在 CSS 之後、其他 script 之前，同步載入避免換色閃爍 -->
     <script src="TCTC2-0-theme.js"></script>
 
@@ -691,6 +694,12 @@
     </div>
 
     <script src="TCTC2-0-challenge_data.js"></script>
+    <!-- 【新增】成就系統共用資料表，一定要放在 achv_notify.js 之前 -->
+    <script src="TCTC2-0-achv_data.js"></script>
+    <!-- 【新增】全站成就解鎖彈窗通知模組 -->
+    <script src="TCTC2-0-achv_notify.js"></script>
+    <!-- 【新增】XP／等級系統設定檔：務必放在 firebase.js 之前 -->
+    <script src="TCTC2-0-xp_data.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>

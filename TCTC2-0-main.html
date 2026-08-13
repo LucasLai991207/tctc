@@ -24,6 +24,8 @@
     <link rel="stylesheet" href="TCTC2-0-main_lobby.css">
     <!-- 【新增】帳號系統彈窗樣式 -->
     <link rel="stylesheet" href="TCTC2-0-auth_ui.css">
+
+    <link rel="stylesheet" href="TCTC2-0-achv_notify.css">
     <!-- 【新增】全站配色主題系統：務必放在 CSS 之後、其他 script 之前，同步載入避免換色閃爍 -->
     <script src="TCTC2-0-theme.js"></script>
 
@@ -215,7 +217,7 @@
                         <h6 class="main_lobby_difficulty_selector_text1-2">＃可在之後更改</h6>
                     </div>
                     <div class="main_lobby_difficulty_selector_row">
-                        <div class="main_lobby_difficulty_seletor_easy" id="main_lobby_easy_mode" tabindex="0" onclick="Exit_mode_selector();Difficulty_Choose_Easy();">
+                        <div class="main_lobby_difficulty_seletor_easy" id="main_lobby_easy_mode" tabindex="0" onclick="Exit_mode_selector();Difficulty_Choose_Easy();Maybe_Show_Nickname_Setup();">
                             <p class="main_lobby_difficulty_Level2_style">
                                 初級<span class="main_lobby_difficulty_Level_style">LEVEL I</span>
                             </p>
@@ -228,7 +230,7 @@
                                 <div class="main_lobby_difficulty_easy_intro2-1">節奏寬鬆無壓力</div>                                
                             </div>
                         </div>
-                        <div class="main_lobby_difficulty_seletor_medium" id="main_lobby_medium_mode" tabindex="0" onclick="Exit_mode_selector();Difficulty_Choose_Medium();">
+                        <div class="main_lobby_difficulty_seletor_medium" id="main_lobby_medium_mode" tabindex="0" onclick="Exit_mode_selector();Difficulty_Choose_Medium();Maybe_Show_Nickname_Setup();">
                             <p class="main_lobby_difficulty_Level2_style">
                                 中級<span class="main_lobby_difficulty_Level_style">LEVEL II</span>
                             </p>
@@ -241,7 +243,7 @@
                                 <div class="main_lobby_difficulty_easy_intro2-1">開放計時模式</div>                                
                             </div>
                         </div>
-                        <div class="main_lobby_difficulty_seletor_hard" id="main_lobby_hard_mode" tabindex="0" onclick="Exit_mode_selector();Difficulty_Choose_Hard();">
+                        <div class="main_lobby_difficulty_seletor_hard" id="main_lobby_hard_mode" tabindex="0" onclick="Exit_mode_selector();Difficulty_Choose_Hard();Maybe_Show_Nickname_Setup();">
                             <p class="main_lobby_difficulty_Level2_style">
                                 高級<span class="main_lobby_difficulty_Level_style">LEVEL III</span>
                             </p>
@@ -256,6 +258,28 @@
                         </div>
                     </div>
 
+                </div>
+            </div>
+        </section>
+        <!-- ===== 【新增】首次進站的暱稱設定彈窗 =====
+             玩家選完難度後（不管是點主大廳的三張卡片，還是點「？」跳出的難度選擇彈窗），
+             如果偵測到「還沒有暱稱、也還沒被問過」，就跳出這個彈窗，讓玩家順手取個名字。
+             樣式定義見 TCTC2-0-main_lobby.css 的 .nickname_setup_* 系列 class。 -->
+        <section class="nickname_setup_window is_hidden" id="nickname_setup_window">
+            <div class="nickname_setup_card">
+                <p class="nickname_setup_subtitle">歡迎來到 TCTC</p>
+                <h1 class="nickname_setup_title">取個暱稱吧</h1>
+                <p class="nickname_setup_desc">
+                    這個名字會顯示在排行榜與個人榮譽牆上(也可以選擇隱藏)<br>
+                </p>
+                <input type="text" class="nickname_setup_input" id="nickname_setup_input" placeholder="輸入暱稱（最多13字）" maxlength="13" autocomplete="off">
+                <p class="nickname_setup_warning" id="nickname_setup_warning"></p>
+                <p class="nickname_setup_desc">                    
+                    ＃之後也可以隨時到「設定」更改
+                </p>
+                <div class="nickname_setup_actions">
+                    <button type="button" class="nickname_setup_skip_btn" id="nickname_setup_skip_btn" onclick="Skip_Nickname_Setup()">先跳過</button>
+                    <button type="button" class="nickname_setup_confirm_btn" id="nickname_setup_confirm_btn" onclick="Confirm_Nickname_Setup()">確定</button>
                 </div>
             </div>
         </section>
@@ -289,11 +313,18 @@
     <!-- 【新增】帳號系統：nav 上的帳號按鈕跟登入/註冊彈窗需要這幾支，
          順序要在 TCTC2-0-online_time.js 之前，因為 online_time.js 內部
          會用到 TCTC2-0-firebase.js 的 Get_Anon_Id() -->
+    <!-- 【新增】XP／等級系統設定檔：務必放在 firebase.js 之前，
+         firebase.js 裡的 Sync_XP / Sync_Stage_Completion / Sync_Chars_Typed
+         都會讀 XP_CONFIG 裡的數值 -->
+    <script src="TCTC2-0-xp_data.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
     <script src="TCTC2-0-firebase.js?v=3"></script>
     <script src="TCTC2-0-auth_ui.js"></script>
+    <!-- 【新增】xp_display.js：把等級/稱號/進度條畫到玩家資訊卡上，
+         需要用到 firebase.js 的 Get_Own_Player_Stats，所以放在它之後 -->
+    <script src="TCTC2-0-xp_display.js"></script>
 
     <script src="TCTC2-0-online_time.js"></script>
     <!-- 【新增】連續登入天數：main.html 是玩家幾乎每次來都會先經過的頁面，
@@ -307,6 +338,168 @@
     <script src="TCTC2-0-difficulty_selet.js"></script>
     <script src="TCTC2-0-level_data.js"></script>
     <script>
+        // ===== 【新增】首次進站的暱稱設定彈窗 =====
+        // 觸發時機：玩家「選完難度」之後——涵蓋兩種入口：
+        //   1) 主大廳三張卡片（mode_select_easy_btn / medium_btn / hard_btn），
+        //      這幾顆的 click 事件是綁在 TCTC2-0-difficulty_selet.js 裡，我們不動那支檔案，
+        //      改用「事件代理（event delegation）」在 document 上監聽，不管它原本的
+        //      handler 是怎麼綁的都能抓到這次點擊。
+        //   2) 「？」跳出的難度選擇彈窗（main_lobby_easy_mode / medium_mode / hard_mode），
+        //      這幾顆本來就有 inline onclick，直接在 HTML 那邊多加一段呼叫即可（見上方 main）。
+        // 兩條路徑最後都會呼叫到同一個 Maybe_Show_Nickname_Setup()，內部會自己判斷
+        // 「這次要不要真的跳出來」，所以就算兩條路徑同時觸發也不會跳出兩次。
+        document.addEventListener("click", function(event){
+            const target = event.target.closest("#mode_select_easy_btn, #mode_select_medium_btn, #mode_select_hard_btn")
+            if(!target) return
+            // 用 setTimeout 延到下一輪事件迴圈，確保原本綁在這幾顆卡片上、
+            // 負責「渲染關卡列表」的邏輯先跑完，我們的彈窗才出現，避免疊在一起造成畫面閃爍
+            setTimeout(Maybe_Show_Nickname_Setup, 0)
+        }, true)
+
+        // 判斷「要不要跳出暱稱設定彈窗」：
+        // - 已經有暱稱（localStorage 的 username）：代表玩家已經是舊玩家或剛設定過，不用再問
+        // - 已經被問過一次（不管當時是設定成功還是按了「先跳過」）：同一個瀏覽器/anon_id
+        //   不會被重複打擾，跟「換一台瀏覽器/清除資料會變成新的 anon_id」這個網站既有的邏輯一致
+        function Maybe_Show_Nickname_Setup(){
+            if(localStorage.getItem("username")) return
+            if(localStorage.getItem("tctc_nickname_prompted")) return
+
+            const win = document.getElementById("nickname_setup_window")
+            if(!win) return
+
+            // 一旦顯示過，不管玩家接下來做什麼選擇，都標記成「問過了」，
+            // 之後選其他難度也不會再跳出來
+            localStorage.setItem("tctc_nickname_prompted", "1")
+
+            win.classList.remove("is_hidden")
+
+            const inputEl = document.getElementById("nickname_setup_input")
+            if(inputEl){
+                inputEl.value = ""
+                inputEl.focus()
+            }
+            const warningEl = document.getElementById("nickname_setup_warning")
+            if(warningEl) warningEl.textContent = ""
+        }
+
+        function Close_Nickname_Setup(){
+            const win = document.getElementById("nickname_setup_window")
+            if(win) win.classList.add("is_hidden")
+        }
+
+        // 「先跳過」：純粹關掉彈窗，不寫入任何名字，玩家之後仍然可以到「設定」頁面自己取名
+        function Skip_Nickname_Setup(){
+            Close_Nickname_Setup()
+        }
+
+        // 「確定」：跟 TCTC2-0-profile.js 的 Update_profile() 用同一套規則——
+        // 先用 Validate_Username_Format() 檢查格式，再用 Claim_Username() 去 Firebase
+        // 確認這個名字全站沒有人用過，兩關都過才算成功、才寫進 localStorage
+        // ===== 【新增】等匿名登入完成，再去搶名字 =====
+        // Firebase Rules 對 /usernames 的寫入要求 auth != null，但 firebase.js 裡的
+        // firebase.auth().signInAnonymously() 是非同步的，網路狀況不好、或玩家手速快，
+        // 都可能在「匿名登入還沒完成」的當下就按下確定，導致 transaction 被 Rules 擋下來，
+        // 在 console 看到 permission_denied（跟玩家實際輸入的名字無關，是登入時機的問題）。
+        // 這裡先確認 firebase.auth().currentUser 是否已經存在，沒有的話用
+        // onAuthStateChanged 等它完成，最多等 3 秒，避免萬一登入一直失敗導致玩家卡住按鈕。
+        function Wait_For_Auth_Ready(callback){
+            if(typeof firebase === "undefined" || !firebase.auth){
+                callback()
+                return
+            }
+            if(firebase.auth().currentUser){
+                callback()
+                return
+            }
+
+            let done = false
+            const unsubscribe = firebase.auth().onAuthStateChanged(function(user){
+                if(done) return
+                if(!user) return
+                done = true
+                unsubscribe()
+                callback()
+            })
+            setTimeout(function(){
+                if(done) return
+                done = true
+                unsubscribe()
+                callback()
+            }, 3000)
+        }
+
+        function Confirm_Nickname_Setup(){
+            const inputEl = document.getElementById("nickname_setup_input")
+            const warningEl = document.getElementById("nickname_setup_warning")
+            const confirmBtn = document.getElementById("nickname_setup_confirm_btn")
+            if(!inputEl) return
+            if(warningEl) warningEl.textContent = ""
+
+            const raw_value = inputEl.value
+
+            if(typeof Validate_Username_Format !== "function" || typeof Claim_Username !== "function"){
+                if(warningEl) warningEl.textContent = "系統暫時無法確認名字，可以先跳過，之後再到設定頁面補設定"
+                return
+            }
+
+            const validation = Validate_Username_Format(raw_value)
+            if(!validation.valid){
+                if(warningEl) warningEl.textContent = validation.reason
+                return
+            }
+
+            const trimmed_value = raw_value.trim()
+
+            if(confirmBtn){
+                confirmBtn.disabled = true
+                confirmBtn.textContent = "連線中..."
+            }
+
+            Wait_For_Auth_Ready(function(){
+                if(confirmBtn) confirmBtn.textContent = "設定中..."
+
+                Claim_Username(trimmed_value, function(success, reason){
+                    if(!success){
+                        if(warningEl) warningEl.textContent = reason
+                        if(confirmBtn){
+                            confirmBtn.disabled = false
+                            confirmBtn.textContent = "確定"
+                        }
+                        return
+                    }
+
+                    localStorage.setItem("username", trimmed_value)
+
+                    // 主大廳頭像旁邊顯示的名字，順手一起更新，不用整頁重新整理
+                    const nameEl = document.querySelector(".main_lobby_main_frame_player_profile_left_div_username")
+                    if(nameEl) nameEl.textContent = trimmed_value
+
+                    if(confirmBtn){
+                        confirmBtn.disabled = false
+                        confirmBtn.textContent = "確定"
+                    }
+
+                    Close_Nickname_Setup()
+                })
+            })
+        }
+
+        // Enter 直接送出、Esc 直接跳過，跟一般表單彈窗的操作習慣一致
+        document.addEventListener("DOMContentLoaded", function(){
+            const inputEl = document.getElementById("nickname_setup_input")
+            if(inputEl){
+                inputEl.addEventListener("keydown", function(event){
+                    if(event.key === "Enter"){
+                        event.preventDefault()
+                        Confirm_Nickname_Setup()
+                    }
+                    else if(event.key === "Escape"){
+                        Skip_Nickname_Setup()
+                    }
+                })
+            }
+        })
+
         // ===== 【新增】記憶功能：回到大廳時，自動定位到上次退出的關卡 =====
         // 【找到真正的成因】TCTC2-0-difficulty_selet.js 裡的
         // Difficulty_Choose_Easy/Medium/Hard() 內部固定寫死：
@@ -355,6 +548,8 @@
         })
     </script>
     <script defer src="https://cloud.umami.is/script.js" data-website-id="070df494-4361-4dce-ad65-a25b404811e9"></script>
+    <script src="TCTC2-0-achv_data.js"></script>
+    <script src="TCTC2-0-achv_notify.js"></script>
         
 </body>
 </html>

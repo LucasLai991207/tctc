@@ -997,6 +997,13 @@ function cg_finish_challenge(){
     if(pointsEarned > 0 && typeof Sync_Player_Points === "function"){
         cg_sync_promises.push(Sync_Player_Points(pointsEarned))
     }
+    // 【新增】挑戰模式的 XP：直接拿這次賺到的積分（已經把難度/時長都加權過）
+    // 乘上 XP_CONFIG.actions.challenge_points_multiplier，不用另外重算一次權重。
+    // 打字量的 XP（chars_per_xp）已經在上面 Sync_Chars_Typed() 裡統一處理過，
+    // 這裡只負責「積分換算」這一份，兩者互不重複。
+    if(pointsEarned > 0 && typeof Sync_XP === "function" && typeof XP_CONFIG !== "undefined"){
+        cg_sync_promises.push(Sync_XP(pointsEarned * XP_CONFIG.actions.challenge_points_multiplier))
+    }
 
     // 統一存成一個 Promise，View_Challenge_Ranking 之後會等它完成（或等到 timeout）才跳頁
     cg_pending_sync_promise = Promise.all(cg_sync_promises)

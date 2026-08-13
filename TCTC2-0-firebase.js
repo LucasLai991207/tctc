@@ -466,6 +466,18 @@ function Submit_Challenge_Score_To_Leaderboard(comboId, wpm, acc, raw_stats) {
         })
     }
 
+    // 【新增】上面這些 best_challenge_wpm / high_wpm_streak / best_challenge_acc /
+    // perfect_challenge_count / high_acc_challenge_streak 全部都是各自獨立、
+    // 互不等待的 fire-and-forget transaction，沒有一個統一的「全部都寫完了」
+    // 的時間點可以掛勾子。改用 debounce（見 achv_notify.js 的
+    // ACHV_Schedule_Notify_Check 說明）：不管這幾個 transaction 各自什麼時候
+    // 完成，都在這裡先排一次「1.2 秒後檢查」，重複呼叫只會延後、不會疊加，
+    // 等所有寫入安定下來後才真正讀一次 Firebase 做比對，觸發「速度」「精準」
+    // 兩個分類的彈窗通知。
+    if(typeof ACHV_Schedule_Notify_Check === "function"){
+        ACHV_Schedule_Notify_Check()
+    }
+
     return _Submit_Best_Score("challenge_leaderboard", comboId, wpm, acc, raw_stats)
 }
 function Get_Challenge_Leaderboard(comboId, callback, limit) {
@@ -585,6 +597,25 @@ function Sync_Stage_Completion(stageId){
 
     return tctc_db.ref(`player_stats/${anon_id}/${field}`).transaction(function(current){
         return (current || 0) + 1
+    }).then(function(result){
+        // 【新增】關卡完成度寫入成功後，觸發一次成就通知檢查（debounce），
+        // 讓「關卡完成度」分類能在破關當下跳出彈窗，不用等玩家自己點進榮譽牆。
+        // result.committed 是 Firebase transaction 的標準回傳欄位，true 代表
+        // 這次真的寫入成功（不是被 Rules 擋下或客戶端中途放棄），只有這種
+        // 情況才有意義觸發檢查。ACHV_Schedule_Notify_Check 定義在
+        // TCTC2-0-achv_notify.js，用 typeof 保護，避免頁面忘記載入該檔案時
+        // 直接噴錯、拖累原本的關卡完成寫入流程。
+        if(result && result.committed && typeof ACHV_Schedule_Notify_Check === "function"){
+            ACHV_Schedule_Notify_Check()
+        }
+        // 【新增】首次破關成功寫入後，順便發「首次破關獎勵」的 XP。
+        // 只在這裡發（不在 game.html 裡另外呼叫），因為「這關是不是第一次破」
+        // 這個判斷本來就已經在這支函式的呼叫端做過一次、又在這支函式的
+        // transaction 裡再次確保只有真的寫入成功才算數，兩層防護疊在一起，
+        // 比在 6 個呼叫端各自重複判斷、各自呼叫 Sync_XP 更不容易漏掉或算重複。
+        if(result && result.committed && typeof Sync_XP === "function" && typeof XP_CONFIG !== "undefined"){
+            Sync_XP(XP_CONFIG.actions.stage_first_clear)
+        }
     }).catch(function(error){
         console.warn(`[player_stats] ${field} 同步失敗（很可能是 Firebase Rules 還沒加上這個欄位的規則）：`, error.message)
     })
@@ -612,6 +643,18 @@ function Sync_Chars_Typed(charCount){
 
     return tctc_db.ref(`player_stats/${anon_id}/total_chars_typed`).transaction(function(current){
         return (current || 0) + rounded
+    }).then(function(result){
+        // 【新增】累積字數同步成功後，觸發一次成就通知檢查（打字分類）
+        if(result && result.committed && typeof ACHV_Schedule_Notify_Check === "function"){
+            ACHV_Schedule_Notify_Check()
+        }
+        // 【新增】依「這次打對的字數」換算 XP（主線／挑戰模式都會呼叫這支函式，
+        // 所以兩邊的「打字量 XP」自動統一套用同一套換算比例，不用各自另外算一次）。
+        // 用 Math.floor 無條件捨去，避免「打 1 個字就進位成 1 XP」這種灌水漏洞。
+        if(result && result.committed && typeof Sync_XP === "function" && typeof XP_CONFIG !== "undefined"){
+            const chars_xp = Math.floor(rounded / XP_CONFIG.actions.chars_per_xp)
+            if(chars_xp > 0) Sync_XP(chars_xp)
+        }
     }).catch(function(error){
         console.warn("[player_stats] total_chars_typed 同步失敗（很可能是 Firebase Rules 還沒加上這個欄位的規則）：", error.message)
     })
@@ -741,6 +784,10 @@ function Sync_Player_Points(points) {
             if (error) {
                 console.log("[player_stats] total_points 同步失敗（很可能是 Firebase Rules 還沒加上 total_points 欄位的規則）：", error)
             }
+            // 【新增】積分累積成功後，觸發一次成就通知檢查（活躍度分類）
+            if (committed && typeof ACHV_Schedule_Notify_Check === "function") {
+                ACHV_Schedule_Notify_Check()
+            }
             resolve()
         })
     })
@@ -752,6 +799,26 @@ function Sync_Player_Points(points) {
     })
 
     return Promise.all([points_promise, name_promise])
+}
+
+// ===== 【新增】XP／等級系統：把賺到的 XP 累加進玩家總 XP =====
+// 呼叫端只需要算好「這次要加多少 XP」丟進來就好，這支函式只負責「累加」，
+// 完全不管 XP 是怎麼算出來的——「每個行為給多少 XP」「升級門檻」全部
+// 定義在 TCTC2-0-xp_data.js 的 XP_CONFIG，想調整數值只要改那支檔案，
+// 不用動這裡（也不用動任何呼叫這支函式的地方）。
+// 用 transaction() 累加，理由跟 total_points 一致：避免多分頁同時發生時
+// 互相蓋掉對方剛寫入的 +N 結果。
+function Sync_XP(amount){
+    if(typeof amount !== "number" || isNaN(amount) || amount <= 0) return Promise.resolve()
+
+    const anon_id = Get_Anon_Id()
+    if(!anon_id) return Promise.resolve()
+
+    return tctc_db.ref(`player_stats/${anon_id}/xp`).transaction(function(current){
+        return (current || 0) + Math.round(amount)
+    }).catch(function(error){
+        console.warn("[player_stats] xp 同步失敗（很可能是 Firebase Rules 還沒加上 xp 欄位的規則）：", error.message)
+    })
 }
 
 // ===== 【新增】追蹤「在線時長」目前是不是有一筆同步還在跟雲端來回中 =====

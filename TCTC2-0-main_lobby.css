@@ -220,16 +220,28 @@
 
 /*    profile    */
 
+/* ============================================================
+   【重新整理】玩家資訊卡（頭像＋暱稱／等級／稱號／XP進度條＋WPM／正確率）
+   ------------------------------------------------------------
+   原本這塊是「外層寫死 height:16vh」+「WPM/ACC 用 position:absolute
+   相對外層做百分比定位」+「左邊文字區用 justify-content:space-between
+   硬凑剛好兩行」拼出來的，任何一行文字變多、或像這次多塞一條 XP 進度條
+   進去，就會撐爆固定高度、或跟絕對定位的 WPM/ACC 疊在一起。
+   改成整組都用 flex 排版、高度交給內容自然撐開（min-height 只是下限，
+   不是死数字），之後不管是稱號變長、多一行文字、或進度條這種新內容，
+   整塊都會自動長高，不會再有「固定高度不夠、內容溢出卡片外面」的問題。
+   ============================================================ */
 .main_lobby_main_frame_profileblock{
     position: relative;
 
-    margin-top: 10vh;    
-    padding-left: 2vw;
+    margin-top: 10vh;
+    padding: 1rem;
+    box-sizing: border-box;
 
     width: 67vw;
     max-width: 1050px;
 
-    height: 16vh;
+    min-height: 16vh;
     background-color:var(--light-blue);
 
     border-radius: 8px;
@@ -238,8 +250,7 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: space-between;
-
+    gap: 1.8vw;
 
     margin-bottom: 30px;
 }
@@ -252,58 +263,62 @@
     border: 2px solid var(--champagne-gold);
 
 }
-.main_lobby_main_frame_profileblock_wpm{
-    position: absolute;
-    top: 25%;
-    right: 5%;
-
+.profile_avatar_container{
+    /* 固定尺寸的圓形頭像，跟旁邊會自動長高的資訊卡放在同一個 flex row 裡，
+       避免資訊卡變高時頭像被跟著拉伸變形 */
+    flex-shrink: 0;
+    align-self: center;
+}
+/* ===== WPM／正確率：從「相對外層卡片絕對定位」改成資訊卡內部的
+   正常 flex 子項目，跟着資訊卡的實際高度自動垂直置中，不用再猜
+   任何 top/right 百分比 ===== */
+.main_lobby_main_frame_profileblock_wpm,
+.main_lobby_main_frame_profileblock_acc{
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
 
+    flex-shrink: 0;
+}
+.main_lobby_main_frame_profileblock_wpm{
     width: 3.5rem;
-    height: 4.5rem;
-
+    order: 3;   /* 排在最右邊，跟改版前的視覺順序一致 */
 }
 .main_lobby_main_frame_profileblock_acc{
-    position: absolute;
-    top: 25%;
-    right: 13%;
-
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-
     width: 4rem;
-    height: 4.5rem;
-
+    order: 2;   /* 排在 WPM 左邊、名稱/稱號右邊 */
 }
 .main_lobby_main_frame_player_profile{
     display: flex;
     flex-direction: row;
+    align-items: center;
 
-    height: 86%;
-    width: 82%;
+    flex: 1;
+    min-width: 0;   /* 允許裡面的文字換行/截斷，不會把 WPM/ACC 擠出卡片外 */
+
     background-color: var(--dark-blue);
-    margin-right: 1.65vw;
+    padding: 1rem 1.5rem;
+    box-sizing: border-box;
 
     border-radius: 10px;
 }
 .main_lobby_main_frame_player_profile_left_div{
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: center;
+    gap: 0.5rem;   /* 用 gap 統一控制行距，不管底下是兩行還是三行都會自動排好，
+                       不用再靠 space-between 硬凑成「剛好兩行」 */
 
-    margin-top: 1vh;
-    padding-left: 1rem;
-    height: 80%;
-    width: 100%;
+    flex: 1;
+    min-width: 0;
+    order: 1;   /* 排在 ACC/WPM 左邊 */
 }
 .main_lobby_main_frame_player_profile_left_div_name{
     font-size: 1.8rem;
     font-weight: 700;
-    
-    margin-top: 0.6vh;
+
     color: rgba(var(--text-rgb), 1);
 }
 .main_lobby_main_frame_player_profile_left_div_LV{
@@ -316,6 +331,41 @@
     font-size: 1.2rem;
     font-weight: 700;
     color: rgba(var(--text-rgb), 0.6);
+}
+
+/* ===== XP／等級系統：進度條 =====
+   由 TCTC2-0-xp_display.js 在載入時動態插入到「稱號」文字下方，
+   不寫死在 HTML 裡，避免頁面沒載入該支 JS 時留下一條空的死版面。
+   父層（left_div）已經用 gap 統一控制間距，這裡不用再自己加 margin-top，
+   避免跟 gap 疊加出雙倍間距。 */
+.xp_progress_wrap{
+    width: 100%;
+    max-width: 14rem;
+}
+.xp_progress_track{
+    width: 100%;
+    height: 0.4rem;
+    border-radius: 999px;
+    background-color: rgba(var(--text-rgb), 0.12);
+    overflow: hidden;
+}
+.xp_progress_fill{
+    height: 100%;
+    border-radius: 999px;
+    background-color: var(--champagne-gold);
+    transition: width 400ms ease;
+}
+.xp_progress_text{
+    margin-top: 0.25rem;
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+    color: rgba(var(--text-rgb), 0.5);
+}
+
+@media (max-width: 46rem){
+    /* 窄螢幕：WPM/ACC 數字先讓出空間給名稱/稱號/進度條，避免擠壓換行 */
+    .main_lobby_main_frame_profileblock_wpm{ width: 3rem; }
+    .main_lobby_main_frame_profileblock_acc{ width: 3.4rem; }
 }
 
 
@@ -1028,4 +1078,146 @@
 .nav_dropdown_item_active {
     font-weight: 600;
     text-shadow: 0 0 1px gray;
+}
+
+/* ============================================================
+   【新增】首次進站的暱稱設定彈窗
+   跟 .main_lobby_difficulty_selet_window 共用「全螢幕半透明遮罩 + 置中內容」
+   的彈窗語彙，但卡片本身改用跟 .profile_card 一致的「深底＋細金邊＋圓角」，
+   因為這裡只是一次性的單欄表單，不需要像難度選擇那樣的三欄大卡片版面。
+   ============================================================ */
+.nickname_setup_window{
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    padding: 1.2rem;
+    box-sizing: border-box;
+}
+.nickname_setup_card{
+    width: 100%;
+    max-width: 50vw;
+    box-sizing: border-box;
+
+    background-color: var(--dark-blue);
+    border: 1px solid rgba(var(--accent-rgb), 0.4);
+    border-radius: 10px;
+
+    padding: 2.2rem 4rem 1.8rem;
+
+    text-align: center;
+}
+.nickname_setup_subtitle{
+    color: var(--champagne-gold);
+    font-size: 0.78rem;
+    letter-spacing: 3px;
+    margin: 0 0 0.6rem;
+}
+.nickname_setup_title{
+    color: rgba(var(--text-rgb), 0.92);
+    font-family: "Noto Serif TC", serif;
+    font-size: 1.6rem;
+    font-weight: 400;
+    letter-spacing: 2px;
+    margin: 0 0 1rem;
+}
+.nickname_setup_desc{
+    color: rgba(var(--text-rgb), 0.55);
+    font-size: 0.8rem;
+    line-height: 1.9;
+    letter-spacing: 0.5px;
+    margin: 0 0 1.5rem;
+}
+.nickname_setup_input{
+    width: 80%;
+    box-sizing: border-box;
+
+    background-color: var(--darker-blue);
+    color: rgba(var(--text-rgb), 0.92);
+
+    border: 1px solid rgba(var(--accent-rgb), 0.4);
+    border-radius: 5px;
+
+    padding: 0.7rem 0.9rem;
+
+    font-size: 1rem;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+    letter-spacing: 1px;
+
+    text-align: center;
+
+}
+.nickname_setup_input:focus{
+    outline: none;
+    border-color: var(--champagne-gold);
+    background-color: var(--light-blue);
+}
+.nickname_setup_warning{
+    min-height: 1.1rem;
+    margin: 0.6rem 0 0;
+
+    color: var(--error-red);
+    font-size: 0.78rem;
+    letter-spacing: 0.5px;
+}
+.nickname_setup_actions{
+    display: flex;
+    gap: 0.8rem;
+    justify-content: center;
+
+    margin-top: 1.2rem;
+}
+.nickname_setup_skip_btn{
+    padding: 0.6rem 1.3rem;
+
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+
+    background-color: transparent;
+    color: rgba(var(--text-rgb), 0.6);
+
+    border: 1px solid rgba(var(--text-rgb), 0.25);
+    border-radius: 5px;
+
+    cursor: pointer;
+    transition: all 150ms ease;
+}
+.nickname_setup_skip_btn:hover{
+    border-color: rgba(var(--text-rgb), 0.5);
+    color: rgba(var(--text-rgb), 0.85);
+}
+.nickname_setup_confirm_btn{
+    padding: 0.6rem 1.6rem;
+
+    font-size: 0.9rem;
+    font-weight: 500;
+    letter-spacing: 1px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+
+    background-color: var(--champagne-gold);
+    color: var(--darker-blue);
+
+    border: 1px solid var(--champagne-gold);
+    border-radius: 5px;
+
+    cursor: pointer;
+    transition: all 150ms ease;
+}
+.nickname_setup_confirm_btn:hover{
+    background-color: transparent;
+    color: var(--champagne-gold);
+}
+.nickname_setup_confirm_btn:disabled{
+    opacity: 0.6;
+    cursor: default;
 }

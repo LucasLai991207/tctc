@@ -1,0 +1,155 @@
+/* ============================================================
+   TCTC2-0-achv_notify.css
+   全站成就解鎖彈窗樣式
+
+   配色變數跟 achievements.css / profile.css / ranking.css 完全一致
+   （champagne gold + deep navy），徽章等級配色也直接沿用
+   achievements.css 裡 .pach_tier_xxx 那一組顏色，確保「彈窗上看到的
+   金牌」跟「榮譽牆頁面上的金牌」是同一套視覺語言，不是另外設計一套。
+   ============================================================ */
+:root{
+    --darker-blue : #0b1a37;
+    --dark-blue : #0B1E36;
+    --champagne-gold : #c9a84c;
+    --accent-rgb : 201, 168, 76;
+    --text-rgb : 255, 255, 255;
+}
+
+/* ===== 通知堆疊容器：固定在畫面最頂端置中 =====
+   z-index 給到 9999，確保蓋在 nav（跟其他彈窗系統，例如 auth_ui 的登入
+   視窗遮罩）之上——榮譽牆要求「不管在哪一頁都彈」，代表這個容器隨時
+   可能疊在任何頁面既有的浮動元素上面，給一個夠高的值比較保險。
+
+   pointer-events: none 讓容器本身「不擋點擊」，這樣容器範圍內、但還沒
+   被任何 toast 佔滿的空白區域，滑鼠事件會直接穿透到底下的頁面內容
+   （例如 nav 的下拉選單），只有真正的 .achv_notify_toast 卡片本身
+   會重新開回 pointer-events: auto 接收點擊。 */
+.achv_notify_stack{
+    position: fixed;
+    top: 1.2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+
+    pointer-events: none;
+}
+
+/* ===== 單張通知卡 =====
+   進場/退場動畫只做 opacity + transform（transform 用 GPU 合成層處理，
+   不會觸發 layout/paint，效能比動 top/margin 好，這點跟 achievements.css
+   裡「進度條只做 width 這一個屬性的 transition」是同一種效能考量） */
+.achv_notify_toast{
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+
+    min-width: 17rem;
+    max-width: 22rem;
+
+    background-color: var(--dark-blue);
+    border: 1px solid var(--champagne-gold);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), 0 0 0 3px rgba(var(--accent-rgb), 0.12);
+
+    padding: 0.8rem 1.1rem;
+
+    cursor: pointer;
+    pointer-events: auto;   /* 卡片本身要接收點擊（點了跳去榮譽牆），跟容器的 none 相反 */
+
+    opacity: 0;
+    transform: translateY(-0.8rem) scale(0.96);
+    transition: opacity 260ms ease, transform 260ms ease;
+}
+.achv_notify_toast_show{
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+.achv_notify_toast_hide{
+    opacity: 0;
+    transform: translateY(-0.4rem) scale(0.98);
+}
+
+/* ===== 徽章圓框：尺寸縮小一號給彈窗用，配色邏輯跟 achievements.css 的
+   .pach_medal 完全對稱，只是選擇器換成 .achv_notify_medal ===== */
+.achv_notify_medal{
+    flex-shrink: 0;
+
+    width: 2.9rem;
+    height: 2.9rem;
+    border-radius: 50%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background-color: rgba(var(--accent-rgb), 0.07);
+    border: 2px solid rgba(var(--accent-rgb), 0.25);
+}
+.achv_notify_medal svg{
+    width: 1.55rem;
+    height: 1.55rem;
+}
+
+.achv_notify_medal.pach_tier_bronze{
+    border-color: #b08d57;
+    box-shadow: 0 0 0 3px rgba(176, 141, 87, 0.16);
+}
+.achv_notify_medal.pach_tier_bronze svg{ stroke: #cd9b6a; }
+
+.achv_notify_medal.pach_tier_silver{
+    border-color: #c7ced6;
+    box-shadow: 0 0 0 3px rgba(199, 206, 214, 0.18);
+}
+.achv_notify_medal.pach_tier_silver svg{ stroke: #dde3e9; }
+
+.achv_notify_medal.pach_tier_gold{
+    border-color: var(--champagne-gold);
+    box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.22);
+}
+.achv_notify_medal.pach_tier_gold svg{ stroke: var(--champagne-gold); }
+
+.achv_notify_medal.pach_tier_platinum{
+    border-color: #eaf3ff;
+    box-shadow: 0 0 0 3px rgba(234, 243, 255, 0.24), 0 0 12px rgba(234, 243, 255, 0.4);
+}
+.achv_notify_medal.pach_tier_platinum svg{ stroke: #eaf3ff; }
+
+/* ===== 文字區 ===== */
+.achv_notify_body{
+    min-width: 0;   /* 讓過長的成就名稱可以被 text-overflow 正常截斷，不撐爆卡片寬度 */
+}
+.achv_notify_eyebrow{
+    margin: 0 0 0.15rem;
+    color: var(--champagne-gold);
+    font-size: 0.68rem;
+    letter-spacing: 2px;
+}
+.achv_notify_name{
+    margin: 0;
+    color: rgba(var(--text-rgb), 0.94);
+    font-size: 0.92rem;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.achv_notify_tier{
+    margin: 0.15rem 0 0;
+    color: rgba(var(--text-rgb), 0.5);
+    font-size: 0.76rem;
+    letter-spacing: 1px;
+}
+
+@media (max-width: 26rem){
+    .achv_notify_toast{
+        min-width: 82vw;
+        max-width: 90vw;
+    }
+}

@@ -1,325 +1,6 @@
-const ACHV_ICON_FLAME = `<svg viewBox="0 0 24 24" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M12 2c2 3 5 6 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 1.4 0 2-1.1 1-2.4C11 7 10 5 12 2Z"/></svg>`
-const ACHV_ICON_CALENDAR_CHECK = `<svg viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"><rect x="3" y="5" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><polyline points="8,15 10.5,17.5 16,12.5"/></svg>`
-const ACHV_ICON_COMPASS = `<svg viewBox="0 0 24 24" stroke-width="1.6" stroke-linejoin="round" fill="none"><circle cx="12" cy="12" r="9"/><polygon points="15,8 12,12 9,16 12,12 15,8"/></svg>`
-const ACHV_ICON_KEYBOARD = `<svg viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" fill="none"><rect x="2" y="6" width="20" height="12" rx="2"/><line x1="6" y1="10" x2="6" y2="10.01"/><line x1="9" y1="10" x2="9" y2="10.01"/><line x1="12" y1="10" x2="12" y2="10.01"/><line x1="15" y1="10" x2="15" y2="10.01"/><line x1="18" y1="10" x2="18" y2="10.01"/><line x1="7" y1="15" x2="17" y2="15"/></svg>`
-const ACHV_ICON_FLAG = `<svg viewBox="0 0 24 24" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"><line x1="5" y1="3" x2="5" y2="21"/><path d="M5 4c3-2 6 2 9 0v8c-3 2-6-2-9 0Z"/></svg>`
-const ACHV_ICON_BOOK = `<svg viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M4 4c3-1 6-1 8 1v14c-2-2-5-2-8-1Z"/><path d="M20 4c-3-1-6-1-8 1v14c2-2 5-2 8-1Z"/></svg>`
-const ACHV_ICON_SPEED = `<svg viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"><polygon points="13,2 5,14 11,14 9,22 19,9 12,9"/></svg>`
-const ACHV_ICON_TRENDING_UP = `<svg viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"><polyline points="3,17 9,11 13,15 21,6"/><polyline points="14,6 21,6 21,13"/></svg>`
-const ACHV_ICON_TARGET = `<svg viewBox="0 0 24 24" stroke-width="1.6" fill="none"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5.5"/><circle cx="12" cy="12" r="2"/></svg>`
-const ACHV_ICON_CHECK_CIRCLE = `<svg viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="12" cy="12" r="9"/><polyline points="8,12.5 11,15.5 16,9"/></svg>`
-const ACHV_ICON_SHIELD = `<svg viewBox="0 0 24 24" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M12 2 L20 5.5 V11 C20 16 16.5 20 12 22 C7.5 20 4 16 4 11 V5.5 Z"/><polyline points="8.5,12 11,14.5 15.5,9.5"/></svg>`
-// 【新增】「活躍度」分類要用的三顆圖示：眼睛（瀏覽次數）、時鐘（遊玩時長）、
-// 心電圖波形（分類標題本身，呼應 ranking.js 既有的「活躍度」語意分組）
-const ACHV_ICON_EYE = `<svg viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`
-const ACHV_ICON_CLOCK = `<svg viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="12" cy="12" r="9"/><polyline points="12,7 12,12 16,14"/></svg>`
-const ACHV_ICON_PULSE = `<svg viewBox="0 0 24 24" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"><polyline points="2,12 7,12 9,6 13,18 16,12 22,12"/></svg>`
-// 【新增】積分成就用的星星圖示
-const ACHV_ICON_STAR = `<svg viewBox="0 0 24 24" stroke-width="1.6" stroke-linejoin="round" fill="none"><polygon points="12,3 14.9,9.1 21.5,9.9 16.8,14.5 18,21 12,17.7 6,21 7.2,14.5 2.5,9.9 9.1,9.1"/></svg>`
 
-const ACHV_TIER_CLASSES = ["pach_tier_locked", "pach_tier_bronze", "pach_tier_silver", "pach_tier_gold", "pach_tier_platinum"]
-const ACHV_TIER_TITLES_DEFAULT = ["未達標", "銅牌", "銀牌", "金牌", "白金"]
-
-// ============================================================
-// 分類 + 成就資料表
-// dataSource 決定要從哪個資料物件取值："streak"（TCTC_Get_Streak_Data
-// 回傳的物件）或 "stats"（ACHV_Get_Player_Stats 回傳的 player_stats 物件）
-// pending: true 代表目前 player_stats 裡還沒有這個欄位在寫入，
-// 卡片會顯示「尚未開放」而不是「尚未達標」，避免誤導玩家
-// ============================================================
-const ACHV_CATEGORIES = [
-    {
-        key: "persistence",
-        title: "堅持",
-        titleIcon: ACHV_ICON_FLAME,
-        achievements: [
-            {
-                key: "login_streak", name: "連續登入", icon: ACHV_ICON_FLAME,
-                dataSource: "streak", metric: "longest_streak",
-                thresholds: [3, 7, 14, 30],
-                condition: (t) => `連續登入達 ${t} 天`,
-                format: (v) => `${Math.round(v)} 天`
-            },
-            {
-                key: "total_days", name: "累積登入", icon: ACHV_ICON_CALENDAR_CHECK,
-                dataSource: "streak", metric: "total_login_days",
-                thresholds: [5, 20, 50, 100],
-                condition: (t) => `累積登入達 ${t} 天`,
-                format: (v) => `${Math.round(v)} 天`
-            },
-            {
-                key: "comeback", name: "中斷後回歸", icon: ACHV_ICON_COMPASS,
-                dataSource: "streak", metric: "longest_gap_days",
-                thresholds: [1, 7, 15, 30],
-                condition: (t) => `隔了 ${t} 天後回來`,
-                format: (v) => `${Math.round(v)} 天`
-            }
-        ]
-    },
-    {
-        // ===== 【新增】活躍度分類：瀏覽次數 + 遊玩時長 =====
-        // 這兩項的資料來源（player_stats/{anon_id} 底下的 page_views /
-        // online_seconds）在這支檔案最上方的文件註解裡本來就已經列在
-        // 「目前已經有寫入邏輯」的欄位清單中（TCTC2-0-online_time.js +
-        // TCTC2-0-firebase.js 的 Sync_Pending_Page_Views() /
-        // Sync_Pending_Online_Time() 早就在同步這兩個數字了），所以這裡
-        // 不用像「完成課程」那幾項一樣標 pending:true——資料源本來就存在，
-        // 只是「榮譽牆」這邊之前沒有把它們變成成就而已。
-        key: "activity",
-        title: "活躍度",
-        titleIcon: ACHV_ICON_PULSE,
-        achievements: [
-            {
-                key: "page_views", name: "瀏覽次數", icon: ACHV_ICON_EYE,
-                dataSource: "stats", metric: "page_views",
-                thresholds: [100, 500, 1000, 2500],
-                condition: (t) => `網站瀏覽次數累積達 ${t.toLocaleString("zh-TW")} 次`,
-                format: (v) => `${Math.round(v).toLocaleString("zh-TW")} 次`
-            },
-            {
-                // 門檻直接用「秒數」存放：30分鐘=1800秒、1小時=3600秒、
-                // 3小時=10800秒、10小時=36000秒，跟 player_stats 裡
-                // online_seconds 這個既有欄位的單位（秒）完全一致，
-                // 不用額外新增欄位或做任何單位換算，讀值邏輯跟其他
-                // metric 查表式成就完全相同，只有 format() 顯示時
-                // 才轉換成人看得懂的「幾分鐘/幾小時」
-                key: "online_time", name: "遊玩時長", icon: ACHV_ICON_CLOCK,
-                dataSource: "stats", metric: "online_seconds",
-                thresholds: [1800, 3600, 10800, 36000],
-                condition: (t) => `累積在線時長達到 ${ACHV_Format_Duration(t)}`,
-                format: (v) => ACHV_Format_Duration(v)
-            },
-            {
-                // 【新增】積分累積：跟瀏覽次數/遊玩時長放同一個分類，理由是
-                // total_points 本質上也是「玩得越多、越認真就會累積越多」的
-                // 活躍度指標（積分公式是時長×難度倍率，不是單次爆發力），
-                // 跟「速度」「精準」那種看單次最佳表現的分類語意不同。
-                // total_points 這個欄位本來就已經在同步（排行榜「積分榜」
-                // 一直在用），這裡不用改 firebase.js，純粹是把既有資料
-                // 接上榮譽牆而已。
-                key: "total_points", name: "積分累積", icon: ACHV_ICON_STAR,
-                dataSource: "stats", metric: "total_points",
-                thresholds: [50, 200, 600, 1500],
-                condition: (t) => `挑戰模式累積積分達到 ${t.toLocaleString("zh-TW")} 分`,
-                format: (v) => `${Math.round(v).toLocaleString("zh-TW")} 分`
-            }
-        ]
-    },
-    {
-        key: "typing",
-        title: "打字",
-        titleIcon: ACHV_ICON_KEYBOARD,
-        achievements: [
-            {
-                key: "total_chars", name: "累積字數", icon: ACHV_ICON_KEYBOARD,
-                dataSource: "stats", metric: "total_chars_typed",
-                thresholds: [1000, 10000, 50000, 200000],
-                condition: (t) => `累積輸入 ${t.toLocaleString("zh-TW")} 字`,
-                format: (v) => `${Math.round(v).toLocaleString("zh-TW")} 字`
-            },
-            {
-                key: "chapter_complete", name: "完成課程", icon: ACHV_ICON_BOOK,
-                dataSource: "stats", metric: "chapters_completed", pending: true,
-                thresholds: [1, 3, 6, 13],
-                condition: (t) => `完成 ${t} 個課程章節`,
-                format: (v) => `${Math.round(v)} 章`
-            }
-        ]
-    },
-    {
-        key: "stage_completion",
-        title: "關卡完成度",
-        titleIcon: ACHV_ICON_FLAG,
-        achievements: [
-            {
-                key: "easy_completion", name: "初級完成度", icon: ACHV_ICON_BOOK,
-                dataSource: "stats",
-                // 【新增】用 getValue() 現場算值，不是單純查表——這裡要算的是
-                // 「已完成關卡數 ÷ Level_Data 裡實際定義的總關卡數 × 100」，
-                // 分母交給 ACHV_Get_Total_Stage_Count() 動態算，之後 Lucas
-                // 加新章節，這裡完全不用回來改任何寫死的數字
-                getValue: (data) => {
-                    const total = ACHV_Get_Total_Stage_Count("easy")
-                    const completed = data ? (data.stages_completed_easy || 0) : 0
-                    return total > 0 ? (completed / total) * 100 : 0
-                },
-                thresholds: [25, 50, 75, 100],
-                condition: (t) => `初級關卡完成度達到 ${t}%`,
-                format: (v) => `${Math.round(v)}%`
-            },
-            {
-                key: "medium_completion", name: "中級完成度", icon: ACHV_ICON_KEYBOARD,
-                dataSource: "stats",
-                getValue: (data) => {
-                    const total = ACHV_Get_Total_Stage_Count("medium")
-                    const completed = data ? (data.stages_completed_medium || 0) : 0
-                    return total > 0 ? (completed / total) * 100 : 0
-                },
-                thresholds: [25, 50, 75, 100],
-                condition: (t) => `中級關卡完成度達到 ${t}%`,
-                format: (v) => `${Math.round(v)}%`
-            },
-            {
-                key: "hard_completion", name: "高級完成度", icon: ACHV_ICON_SPEED,
-                dataSource: "stats",
-                getValue: (data) => {
-                    const total = ACHV_Get_Total_Stage_Count("hard")
-                    const completed = data ? (data.stages_completed_hard || 0) : 0
-                    return total > 0 ? (completed / total) * 100 : 0
-                },
-                thresholds: [25, 50, 75, 100],
-                condition: (t) => `高級關卡完成度達到 ${t}%`,
-                format: (v) => `${Math.round(v)}%`
-            },
-            {
-                // 【新增】總關卡完成度：三個難度的「完成數」相加 ÷「總關卡數」相加，
-                // 刻意不是三個百分比取平均——三個難度的關卡數不一樣多（目前
-                // 78/96/32），直接平均會讓關卡數最少的高級難度佔比被放大、失真，
-                // 用「總完成數 / 總關卡數」才能真正代表「玩家破了全站幾 % 的關」
-                key: "total_completion", name: "總關卡完成度", icon: ACHV_ICON_FLAG,
-                dataSource: "stats",
-                getValue: (data) => {
-                    const totalStages = ACHV_Get_Total_Stage_Count("easy") + ACHV_Get_Total_Stage_Count("medium") + ACHV_Get_Total_Stage_Count("hard")
-                    const totalCompleted = data ? ((data.stages_completed_easy || 0) + (data.stages_completed_medium || 0) + (data.stages_completed_hard || 0)) : 0
-                    return totalStages > 0 ? (totalCompleted / totalStages) * 100 : 0
-                },
-                thresholds: [25, 50, 75, 100],
-                condition: (t) => `全站關卡完成度達到 ${t}%`,
-                format: (v) => `${Math.round(v)}%`
-            }
-        ]
-    },
-    {
-        key: "speed",
-        title: "速度",
-        titleIcon: ACHV_ICON_SPEED,
-        achievements: [
-            {
-                key: "wpm", name: "挑戰模式 WPM 達標", icon: ACHV_ICON_SPEED,
-                dataSource: "stats", metric: "best_challenge_wpm",
-                thresholds: [20, 50, 100, 180],
-                condition: (t) => `挑戰模式單次 WPM 達到 ${t}`,
-                format: (v) => `${Math.round(v)} WPM`
-            },
-            {
-                // 【修改】原本是「連續次數」當變數（3/7/15/30 場），現在改成
-                // 固定連續 7 場、變數換成 WPM 門檻（35/70/100/150）。
-                // 資料源 high_wpm_streak 現在存的是「歷史上連續 7 場挑戰模式
-                // 裡，最低那一場曾經有過的最高紀錄」，見 firebase.js 的
-                // Submit_Challenge_Score_To_Leaderboard——用滑動視窗取最近
-                // 7 筆的最小值，不是任何一場達標就算數，也不是平均。
-                key: "wpm_streak", name: "連續維持高速", icon: ACHV_ICON_TRENDING_UP,
-                dataSource: "stats", metric: "high_wpm_streak",
-                thresholds: [35, 70, 100, 150],
-                condition: (t) => `挑戰模式連續 7 場 WPM 都達到 ${t} 以上`,
-                format: (v) => `${Math.round(v)} WPM`
-            }
-        ]
-    },
-    {
-        key: "accuracy",
-        title: "精準",
-        titleIcon: ACHV_ICON_TARGET,
-        achievements: [
-            {
-                // 【修改】原本是「所有模式累計平均正確率」，改成跟「速度」分類的
-                // wpm 成就同一種語意：只看挑戰模式單次成績裡的最佳一次，
-                // 資料源改成 best_challenge_acc（見 TCTC2-0-firebase.js 的
-                // Submit_Challenge_Score_To_Leaderboard，跟 best_challenge_wpm
-                // 用同一套「transaction + Math.max」寫法同步）
-                key: "acc", name: "挑戰模式單次正確率達標", icon: ACHV_ICON_TARGET,
-                dataSource: "stats", metric: "best_challenge_acc",
-                thresholds: [90, 95, 98, 100],
-                condition: (t) => `挑戰模式單次正確率達到 ${t}%`,
-                format: (v) => `${Math.round(v * 10) / 10}%`
-            },
-            {
-                // 【修改】原本是 pending（沒有資料源），現在改成計算「挑戰模式單次
-                // 正確率剛好 100% 的次數」，資料源 perfect_challenge_count 同樣
-                // 在 Submit_Challenge_Score_To_Leaderboard 裡用 transaction 累加
-                key: "perfect", name: "挑戰模式滿分次數", icon: ACHV_ICON_CHECK_CIRCLE,
-                dataSource: "stats", metric: "perfect_challenge_count",
-                thresholds: [1, 3, 5, 10],
-                condition: (t) => `挑戰模式單次正確率達到 100% 共 ${t} 次`,
-                format: (v) => `${Math.round(v)} 次`
-            },
-            {
-                // 【修改】原本是 pending，現在改成「挑戰模式連續幾次正確率都 ≥90%」，
-                // 90% 這個達標門檻跟上面「acc」成就的銅牌門檻一致，資料源
-                // high_acc_challenge_streak 存的是「歷史最長連續紀錄」（只增不減，
-                // 跟 login_streak 的 streak_longest 同一種語意），不是目前這一段，
-                // 這樣就算後來斷了，已經拿到的牌不會被收回
-                key: "acc_streak", name: "連續高準確率", icon: ACHV_ICON_SHIELD,
-                dataSource: "stats", metric: "high_acc_challenge_streak",
-                thresholds: [3, 5, 10, 30],
-                condition: (t) => `挑戰模式連續 ${t} 次正確率達到 90% 以上`,
-                format: (v) => `${Math.round(v)} 次`
-            }
-        ]
-    }
-    // 「特殊」分類（彩蛋／特殊行為／隱藏成就）先擱置，見頁面下方的佔位區塊
-]
-
-// ===== 【新增】把「總秒數」轉成人類可讀的時長文字，給「遊玩時長」成就的
-// condition() / format() 共用 =====
-// 刻意跟 ranking.js 的 Format_Online_Seconds() 分開寫一份、不共用：
-// 那支是排行榜要精確到「時分秒」，這裡只是成就卡片上一句簡短說明
-// （例如「目前 1.5 小時 / 下一階：3 小時」），精確到秒反而讓文字過長、
-// 在窄螢幕的卡片裡容易被擠壓換行，兩邊需求不同，各自維護各自的格式。
-function ACHV_Format_Duration(totalSeconds){
-    const seconds = Math.max(0, Math.round(totalSeconds || 0))
-    const minutes = Math.floor(seconds / 60)
-
-    if(minutes < 60) return `${minutes} 分鐘`
-
-    const hours = minutes / 60
-    // 未滿整數小時（例如 90 分鐘 = 1.5 小時）保留一位小數方便閱讀，
-    // 剛好是整數小時（例如 180 分鐘 = 3 小時）就不顯示多餘的「.0」
-    return `${Number.isInteger(hours) ? hours : hours.toFixed(1)} 小時`
-}
-
-// ===== 【新增】動態算出某難度在 Level_Data 裡「實際定義」的總關卡數 =====
-// 刻意不寫死數字：直接對 Level_Data 現場算 sum，Lucas 之後不管加幾個
-// 章節/關卡，這裡的分母都會自動跟上，不用回來手動改成就門檻
-function ACHV_Get_Total_Stage_Count(difficulty){
-    if(typeof Level_Data === "undefined" || !Level_Data[difficulty]) return 0
-    return Level_Data[difficulty].chapter.reduce(function(sum, chapter){
-        return sum + (chapter.stage ? chapter.stage.length : 0)
-    }, 0)
-}
-
-// 依目前數值算出這個成就達到第幾階（0 = 未達標，1~4 = 銅/銀/金/白金）
-function ACHV_Get_Tier_Index(value, thresholds){
-    let tierIndex = 0
-    for(let i = 0; i < thresholds.length; i++){
-        if(value >= thresholds[i]) tierIndex = i + 1
-    }
-    return tierIndex
-}
-
-// 依「目前數值」在「目前這一階的區間」裡算百分比，用來畫單項成就自己的進度條。
-// 例如連續登入門檻是 [3,7,14,30]，目前值 5（銅牌已達成，卡在銅→銀之間）：
-// 區間下界是 3（銅牌門檻）、上界是 7（銀牌門檻），百分比 = (5-3)/(7-3) = 50%。
-// 這樣進度條每一階都是從 0% 重新畫到 100%，而不是「距離最終門檻還有多遠」
-// 那種一次性長條——玩家比較容易感覺到「快到下一階了」。
-function ACHV_Get_Tier_Progress_Percent(value, thresholds, tierIndex){
-    if(tierIndex === thresholds.length) return 100   // 已經封頂（白金），永遠滿條
-    const lowerBound = tierIndex === 0 ? 0 : thresholds[tierIndex - 1]
-    const upperBound = thresholds[tierIndex]
-    const percent = ((value - lowerBound) / (upperBound - lowerBound)) * 100
-    return Math.max(0, Math.min(100, Math.round(percent)))
-}
-
-// 產生單一成就「橫排列」的 HTML。data 是對應 dataSource 的來源物件
-// （streakData 或 statsData），可能是 {} 或 null，一律用 0 兜底。
-//
-// 版面改成橫排（圖示在左、名稱＋進度條在右）而不是直排卡片格線，
-// 原因：直排格線在「一個分類只有 2~3 項成就」時會被 grid 拉開留白，
-// 加上原本的長句「目前 X／下一階：條件描述」在窄欄位裡容易強制換行、
-// 很難一眼看完。橫排可以讓文字沿著卡片寬度平鋪，同時進度條本身
-// 就能表達「還差多少」，不需要再塞一整句條件描述進畫面。
 function ACHV_Build_Badge_HTML(achv, data){
-    // pending 成就：不計算真實進度（因為資料源不存在），直接顯示「尚未開放」，
+    // 不計算真實進度（因為資料源不存在），直接顯示「尚未開放」，
     // 避免用 0 去比對門檻造出一個看起來像「還沒達成」但其實是「功能還沒做」的假象
     if(achv.pending){
         return `
@@ -350,16 +31,6 @@ function ACHV_Build_Badge_HTML(achv, data){
     // 不會有徽章已經是金色、但進度條還是灰色這種不一致的情況
     const fillPercent = ACHV_Get_Tier_Progress_Percent(value, achv.thresholds, tierIndex)
 
-    // 【修正】原本這行只顯示「目前值 / 下一階絕對門檻」（例如 1,114 / 2,000），
-    // 但長條圖 fillPercent 算的是「這一階自己的區間進度」（例如金牌→白金
-    // 這一階只算 1000~2000 之間，結果是 11%）。當某一階的跨距很大（像
-    // 瀏覽次數的 1000→2000 這階），兩個數字放在一起會讓人誤以為長條圖
-    // 「填錯了」——文字暗示快 56%，長條卻只有 11%。
-    // 這裡不改變長條圖「每階歸零重算」的既有設計（其他成就、連續登入等
-    // 都共用這套邏輯，不宜貿然全站更動手感），而是直接把 fillPercent
-    // 這個長條圖真正在用的數字一起印在文字說明裡，讓兩邊呈現的內容
-    // 對得起來，玩家才知道「11%」指的是「這一階內的進度」，不是「整體
-    // 距離下一階的總進度」。
     const caption = isMaxed
         ? `已達最高等級・目前 ${achv.format(value)}`
         : `${achv.format(value)} / ${achv.format(achv.thresholds[tierIndex])}（${fillPercent}%）`
@@ -379,14 +50,6 @@ function ACHV_Build_Badge_HTML(achv, data){
             </div>
         </div>
     `
-}
-
-// 計算單一成就「已解鎖幾階」，pending 成就一律算 0（尚未開放不計入解鎖數，
-// 但仍計入總數的分母，讓玩家知道之後會有這些成就等著解鎖）
-function ACHV_Get_Unlocked_Tiers(achv, data){
-    if(achv.pending) return 0
-    const value = achv.getValue ? achv.getValue(data) : (data ? (data[achv.metric] || 0) : 0)
-    return ACHV_Get_Tier_Index(value, achv.thresholds)
 }
 
 // 渲染單一分類區塊（標題 + 分類進度條 + 卡片 grid），回傳 { html, unlocked, total }
@@ -566,6 +229,21 @@ document.addEventListener("DOMContentLoaded", function(){
         // 載入 firebase.js 時直接噴錯。
         if(typeof Sync_Achievements_Unlocked === "function" && overview){
             Sync_Achievements_Unlocked(overview.unlocked)
+        }
+
+        // ===== 【新增】用這次已經抓好的 streak + stats 資料，順便跑一次成就通知比對 =====
+        // 這裡刻意「重複利用」剛剛渲染畫面用的同一份 results，不再另外發一次
+        // Firebase 請求。之所以在榮譽牆頁面也要跑這個比對（而不是只靠其他頁面
+        // 的即時觸發），是因為榮譽牆頁面同時具備「Level_Data + streak + stats」
+        // 三種資料來源，是全站唯一一個「關卡完成度」分類成就能被正確計算與
+        // 建立 baseline 的頁面之一（另一個是 game.html / main.html / profile.html，
+        // 這幾個頁面也都有載入 level_data.js）。ACHV_Notify_Diff() 定義在
+        // TCTC2-0-achv_notify.js，這裡用 typeof 保護，避免忘記載入該檔案時
+        // 直接噴錯、拖累整個榮譽牆頁面渲染失敗。
+        if(typeof ACHV_Notify_Diff === "function"){
+            ACHV_Notify_Diff(results[0], results[1]).forEach(function(item){
+                if(typeof ACHV_Notify_Show_Toast === "function") ACHV_Notify_Show_Toast(item)
+            })
         }
     })
 })

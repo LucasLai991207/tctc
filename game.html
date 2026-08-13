@@ -11,7 +11,7 @@
 
     <!--瀏覽器分頁小圖-->
     <link rel="icon" href="favicon-32x32.png" type="image/png" sizes="32x32">
-
+    
     <!-- 社群分享預覽圖-->
     <meta property="og:image" content="https://lucaslai991207.github.io/tctc/os_image.png">
 
@@ -23,6 +23,8 @@
     <link rel="stylesheet" href="TCTC2-0-main_lobby.css">
     <!-- 【新增】帳號系統彈窗樣式 -->
     <link rel="stylesheet" href="TCTC2-0-auth_ui.css">
+    <!--成就彈窗-->
+    <link rel="stylesheet" href="TCTC2-0-achv_notify.css">
     <!-- 【新增】全站配色主題系統：務必放在 CSS 之後、其他 script 之前，同步載入避免換色閃爍 -->
     <script src="TCTC2-0-theme.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -598,6 +600,54 @@
             font-size: 1rem;
             letter-spacing: 4px;
         }
+        /* 【新增】過關／未過關狀態徽章：放在 RESULT 標題正下方、WPM 數字正上方，
+           是玩家結算後第一眼會看到的資訊，比起只靠邊框變紅色，這裡直接用文字
+           講清楚「有沒有過關」，未過關再額外加一個提示句，說明這關還不算數。 */
+        .game_result_status {
+            display: none;
+
+            align-items: center;
+            gap: 0.5rem;
+
+            padding: 0.4rem 1.1rem;
+
+            font-size: 0.95rem;
+            font-weight: 500;
+            letter-spacing: 2px;
+
+            border-radius: 999px;
+        }
+        .game_result_status.show { display: inline-flex; }
+        .game_result_status_pass {
+            color: var(--champagne-gold);
+            background-color: rgba(var(--accent-rgb), 0.12);
+            border: 1px solid rgba(var(--accent-rgb), 0.4);
+        }
+        .game_result_status_fail {
+            color: var(--error-red);
+            background-color: rgba(var(--error-rgb), 0.12);
+            border: 1px solid rgba(var(--error-rgb), 0.55);
+
+            animation: game_result_status_fail_pulse 1.4s ease-in-out infinite;
+        }
+        @keyframes game_result_status_fail_pulse {
+            0%, 100% { box-shadow: 0 0 0 rgba(var(--error-rgb), 0); }
+            50% { box-shadow: 0 0 12px rgba(var(--error-rgb), 0.55); }
+        }
+        /* 未過關時的提示句，放在狀態徽章下面，用比較小、比較不搶眼的字說明原因 */
+        .game_result_fail_hint {
+            display: none;
+
+            color: rgba(255, 255, 255, 0.55);
+            font-size: 0.78rem;
+            letter-spacing: 1px;
+            line-height: 1.6;
+            text-align: center;
+
+            max-width: 22rem;
+            margin-top: -0.8rem;
+        }
+        .game_result_fail_hint.show { display: block; }
         .game_result_wpm {
             color: #fff;
 
@@ -669,6 +719,17 @@
             background-color: var(--dark-blue);
             color: var(--champagne-gold);
             border: 1px solid var(--champagne-gold);
+        }
+        /* 【新增】未過關時「再來一次」按鈕：跟「下一關/回到大廳」的金色做出區隔，
+           改用紅色系，讓玩家一眼就知道這顆按鈕現在的意義不一樣（不是往前進，是重打） */
+        .next_game_btn.next_game_btn_retry {
+            background-color: var(--error-red);
+            color: rgba(255, 255, 255, 0.95);
+        }
+        .next_game_btn.next_game_btn_retry:hover {
+            background-color: var(--dark-blue);
+            color: var(--error-red);
+            border: 1px solid var(--error-red);
         }
         .rank_view_btn {
             box-sizing: border-box;
@@ -1248,6 +1309,9 @@
         <button class="game_retry_btn" onclick="Init()">再試一次</button>
         <div class="game_result" id="game_result" style="z-index: 9999;">
             <div class="game_result_title">RESULT</div>
+            <!-- 【新增】過關／未過關狀態徽章 + 未過關提示句，內容由 ShowResult() 動態填入 -->
+            <div class="game_result_status" id="game_result_status"></div>
+            <p class="game_result_fail_hint" id="game_result_fail_hint"></p>
             <div class="game_result_wpm" id="result_wpm">0<span>WPM</span></div>
             <div class="game_result_row">
                 <div class="game_result_stat">
@@ -1405,6 +1469,14 @@
     </main>
 
     <script src="TCTC2-0-level_data.js"></script>
+    <!--成就系統共用資料表-->
+    <script src="TCTC2-0-achv_data.js"></script>
+    <!--全站成就解鎖彈窗通知模組 -->
+    <script src="TCTC2-0-achv_notify.js"></script>
+    <!-- 【新增】XP／等級系統設定檔：務必放在 firebase.js 之前，
+         firebase.js 裡的 Sync_XP / Sync_Stage_Completion / Sync_Chars_Typed
+         都會讀 XP_CONFIG 裡的數值 -->
+    <script src="TCTC2-0-xp_data.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
@@ -4011,6 +4083,12 @@
                 if(typeof Sync_Chars_Typed === "function"){
                     Sync_Chars_Typed(target_get)
                 }
+                // 【新增】主線模式每完成一次算數的測驗，給固定的 XP_CONFIG.actions.stage_clear。
+                // 首次破關的額外獎勵已經在 firebase.js 的 Sync_Stage_Completion() 裡發過了，
+                // 這裡發的是「每次都給」的那一份，兩者互不重複、互不取代。
+                if(typeof Sync_XP === "function" && typeof XP_CONFIG !== "undefined"){
+                    Sync_XP(XP_CONFIG.actions.stage_clear)
+                }
             }
             // 這關本來就不計分/這次沒過關門檻，排行榜也不會有這次的資料，按鈕就不顯示，
             // 避免玩家點進去看到空的以為壞掉了
@@ -4064,9 +4142,24 @@
 
             //顯示結果畫面
             document.getElementById("game_result").classList.add("show")
+
+            // 【新增】狀態徽章 + 未過關提示句，兩種狀態共用的元素先抓出來
+            const resultStatusEl = document.getElementById("game_result_status")
+            const resultFailHintEl = document.getElementById("game_result_fail_hint")
+
             if(stage_is_passed){
                 document.getElementById("game_result").style.boxShadow = "0px 0px 15px var(--champagne-gold)"
                 document.getElementById("game_result").style.border = "2px solid var(--champagne-gold)"
+
+                if(resultStatusEl){
+                    resultStatusEl.textContent = "通過"
+                    resultStatusEl.className = "game_result_status show game_result_status_pass"
+                }
+                if(resultFailHintEl){
+                    resultFailHintEl.textContent = ""
+                    resultFailHintEl.classList.remove("show")
+                }
+
                 //過關標記 沒拿到就給空字串
                 let progress = JSON.parse(localStorage.getItem("stage_progress")) || {} 
 
@@ -4085,6 +4178,19 @@
                 document.getElementById("game_result").style.boxShadow = "0px 0px 20px red"
                 document.getElementById("game_result").style.border = "3px solid red"
 
+                if(resultStatusEl){
+                    resultStatusEl.textContent = "未通過"
+                    resultStatusEl.className = "game_result_status show game_result_status_fail"
+                }
+                // 【新增】高級關卡的過關門檻是速度+正確率雙門檻，未過關的原因可能是其中一項沒達標，
+                // 這裡把「這關實際要求的標準」直接講清楚，玩家才知道下次要往哪個方向加強，
+                // 不是只看到一個叉叉卻不知道差在哪
+                if(resultFailHintEl){
+                    resultFailHintEl.textContent = get_difficulty_by_stageid(stage.id) === "hard"
+                        ? `這關需要達到 ${Get_Stage_Default_Wpm(stage)} WPM 以上、正確率 ${(typeof stage.acc_min === "number" && stage.acc_min > 0 ? stage.acc_min : 90)}% 以上才算過關，再挑戰一次吧！`
+                        : "正確率需達到 90% 以上才算過關，再挑戰一次吧！"
+                    resultFailHintEl.classList.add("show")
+                }
             }
 
 
@@ -4104,11 +4210,20 @@
                 }
             }
 
-            // 【修改】原本沒有下一關時直接把按鈕藏起來，現在改成：
-            // 沒有下一關 → 按鈕文字變成「回到大廳」，點下去導回主大廳頁面；
-            // 還有下一關 → 維持原本「下一關」文字與行為，不影響原本邏輯
+            // 【修改】原本不管有沒有過關，只要「同章節還有下一關」就顯示「下一關」，
+            // 玩家沒過關也能直接跳過去，跟遊戲本來「要過關才能繼續」的設計互相矛盾。
+            // 現在改成：
+            // 沒過關 → 不管有沒有下一關，按鈕一律變成「再來一次」，點下去重打同一關（Init()）；
+            // 過關 + 還有下一關 → 維持原本「下一關」文字與行為；
+            // 過關 + 沒有下一關 → 維持原本「回到大廳」文字與行為。
             nextBtn.style.display = "block"
-            if(hasNext){
+            nextBtn.classList.remove("next_game_btn_retry")
+            if(!stage_is_passed){
+                nextBtn.textContent = "再來一次"
+                nextBtn.onclick = function(){ Init() }
+                nextBtn.classList.add("next_game_btn_retry")
+            }
+            else if(hasNext){
                 nextBtn.textContent = "下一關"
                 nextBtn.onclick = function(){ Find_next_game(stageId) }
             }
