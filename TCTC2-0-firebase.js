@@ -1318,6 +1318,119 @@ function Set_Own_Leaderboard_Visibility(hide, callback) {
 }
 
 /* ============================================================
+   【新增】個人資料頁公開設定
+   ------------------------------------------------------------
+   單一 boolean 欄位：player_stats/{anon_id}/hide_profile_view
+   - 這跟上面的 hide_from_leaderboard 是兩件獨立的事：那個開關只影響
+     「排行榜上看不看得到這個人」；這個開關只影響「別人能不能點進
+     這個人的個人資料頁（TCTC2-0-view_profile.html）看到成就/統計」。
+     玩家可以只關掉其中一個，兩者互不影響。
+   - 欄位不存在，或值是 false：允許別人查看（預設狀態，也就是這個玩家
+     從來沒關過這個開關）
+   - 欄位值是 true：TCTC2-0-view_profile.html 一律顯示「這位玩家沒有
+     公開個人資料」，不會回傳任何統計數字或成就資料給查看者
+   ============================================================ */
+
+// 讀取「自己目前」的開關狀態，給 profile.html 初始化 checkbox 用（跟
+// Get_Own_Leaderboard_Visibility 同一種寫法，profile.js 實際上一樣是
+// 直接沿用 Get_Own_Player_Stats() 讀回來的欄位，不會另外呼叫這個函式，
+// 留著是給以後其他頁面需要單獨檢查這個開關時使用）
+function Get_Own_Profile_Visibility(callback) {
+    const anon_id = Get_Anon_Id()
+    tctc_db.ref(`player_stats/${anon_id}/hide_profile_view`)
+        .once("value")
+        .then(function (snapshot) {
+            callback(snapshot.val() === true)
+        })
+        .catch(function (error) {
+            console.log("[profile] 讀取個人資料公開設定失敗：", error)
+            callback(null) // null 代表「真的讀取失敗」，要跟「目前設定為公開」明確區分開來
+        })
+}
+
+// 更新「自己」的開關狀態，立即生效（跟 Set_Own_Leaderboard_Visibility 同一套邏輯）
+function Set_Own_Profile_Visibility(hide, callback) {
+    const anon_id = Get_Anon_Id()
+    tctc_db.ref(`player_stats/${anon_id}/hide_profile_view`).set(!!hide)
+        .then(function () {
+            if (callback) callback(true)
+        })
+        .catch(function (error) {
+            console.log("[profile] 更新個人資料公開設定失敗（很可能是 Firebase Rules 還沒加上 hide_profile_view 欄位的規則）：", error)
+            if (callback) callback(false)
+        })
+}
+
+// ===== 【新增】把「個人簡介」同步上雲端 =====
+// 原本 intro 只存在 localStorage、從來沒同步過雲端——別人的瀏覽器
+// 根本讀不到，個人資料頁若要顯示簡介，一定要有這一份雲端拷貝。
+// 跟 name 的同步邏輯一樣直接用 .set()，不用 transaction：這欄位不是
+// 累加值，而是「玩家這次輸入的最終內容」，後寫的直接蓋掉前一筆即可。
+// 由 TCTC2-0-profile.js 的 Update_profile() 在改名字成功之後呼叫。
+function Set_Own_Intro(intro_text, callback) {
+    const anon_id = Get_Anon_Id()
+    tctc_db.ref(`player_stats/${anon_id}/intro`).set(intro_text || "")
+        .then(function () {
+            if (callback) callback(true)
+        })
+        .catch(function (error) {
+            console.log("[profile] 個人簡介同步失敗（很可能是 Firebase Rules 還沒加上 intro 欄位的規則）：", error)
+            if (callback) callback(false)
+        })
+}
+
+/* ============================================================
+   【新增】讀取「別人」的公開個人資料頁資料
+   ------------------------------------------------------------
+   給 TCTC2-0-view_profile.html 用，跟 Get_Own_Player_Stats 不一樣的地方：
+   - 這裡讀的是「別人」的 anon_id，不是自己的，所以不需要（也不應該）
+     先等 Wait_For_Online_Time_Sync / Wait_For_Page_Views_Sync——那兩個
+     只是在等「這台瀏覽器自己」的本機暫存同步完成，跟正在查看的目標
+     玩家完全無關，等了也沒有意義。
+   - 會先檢查目標玩家的 hide_profile_view 開關，關閉的話直接回傳
+     { hidden: true }，呼叫端要用這個旗標顯示「未公開」畫面，
+     不能把讀到的其他欄位顯示出來。
+   ------------------------------------------------------------
+   callback 收到的值：
+   - null：讀取失敗（離線、Rules 問題），呼叫端應顯示「讀取失敗」
+   - { exists: false }：這個 anon_id 在雲端完全沒有任何資料
+   - { hidden: true, exists: true }：這個玩家關閉了個人資料公開設定
+   - { hidden: false, exists: true, ...其餘 player_stats 欄位 }：
+     正常可以顯示的資料（name / intro / avg_wpm / avg_acc /
+     online_seconds / total_points / page_views / streak_xxx /
+     stages_completed_xxx / best_challenge_wpm 等等，哪些欄位存在，
+     取決於這個玩家之前實際觸發過哪些同步）
+   ============================================================ */
+function Get_Public_Player_Profile(anon_id, callback) {
+    if (!anon_id) {
+        callback({ exists: false })
+        return
+    }
+
+    tctc_db.ref(`player_stats/${anon_id}`)
+        .once("value")
+        .then(function (snapshot) {
+            const val = snapshot.val()
+            if (!val) {
+                callback({ exists: false })
+                return
+            }
+            if (val.hide_profile_view === true) {
+                callback({ hidden: true, exists: true })
+                return
+            }
+
+            val.hidden = false
+            val.exists = true
+            callback(val)
+        })
+        .catch(function (error) {
+            console.log("[profile] 讀取玩家公開資料失敗：", error)
+            callback(null)
+        })
+}
+
+/* ============================================================
    【新增】刪除這個瀏覽器（anon_id）在雲端留下的所有資料
    ------------------------------------------------------------
    刻意「不」刪除的東西：
@@ -1361,7 +1474,10 @@ function Delete_All_Player_Data(callback) {
         "streak_current", "streak_longest", "streak_last_ts", "streak_total_days",
         // 【新增】「斷簽後回歸」徽章用的單一欄位，理由跟其他 streak_* 欄位一樣：
         // 玩家主動刪除所有資料時要一起歸零
-        "longest_gap_days"
+        "longest_gap_days",
+        // 【新增】個人資料頁公開設定 + 雲端簡介，同樣屬於「這個玩家的個人資料」，
+        // 刪除所有資料時要一併清空，不然換一台裝置/新身份的人會意外繼承到舊簡介
+        "hide_profile_view", "intro"
     ].forEach(function (field) {
         updates[`player_stats/${anon_id}/${field}`] = null
     })

@@ -271,6 +271,22 @@
     word-break: break-all;
 }
 
+/* ===== 【新增】點名字查看該玩家個人資料頁 =====
+   只包住名字本身（不含 LV 標籤／「你」標籤），用底線 + hover 變金色
+   表達「這是可以點的連結」，跟全站其他可點擊文字（例如 footer 連結）
+   的視覺語言一致，不用額外做按鈕感的樣式，畢竟這裡只是排行榜列表裡
+   的一小段文字，不該搶走整列的視覺重量。 */
+.rank_player_name_link{
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-color: rgba(var(--accent-rgb), 0.35);
+    text-underline-offset: 2px;
+}
+.rank_player_name_link:hover{
+    color: var(--champagne-gold);
+    text-decoration-color: var(--champagne-gold);
+}
+
 /* ===== 【新增】玩家名字旁邊的 LV 小標籤 =====
    跟 .ranking_self_tag（「你」標籤）刻意做出區隔：那個是實心金底、搶眼，
    這個只是「背景資訊」，用空心金邊框 + 金字，份量比「你」標籤輕，
