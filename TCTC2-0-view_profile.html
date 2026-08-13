@@ -89,6 +89,19 @@
                         <h1 class="vp_player_name" id="vp_player_name">—</h1>
                         <span class="vp_level_badge_slot" id="vp_level_badge_slot"></span>
                         <p class="vp_player_intro" id="vp_player_intro"></p>
+
+                        <!-- ===== 【新增】XP 等級進度條 =====
+                             跟主大廳（xp_display.js）用的是同一套 XP_Get_Level_Progress() 計算邏輯，
+                             但這裡刻意不共用 .xp_progress_wrap 那組 class——那組樣式定義在
+                             main_lobby.css，是給主大廳「玩家資訊卡」那個特定版位用的，這個頁面
+                             另外開一組 vp_xp_ 前綴的 class，樣式寫在 view_profile.css，避免哪天
+                             main_lobby.css 調整版位時意外牽動到這裡。 -->
+                        <div class="vp_xp_wrap" id="vp_xp_wrap">
+                            <div class="vp_xp_track">
+                                <div class="vp_xp_fill" id="vp_xp_fill" style="width:0%;"></div>
+                            </div>
+                            <p class="vp_xp_text" id="vp_xp_text">— / — XP</p>
+                        </div>
                     </div>
 
                     <div class="profile_card" style="margin-bottom: 1.6rem;">
@@ -114,11 +127,31 @@
                                 <span class="profile_stat_label">目前連續登入</span>
                                 <span class="profile_stat_value" id="vp_stat_streak">0 天</span>
                             </div>
+                            <!-- ===== 【新增】以下三列：瀏覽次數／歷史最長連續／累積登入天數 =====
+                                 資料來源都已經在 Get_Public_Player_Profile() 回傳的原始物件裡
+                                 （page_views、streak_longest、streak_total_days），沒有另外多發
+                                 任何一次 Firebase 請求，純粹是把既有資料多顯示出來而已 -->
+                            <div class="profile_stat_row">
+                                <span class="profile_stat_label">瀏覽次數</span>
+                                <span class="profile_stat_value" id="vp_stat_views">0 次</span>
+                            </div>
+                            <div class="profile_stat_row">
+                                <span class="profile_stat_label">歷史最長連續登入</span>
+                                <span class="profile_stat_value" id="vp_stat_longest_streak">0 天</span>
+                            </div>
+                            <div class="profile_stat_row">
+                                <span class="profile_stat_label">累積登入天數</span>
+                                <span class="profile_stat_value" id="vp_stat_total_days">0 天</span>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- 成就區塊：由 view_profile.js 動態產生，跟榮譽牆共用同一份
-                         TCTC2-0-achv_data.js 資料表跟徽章樣式，只是這裡是唯讀顯示 -->
+                    <!-- ===== 已解鎖成就：條列式清單 =====
+                         跟榮譽牆（achievements.html）不一樣，這裡「只列出已經解鎖的成就」，
+                         不顯示未達標的項目、不顯示每項的進度條，一項成就＝一行，
+                         只留「圖示＋名稱＋位階」三個欄位，給快速瀏覽用。
+                         上面的 achv_overview_card 保留，讓訪客還是能一眼看到
+                         「總共解鎖幾項／總數多少」這個總覽數字。 -->
                     <div class="achv_overview_card">
                         <p class="achv_overview_label">已解鎖成就</p>
                         <p class="achv_overview_count" id="vp_overview_count">— <span>/ —</span></p>
@@ -127,7 +160,10 @@
                         </div>
                     </div>
 
-                    <div id="vp_categories"></div>
+                    <div class="profile_card" style="margin-bottom: 0;">
+                        <p class="profile_card_title">已解鎖成就清單</p>
+                        <div class="vp_achv_list" id="vp_achv_list"></div>
+                    </div>
                 </div>
             </div>
         </section>

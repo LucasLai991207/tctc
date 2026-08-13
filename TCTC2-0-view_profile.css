@@ -1,12 +1,3 @@
-/* ============================================================
-   TCTC2-0-view_profile.css
-   點排行榜名字進來的「唯讀公開個人資料頁」
-
-   配色變數跟 profile.css / achievements.css 完全一致，這裡不重複
-   宣告一次 :root（profile.css 已經載入、已經宣告過了），只補這個
-   頁面特有的版面（頭像式標題區、狀態卡片、自我預覽提示條）。
-   ============================================================ */
-
 .vp_main_style{
     background-color: var(--darker-blue);
     min-height: 100vh;
@@ -88,6 +79,22 @@
     margin: 0;
     display: inline;
 }
+.rank_level_badge{
+    display: inline-block;
+    vertical-align: middle;
+
+    margin-left: 0.4rem;
+    padding: 0.05rem 0.4rem;
+
+    color: var(--champagne-gold);
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+
+    border: 1px solid rgba(var(--accent-rgb), 0.4);
+    border-radius: 3px;
+}
 .vp_level_badge_slot{
     margin-left: 0.5rem;
     vertical-align: middle;
@@ -103,6 +110,128 @@
 
     white-space: pre-wrap;   /* 簡介可能有換行，保留玩家原本輸入的排版 */
     word-break: break-word;
+}
+
+/* ============================================================
+   【新增】頁首下方的 XP 等級進度條
+   刻意跟主大廳 xp_display.js 用的 .xp_progress_wrap 分開一組 class
+   （那組定義在 main_lobby.css，是給主大廳「玩家資訊卡」特定版位用的），
+   這裡樣式跟主大廳長得像，但走自己獨立的一份，不互相牽動。
+   ============================================================ */
+.vp_xp_wrap{
+    max-width: 18rem;
+    margin: 1rem auto 0;
+}
+.vp_xp_track{
+    width: 100%;
+    height: 0.4rem;
+    border-radius: 999px;
+    background-color: rgba(var(--text-rgb), 0.08);
+    overflow: hidden;
+}
+.vp_xp_fill{
+    height: 100%;
+    border-radius: 999px;
+    /* 跟 achievements.css 的 .achv_progress_fill 用同一組漸層色，
+       全站「進度條」的視覺語言統一 */
+    background: linear-gradient(90deg, #b08d57, var(--champagne-gold));
+    transition: width 400ms ease;
+}
+.vp_xp_text{
+    margin: 0.4rem 0 0;
+    color: rgba(var(--text-rgb), 0.45);
+    font-size: 0.74rem;
+    letter-spacing: 1px;
+    text-align: center;
+}
+
+/* ============================================================
+   【新增】已解鎖成就 —— 條列式清單
+   跟 achievements.html／achievements.css 那種「不論解鎖與否都整排列出、
+   每項都帶一條進度條＋caption」的完整版呈現方式不同：這裡只顯示
+   「已經解鎖」的成就，一項一行，只留圖示／名稱／位階三個欄位，
+   給快速瀏覽「這個人解鎖過什麼」用。
+   ============================================================ */
+.vp_achv_list{
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+.vp_achv_item{
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+
+    padding: 0.6rem 0.2rem;
+    border-bottom: 1px solid rgba(var(--accent-rgb), 0.1);
+}
+.vp_achv_item:last-child{
+    border-bottom: none;
+}
+
+/* 圖示圓框：概念上跟 achievements.css 的 .pach_medal（圓框＋位階配色）一樣，
+   但刻意不共用那個 class——.pach_medal 的尺寸（4.6rem／3.4rem）是給
+   「一個成就佔一整條」的榮譽牆版面設計的，在這種一行一項的緊湊清單裡
+   會太搶版面，所以另外開一組更小尺寸、獨立維護的位階配色。 */
+.vp_achv_icon{
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 2.1rem;
+    height: 2.1rem;
+    border-radius: 50%;
+
+    background-color: rgba(var(--accent-rgb), 0.07);
+    border: 2px solid rgba(var(--accent-rgb), 0.25);
+}
+.vp_achv_icon svg{
+    width: 1.05rem;
+    height: 1.05rem;
+    stroke: var(--champagne-gold);
+}
+/* 位階配色跟 achievements.css 的 .pach_tier_xxx 用同一組色碼，
+   確保「別人公開頁看到的金牌」跟「榮譽牆本人頁面的金牌」是同一套顏色語言 */
+.vp_achv_icon.pach_tier_bronze{ border-color: #b08d57; }
+.vp_achv_icon.pach_tier_bronze svg{ stroke: #cd9b6a; }
+.vp_achv_icon.pach_tier_silver{ border-color: #c7ced6; }
+.vp_achv_icon.pach_tier_silver svg{ stroke: #dde3e9; }
+.vp_achv_icon.pach_tier_gold{ border-color: var(--champagne-gold); }
+.vp_achv_icon.pach_tier_gold svg{ stroke: var(--champagne-gold); }
+.vp_achv_icon.pach_tier_platinum{ border-color: #eaf3ff; }
+.vp_achv_icon.pach_tier_platinum svg{ stroke: #eaf3ff; }
+
+.vp_achv_name{
+    flex: 1;
+    min-width: 0;   /* 名稱太長時能正常被截斷，不撐爆這一行 */
+    color: rgba(var(--text-rgb), 0.9);
+    font-size: 0.9rem;
+    letter-spacing: 0.5px;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.vp_achv_tier{
+    flex-shrink: 0;
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 1px;
+    color: var(--champagne-gold);
+}
+.vp_achv_tier.pach_tier_bronze{ color: #cd9b6a; }
+.vp_achv_tier.pach_tier_silver{ color: #dde3e9; }
+.vp_achv_tier.pach_tier_gold{ color: var(--champagne-gold); }
+.vp_achv_tier.pach_tier_platinum{ color: #eaf3ff; }
+
+.vp_achv_empty{
+    color: rgba(var(--text-rgb), 0.4);
+    font-size: 0.88rem;
+    letter-spacing: 1px;
+    text-align: center;
+    padding: 1.4rem 0;
+    margin: 0;
 }
 
 .is_hidden{
