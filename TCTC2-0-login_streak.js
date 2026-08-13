@@ -56,6 +56,14 @@ function TCTC_Record_Daily_Login(){
     // 因為等一下要用 update() 局部寫入，先確認一次現有資料，避免用猜的
     const statsRef = tctc_db.ref(`player_stats/${anon_id}`)
 
+    // 【新增】標記「這次呼叫有沒有真的寫入過 streak 資料」。下面三個分支
+    // （初次記錄／連續 +1／斷簽重置）都會呼叫 statsRef.update()，但「今天
+    // 已經記錄過了」那個分支會提早 return、不寫入——這個旗標讓稍後的
+    // .then() 能分辨「這次真的有新資料要檢查成就」還是「沒事發生」，
+    // 不能單靠 update() 的 resolve 值判斷，因為 Firebase update() 不管
+    // 有沒有真的呼叫，resolve 出來都一律是 undefined，沒辦法從回傳值反推。
+    let did_write_streak = false
+
     statsRef.once("value").then(function(snapshot){
         const current = snapshot.val() || {}
         const now = Date.now()
@@ -65,6 +73,7 @@ function TCTC_Record_Daily_Login(){
         // 節點覆蓋掉，連 avg_wpm、name 這些既有資料都會一起被砍掉。update() 只會
         // 動到明確列出的這幾個欄位，其他欄位原封不動保留。
         if(!current.streak_last_ts){
+            did_write_streak = true
             return statsRef.update({
                 streak_current: 1,
                 streak_longest: Math.max(1, current.streak_longest || 0),
@@ -112,8 +121,17 @@ function TCTC_Record_Daily_Login(){
             update.longest_gap_days = gap_days
         }
 
+        did_write_streak = true
         return statsRef.update(update)
 
+    }).then(function(){
+        // 【新增】真的寫入過 streak 資料才觸發成就通知檢查，「今天已經記錄過了」
+        // 提早 return 的情況 did_write_streak 仍是 false，不會誤觸發。
+        // 讓「堅持」分類（連續登入／累積登入／中斷後回歸）能在登入記錄成功的
+        // 當下跳出彈窗，不用等玩家自己點進榮譽牆才看到。
+        if(did_write_streak && typeof ACHV_Schedule_Notify_Check === "function"){
+            ACHV_Schedule_Notify_Check()
+        }
     }).catch(function(error){
         // 最常見的 error 會是 PERMISSION_DENIED——代表前端猜的 elapsed
         // 跟伺服器實際驗證出來的對不上（例如玩家改了電腦時間，或試圖用

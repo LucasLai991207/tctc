@@ -18,6 +18,8 @@
     <link rel="stylesheet" href="TCTC2-0-intro_lobby.css">
     <link rel="stylesheet" href="TCTC2-0-main_lobby.css">
     <link rel="stylesheet" href="TCTC2-0-achievements.css">
+    <!-- 【新增】全站成就解鎖彈窗樣式，任何頁面只要有載入這個 + achv_notify.js 就能跳通知 -->
+    <link rel="stylesheet" href="TCTC2-0-achv_notify.css">
     <!-- 帳號系統彈窗樣式 -->
     <link rel="stylesheet" href="TCTC2-0-auth_ui.css">
     <!-- 【新增】全站配色主題系統：務必放在 CSS 之後、其他 script 之前，同步載入避免換色閃爍 -->
@@ -160,6 +162,14 @@
 
 
     <script src="TCTC2-0-level_data.js"></script>
+
+    <!-- 【新增】成就系統共用資料表，一定要放在 achievements.js 跟 achv_notify.js 之前 -->
+    <script src="TCTC2-0-achv_data.js"></script>
+    <!-- 【新增】全站成就解鎖彈窗通知模組 -->
+    <script src="TCTC2-0-achv_notify.js"></script>
+
+    <script src="TCTC2-0-achv_data.js"></script>
+    <script src="TCTC2-0-achv_notify.js"></script>
 
     <script src="TCTC2-0-achievements.js"></script>
     <script defer src="https://cloud.umami.is/script.js" data-website-id="070df494-4361-4dce-ad65-a25b404811e9"></script>
