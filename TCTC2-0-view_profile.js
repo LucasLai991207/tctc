@@ -57,90 +57,80 @@ function VP_Format_Online_Seconds(total_seconds){
 }
 
 /* ------------------------------------------------------------
-   以下兩個函式跟 TCTC2-0-achievements.js 的 ACHV_Build_Badge_HTML /
-   ACHV_Render_Category 邏輯完全一樣（同一份 ACHV_CATEGORIES 資料表、
-   同一套徽章樣式），故意複製一份而不是直接載入 achievements.js：
-   那支檔案底下的 DOMContentLoaded 會自動抓「自己」的 streak/stats
-   資料、呼叫 Sync_Achievements_Unlocked() 等只有「本人」在榮譽牆頁面
-   才該做的事，這個頁面顯示的是「別人」的資料，不能共用那段自動流程，
-   只需要它前半段「純函式、給什麼資料就畫出什麼 HTML」的部分。
-   ------------------------------------------------------------ */
-function VP_Build_Badge_HTML(achv, data){
-    if(achv.pending){
-        return `
-            <div class="achv_badge_row achv_badge_pending">
-                <div class="pach_medal achv_medal_row pach_tier_locked">${achv.icon}</div>
-                <div class="achv_badge_info">
-                    <div class="achv_badge_info_top">
-                        <span class="achv_badge_name">${achv.name}</span>
-                        <span class="achv_badge_pending_tag">此功能還沒開發</span>
-                    </div>
-                    <p class="achv_badge_caption">目標：${achv.condition(achv.thresholds[0])}</p>
-                </div>
-            </div>
-        `
-    }
+   ===== 【改版】已解鎖成就清單 =====
+   原本這裡（VP_Build_Badge_HTML / VP_Render_Category）是完整複製一份
+   TCTC2-0-achievements.js 的渲染邏輯：不管解鎖與否，每個分類底下的
+   每一項成就都會整條列出來、每項還帶一條自己的進度條——在「查看別人
+   的公開頁」這個情境下太雜太長（別人還沒達成什麼，其實不是訪客真正
+   關心的資訊）。
 
-    const value = achv.getValue ? achv.getValue(data) : (data ? (data[achv.metric] || 0) : 0)
-    const tierIndex = ACHV_Get_Tier_Index(value, achv.thresholds)
+   改成 VP_Build_Unlocked_List_Item()：只負責畫「單一已解鎖成就」的
+   一行（圖示＋名稱＋位階），不畫進度條、不畫 caption。
+   VP_Render_Achievements() 則取代原本的 VP_Render_Category()：一次
+   掃過 ACHV_CATEGORIES 裡所有成就，篩出「tierIndex > 0（至少拿到銅牌）」
+   的項目，其餘（未達標／pending 尚未開發）一律不進清單。
+   ------------------------------------------------------------ */
+
+// 單一已解鎖成就的清單項目。tierIndex 由呼叫端算好傳進來（1~4，
+// 對應銅/銀/金/白金），這支函式本身不做任何門檻判斷，只負責排版。
+function VP_Build_Unlocked_List_Item(achv, tierIndex){
     const tierClass = ACHV_TIER_CLASSES[tierIndex]
     const tierTitle = ACHV_TIER_TITLES_DEFAULT[tierIndex]
-    const isLocked = tierIndex === 0
-    const isMaxed = tierIndex === achv.thresholds.length
-
-    const fillPercent = ACHV_Get_Tier_Progress_Percent(value, achv.thresholds, tierIndex)
-
-    const caption = isMaxed
-        ? `已達最高等級・目前 ${achv.format(value)}`
-        : `${achv.format(value)} / ${achv.format(achv.thresholds[tierIndex])}（${fillPercent}%）`
 
     return `
-        <div class="achv_badge_row ${isLocked ? "achv_badge_is_locked" : ""}">
-            <div class="pach_medal achv_medal_row ${tierClass}">${achv.icon}</div>
-            <div class="achv_badge_info">
-                <div class="achv_badge_info_top">
-                    <span class="achv_badge_name">${achv.name}</span>
-                    <span class="achv_badge_tier_inline">${tierTitle}</span>
-                </div>
-                <div class="achv_badge_progress_track">
-                    <div class="achv_badge_progress_fill ${tierClass}" style="width:${fillPercent}%;"></div>
-                </div>
-                <p class="achv_badge_caption">${caption}</p>
-            </div>
+        <div class="vp_achv_item">
+            <span class="vp_achv_icon ${tierClass}">${achv.icon}</span>
+            <span class="vp_achv_name">${achv.name}</span>
+            <span class="vp_achv_tier ${tierClass}">${tierTitle}</span>
         </div>
     `
 }
 
-function VP_Render_Category(category, streakData, statsData){
-    let categoryUnlocked = 0
-    const categoryTotal = category.achievements.length * 4
+// 掃過全部分類、算出總覽數字，同時把「已解鎖」的項目蒐集成一份扁平陣列
+// （不分類、不保留分類標題），最後依位階高到低排序後畫成清單。
+function VP_Render_Achievements(streakData, statsData){
+    let overallUnlocked = 0
+    let overallTotal = 0
+    const unlockedItems = []   // 每一項：{ tierIndex, html }，html 先算好存著，排序後直接 join
 
-    const cardsHTML = category.achievements.map(function(achv){
-        const data = achv.dataSource === "streak" ? streakData : statsData
-        categoryUnlocked += ACHV_Get_Unlocked_Tiers(achv, data)
-        return VP_Build_Badge_HTML(achv, data)
-    }).join("")
+    ACHV_CATEGORIES.forEach(function(category){
+        category.achievements.forEach(function(achv){
+            overallTotal += 4   // 每個成就固定 4 階，跟 achievements.js 算總數的邏輯一致，不能改
 
-    const percent = categoryTotal > 0 ? Math.round((categoryUnlocked / categoryTotal) * 100) : 0
+            if(achv.pending) return   // 功能還沒開發的成就：不計入解鎖數，清單裡也不會出現
 
-    const html = `
-        <div class="achv_category_block">
-            <div class="achv_category_head">
-                <h2 class="achv_category_title">
-                    <span class="achv_category_title_icon">${category.titleIcon}</span>${category.title}
-                </h2>
-                <div class="achv_category_progress_wrap">
-                    <div class="achv_category_progress_track">
-                        <div class="achv_category_progress_fill" style="width:${percent}%;"></div>
-                    </div>
-                    <span class="achv_category_progress_text">${categoryUnlocked}/${categoryTotal}</span>
-                </div>
-            </div>
-            <div class="achv_badge_list">${cardsHTML}</div>
-        </div>
-    `
+            const data = achv.dataSource === "streak" ? streakData : statsData
+            const value = achv.getValue ? achv.getValue(data) : (data ? (data[achv.metric] || 0) : 0)
+            const tierIndex = ACHV_Get_Tier_Index(value, achv.thresholds)
 
-    return { html: html, unlocked: categoryUnlocked, total: categoryTotal }
+            overallUnlocked += tierIndex
+
+            // tierIndex === 0 代表連銅牌門檻都還沒到，這項成就不進「已解鎖」清單
+            if(tierIndex > 0){
+                unlockedItems.push({ tierIndex: tierIndex, html: VP_Build_Unlocked_List_Item(achv, tierIndex) })
+            }
+        })
+    })
+
+    // 位階高的排前面（白金 4 > 金 3 > 銀 2 > 銅 1），讓訪客一眼先看到最厲害的成就。
+    // Array.prototype.sort 從 ES2019 起在所有主流瀏覽器都保證是穩定排序，
+    // 所以同一個 tierIndex 的項目彼此之間，順序會維持 ACHV_CATEGORIES 資料表裡原本的排列，不會被打亂
+    unlockedItems.sort(function(a, b){ return b.tierIndex - a.tierIndex })
+
+    const listEl = document.getElementById("vp_achv_list")
+    if(listEl){
+        listEl.innerHTML = unlockedItems.length > 0
+            ? unlockedItems.map(function(item){ return item.html }).join("")
+            : `<p class="vp_achv_empty">這位玩家還沒有解鎖任何成就</p>`
+    }
+
+    const overviewCountEl = document.getElementById("vp_overview_count")
+    const overviewFillEl = document.getElementById("vp_overview_fill")
+    if(overviewCountEl) overviewCountEl.innerHTML = `${overallUnlocked} <span>/ ${overallTotal}</span>`
+    if(overviewFillEl){
+        const overallPercent = overallTotal > 0 ? Math.round((overallUnlocked / overallTotal) * 100) : 0
+        overviewFillEl.style.width = `${overallPercent}%`
+    }
 }
 
 // ===== 主渲染：把整包 player_stats 原始資料畫成頁面內容 =====
@@ -179,6 +169,34 @@ function VP_Render_Profile(raw, is_self){
         }
     }
 
+    // ===== 【新增】XP 進度條 =====
+    // XP_Get_Level_Progress() 定義在 TCTC2-0-xp_data.js，回傳
+    // { level, current, needed, percent }：current/needed 是「這一級目前
+    // 累積多少 XP／這一級總共要多少 XP」，percent 是算好的百分比，
+    // 不用自己重算一次公式（跟 main.html 的 xp_display.js 共用同一套邏輯，
+    // 兩邊算出來的數字保證一致）。
+    const xpWrapEl = document.getElementById("vp_xp_wrap")
+    if(xpWrapEl){
+        if(typeof XP_Get_Level_Progress === "function"){
+            const xp = typeof raw.xp === "number" ? raw.xp : 0
+            const progress = XP_Get_Level_Progress(xp)
+            const fillEl = document.getElementById("vp_xp_fill")
+            const textEl = document.getElementById("vp_xp_text")
+
+            if(fillEl) fillEl.style.width = `${progress.percent}%`
+            if(textEl){
+                // 已經封頂等級：不再顯示「還差多少」，改顯示總 XP，跟 xp_display.js 的寫法一致
+                textEl.textContent = (typeof XP_CONFIG !== "undefined" && progress.level >= XP_CONFIG.max_level)
+                    ? `已達最高等級・${xp} XP`
+                    : `${progress.current} / ${progress.needed} XP`
+            }
+        } else {
+            // 找不到 XP_Get_Level_Progress（代表 xp_data.js 忘記載入）：
+            // 直接把整個進度條區塊藏起來，比顯示一條卡在 0% 的假進度條更誠實
+            xpWrapEl.classList.add("is_hidden")
+        }
+    }
+
     // ----- 統計資料 -----
     const set_text = function(id, text){
         const el = document.getElementById(id)
@@ -189,8 +207,13 @@ function VP_Render_Profile(raw, is_self){
     set_text("vp_stat_online_time", VP_Format_Online_Seconds(raw.online_seconds ?? 0))
     set_text("vp_stat_points", `${raw.total_points ?? 0} 積分`)
     set_text("vp_stat_streak", `${raw.streak_current ?? 0} 天`)
+    // 【新增】以下三列直接沿用 Get_Public_Player_Profile() 已經回傳的原始欄位，
+    // 沒有多發任何一次 Firebase 請求
+    set_text("vp_stat_views", `${raw.page_views ?? 0} 次`)
+    set_text("vp_stat_longest_streak", `${raw.streak_longest ?? 0} 天`)
+    set_text("vp_stat_total_days", `${raw.streak_total_days ?? 0} 天`)
 
-    // ----- 成就 -----
+    // ----- 成就（改版：只列已解鎖，扁平條列式，見 VP_Render_Achievements） -----
     // ACHV_CATEGORIES 裡「堅持」分類的成就用的是 streakData 這個獨立形狀
     // （current_streak / longest_streak / total_login_days / longest_gap_days），
     // 跟 player_stats 原始欄位名稱（streak_current / streak_longest / ...）不一樣，
@@ -203,25 +226,8 @@ function VP_Render_Profile(raw, is_self){
     }
     const statsData = raw // 其餘分類的成就都直接用 metric 名稱查 raw 本身的欄位
 
-    const categoriesEl = document.getElementById("vp_categories")
-    let overallUnlocked = 0
-    let overallTotal = 0
-
-    if(categoriesEl && typeof ACHV_CATEGORIES !== "undefined"){
-        categoriesEl.innerHTML = ACHV_CATEGORIES.map(function(category){
-            const result = VP_Render_Category(category, streakData, statsData)
-            overallUnlocked += result.unlocked
-            overallTotal += result.total
-            return result.html
-        }).join("")
-    }
-
-    const overviewCountEl = document.getElementById("vp_overview_count")
-    const overviewFillEl = document.getElementById("vp_overview_fill")
-    if(overviewCountEl) overviewCountEl.innerHTML = `${overallUnlocked} <span>/ ${overallTotal}</span>`
-    if(overviewFillEl){
-        const overallPercent = overallTotal > 0 ? Math.round((overallUnlocked / overallTotal) * 100) : 0
-        overviewFillEl.style.width = `${overallPercent}%`
+    if(typeof ACHV_CATEGORIES !== "undefined"){
+        VP_Render_Achievements(streakData, statsData)
     }
 }
 
