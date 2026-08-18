@@ -1,52 +1,4 @@
-/* ============================================================
-   TCTC2-0-achv_notify.js
-   全站成就解鎖彈窗通知
 
-   【運作原理・跟 achievements.js 的關鍵差異】
-   achievements.js 是「衍生計算型」：每次進榮譽牆頁面，都是現場把
-   「目前數值」跟「門檻」重新比對一次，畫面上看到的等級永遠是即時算出來的，
-   過程中完全沒有任何地方會發出「剛剛解鎖了 XX 成就」這種事件。
-
-   要在任何頁面、動作完成當下跳彈窗，這支檔案要自己「記住上一次算出來的
-   等級」，每次重新算完之後拿新舊等級比對，等級變高了才代表「這是一次
-   新解鎖」，才彈窗。比對基準存在 localStorage
-   （key: tctc2.0-achv_seen_tiers），格式是 { 成就 key: 已看過的最高等級 }。
-
-   【重要限制・誠實列出，不要美化】
-   1. 這個 baseline 存在 localStorage，不是 Firebase，所以「換瀏覽器 /
-      清除資料」會讓通知重新從頭判斷一次——但因為是「只增不彈舊的」邏輯
-      （見下方 ACHV_Notify_Diff 的「第一次觀察到就只記錄、不彈窗」設計），
-      換瀏覽器最多只是「這台新瀏覽器的第一次造訪不會補彈之前錯過的成就」，
-      不會發生「同一個成就在新瀏覽器上重複彈一次」的情況。
-   2. 多分頁同時遊玩時，這個 localStorage 讀寫本身不是原子操作，理論上
-      存在極小的競態視窗（兩個分頁幾乎同時讀到舊 baseline、各自判斷成
-      新解鎖、都彈了一次）。這個網站的其他 localStorage 用法（例如
-      TCTC2-0-online_time.js 的暫存秒數）也有類似的取捨，不是這支檔案
-      特有的問題，維持全站一致的作法。
-   3. 「遊玩時長」「瀏覽次數」這兩個活躍度成就不會在寫入當下觸發即時彈窗
-      （見檔案下方 ACHV_Schedule_Notify_Check 的呼叫點，firebase.js 故意
-      沒有在 Sync_Pending_Online_Time / Sync_Pending_Page_Views 掛勾子），
-      因為那兩個函式每 20 秒就會被 online_time.js 呼叫一次，掛上去等於
-      玩家只要開著分頁不動，就會每 20 秒重新讀一次 Firebase，太浪費。
-      這兩個成就一樣會被「保底檢查」（見檔案最下方 DOMContentLoaded）
-      抓到，只是不是「達成當下」，而是「下次換頁 / 重新整理」才彈。
-
-   【依賴】
-   - TCTC2-0-firebase.js（Get_Anon_Id / tctc_db / Sync_XP）—— 必要
-   - TCTC2-0-achv_data.js（ACHV_CATEGORIES 等資料表）—— 必要，且要放在
-     這支檔案「之前」載入
-   - TCTC2-0-xp_data.js（XP_CONFIG）—— 選用，沒載入時「新解鎖成就發 XP」
-     這一小段會被跳過（typeof 保護），不影響彈窗本身
-   - TCTC2-0-login_streak.js（TCTC_Get_Streak_Data）—— 選用，沒載入時
-     「堅持」分類會被整組跳過，不影響其他分類
-   - TCTC2-0-level_data.js（全域 Level_Data）—— 選用，沒載入時
-     「關卡完成度」分類會被整組跳過（見 achv_data.js 的 requiresLevelData
-     旗標說明）
-   ============================================================ */
-
-// ===== 【新增】成就等級索引（tierIndex 1~4）對應 XP_CONFIG.actions.achievement_tier
-// 裡的欄位名稱。跟 ACHV_TIER_CLASSES（achv_data.js）是同一套順序，
-// 索引 0（未達標）不會被用到，因為只有 newTier > storedTier 時才會查這個表。 =====
 const ACHV_XP_TIER_KEYS = [null, "bronze", "silver", "gold", "platinum"]
 
 const ACHV_NOTIFY_SEEN_KEY = "tctc2.0-achv_seen_tiers"   // localStorage：{ 成就key: 已看過的最高等級 }
@@ -138,7 +90,11 @@ function ACHV_Notify_Diff(streakData, statsData){
                     name: achv.name,
                     icon: achv.icon,
                     tierIndex: newTier,
-                    tierTitle: ACHV_TIER_TITLES_DEFAULT[newTier]
+                    tierTitle: ACHV_TIER_TITLES_DEFAULT[newTier],
+                    // 【新增】只有滿級（白金）且這個成就有掛 certificateLevel（見 achv_data.js
+                    // 的 easy_completion／medium_completion）才會有值，給 ACHV_Notify_Show_Toast
+                    // 判斷要不要把這次的彈窗換成「可以領證書了」的樣式
+                    certificateLevel: (newTier === achv.thresholds.length && achv.certificateLevel) ? achv.certificateLevel : null
                 })
                 seen[achv.key] = newTier
                 seenChanged = true
@@ -243,19 +199,28 @@ function ACHV_Notify_Show_Toast(item){
     // 「彈窗的金牌」跟「榮譽牆上的金牌」長得不一樣
     const tierClass = ACHV_TIER_CLASSES[item.tierIndex]
 
+    // 【新增】滿級且有掛 certificateLevel：換成「可以領證書了」的措辭，
+    // 點下去直接跳證書頁，不是先繞去榮譽牆再讓玩家自己找連結
+    const eyebrowText = item.certificateLevel ? "可以領證書了" : "成就解鎖"
+    const tierText = item.certificateLevel ? "🎓 點這裡列印證書" : item.tierTitle
+    const clickTarget = item.certificateLevel
+        ? `TCTC2-0-certificate.html?level=${item.certificateLevel}`
+        : "TCTC2-0-achievements.html"
+
     const toast = document.createElement("div")
     toast.className = "achv_notify_toast"
     toast.innerHTML = `
         <div class="achv_notify_medal ${tierClass}">${item.icon}</div>
         <div class="achv_notify_body">
-            <p class="achv_notify_eyebrow">成就解鎖</p>
+            <p class="achv_notify_eyebrow">${eyebrowText}</p>
             <p class="achv_notify_name">${item.name}</p>
-            <p class="achv_notify_tier">${item.tierTitle}</p>
+            <p class="achv_notify_tier">${tierText}</p>
         </div>
     `
-    // 點一下通知卡直接跳去榮譽牆頁面看完整進度，順便當作「立刻關閉」的手動方式
+    // 點一下通知卡：一般成就跳去榮譽牆看完整進度；證書類的直接跳證書頁，
+    // 少讓玩家多繞一步，同時也是「立刻關閉」的手動方式
     toast.addEventListener("click", function(){
-        window.location.href = "TCTC2-0-achievements.html"
+        window.location.href = clickTarget
     })
 
     container.appendChild(toast)

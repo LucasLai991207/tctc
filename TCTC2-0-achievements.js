@@ -1,4 +1,3 @@
-
 function ACHV_Build_Badge_HTML(achv, data){
     // 不計算真實進度（因為資料源不存在），直接顯示「尚未開放」，
     // 避免用 0 去比對門檻造出一個看起來像「還沒達成」但其實是「功能還沒做」的假象
@@ -35,6 +34,13 @@ function ACHV_Build_Badge_HTML(achv, data){
         ? `已達最高等級・目前 ${achv.format(value)}`
         : `${achv.format(value)} / ${achv.format(achv.thresholds[tierIndex])}（${fillPercent}%）`
 
+    // ===== 【新增】滿級（100%）且這個成就有掛 certificateLevel（見 achv_data.js）
+    // 才顯示「列印證書」連結——目前只有初級／中級完成度有掛這個屬性，
+    // 高級刻意沒加（能打完的人太少，做了也沒什麼人用得到）。
+    const certLinkHTML = (isMaxed && achv.certificateLevel)
+        ? `<a class="achv_cert_link" href="TCTC2-0-certificate.html?level=${achv.certificateLevel}" target="_blank" rel="noopener">🎓 列印證書</a>`
+        : ""
+
     return `
         <div class="achv_badge_row ${isLocked ? "achv_badge_is_locked" : ""}">
             <div class="pach_medal achv_medal_row ${tierClass}">${achv.icon}</div>
@@ -47,6 +53,7 @@ function ACHV_Build_Badge_HTML(achv, data){
                     <div class="achv_badge_progress_fill ${tierClass}" style="width:${fillPercent}%;"></div>
                 </div>
                 <p class="achv_badge_caption">${caption}</p>
+                ${certLinkHTML}
             </div>
         </div>
     `

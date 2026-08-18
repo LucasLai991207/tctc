@@ -1,6 +1,3 @@
-
-
-// ===== 讀取網址上的 ?id= 參數 =====
 function VP_Get_Target_Anon_Id(){
     const params = new URLSearchParams(window.location.search)
     return params.get("id")
@@ -108,7 +105,7 @@ function VP_Render_Achievements(streakData, statsData){
     if(listEl){
         listEl.innerHTML = unlockedItems.length > 0
             ? unlockedItems.map(function(item){ return item.html }).join("")
-            : `<p class="vp_achv_empty">無</p>`
+            : `<p class="vp_achv_empty">這位玩家還沒有解鎖任何成就</p>`
     }
 
     const overviewCountEl = document.getElementById("vp_overview_count")
@@ -133,14 +130,21 @@ function VP_Init_Like_Button(raw, is_self){
     const btnEl = document.getElementById("vp_like_btn")
     if(!btnEl) return
 
+    const iconEl = document.getElementById("vp_like_icon")
+    const countEl = document.getElementById("vp_like_count")
+
     if(is_self){
-        btnEl.classList.add("is_hidden")
+        // 看自己：讚數還是要看得到（想知道自己被讚幾次），但不能讚自己，
+        // 所以顯示歸顯示，按鈕鎖住不能點，也不套用「已讚」那個實心愛心樣式
+        // ——空心愛心 + 鎖住的視覺，跟「還沒讚過別人」但「可以點」的狀態
+        // 明確區分開來，靠 disabled 本身的灰階效果做出差異
+        btnEl.classList.remove("is_hidden")
+        btnEl.disabled = true
+        if(countEl) countEl.textContent = raw.like_count || 0
         return
     }
 
     const target_id = VP_Get_Target_Anon_Id()
-    const iconEl = document.getElementById("vp_like_icon")
-    const countEl = document.getElementById("vp_like_count")
 
     btnEl.classList.remove("is_hidden")
     if(countEl) countEl.textContent = raw.like_count || 0
