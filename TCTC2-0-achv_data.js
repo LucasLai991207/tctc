@@ -1,5 +1,3 @@
-
-
 // ===== 成就徽章圖示（SVG 字串）=====
 // 原封不動從 achievements.js 搬過來，內容完全沒改
 const ACHV_ICON_FLAME = `<svg viewBox="0 0 24 24" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M12 2c2 3 5 6 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 1.4 0 2-1.1 1-2.4C11 7 10 5 12 2Z"/></svg>`
@@ -17,6 +15,7 @@ const ACHV_ICON_EYE = `<svg viewBox="0 0 24 24" stroke-width="1.6" stroke-lineca
 const ACHV_ICON_CLOCK = `<svg viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="12" cy="12" r="9"/><polyline points="12,7 12,12 16,14"/></svg>`
 const ACHV_ICON_PULSE = `<svg viewBox="0 0 24 24" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"><polyline points="2,12 7,12 9,6 13,18 16,12 22,12"/></svg>`
 const ACHV_ICON_STAR = `<svg viewBox="0 0 24 24" stroke-width="1.6" stroke-linejoin="round" fill="none"><polygon points="12,3 14.9,9.1 21.5,9.9 16.8,14.5 18,21 12,17.7 6,21 7.2,14.5 2.5,9.9 9.1,9.1"/></svg>`
+const ACHV_ICON_HEART = `<svg viewBox="0 0 24 24" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M12 21s-7-4.35-9.5-8.5C1 9 2.5 5 6.5 5c2 0 3.5 1.3 4.5 3 1-1.7 2.5-3 4.5-3 4 0 5.5 4 3 7.5C19 16.65 12 21 12 21Z"/></svg>`
 
 const ACHV_TIER_CLASSES = ["pach_tier_locked", "pach_tier_bronze", "pach_tier_silver", "pach_tier_gold", "pach_tier_platinum"]
 const ACHV_TIER_TITLES_DEFAULT = ["未達標", "銅牌", "銀牌", "金牌", "白金"]
@@ -76,6 +75,13 @@ const ACHV_CATEGORIES = [
                 thresholds: [50, 200, 600, 1500],
                 condition: (t) => `挑戰模式累積積分達到 ${t.toLocaleString("zh-TW")} 分`,
                 format: (v) => `${Math.round(v).toLocaleString("zh-TW")} 分`
+            },
+            {
+                key: "popularity", name: "人氣王", icon: ACHV_ICON_HEART,
+                dataSource: "stats", metric: "like_count",
+                thresholds: [1, 10, 25, 67],
+                condition: (t) => `獲得其他玩家的讚達到 ${t} 個`,
+                format: (v) => `${Math.round(v)} 讚`
             }
         ]
     },
@@ -108,6 +114,7 @@ const ACHV_CATEGORIES = [
             {
                 key: "easy_completion", name: "初級完成度", icon: ACHV_ICON_BOOK,
                 dataSource: "stats", requiresLevelData: true,
+                certificateLevel: "easy",   // 【新增】滿級（100%）時，榮譽牆會多顯示一個列印證書的連結
                 getValue: (data) => {
                     const total = ACHV_Get_Total_Stage_Count("easy")
                     const completed = data ? (data.stages_completed_easy || 0) : 0
@@ -120,6 +127,7 @@ const ACHV_CATEGORIES = [
             {
                 key: "medium_completion", name: "中級完成度", icon: ACHV_ICON_KEYBOARD,
                 dataSource: "stats", requiresLevelData: true,
+                certificateLevel: "medium",   // 【新增】同上，中級也有證書；高級刻意不加──能打完的人太少，做了也沒什麼人用得到
                 getValue: (data) => {
                     const total = ACHV_Get_Total_Stage_Count("medium")
                     const completed = data ? (data.stages_completed_medium || 0) : 0

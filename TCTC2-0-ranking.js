@@ -1,26 +1,3 @@
-/* ============================================================
-   TCTC2-0-ranking.js
-   排行榜頁面邏輯：
-   - 「主線關卡」模式：難度/章節/關卡三層選單 + 讀取該關卡的雲端排行榜
-   - 「挑戰模式」：難度/文章單詞/時間長度三個獨立選單 + 讀取該組合的雲端排行榜
-   依賴：TCTC2-0-level_data.js（拿 Level_Data 關卡資料，主線關卡模式用）
-        TCTC2-0-firebase.js（Get_Stage_Leaderboard / Get_Challenge_Leaderboard）
-        TCTC2-0-xp_data.js（【新增】XP_Get_Level()，玩家名字旁邊的 LV 小標籤用）
-   ============================================================ */
-
-// ===== 【修改】排行榜返回鍵：改成用網址帶的 return_to 參數記住「真正的入口」 =====
-// 原本的做法是讀「排行榜頁面現在選單顯示的難度/秒數/關卡」去猜返回目的地，
-// 這樣做有兩個問題：(1) 就算猜對是挑戰模式，也是猜去遊戲畫面，不是大廳，
-// 目的地本身就不對；(2) 只要使用者進來之後自己切換過選單/分頁，
-// 猜出來的目的地就會跟他真正的來源完全無關（例如從導覽列直接點「排行榜」，
-// 選單預設停在某個組合，按返回卻被送進那個組合的遊戲畫面）。
-//
-// 現在改成：game.html / TCTC2-0-challenge_lobby.js / TCTC2-0-challenge.js
-// 這三個「真正會連來排行榜」的入口，各自在跳轉時把「自己當下的網址」用
-// return_to 參數一起帶過來；這裡只負責讀出來、原封不動送回去，
-// 不管使用者進來後在排行榜頁面裡怎麼切換選單都不影響返回目的地。
-// 如果網址沒帶 return_to（例如直接從導覽列的「排行榜」連結、或直接貼網址進來），
-// 代表不是從任何一個「關卡/大廳」過來的，沒有一個該回去的地方，退回主畫面就是合理預設值。
 const ranking_return_to = new URLSearchParams(window.location.search).get("return_to")
 
 //======= 共用 DOM =======
@@ -115,13 +92,16 @@ function Escape_Html(text) {
 // 用 assume_zero_if_missing 這個參數區分兩種情境：
 //   true  → 沒有 xp 就當作 0（玩家總榜用這個）
 //   false → 沒有 xp 就不顯示（主線關卡／挑戰模式維持這個，預設值）
-// ===== 【新增】排行榜點名字 → 查看該玩家的個人資料頁 =====
+// ===== 【修正】排行榜點名字 → 查看該玩家的個人資料頁 =====
 // 統一由這個函式組出名字欄位的 HTML，兩種榜（Render_Leaderboard /
 // Render_Player_Leaderboard）都呼叫這裡，不要各自重複寫一份判斷邏輯。
 //
-// 點自己的名字：導去 profile.html（設定頁），因為「編輯」對自己來說
-// 比「唯讀預覽」更有用，且自己一定看得到自己完整的資料，不需要走
-// view_profile.html 那套「可能被 hide_profile_view 擋掉」的唯讀邏輯。
+// 點自己的名字：跟點別人一樣，導去 view_profile.html?id={自己的 anon_id}。
+// 原本這裡是直接跳 profile.html（設定頁），理由是「編輯」對自己更有用，
+// 但玩家實際想看到的其實是「別人點我的名字會看到什麼樣子」——現在統一
+// 走 view_profile.html，該頁面本來就有 is_self 判斷，會額外顯示一條
+// 「這是你自己的預覽」提示條，並附上連去 profile.html 編輯的連結，
+// 兩種需求（先看預覽／要編輯）都還是能滿足，只是預覽變成預設路徑。
 // 點別人的名字：導去 view_profile.html?id={anon_id}，由該頁面自己
 // 去檢查對方有沒有把個人資料設為公開。
 //
@@ -132,10 +112,7 @@ function Get_Player_Name_Link_HTML(entry, display_name_html){
         return display_name_html
     }
 
-    const is_self = typeof Get_Anon_Id === "function" && entry._anon_id === Get_Anon_Id()
-    const target_url = is_self
-        ? "TCTC2-0-profile.html"
-        : `TCTC2-0-view_profile.html?id=${encodeURIComponent(entry._anon_id)}`
+    const target_url = `TCTC2-0-view_profile.html?id=${encodeURIComponent(entry._anon_id)}`
 
     // onclick 直接跳轉，不用 <a href>：整個 rank_col_name 裡面還包著 LV 標籤
     // 跟「你」標籤，用 <a> 包住這些子元素在既有樣式下比較容易跑版，

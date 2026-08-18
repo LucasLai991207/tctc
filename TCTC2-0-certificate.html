@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>完成證書 | TCTC 繁體中文打字練習中心</title>
+    <meta name="robots" content="noindex, nofollow">
+
+    <link rel="icon" href="favicon-32x32.png" type="image/png" sizes="32x32">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@200;300;400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root{
+            --darker-blue: #0b1a37;
+            --dark-blue: #0B1E36;
+            --champagne-gold: #c9a84c;
+            --accent-rgb: 201, 168, 76;
+            --text-rgb: 255, 255, 255;
+        }
+
+        *{ box-sizing: border-box; }
+
+        body{
+            margin: 0;
+            min-height: 100vh;
+            background-color: var(--darker-blue);
+            font-family: "Noto Serif TC", serif;
+
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2.5rem 1.2rem 4rem;
+        }
+
+        /* ===== 頂部操作列：列印時完全隱藏，畫面上才看得到 ===== */
+        .cert_toolbar{
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.6rem;
+        }
+        .cert_back_link{
+            color: rgba(var(--text-rgb), 0.55);
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .cert_back_link:hover{ color: var(--champagne-gold); }
+        .cert_print_btn{
+            font-family: "Noto Serif TC", serif;
+            background-color: var(--champagne-gold);
+            color: var(--darker-blue);
+            border: 1px solid var(--champagne-gold);
+            border-radius: 4px;
+            padding: 0.6rem 1.6rem;
+            font-size: 0.95rem;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 200ms ease;
+        }
+        .cert_print_btn:hover{
+            background-color: transparent;
+            color: var(--champagne-gold);
+        }
+
+        /* ===== 尚未達成時的提示卡 ===== */
+        .cert_gate_card{
+            width: 100%;
+            max-width: 30rem;
+            margin-top: 4rem;
+
+            background-color: var(--dark-blue);
+            border: 1px solid rgba(var(--accent-rgb), 0.25);
+            border-radius: 8px;
+            padding: 2.4rem 1.8rem;
+            text-align: center;
+        }
+        .cert_gate_title{
+            color: var(--champagne-gold);
+            font-size: 1.15rem;
+            font-weight: 500;
+            letter-spacing: 2px;
+            margin: 0 0 0.8rem;
+        }
+        .cert_gate_text{
+            color: rgba(var(--text-rgb), 0.55);
+            font-size: 0.9rem;
+            line-height: 1.8;
+            letter-spacing: 0.5px;
+            margin: 0;
+        }
+
+        /* ===== 證書本體：畫面上用深底金框預覽，列印時另外覆寫成白底 ===== */
+        .cert_paper{
+            width: 100%;
+            max-width: 900px;
+            aspect-ratio: 1.414 / 1;   /* A4 橫向比例 */
+
+            background-color: var(--dark-blue);
+            border: 2px solid var(--champagne-gold);
+            border-radius: 4px;
+            box-shadow: 0 0 0 6px rgba(var(--accent-rgb), 0.12), 0 20px 50px rgba(0,0,0,0.4);
+
+            padding: 3rem 4rem;
+
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+
+            position: relative;
+        }
+        /* 四個角落的裝飾角框，呼應全站「證書/會員卡」的金線美學 */
+        .cert_corner{
+            position: absolute;
+            width: 2rem;
+            height: 2rem;
+            border: 2px solid var(--champagne-gold);
+        }
+        .cert_corner_tl{ top: 0.7rem; left: 0.7rem; border-right: none; border-bottom: none; }
+        .cert_corner_tr{ top: 0.7rem; right: 0.7rem; border-left: none; border-bottom: none; }
+        .cert_corner_bl{ bottom: 0.7rem; left: 0.7rem; border-right: none; border-top: none; }
+        .cert_corner_br{ bottom: 0.7rem; right: 0.7rem; border-left: none; border-top: none; }
+
+        .cert_eyebrow{
+            color: var(--champagne-gold);
+            font-size: 0.85rem;
+            letter-spacing: 6px;
+            margin: 0 0 1.2rem;
+        }
+        .cert_title{
+            color: rgba(var(--text-rgb), 0.94);
+            font-size: 2.6rem;
+            font-weight: 500;
+            letter-spacing: 6px;
+            margin: 0 0 2rem;
+        }
+        .cert_body_text{
+            color: rgba(var(--text-rgb), 0.7);
+            font-size: 1.05rem;
+            letter-spacing: 1px;
+            line-height: 2;
+            margin: 0;
+        }
+        .cert_player_name{
+            display: inline-block;
+            color: var(--champagne-gold);
+            font-size: 1.8rem;
+            font-weight: 500;
+            letter-spacing: 2px;
+            margin: 0.6rem 0.3rem;
+            padding-bottom: 0.2rem;
+            border-bottom: 1px solid rgba(var(--accent-rgb), 0.5);
+        }
+        .cert_level_name{
+            color: var(--champagne-gold);
+            font-weight: 500;
+        }
+
+        .cert_stats_row{
+            display: flex;
+            gap: 3rem;
+            margin-top: 1.8rem;
+        }
+        .cert_stat{
+            text-align: center;
+        }
+        .cert_stat_value{
+            color: var(--champagne-gold);
+            font-size: 1.6rem;
+            font-weight: 500;
+        }
+        .cert_stat_label{
+            color: rgba(var(--text-rgb), 0.45);
+            font-size: 0.7rem;
+            letter-spacing: 2px;
+            margin-top: 0.3rem;
+        }
+
+        .cert_footer_row{
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-top: 2.4rem;
+        }
+        .cert_date,
+        .cert_signature{
+            text-align: center;
+        }
+        .cert_footer_line{
+            width: 10rem;
+            border-top: 1px solid rgba(var(--text-rgb), 0.3);
+            margin-bottom: 0.4rem;
+        }
+        .cert_footer_label{
+            color: rgba(var(--text-rgb), 0.4);
+            font-size: 0.7rem;
+            letter-spacing: 2px;
+        }
+        .cert_footer_value{
+            color: rgba(var(--text-rgb), 0.75);
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+        }
+
+        .is_hidden{ display: none !important; }
+
+        /* ============================================================
+           列印樣式：改白底深字省墨水，A4 橫向，蓋掉螢幕預覽用的陰影/外距，
+           工具列（返回連結、列印按鈕）完全不列印出來
+           ============================================================ */
+        @media print{
+            @page{
+                size: A4 landscape;
+                margin: 0;
+            }
+            body{
+                background-color: #fff;
+                padding: 0;
+            }
+            .cert_toolbar{ display: none; }
+            .cert_paper{
+                width: 100%;
+                height: 100vh;
+                max-width: none;
+                aspect-ratio: auto;
+
+                background-color: #fff;
+                box-shadow: none;
+                border-color: #b08d3f;
+                border-radius: 0;
+            }
+            .cert_title,
+            .cert_player_name,
+            .cert_level_name,
+            .cert_stat_value{
+                color: #8a6d1f;
+            }
+            .cert_body_text,
+            .cert_footer_value{
+                color: #333;
+            }
+            .cert_eyebrow,
+            .cert_stat_label,
+            .cert_footer_label{
+                color: #777;
+            }
+            .cert_corner{ border-color: #b08d3f; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="cert_toolbar">
+        <span class="cert_back_link" onclick="window.history.back()">← 返回</span>
+        <button type="button" class="cert_print_btn" id="cert_print_btn" onclick="window.print()">列印證書</button>
+    </div>
+
+    <div class="cert_gate_card is_hidden" id="cert_gate_card">
+        <p class="cert_gate_title" id="cert_gate_title">尚未達成</p>
+        <p class="cert_gate_text" id="cert_gate_text">再接再厲！</p>
+    </div>
+
+    <div class="cert_paper is_hidden" id="cert_paper">
+        <div class="cert_corner cert_corner_tl"></div>
+        <div class="cert_corner cert_corner_tr"></div>
+        <div class="cert_corner cert_corner_bl"></div>
+        <div class="cert_corner cert_corner_br"></div>
+
+        <p class="cert_eyebrow">TCTC 繁體中文打字練習中心</p>
+        <h1 class="cert_title">完 成 證 書</h1>
+
+        <p class="cert_body_text">
+            茲證明 <span class="cert_player_name" id="cert_player_name">—</span><br>
+            已完成本站<span class="cert_level_name" id="cert_level_name">—</span>難度的全部關卡練習
+        </p>
+
+        <div class="cert_stats_row">
+            <div class="cert_stat">
+                <div class="cert_stat_value" id="cert_stat_wpm">—</div>
+                <div class="cert_stat_label">主線平均 WPM</div>
+            </div>
+            <div class="cert_stat">
+                <div class="cert_stat_value" id="cert_stat_acc">—</div>
+                <div class="cert_stat_label">主線平均正確率</div>
+            </div>
+        </div>
+
+        <div class="cert_footer_row">
+            <div class="cert_date">
+                <div class="cert_footer_line"></div>
+                <div class="cert_footer_value" id="cert_date">—</div>
+                <div class="cert_footer_label">頒發日期</div>
+            </div>
+            <div class="cert_signature">
+                <div class="cert_footer_line"></div>
+                <div class="cert_footer_value">TCTC 繁體中文打字練習中心</div>
+                <div class="cert_footer_label">發證單位</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+    <script src="TCTC2-0-firebase.js?v=3"></script>
+
+    <!-- 算「這個難度是不是真的 100% 完成」需要這兩支檔案 -->
+    <script src="TCTC2-0-level_data.js"></script>
+    <script src="TCTC2-0-achv_data.js"></script>
+
+    <script src="TCTC2-0-certificate.js"></script>
+</body>
+</html>
