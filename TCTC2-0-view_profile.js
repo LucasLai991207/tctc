@@ -108,7 +108,7 @@ function VP_Render_Achievements(streakData, statsData){
     if(listEl){
         listEl.innerHTML = unlockedItems.length > 0
             ? unlockedItems.map(function(item){ return item.html }).join("")
-            : `<p class="vp_achv_empty">這位玩家還沒有解鎖任何成就</p>`
+            : `<p class="vp_achv_empty">無</p>`
     }
 
     const overviewCountEl = document.getElementById("vp_overview_count")
