@@ -1,0 +1,789 @@
+:root{
+    --darker-blue : #0b1a37;
+    --dark-blue : #0B1E36;
+    --light-blue : #0e243e;
+    --champagne-gold : #c9a84c;
+    --accent-rgb : 201, 168, 76;
+    --error-red : #c0392b;
+    --error-rgb : 192, 57, 43;
+    --text-rgb : 255, 255, 255;
+}
+
+.cls_main_style{
+    background-color: var(--darker-blue);
+    min-height: 100vh;
+
+    display: flex;
+    justify-content: center;
+
+    padding-bottom: 4rem;
+}
+
+.cls_first_section{
+    width: 100%;
+}
+
+.cls_container{
+    max-width: 46rem;
+    margin: 0 auto;
+    padding: 0 1.2rem;
+}
+
+/* ===== 頁首：跟 achievements.css 的「小金字副標 + serif 大標題」同一套語彙 ===== */
+.cls_header{
+    text-align: center;
+    margin: 1rem 0 2.4rem;
+}
+.cls_page_subtitle{
+    color: var(--champagne-gold);
+    font-size: 0.78rem;
+    letter-spacing: 4px;
+    margin: 4rem 0 0.6rem;
+}
+.cls_page_title{
+    color: rgba(var(--text-rgb), 0.92);
+    font-size: 2.2rem;
+    font-weight: 500;
+    letter-spacing: 3px;
+    margin: 0;
+    margin-top: 3rem;
+}
+
+.is_hidden{
+    display: none !important;
+}
+
+/* ===== 通用狀態卡（載入中／已加入教室提示）===== */
+.cls_status_card{
+    background-color: var(--dark-blue);
+    border: 1px solid rgba(var(--accent-rgb), 0.25);
+    border-radius: 8px;
+
+    padding: 2.2rem 1.8rem;
+    text-align: center;
+}
+.cls_status_title{
+    color: var(--champagne-gold);
+    font-size: 1.1rem;
+    font-weight: 500;
+    letter-spacing: 1px;
+    margin: 0 0 0.8rem;
+}
+.cls_status_title span{
+    color: rgba(var(--text-rgb), 0.92);
+}
+.cls_status_text{
+    color: rgba(var(--text-rgb), 0.55);
+    font-size: 0.9rem;
+    line-height: 1.8;
+    letter-spacing: 0.5px;
+    margin: 0 auto 1.4rem;
+    max-width: 30rem;
+}
+
+/* ===== 一般卡片（沿用 profile_card 的視覺語言，這裡獨立一份避免跨檔案耦合）===== */
+.cls_card{
+    background-color: var(--dark-blue);
+    border: 1px solid rgba(var(--accent-rgb), 0.25);
+    border-radius: 8px;
+
+    padding: 1.8rem 1.6rem;
+    margin-bottom: 1.5rem;
+}
+.cls_card_title{
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+
+    color: rgba(var(--text-rgb), 0.92);
+    font-size: 1.15rem;
+    font-weight: 500;
+    letter-spacing: 2px;
+
+    margin: 0 0 1.2rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 1px solid rgba(var(--accent-rgb), 0.2);
+}
+.cls_student_count{
+    color: rgba(var(--text-rgb), 0.45);
+    font-size: 0.78rem;
+    letter-spacing: 1px;
+    font-weight: 400;
+}
+
+.cls_info_row{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding-bottom: 0.9rem;
+    margin-bottom: 0.9rem;
+    border-bottom: 1px solid rgba(var(--accent-rgb), 0.12);
+}
+.cls_info_row:last-of-type{
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+.cls_info_label{
+    color: rgba(var(--text-rgb), 0.65);
+    font-size: 0.88rem;
+    letter-spacing: 1px;
+}
+.cls_info_value{
+    color: var(--champagne-gold);
+    font-size: 1rem;
+    font-weight: 500;
+}
+.cls_join_code_display{
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+}
+.cls_join_code_text{
+    font-size: 1.3rem;
+    letter-spacing: 3px;
+}
+.cls_copy_btn{
+    padding: 0.3rem 0.7rem;
+
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+
+    background-color: transparent;
+    color: rgba(var(--text-rgb), 0.75);
+
+    border: 1px solid rgba(var(--accent-rgb), 0.35);
+    border-radius: 4px;
+
+    cursor: pointer;
+    transition: all 150ms ease;
+}
+.cls_copy_btn:hover{
+    border-color: var(--champagne-gold);
+    color: var(--champagne-gold);
+}
+
+.cls_info_hint{
+    color: rgba(var(--text-rgb), 0.45);
+    font-size: 0.78rem;
+    line-height: 1.6;
+    letter-spacing: 0.3px;
+    margin: 0 0 1rem;
+}
+
+/* ===== 表單（加入教室／建立教室共用）===== */
+.cls_form_row{
+    display: flex;
+    gap: 0.7rem;
+}
+.cls_input{
+    flex: 1;
+    box-sizing: border-box;
+
+    background-color: var(--darker-blue);
+    color: rgba(var(--text-rgb), 0.92);
+
+    border: 1px solid rgba(var(--accent-rgb), 0.4);
+    border-radius: 5px;
+
+    padding: 0.6rem 0.8rem;
+
+    font-size: 0.95rem;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+    letter-spacing: 1px;
+}
+.cls_input:focus{
+    outline: none;
+    background-color: var(--light-blue);
+}
+.cls_primary_btn{
+    padding: 0.6rem 1.4rem;
+
+    font-size: 0.9rem;
+    font-weight: 500;
+    letter-spacing: 1px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+    white-space: nowrap;
+
+    background-color: var(--champagne-gold);
+    color: var(--darker-blue);
+
+    border: 1px solid var(--champagne-gold);
+    border-radius: 5px;
+
+    cursor: pointer;
+    transition: all 150ms ease;
+}
+.cls_primary_btn:hover{
+    background-color: transparent;
+    color: var(--champagne-gold);
+}
+.cls_primary_btn:disabled{
+    opacity: 0.6;
+    cursor: default;
+}
+.cls_form_msg{
+    min-height: 1.1rem;
+    margin: 0.6rem 0 0;
+
+    color: var(--champagne-gold);
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+}
+
+.cls_danger_btn{
+    padding: 0.6rem 1.2rem;
+
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+
+    background-color: transparent;
+    color: var(--error-red);
+
+    border: 1px solid var(--error-red);
+    border-radius: 4px;
+
+    cursor: pointer;
+    transition: all 150ms ease;
+}
+.cls_danger_btn:hover{
+    background-color: var(--error-red);
+    color: rgba(var(--text-rgb), 0.92);
+}
+.cls_danger_btn:disabled{
+    opacity: 0.6;
+    cursor: default;
+}
+
+/* ============================================================
+   【重新設計】學生名單：改回「一列一行」的橫向表格
+   ------------------------------------------------------------
+   前一版做成上下分層的卡片，學生一多，名單會一直往下疊得很長，
+   老師要掃過全班反而更不方便。改回表格式：每個學生一行，欄位固定，
+   一眼可以掃過一整排資料。
+
+   數據精簡到「等級／平均WPM／平均正確率／關卡完成度／操作」5 欄，
+   比一開始「名字/等級/完成度」3 欄豐富一些，但不像上一版塞進 5 種
+   數據那麼滿——在線時長／挑戰積分／解鎖成就這幾項拿掉了，真的要看
+   點名字進個人資料頁就有完整數據，列表不需要重複。
+
+   .cls_table_scroll 是外層捲動容器：欄位加總的寬度在窄螢幕會超過
+   螢幕寬度，這裡選擇「整個表格橫向捲動」而不是「每欄擠到換行」，
+   這樣不管學生名字多長、螢幕多窄，欄位對齊永遠不會跑掉，
+   使用者用滑手指/滑鼠橫向拖就能看到右邊被裁掉的欄位。
+   ============================================================ */
+.cls_table_scroll{
+    overflow-x: auto;
+    /* 捲動軸本身也套用一點金色系的低調樣式，跟系統預設的灰色捲軸區隔開，
+       不做也完全不影響功能，純粹視覺一致性 */
+    scrollbar-color: rgba(var(--accent-rgb), 0.4) transparent;
+}
+
+.cls_row_head,
+.cls_row{
+    display: grid;
+    grid-template-columns: minmax(9rem, 1.4fr) 3.6rem 3.6rem 4.2rem 8rem 4.2rem;
+    align-items: center;
+    gap: 0.7rem;
+
+    min-width: 38rem;   /* 欄位加總的最小寬度，螢幕比這個窄就交給 .cls_table_scroll 橫向捲動 */
+
+    padding: 0.7rem 0.3rem;
+}
+.cls_row{
+    border-bottom: 1px solid rgba(var(--accent-rgb), 0.1);
+}
+.cls_row:last-child{
+    border-bottom: none;
+}
+.cls_row_head{
+    color: rgba(var(--text-rgb), 0.4);
+    font-size: 0.72rem;
+    letter-spacing: 1px;
+    border-bottom: 1px solid rgba(var(--accent-rgb), 0.2);
+    padding-bottom: 0.6rem;
+    margin-bottom: 0.2rem;
+}
+
+.cls_row_name{
+    min-width: 0;   /* 讓長名字可以正常被 ellipsis 截斷，不撐爆這一欄 */
+}
+.rank_player_name_link{
+    color: var(--champagne-gold);
+}
+.cls_row_name .rank_player_name_link{
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+.cls_row_level{
+    justify-self: start;
+}
+.cls_row_metric{
+    color: var(--champagne-gold);
+    font-size: 0.86rem;
+    font-weight: 500;
+    font-family: "Noto Serif TC", serif;
+    white-space: nowrap;
+}
+
+.cls_row_progress_wrap{
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.cls_row_progress_track{
+    flex: 1;
+    height: 0.32rem;
+    border-radius: 999px;
+    background-color: rgba(var(--text-rgb), 0.08);
+    overflow: hidden;
+}
+.cls_row_progress_fill{
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #b08d57, var(--champagne-gold));
+    transition: width 400ms ease;
+}
+.cls_row_progress_text{
+    color: rgba(var(--text-rgb), 0.5);
+    font-size: 0.74rem;
+    white-space: nowrap;
+}
+
+/* ===== 踢出按鈕：跟 .cls_danger_btn（離開教室）同一套「危險操作」紅色語彙，
+   但尺寸縮小一號給表格裡的單一按鈕用，不搶走整列的視覺重量 ===== */
+.cls_kick_btn{
+    justify-self: start;
+
+    padding: 0.32rem 0.7rem;
+
+    font-size: 0.74rem;
+    letter-spacing: 1px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+    white-space: nowrap;
+
+    background-color: transparent;
+    color: var(--error-red);
+
+    border: 1px solid var(--error-red);
+    border-radius: 4px;
+
+    cursor: pointer;
+    transition: all 150ms ease;
+}
+.cls_kick_btn:hover{
+    background-color: var(--error-red);
+    color: rgba(var(--text-rgb), 0.92);
+}
+.cls_kick_btn:disabled{
+    opacity: 0.6;
+    cursor: default;
+}
+
+.cls_empty_text{
+    color: rgba(var(--text-rgb), 0.4);
+    font-size: 0.88rem;
+    letter-spacing: 1px;
+    text-align: center;
+    padding: 1.6rem 0;
+    margin: 0;
+}
+
+@media (max-width: 30rem){
+    .cls_form_row{
+        flex-direction: column;
+    }
+    /* 表格本身已經靠 .cls_table_scroll 橫向捲動因應窄螢幕，
+       這裡不需要再額外壓縮欄寬或改變排版方向 */
+}
+
+.cls_list_grid{
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+.cls_list_card{
+    background-color: var(--darker-blue);
+    border: 1px solid rgba(var(--accent-rgb), 0.2);
+    border-radius: 6px;
+    padding: 1.1rem 1.3rem;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+.cls_list_card_info{
+    min-width: 0;
+}
+.cls_list_card_name{
+    color: rgba(var(--text-rgb), 0.92);
+    font-size: 1.05rem;
+    font-weight: 500;
+    letter-spacing: 1px;
+    margin: 0 0 0.35rem;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.cls_list_card_meta{
+    color: rgba(var(--text-rgb), 0.5);
+    font-size: 0.78rem;
+    letter-spacing: 0.5px;
+}
+.cls_list_card_meta span{
+    color: var(--champagne-gold);
+}
+.cls_list_card_actions{
+    display: flex;
+    gap: 0.6rem;
+    flex-shrink: 0;
+}
+.cls_list_card_actions .cls_primary_btn,
+.cls_list_card_actions .cls_danger_btn{
+    padding: 0.45rem 1rem;
+    font-size: 0.82rem;
+}
+
+/* ===== 返回教室列表的小連結 ===== */
+.cls_back_btn{
+    display: inline-block;
+    margin-bottom: 1.2rem;
+
+    color: rgba(var(--text-rgb), 0.55);
+    font-size: 0.82rem;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: color 150ms ease;
+}
+.cls_back_btn:hover{
+    color: var(--champagne-gold);
+}
+
+/* ===== 【新增】班級戰績：給老師一眼看出全班整體表現，方便班際比賽 =====
+   四個數字盒子平鋪，「班級之星」用同一套盒子但數字改小一號，
+   因為裡面放的是名字（可能比較長），跟純數字的三個盒子放同尺寸字會太搶眼 */
+.cls_stats_grid{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+    gap: 1rem;
+}
+.cls_stat_box{
+    background-color: var(--darker-blue);
+    border: 1px solid rgba(var(--accent-rgb), 0.2);
+    border-radius: 6px;
+    padding: 1rem 0.8rem;
+    text-align: center;
+}
+.cls_stat_box_label{
+    color: rgba(var(--text-rgb), 0.45);
+    font-size: 0.72rem;
+    letter-spacing: 1px;
+    margin: 0 0 0.5rem;
+}
+.cls_stat_box_value{
+    color: var(--champagne-gold);
+    font-family: "Noto Serif TC", serif;
+    font-size: 1.4rem;
+    font-weight: 500;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.cls_stat_box_star .cls_stat_box_value{
+    font-size: 1.05rem;
+}
+
+/* ===== 教室資訊卡片裡的解散按鈕，跟卡片其他內容拉開一點距離 ===== */
+#cls_dissolve_btn{
+    margin-top: 1.2rem;
+}
+
+/* ============================================================
+   【新增】班級任務系統
+   ============================================================ */
+
+/* 「指派新任務」按鈕放在 .cls_card_title 裡（本來就是 flex 兩端對齊），
+   尺寸縮小一號，避免跟卡片標題的大字級擠在一起太搶眼 */
+.cls_task_new_btn{
+    padding: 0.35rem 0.9rem;
+    font-size: 0.78rem;
+}
+
+/* ===== 新增任務表單 =====
+   跟 .cls_card 用同一套「深底+金邊框」語言，但邊框淡一階、背景改用最深的
+   --darker-blue，讓它在 .cls_card（本身已經是 --dark-blue 底）裡面
+   看起來像「卡片裡的卡片」，跟外層的任務列表視覺上分層 */
+.cls_task_form{
+    background-color: var(--darker-blue);
+    border: 1px solid rgba(var(--accent-rgb), 0.2);
+    border-radius: 6px;
+
+    padding: 1.2rem 1.3rem 1.4rem;
+    margin-bottom: 1.4rem;
+}
+.cls_task_form_row{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.9rem;
+}
+.cls_field_label{
+    display: block;
+
+    color: rgba(var(--text-rgb), 0.5);
+    font-size: 0.74rem;
+    letter-spacing: 1px;
+
+    margin: 0.9rem 0 0.4rem;
+}
+.cls_task_form select.cls_input{
+    /* <select> 預設外觀跟 <input> 不太一樣（尤其瀏覽器原生下拉箭頭），
+       這裡至少把顏色/邊框/字級對齊，讓它跟旁邊的 <input> 看起來是同一組表單 */
+    cursor: pointer;
+}
+.cls_task_form_actions{
+    display: flex;
+    gap: 0.7rem;
+    margin-top: 1.2rem;
+}
+
+/* ===== 次要按鈕（取消）=====
+   跟 .cls_primary_btn（金底深字）刻意做出區隔：這裡改成空心淡灰邊框，
+   hover 才變金色，份量比主要動作（建立）輕，避免兩顆按鈕搶視覺焦點 */
+.cls_secondary_btn{
+    padding: 0.6rem 1.2rem;
+
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+
+    background-color: transparent;
+    color: rgba(var(--text-rgb), 0.65);
+
+    border: 1px solid rgba(var(--text-rgb), 0.25);
+    border-radius: 5px;
+
+    cursor: pointer;
+    transition: all 150ms ease;
+}
+.cls_secondary_btn:hover{
+    border-color: var(--champagne-gold);
+    color: var(--champagne-gold);
+}
+
+/* ===== 單一任務列 =====
+   老師視角（在 #cls_task_list 裡）跟學生視角（在 #cls_my_task_list 裡）
+   共用同一份 .cls_task_row 樣式，兩邊看到的任務卡片長相完全一致，
+   只差在老師那份右上角多一顆刪除按鈕、學生那份可能多一顆「已達標」標籤。 */
+.cls_task_row{
+    background-color: var(--darker-blue);
+    border: 1px solid rgba(var(--accent-rgb), 0.18);
+    border-radius: 6px;
+
+    padding: 1rem 1.1rem;
+    margin-bottom: 0.9rem;
+
+    text-align: left;   /* 保險：學生那邊的父層 .cls_status_card 是 text-align:center，這裡強制蓋回左對齊 */
+}
+.cls_task_row:last-child{
+    margin-bottom: 0;
+}
+/* 已截止的任務整體降低透明度，跟學生名單/成就系統的「未達成/已過期」
+   視覺語言一致（低透明度 = 不是現在的重點，但仍然看得到內容） */
+.cls_task_row.cls_task_expired{
+    opacity: 0.55;
+}
+
+.cls_task_row_top{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+
+    margin: 0 0 0.4rem;
+}
+.cls_task_title{
+    color: rgba(var(--text-rgb), 0.92);
+    font-size: 0.98rem;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+.cls_task_meta{
+    color: rgba(var(--text-rgb), 0.5);
+    font-size: 0.78rem;
+    letter-spacing: 0.3px;
+    line-height: 1.6;
+    margin: 0 0 0.8rem;
+}
+.cls_task_badge{
+    display: inline-block;
+
+    color: var(--champagne-gold);
+    font-size: 0.68rem;
+    letter-spacing: 0.5px;
+
+    border: 1px solid rgba(var(--accent-rgb), 0.4);
+    border-radius: 3px;
+    padding: 0.05rem 0.4rem;
+    margin-right: 0.5rem;
+}
+.cls_task_sub_label{
+    color: rgba(var(--text-rgb), 0.4);
+    font-size: 0.72rem;
+    letter-spacing: 0.5px;
+    margin: 0.7rem 0 0.35rem;
+}
+/* 每個任務列裡第一條進度條上方的小標籤，不需要額外的頂部留白（已經緊接在 .cls_task_meta 後面） */
+.cls_task_row .cls_task_meta + .cls_task_sub_label{
+    margin-top: 0;
+}
+
+/* 「已達標」標籤：跟 .ranking_self_tag（排行榜的「你」標籤）同一套
+   「實心金底、深字」語言，代表這是最搶眼、值得慶祝的狀態 */
+.cls_task_done_tag{
+    display: inline-block;
+    flex-shrink: 0;
+
+    background-color: var(--champagne-gold);
+    color: var(--darker-blue);
+
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+
+    padding: 0.12rem 0.55rem;
+    border-radius: 3px;
+
+    white-space: nowrap;
+}
+
+/* 刪除任務按鈕：跟 .cls_kick_btn（踢出學生）同一套「危險操作」紅色空心語言，
+   尺寸再縮小一號，因為它要跟任務標題並排在同一行，不能搶走標題的視覺重量 */
+.cls_task_delete_btn{
+    flex-shrink: 0;
+
+    padding: 0.28rem 0.65rem;
+
+    font-size: 0.72rem;
+    letter-spacing: 1px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+    white-space: nowrap;
+
+    background-color: transparent;
+    color: var(--error-red);
+
+    border: 1px solid var(--error-red);
+    border-radius: 4px;
+
+    cursor: pointer;
+    transition: all 150ms ease;
+}
+.cls_task_delete_btn:hover{
+    background-color: var(--error-red);
+    color: rgba(var(--text-rgb), 0.92);
+}
+.cls_task_delete_btn:disabled{
+    opacity: 0.6;
+    cursor: default;
+}
+
+/* 學生視角的任務清單容器：跟外層 .cls_status_card 拉開一點距離，
+   上下都留白，讓它在「教室名稱／老師名字」跟「離開教室按鈕」中間
+   自成一個獨立區塊，不會跟上下的文字黏在一起 */
+.cls_task_list_student{
+    margin: 1.6rem 0;
+}
+
+/* ===== 【新增】老師視角：任務列標題右側的按鈕群組（查看每人進度 + 刪除）=====
+   兩顆按鈕並排，跟 .cls_task_row_top 原本的 flex 兩端對齊排版相容，
+   只是右邊那格從單一按鈕變成一組按鈕 */
+.cls_task_row_actions{
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+/* 「查看每人進度」按鈕：跟 .cls_secondary_btn（取消按鈕）同一套「次要動作」
+   空心語言，但尺寸縮小到跟 .cls_task_delete_btn 同一個量級，因為它們並排
+   在同一行，份量要一致，不能一個大一個小看起來像沒對齊 */
+.cls_task_detail_toggle_btn{
+    padding: 0.28rem 0.65rem;
+
+    font-size: 0.72rem;
+    letter-spacing: 1px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+    white-space: nowrap;
+
+    background-color: transparent;
+    color: rgba(var(--text-rgb), 0.65);
+
+    border: 1px solid rgba(var(--text-rgb), 0.25);
+    border-radius: 4px;
+
+    cursor: pointer;
+    transition: all 150ms ease;
+}
+.cls_task_detail_toggle_btn:hover{
+    border-color: var(--champagne-gold);
+    color: var(--champagne-gold);
+}
+
+/* ===== 【新增】展開後的「每人進度」明細區塊 =====
+   用上邊框 + 淡淡的留白跟上面的整體進度條分隔開，讓人一眼看出
+   「上面是整體，下面是逐一明細」這兩層資訊的從屬關係 */
+.cls_task_detail{
+    margin-top: 0.9rem;
+    padding-top: 0.9rem;
+    border-top: 1px dashed rgba(var(--accent-rgb), 0.18);
+}
+.cls_task_detail_list{
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+.cls_task_detail_row{
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+.cls_task_detail_name{
+    flex: 0 0 6rem;
+    min-width: 0;   /* 讓長名字可以被 ellipsis 截斷，不撐爆整排 */
+
+    color: rgba(var(--text-rgb), 0.75);
+    font-size: 0.82rem;
+    letter-spacing: 0.3px;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+/* 明細列裡的進度條要吃掉名字跟「已達標」標籤之間的剩餘空間 */
+.cls_task_detail_row .cls_row_progress_wrap{
+    flex: 1;
+}
+.cls_task_detail_row .cls_task_done_tag{
+    flex-shrink: 0;
+}
+
+@media (max-width: 30rem){
+    .cls_task_form_row{
+        grid-template-columns: 1fr;
+    }
+    .cls_task_detail_name{
+        flex-basis: 4.5rem;
+        font-size: 0.76rem;
+    }
+}

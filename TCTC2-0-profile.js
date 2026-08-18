@@ -191,6 +191,7 @@ function Load_Cloud_Player_Stats(){
     const onlineTimeEl = document.getElementById("profile_history_online_time")
     const totalPointsEl = document.getElementById("profile_history_total_points")
     const pageViewsEl = document.getElementById("profile_history_page_views")
+    const likeCountEl = document.getElementById("profile_history_like_count")
     const leaderboardToggleEl = document.getElementById("profile_leaderboard_toggle") // 【新增】
     const profileViewToggleEl = document.getElementById("profile_view_toggle") // 【新增】
 
@@ -204,6 +205,7 @@ function Load_Cloud_Player_Stats(){
         if(onlineTimeEl) onlineTimeEl.textContent = "無法載入"
         if(totalPointsEl) totalPointsEl.textContent = "無法載入"
         if(pageViewsEl) pageViewsEl.textContent = "無法載入"
+        if(likeCountEl) likeCountEl.textContent = "無法載入"
         return
     }
 
@@ -215,6 +217,7 @@ function Load_Cloud_Player_Stats(){
             if(onlineTimeEl) onlineTimeEl.textContent = "讀取失敗"
             if(totalPointsEl) totalPointsEl.textContent = "讀取失敗"
             if(pageViewsEl) pageViewsEl.textContent = "讀取失敗"
+            if(likeCountEl) likeCountEl.textContent = "讀取失敗"
             // 【新增】讀取失敗時開關保持鎖住，理由同上
             return
         }
@@ -226,6 +229,9 @@ function Load_Cloud_Player_Stats(){
         if(onlineTimeEl) onlineTimeEl.textContent = Format_Online_Seconds_For_Profile(stats.online_seconds ?? 0)
         if(totalPointsEl) totalPointsEl.textContent = `${stats.total_points ?? 0} 積分`
         if(pageViewsEl) pageViewsEl.textContent = `${stats.page_views ?? 0} 次`
+        // 【新增】獲得讚數：跟上面三項一樣，只存在 player_stats/{anon_id} 雲端，
+        // 直接沿用同一次 Get_Own_Player_Stats() 讀到的資料，不用多發一次請求
+        if(likeCountEl) likeCountEl.textContent = `${stats.like_count ?? 0} 讚`
 
         // ===== 【新增】用同一次讀到的資料，順便初始化排行榜顯示開關 =====
         // stats.hide_from_leaderboard 這個欄位本來就包含在 player_stats/{anon_id}

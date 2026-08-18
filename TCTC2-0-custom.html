@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>自訂練習 | TCTC 繁體中文打字中心</title>
+    <meta name="description" content="貼上你自己想練的文字，不進排行榜、純粹練習。">
+    <meta name="robots" content="noindex, nofollow">
+
+    <!--瀏覽器分頁小圖-->
+    <link rel="icon" href="favicon-32x32.png" type="image/png" sizes="32x32">
+
+    <!-- 社群分享預覽圖-->
+    <meta property="og:image" content="https://lucaslai991207.github.io/tctc/os_image.png">
+    <meta property="og:title" content="TCTC 繁體中文打字中心">
+
+    <link rel="stylesheet" href="TCTC2-0-intro_lobby.css">
+    <link rel="stylesheet" href="TCTC2-0-main_lobby.css">
+    <link rel="stylesheet" href="TCTC2-0-auth_ui.css">
+    <link rel="stylesheet" href="TCTC2-0-achv_notify.css">
+
+    <!-- 全站配色主題系統：務必放在 CSS 之後、其他 script 之前，同步載入避免換色閃爍 -->
+    <script src="TCTC2-0-theme.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@200;300;400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        body{
+            padding-top: 63px;
+        }
+        .game_back_btn {
+            position: fixed;
+            top: 70px;
+            left: 2rem;
+            height: 2.3rem;
+            width: 2.3rem;
+
+            background-color: transparent;
+            border: none;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            cursor: pointer;
+            z-index: 100;
+        }
+        .game_back_btn img {
+            height: 1.6rem;
+            width: auto;
+            display: block;
+            filter: brightness(0) invert(1) drop-shadow(0 1px 3px rgba(0,0,0,0.5));
+        }
+        /* ===== 打字音效開關：位置比照挑戰模式，排在返回鍵右邊 ===== */
+        .game_sound_toggle_btn {
+            position: fixed;
+            top: 70px;
+            left: 5.3rem;
+            height: 2.3rem;
+            width: 2.3rem;
+            background-color: transparent;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            cursor: pointer;
+            z-index: 100;
+        }
+        .game_sound_toggle_btn img {
+            height: 1.6rem;
+            width: auto;
+            display: block;
+            filter: brightness(0) invert(1) drop-shadow(0 1px 3px rgba(0,0,0,0.5));
+        }
+
+        .cus_wrap{
+            width: 100vw;
+            min-height: calc(100vh - 63px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 3rem 1.5rem 5rem;
+        }
+
+        /* ============================================================
+           【設定畫面】貼文字 + 常用文本清單
+           ============================================================ */
+        .cus_setup_box{
+            width: 100%;
+            max-width: 900px;
+        }
+        .cus_setup_header{
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .cus_setup_eyebrow{
+            color: var(--champagne-gold);
+            font-size: 0.78rem;
+            letter-spacing: 4px;
+            margin: 0 0 0.6rem;
+        }
+        .cus_setup_title{
+            color: rgba(255,255,255,0.92);
+            font-size: 2.2rem;
+            font-weight: 500;
+            letter-spacing: 3px;
+            margin: 0 0 0.8rem;
+        }
+        .cus_setup_desc{
+            color: rgba(255,255,255,0.5);
+            font-size: 0.88rem;
+            line-height: 1.8;
+            letter-spacing: 0.5px;
+            max-width: 32rem;
+            margin: 0 auto;
+        }
+
+        .cus_textarea_box{
+            background-color: var(--dark-blue);
+            border: 1px solid rgba(var(--accent-rgb),0.25);
+            border-radius: 8px;
+            padding: 1.2rem 1.4rem;
+            margin-top: 1.6rem;
+        }
+        .cus_textarea{
+            width: 100%;
+            box-sizing: border-box;
+
+            background: transparent;
+            border: none;
+            outline: none;
+            resize: vertical;
+
+            min-height: 8rem;
+            max-height: 16rem;
+
+            font-size: 1.1rem;
+            line-height: 1.9;
+            letter-spacing: 1px;
+            color: #fff;
+        }
+        .cus_textarea::placeholder{
+            color: rgba(255,255,255,0.3);
+        }
+        .cus_textarea_footer{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0.6rem;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+        }
+        .cus_char_count{
+            color: rgba(255,255,255,0.4);
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+        }
+        .cus_char_count.cus_char_count_over{
+            color: #e07a5f;
+        }
+        .cus_setup_actions{
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+        }
+        .cus_btn{
+            font-family: "Noto Serif TC", serif;
+            background-color: transparent;
+            color: var(--champagne-gold);
+            border: 1px solid var(--champagne-gold);
+            border-radius: 4px;
+            padding: 0.6rem 1.6rem;
+            font-size: 0.95rem;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 300ms ease;
+        }
+        .cus_btn:hover{
+            background-color: var(--champagne-gold);
+            color: var(--dark-blue);
+        }
+        .cus_btn:disabled{
+            opacity: 0.4;
+            cursor: default;
+            background-color: transparent;
+            color: var(--champagne-gold);
+        }
+        .cus_btn_ghost{
+            border-color: rgba(255,255,255,0.25);
+            color: rgba(255,255,255,0.7);
+        }
+        .cus_btn_ghost:hover{
+            background-color: rgba(255,255,255,0.08);
+            color: rgba(255,255,255,0.92);
+        }
+
+        .cus_save_row{
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+        .cus_save_row label{
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: rgba(255,255,255,0.6);
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+        }
+        .cus_save_title_input{
+            background-color: var(--darker-blue);
+            color: #fff;
+            border: 1px solid rgba(var(--accent-rgb),0.3);
+            border-radius: 4px;
+            padding: 0.4rem 0.7rem;
+            font-size: 0.85rem;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+            width: 12rem;
+        }
+        .cus_save_title_input.is_hidden{ display: none; }
+
+        /* ===== 常用文本清單 ===== */
+        .cus_saved_section{
+            margin-top: 2.4rem;
+        }
+        .cus_saved_title{
+            color: rgba(255,255,255,0.5);
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            margin: 0 0 0.9rem;
+        }
+        .cus_saved_list{
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+        }
+        .cus_saved_item{
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+
+            background-color: var(--dark-blue);
+            border: 1px solid rgba(var(--accent-rgb),0.18);
+            border-radius: 6px;
+            padding: 0.7rem 1rem;
+
+            cursor: pointer;
+            transition: border-color 150ms ease;
+        }
+        .cus_saved_item:hover{
+            border-color: rgba(var(--accent-rgb),0.4);
+        }
+        .cus_saved_item_name{
+            flex: 1;
+            min-width: 0;
+            color: rgba(255,255,255,0.88);
+            font-size: 0.92rem;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .cus_saved_item_len{
+            color: rgba(255,255,255,0.35);
+            font-size: 0.75rem;
+            white-space: nowrap;
+        }
+        .cus_saved_item_delete{
+            flex-shrink: 0;
+            color: rgba(255,255,255,0.3);
+            font-size: 0.85rem;
+            padding: 0.2rem 0.5rem;
+            cursor: pointer;
+            transition: color 150ms ease;
+        }
+        .cus_saved_item_delete:hover{
+            color: #e07a5f;
+        }
+        .cus_saved_empty{
+            color: rgba(255,255,255,0.35);
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+        }
+
+        /* ============================================================
+           【練習畫面】跟挑戰模式的文章模式同一套視覺語言
+           ============================================================ */
+        .cus_practice_wrap{
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .cus_topbar{
+            width: 100%;
+            max-width: 900px;
+
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            margin-bottom: 2rem;
+        }
+        .cus_elapsed{
+            font-family: "Noto Serif TC", serif;
+            font-size: 2.2rem;
+            font-weight: 300;
+            color: whitesmoke;
+            letter-spacing: 2px;
+            font-variant-numeric: tabular-nums;
+        }
+        .cus_stats{
+            display: flex;
+            gap: 1.4rem;
+        }
+        .cus_stat{
+            font-family: "Noto Serif TC", serif;
+            color: gray;
+            font-size: 0.85rem;
+            text-align: right;
+        }
+        .cus_stat span{
+            color: var(--champagne-gold);
+            font-size: 1.2rem;
+            margin-left: 0.3rem;
+        }
+
+        .cus_article_box{
+            width: 70vw;
+            max-width: 1400px;
+
+            background-color: var(--dark-blue);
+            border: 1px solid rgba(var(--accent-rgb),0.25);
+            border-radius: 8px;
+
+            padding: 1rem 2rem;
+
+            font-family: "Noto Serif TC", serif;
+            font-size: 1.35rem;
+            line-height: 2.3;
+            letter-spacing: 1px;
+
+            color: rgb(170,170,170);
+
+            cursor: text;
+
+            max-height: calc(1.35rem * 2.3 * 4);
+            overflow-y: hidden;
+            position: relative;
+        }
+        .cus_char{
+            transition: color 120ms ease, background-color 120ms ease;
+            border-radius: 3px;
+        }
+        .cus_char.correct{ color: rgb(140,220,140); }
+        .cus_char.wrong{
+            color: #fff;
+            background-color: rgba(200,60,60,0.65);
+        }
+        .cus_char.current{
+            outline: 2px solid var(--champagne-gold);
+            background-color: rgba(var(--accent-rgb),0.15);
+        }
+
+        .cus_input_box{
+            width: 70vw;
+            max-width: 1400px;
+            margin-top: 1.2rem;
+            box-sizing: border-box;
+
+            background-color: var(--dark-blue);
+            border: 1px solid rgba(var(--accent-rgb),0.25);
+            border-radius: 6px;
+
+            padding: 0.2rem 1rem;
+        }
+        .cus_input_textarea{
+            display: block;
+            width: 100%;
+
+            border: none;
+            outline: none;
+            background: transparent;
+            resize: none;
+            box-sizing: border-box;
+
+            font-family: "Noto Serif TC", serif;
+            font-size: 1.35rem;
+            line-height: 2.3;
+            letter-spacing: 1px;
+            color: #fff;
+
+            max-height: calc(1.35rem * 2.3 * 3);
+            overflow-y: auto;
+
+            scrollbar-width: thin;
+            scrollbar-color: var(--dark-blue) transparent;
+        }
+        .cus_input_textarea::-webkit-scrollbar{ width: 6px; }
+        .cus_input_textarea::-webkit-scrollbar-thumb{
+            background-color: rgba(var(--accent-rgb),0.5);
+            border-radius: 4px;
+        }
+        .cus_input_textarea::-webkit-scrollbar-track{ background: transparent; }
+        .cus_input_textarea::placeholder{ color: rgba(255,255,255,0.35); }
+
+        .cus_hint{
+            margin-top: 1.2rem;
+            font-family: "Noto Serif TC", serif;
+            color: gray;
+            font-size: 0.85rem;
+        }
+        .cus_punct_hint_btn{
+            color: var(--champagne-gold);
+            margin-left: 0.6rem;
+            cursor: pointer;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+
+        .cus_action_row{
+            margin-top: 2rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .cm_window{
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .cm_panel{
+            position: relative;
+            width: 60vw;
+            max-width: 720px;
+            background-color: var(--dark-blue);
+            opacity: 0.97;
+            border-radius: 8px;
+            padding: 2rem 2.2rem 1rem;
+            margin-top: 10vh;
+            border: 0.5px solid var(--champagne-gold);
+        }
+        .cm_header_sub{
+            font-size: small;
+            font-family: "Noto Serif TC", serif;
+            color: var(--champagne-gold);
+            letter-spacing: 2px;
+        }
+        .cm_header_title{
+            font-family: "Noto Serif TC", serif;
+            font-weight: 200;
+            color: #fff;
+            font-size: 2.2rem;
+            margin-top: 0.3rem;
+        }
+        .cus_result_panel{
+            width: 60vw;
+            max-width: 640px;
+            text-align: center;
+        }
+        .cus_result_row{
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            margin-top: 1.8rem;
+            margin-bottom: 2rem;
+        }
+        .cus_result_item{ font-family: "Noto Serif TC", serif; }
+        .cus_result_item_label{
+            color: gray;
+            font-size: 0.85rem;
+            letter-spacing: 2px;
+        }
+        .cus_result_item_value{
+            color: var(--champagne-gold);
+            font-size: 2.6rem;
+            font-weight: 300;
+            margin-top: 0.3rem;
+        }
+        .cus_result_detail{
+            text-align: left;
+            color: #fff;
+            line-height: 25px;
+            margin-top: 1.5rem;
+        }
+        .cus_result_note{
+            margin-top: 1.4rem;
+            color: rgba(255,255,255,0.35);
+            font-size: 0.76rem;
+            letter-spacing: 0.5px;
+        }
+
+        .cus_punct_content{
+            background-color: rgba(14, 36, 62, 0.6);
+            padding: 1rem;
+            border-radius: 4px;
+            margin-top: 0.2rem;
+            line-height: 1.9rem;
+            color: #fff;
+            max-height: 50vh;
+            overflow-y: auto;
+        }
+        .cus_punct_content_title{
+            color: var(--champagne-gold);
+            font-size: 1.1rem;
+            padding-bottom: 0.3rem;
+        }
+        .cus_punct_item_name{
+            color: var(--champagne-gold);
+            font-size: 1rem;
+        }
+
+        .is_hidden{ display: none !important; }
+    </style>
+</head>
+<body>
+    <nav id="nav">
+        <img src="TCTC2.0 logo.png" class="logo_style" onclick="window.location.href='TCTC2-0-main.html'">
+        <div class="nav_css">
+            <div onclick="window.location.href='TCTC2-0-details.html'">常見問題</div>
+            <div class="nav_dropdown">
+                模式 <span class="nav_dropdown_arrow">≡</span>
+                <div class="nav_dropdown_menu">
+                    <div class="nav_dropdown_panel">
+                        <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-main.html'">主線模式</div>
+                        <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-challenge_lobby.html'">挑戰模式</div>
+                        <!-- 【新增】自訂模式入口 -->
+                        <div class="nav_dropdown_item nav_dropdown_item_active" onclick="window.location.href='TCTC2-0-custom.html'">自訂模式</div>
+                    </div>
+                </div>
+            </div>
+            <div class="nav_dropdown">
+                更多 <span class="nav_dropdown_arrow">≡</span>
+                <div class="nav_dropdown_menu">
+                    <div class="nav_dropdown_panel">
+                        <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-ranking.html'">排行榜</div>
+                        <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-profile.html'">設定</div>
+                        <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-achievements.html'">個人榮譽牆</div>
+                        <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-classroom.html'">我的教室</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="game_back_btn" onclick="CUS_Confirm_Leave()"><img src="back_pointer_gold.png" alt="返回"></div>
+    <div class="game_sound_toggle_btn" id="cus_sound_toggle_btn" title="開啟/關閉打字音效"><img id="cus_sound_toggle_icon" src="mute.png" alt="音效開關"></div>
+
+    <main class="cus_wrap">
+
+        <!-- ===== 設定畫面：貼文字 + 常用文本 ===== -->
+        <div class="cus_setup_box" id="cus_setup_section">
+            <div class="cus_setup_header">
+                <h1 class="cus_setup_title">自訂練習模式</h1>
+                <p class="cus_setup_desc">
+                    貼上任何你想練的文字開始打字練習。不限中英文。
+                </p>
+            </div>
+
+            <div class="cus_textarea_box">
+                <textarea
+                    class="cus_textarea"
+                    id="cus_setup_textarea"
+                    placeholder="在這裡貼上或輸入你想練習的文字…"
+                    autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+                ></textarea>
+                <div class="cus_textarea_footer">
+                    <span class="cus_char_count" id="cus_char_count">0 字</span>
+                    <div class="cus_setup_actions">
+                        <button type="button" class="cus_btn" id="cus_start_btn" disabled>開始練習</button>
+                    </div>
+                </div>
+
+                <div class="cus_save_row">
+                    <label>
+                        <input type="checkbox" id="cus_save_checkbox">
+                        儲存這段文本，之後還可以重複用
+                    </label>
+                    <input type="text" class="cus_save_title_input is_hidden" id="cus_save_title_input" placeholder="幫這篇取個名字" maxlength="30">
+                </div>
+            </div>
+
+            <div class="cus_saved_section">
+                <p class="cus_saved_title">常用文本</p>
+                <div class="cus_saved_list" id="cus_saved_list"></div>
+            </div>
+        </div>
+
+        <!-- ===== 練習畫面 ===== -->
+        <div class="cus_practice_wrap is_hidden" id="cus_practice_section">
+            <div class="cus_topbar">
+                <div></div>
+                <div class="cus_elapsed" id="cus_elapsed">00:00</div>
+                <div class="cus_stats">
+                    <div class="cus_stat">WPM<span id="cus_live_wpm">0</span></div>
+                    <div class="cus_stat">正確率<span id="cus_live_acc">100%</span></div>
+                </div>
+            </div>
+
+            <div class="cus_article_box" id="cus_article_box"></div>
+
+            <div class="cus_input_box">
+                <textarea
+                    class="cus_input_textarea"
+                    id="cus_input_textarea"
+                    rows="1"
+                    placeholder="請在這裡輸入上方的文字…"
+                    autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+                ></textarea>
+            </div>
+
+            <div class="cus_hint">
+                正確率以及指法才是打字快速的關鍵
+                <span class="cus_punct_hint_btn" id="cus_punct_hint_btn">打不出標點符號？</span>
+            </div>
+        </div>
+    </main>
+
+    <!-- ===== 結算視窗 ===== -->
+    <div class="cm_window is_hidden" id="cus_result_window">
+        <div class="cm_panel cus_result_panel">
+            <div class="cm_header_sub">練習總覽</div>
+            <div class="cm_header_title" id="cus_result_title">練習完成！</div>
+            <div class="cus_result_row">
+                <div class="cus_result_item">
+                    <div class="cus_result_item_label">字 / 分 (CPM)</div>
+                    <div class="cus_result_item_value" id="cus_result_wpm">0</div>
+                </div>
+                <div class="cus_result_item">
+                    <div class="cus_result_item_label">正確率</div>
+                    <div class="cus_result_item_value" id="cus_result_acc">0%</div>
+                </div>
+            </div>
+            <div class="cus_result_detail">
+                <div id="cus_result_all_char">總打字元數 </div>
+                <div id="cus_result_time_used">總耗時 </div>
+                <div id="cus_result_correct">正確字元數 </div>
+                <div id="cus_result_false">錯誤字元數 </div>
+                <div id="cus_result_deleted_time">修正次數 </div>
+                <div id="cus_result_highest_wpm">瞬時最高CPM </div>
+            </div>
+            <p class="cus_result_note">自訂模式的成績不會進排行榜、不計入成就／積分</p>
+            <div class="cus_action_row">
+                <button class="cus_btn" onclick="CUS_Restart()">再打一次</button>
+                <button class="cus_btn" id="cus_result_share_btn" onclick="CUS_Share_Result()">分享成績卡</button>
+                <button class="cus_btn cus_btn_ghost" onclick="CUS_Back_To_Setup()">回大廳</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 標點符號輸入指法說明視窗 ===== -->
+    <div class="cm_window is_hidden" id="cus_punct_modal_overlay">
+        <div class="cm_panel">
+            <div class="cm_header_sub">輸入小技巧</div>
+            <div class="cm_header_title">標點符號怎麼打？</div>
+
+            <div class="cus_punct_content">
+                <div class="cus_punct_content_title">各種符號輸入的指法：</div><br>
+
+                <span class="cus_punct_item_name">引號「」</span> <br>
+                • Windows：Ctrl + [ + ↓選擇，就會直接彈出選字清單。（持續按住 Ctrl，點一下 [ 之後使用方向鍵調整至需要的符號）<br>
+                • Mac：直接按下鍵盤右上角的符號即可打出<br><br>
+
+                <span class="cus_punct_item_name">頓號、</span> <br>
+                • Windows：Ctrl + '（' 為上引號，在 Enter 鍵左邊）。<br>
+                • Mac：直接按下鍵盤右上角的符號即可打出<br><br>
+
+                <span class="cus_punct_item_name">冒號：</span> <br>
+                • Windows：Ctrl + shift + ;（; 為注音ㄤ的按鍵）<br>
+                • Mac：shift + ;<br><br>
+
+                <span class="cus_punct_item_name">問號？</span> <br>
+                • Windows：Ctrl + shift + /（/ 為注音ㄥ的按鍵）<br>
+                • Mac：shift + /<br><br>
+
+                <span class="cus_punct_item_name">驚嘆號！</span> <br>
+                • Windows：Ctrl + shift + 1（1 為注音ㄅ的按鍵）<br>
+                • Mac：shift + 1<br><br>
+
+                <span class="cus_punct_item_name">逗號，</span> <br>
+                • Windows：Ctrl + ,（, 為注音ㄝ的按鍵）<br>
+                • Mac：shift + ,<br><br>
+
+                <span class="cus_punct_item_name">句號。</span> <br>
+                • Windows：Ctrl + .（. 為注音ㄡ的按鍵）<br>
+                • Mac：shift + .<br><br>
+            </div>
+
+            <div class="cus_action_row">
+                <button class="cus_btn" id="cus_punct_modal_close">關閉</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+    <script src="TCTC2-0-firebase.js?v=3"></script>
+    <!-- 帳號系統：nav 上的帳號按鈕跟登入/註冊彈窗（純粹是全站共用的 nav 功能，
+         自訂模式本身完全不會呼叫任何寫入 Firebase 的函式） -->
+    <script src="TCTC2-0-auth_ui.js"></script>
+    <!-- 全站共用：在線時長追蹤 -->
+    <script src="TCTC2-0-online_time.js"></script>
+    <!-- 成就系統：只是讓這一頁也能跳「其他模式賺到的成就」通知，自訂模式本身不會產生任何成就進度 -->
+    <script src="TCTC2-0-achv_data.js"></script>
+    <script src="TCTC2-0-achv_notify.js"></script>
+    <!-- 打字音效／分享成績卡：共用模組 -->
+    <script src="TCTC2-0-typing_sound.js"></script>
+    <script src="TCTC2-0-share_card.js"></script>
+
+    <script src="TCTC2-0-custom.js"></script>
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="070df494-4361-4dce-ad65-a25b404811e9"></script>
+</body>
+</html>

@@ -14,15 +14,38 @@ if (!firebase.apps.length) {
 }
 const tctc_db = firebase.database()
 
-/* ============================================================
-   【新增】匿名登入
-   ============================================================ */
+
+let _tctc_auth_ready_resolve
+const _tctc_auth_ready_promise = new Promise(function (resolve) {
+    _tctc_auth_ready_resolve = resolve
+})
 if (typeof firebase.auth === "function") {
-    firebase.auth().signInAnonymously().catch(function (error) {
-        console.log("[auth] 匿名登入失敗：", error)
+    firebase.auth().onAuthStateChanged(function (user) {
+        if (user) {
+            if (_tctc_auth_ready_resolve) {
+                _tctc_auth_ready_resolve(user)
+                _tctc_auth_ready_resolve = null
+            }
+            return
+        }
+
+        // 現在真的沒有人登入，補一次匿名登入，讓訪客也有 auth.uid 可用
+        if (_tctc_auth_ready_resolve) {
+            firebase.auth().signInAnonymously().catch(function (error) {
+                console.log("[auth] 匿名登入失敗：", error)
+                // 失敗也要 resolve（用 null），避免 Wait_For_Auth_Ready 卡死等不到結果
+                if (_tctc_auth_ready_resolve) {
+                    _tctc_auth_ready_resolve(null)
+                    _tctc_auth_ready_resolve = null
+                }
+            })
+        }
     })
 } else {
     console.log("[auth] 尚未載入 firebase-auth-compat.js，這個頁面沒辦法匿名登入")
+}
+function Wait_For_Auth_Ready(callback) {
+    _tctc_auth_ready_promise.then(function (user) { callback(user) })
 }
 
 /* ------------------------------------------------------------
@@ -109,15 +132,6 @@ function Get_Player_Display_Name(callback) {
     })
 }
 
-/* ------------------------------------------------------------
-   自訂名字：格式規則 + 全站不能重複
-   ------------------------------------------------------------
-   格式規則（純字串檢查，不需要連 Firebase）：
-   - 不可為空白
-   - 第一個字不可以是空格（檢查「原始輸入」、不是 trim 過的值，
-     不然開頭空格會被靜靜吃掉，玩家不會知道自己違反規則）
-   - 不可超過 13 個字元
-   ------------------------------------------------------------ */
 function Validate_Username_Format(raw_name) {
     if (!raw_name || raw_name.length === 0) {
         return { valid: false, reason: "名字不可為空白" }
@@ -622,10 +636,15 @@ function Sync_Stage_Completion(stageId){
 }
 
 // ===== 【新增】累積打字字數（榮譽牆「累積字數」成就用）=====
-// 算的是「這次打對的字數」（跟結果畫面「正確字數」同一個數字），不算錯字，
-// 避免玩家亂打灌數字。呼叫時機比照 Sync_Player_Stats：只有「這次成績有
-// 算進排行榜/平均值」的情況下才呼叫（主線模式看 counts_for_leaderboard，
-// 挑戰模式看 cg_meets_points_threshold），跟其他統計欄位採計標準一致。
+// 算的是「這次真正打出來的中文字數」——不是每個模式都跟結果畫面上顯示的
+// 「正確字數」同一個數字：直接輸入模式（IME）兩者相同；逐字注音模式的
+// 「正確字數」其實是按鍵次數（一個字要按 2～4 次鍵），呼叫端
+// （game.html 的 Compute_Real_Char_Count()）已經先換算成真正字數才傳進來，
+// 這裡收到的一律當作「真正字數」處理，不用再另外判斷模式。
+// 只算打對的字，不算錯字，避免玩家亂打灌數字。呼叫時機比照 Sync_Player_Stats：
+// 只有「這次成績有算進排行榜/平均值」的情況下才呼叫（主線模式看
+// counts_for_leaderboard，挑戰模式看 cg_meets_points_threshold），跟其他統計
+// 欄位採計標準一致。
 // 用 transaction() 累加。Rules 沒辦法驗證「這次加的量剛好等於玩家真的打對
 // 幾個字」（那需要額外一個欄位把這次的量也公開寫出來給 Rules 讀，等於給
 // 玩家看到怎麼繞過），所以退而求其次：Rules 只擋「新值必須比舊值大，且
@@ -1431,6 +1450,70 @@ function Get_Public_Player_Profile(anon_id, callback) {
 }
 
 /* ============================================================
+   【新增】幫其他玩家按讚
+   ------------------------------------------------------------
+   player_likes/{target_anon_id}/{liker_anon_id} = true —— 誰讚過誰的紀錄，
+   同時拿來做「一人限一次」的判斷：這個節點的安全規則設計成一旦寫入就不能
+   覆寫或刪除（見 database.rules.json 的對應片段），所以按過一次之後，
+   不管是同一個分頁重複點擊、還是直接用開發者工具打 API，都無法對同一個
+   對象再按第二次讚，也沒辦法收回讚。
+
+   player_stats/{target_anon_id}/like_count 是給列表/頁面快速顯示用的
+   衍生計數器，寫法比照教室人數計數器（CLS_Adjust_Student_Count）：
+   用 transaction 累加，失敗只 console.warn、不中斷主要流程——這是
+   「盡力而為」的展示用數字，真正誰讚過誰的原始資料以 player_likes 為準，
+   就算計數器意外對不上，之後也能用同樣的自我修正邏輯重新算過。
+
+   跟這個網站其他所有 anon_id 相關的寫入一樣，這裡沒有、也沒辦法用
+   Firebase Auth 去驗證「$likerId 真的是打這支 API 的那個人」——訪客
+   身分本來就是自己存在 localStorage 的 anon_id，不是登入身分。多一層
+   保護的意義在於擋掉「不小心」的重複點擊跟最基本的重放，不是防止蓄意
+   繞過的作弊者，這點跟本站其他 Sync_* 函式的信任層級是一致的。
+   ============================================================ */
+function Get_Own_Like_Status(target_anon_id, callback) {
+    const anon_id = Get_Anon_Id()
+    if (!target_anon_id || target_anon_id === anon_id) {
+        callback(false)
+        return
+    }
+
+    tctc_db.ref(`player_likes/${target_anon_id}/${anon_id}`)
+        .once("value")
+        .then(function (snapshot) {
+            callback(snapshot.val() === true)
+        })
+        .catch(function (error) {
+            console.warn("[like] 讀取按讚狀態失敗：", error.message)
+            callback(false)
+        })
+}
+
+function Like_Player(target_anon_id, callback) {
+    const anon_id = Get_Anon_Id()
+    if (!target_anon_id || target_anon_id === anon_id) {
+        callback(false)   // 不能讚自己
+        return
+    }
+
+    tctc_db.ref(`player_likes/${target_anon_id}/${anon_id}`)
+        .set(true)
+        .then(function () {
+            tctc_db.ref(`player_stats/${target_anon_id}/like_count`).transaction(function (current) {
+                return (current || 0) + 1
+            }).catch(function (error) {
+                console.warn("[like] 更新讚數計數器失敗：", error.message)
+            })
+            callback(true)
+        })
+        .catch(function (error) {
+            // 最常見的失敗原因：已經對這個人按過讚了（規則擋下重複寫入），
+            // 不當成例外處理，呼叫端會依 callback(false) 顯示「已經讚過了」
+            console.warn("[like] 按讚失敗（可能是已經讚過了）：", error.message)
+            callback(false)
+        })
+}
+
+/* ============================================================
    【新增】刪除這個瀏覽器（anon_id）在雲端留下的所有資料
    ------------------------------------------------------------
    刻意「不」刪除的東西：
@@ -1919,14 +2002,7 @@ function Logout_Account(callback) {
     })
 }
 
-/* ------------------------------------------------------------
-   【新增】登出並清除這台裝置的訪客紀錄（給共用電腦用）
-   ------------------------------------------------------------
-   跟上面一般的 Logout_Account 差在：不管這台裝置有沒有備份的訪客資料，
-   一律【丟棄】那筆備份、配一組全新的 anon_id，不會「復活」成登入前的
-   訪客進度。雲端那份舊訪客資料本身不會被刪除（跟 Delete_All_Player_Data
-   是兩回事），只是這台裝置不會再有任何本機記錄指向它。
-   ------------------------------------------------------------ */
+
 function Logout_And_Clear_Guest_Backup(callback) {
     firebase.auth().signOut().then(function () {
         localStorage.removeItem(AUTH_ACCOUNT_UID_KEY)

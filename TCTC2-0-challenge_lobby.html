@@ -105,20 +105,28 @@
             .cg_difficulty_selector{ flex-wrap: wrap; }
             .cg_difficulty_card{ min-width: 45%; }
         }
+        /* 窄螢幕：跟 main_lobby.css 讓 wpm/acc 讓出空間給名稱的斷點對齊，
+           積分欄位也一起縮，三個數字才不會把名稱擠到換行 */
+        @media (max-width: 46rem){
+            .cg_profileblock_points{ width: 3rem; }
+        }
 
-        /* ===== 【新增】積分欄位（放在 wpm / 正確率 更左邊）===== */
+        
         .cg_profileblock_points{
-            position: absolute;
-            top: 25%;
-            right: 21%;
-
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
+            gap: 0.2rem;
 
+            flex-shrink: 0;
             width: 4rem;
-            height: 4.5rem;
+
+            order: 2;   /* 排在名稱右邊、正確率/WPM 左邊 */
         }
+        
+        .main_lobby_main_frame_profileblock_acc{ order: 3; }
+        .main_lobby_main_frame_profileblock_wpm{ order: 4; }
 
         /* ===== 【新增】時間長度按鈕旁的積分標示 ===== */
         .cg_chapter_points{
@@ -154,6 +162,18 @@
         }
         .cg_stage_group .chapter_frame:last-child{
             margin-bottom: 0;
+        }
+        /* ===== 【修正】選中的時間按鈕，積分數字跟其他按鈕對不齊 =====
+           main_lobby.css 的 .chapter_selected 會把選中的那一列寬度變成
+           103%（讓選中狀態的背景色/上框線稍微「溢出」一點，是原本設計給
+           沒有「積分」欄位的舊版章節清單用的視覺效果）。但這一列同時是
+           flex 容器，積分數字（.cg_chapter_points）是靠 margin-left:auto
+           貼齊右邊界——列一變寬 3%，右邊界跟著往右移，選中那一列的積分
+           數字就會比其他未選中列的積分數字更往右一點，一整排看起來歪一邊。
+           只在這個頁面的時間選單裡把寬度蓋回 100%，不動 main_lobby.css
+           本身（那邊的章節選單沒有積分欄位，不會有這個問題，不需要跟著改）。 */
+        #minute_list .chapter_selected{
+            width: 100%;
         }
 
         /* ===== 【調整】進步曲線區塊：放在 challenge_stage_container 裡、關卡卡片「上方」=====
@@ -208,6 +228,7 @@
                     <div class="nav_dropdown_panel">
                         <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-main.html'">主線模式</div>
                         <div class="nav_dropdown_item nav_dropdown_item_active" onclick="window.location.href='TCTC2-0-challenge_lobby.html'">挑戰模式</div>
+                        <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-custom.html'">自訂模式</div>
                     </div>
                 </div>
             </div>
@@ -217,7 +238,8 @@
                     <div class="nav_dropdown_panel">
                         <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-ranking.html'">排行榜</div>
                         <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-profile.html'">設定</div>
-                        <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-achievements.html'">個人榮譽獎</div>
+                        <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-achievements.html'">個人榮譽牆</div>
+                        <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-classroom.html'">我的教室</div>
                     </div>
                 </div>
             </div>

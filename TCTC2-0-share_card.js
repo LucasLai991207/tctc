@@ -41,34 +41,20 @@
 const SHARE_CARD_WIDTH = 960
 const SHARE_CARD_AVATAR_KEY = "tctc2.0-profile_avatar"   // 跟 avatar_display.js 用同一把 key，讀同一份頭像資料
 
-// ===== 【新增】細項表格的排版參數 =====
-// 卡片高度不再是寫死的常數，而是依 details 筆數動態算出來（見 _Compute_Share_Card_Height），
-// 這些參數就是算式裡用到的版面座標，改版面時只要調這裡就好，不用去 Generate_Result_Share_Card 裡到處找魔術數字。
-// 【修正】原本兩欄排版，細項一多（例如挑戰模式全部塞進去有 10 幾筆）卡片會被拉得非常高，
-// 縮圖到彈窗裡還是巨大一張，改成三欄排版讓同樣筆數的細項只需要三分之二的高度，
-// 從根本減少「圖片爆大」的問題，而不是只靠彈窗那邊硬縮。
+
 const SHARE_CARD_DETAILS_TOP_Y   = 490   // 細項表格第一列的文字 baseline y 座標
 const SHARE_CARD_DETAILS_ROW_H   = 38    // 每一列的高度（三欄共用同一列高）
 const SHARE_CARD_DETAILS_COLS    = 3     // 細項表格欄數
 const SHARE_CARD_DETAILS_COL_X   = [50, 370, 690]   // 三欄各自的起始 x 座標
 const SHARE_CARD_BOTTOM_PADDING  = 55    // 細項表格畫完之後，底部網址那一行還需要留的空間
 
-// ===== 私有工具：依 details 筆數，算出這張卡片總共需要多高 =====
-// 三欄排版，所以列數 = 無條件進位(details 筆數 / 3)。
-// Generate_Result_Share_Card 一定會自動補一筆「測驗時間」，所以這裡至少會收到 1 筆，
-// details_count <= 0 這個分支只是防呆（例如未來有人直接呼叫這個工具函式做別的用途）。
+
 function _Compute_Share_Card_Height(details_count){
     if(details_count <= 0) return 500
     const rows = Math.ceil(details_count / SHARE_CARD_DETAILS_COLS)
     return SHARE_CARD_DETAILS_TOP_Y + (rows * SHARE_CARD_DETAILS_ROW_H) + SHARE_CARD_BOTTOM_PADDING
 }
 
-// ===== 私有工具：非同步載入玩家頭像圖片（如果有設定過的話）=====
-// 回傳一個 Promise<HTMLImageElement | null>：
-//   - 玩家有頭像 → resolve 一個已經載入完成、可以直接 drawImage() 的 <img>
-//   - 玩家沒頭像，或頭像資料本身壞掉讀不出來 → resolve null，呼叫端據此決定跳過畫頭像那一步
-// 之所以特別包成 Promise，是因為 <img>.onload 本身是非同步事件，
-// 一定要等圖片真的載入完成才能拿去 drawImage()，不然畫出來的東西可能是空的。
 function _Load_Share_Card_Avatar(){
     return new Promise(function(resolve){
         const data_url = localStorage.getItem(SHARE_CARD_AVATAR_KEY)
@@ -83,35 +69,26 @@ function _Load_Share_Card_Avatar(){
     })
 }
 
-// ===== 核心：畫出成績卡，回傳 Promise<string>（data URL，PNG 格式）=====
-// 拆成 async function 是因為「載入玩家頭像」跟「確保網頁字體真的載入完成」都是非同步的，
-// 要等這兩件事都做完才能開始畫字/畫圖，不然畫出來的東西可能字體跑掉、或頭像沒疊上去。
+
 async function Generate_Result_Share_Card(options){
     const wpm = options.wpm ?? 0
     const acc = options.acc ?? 0
     const label = options.label ?? ""
     const sub_label = options.sub_label ?? ""
 
-    // ===== 【新增】細項數據：呼叫端傳什麼就畫什麼，這個模組不管內容是什麼意思 =====
-    // 額外自動補一筆「測驗時間」在最後面，讓分享出去的圖片看得出來是什麼時候打的成績，
-    // 不用每個呼叫端都自己重複塞一次同樣的邏輯。
     const now = new Date()
     const pad2 = function(n){ return String(n).padStart(2, "0") }
     const played_at = `${now.getFullYear()}/${pad2(now.getMonth() + 1)}/${pad2(now.getDate())} ${pad2(now.getHours())}:${pad2(now.getMinutes())}`
     const all_details = (options.details || []).concat([{ label: "測驗時間", value: played_at }])
 
-    // ---- 建立畫布：不用真的插進 DOM，純粹當繪圖工具用，畫完直接讀取結果就好 ----
-    // 高度依細項筆數動態算出來，細項越多卡片自動越長，不會被舊版固定尺寸擠爆或裁切掉
+
     const canvas = document.createElement("canvas")
     canvas.width = SHARE_CARD_WIDTH
     canvas.height = _Compute_Share_Card_Height(all_details.length)
     const ctx = canvas.getContext("2d")
     const card_height = canvas.height
 
-    // ---- 確保網頁字體（Noto Serif TC）真的載入完成 ----
-    // document.fonts.ready 是瀏覽器原生 API，回傳一個 Promise，
-    // 「目前頁面上用到的字體都載入完成」時才會 resolve；
-    // 沒等這個就直接畫字，Canvas 有可能還在用瀏覽器預設字體，畫出來的字型會跟網站不一致。
+
     if(document.fonts && document.fonts.ready){
         await document.fonts.ready
     }
@@ -133,41 +110,13 @@ async function Generate_Result_Share_Card(options){
 
     // ===== 標題區（左上角）=====
     ctx.textBaseline = "alphabetic"   // Canvas 文字預設的基準線，明確寫出來避免不同瀏覽器預設值不一致
-    ctx.fillStyle = "#c9a84c"
-    ctx.font = "bold 38px 'Noto Serif TC', sans-serif"
-    ctx.fillText("TCTC 繁中打字中心", 50, 80)
+    ctx.fillStyle = "#fff"
+    ctx.font = "bold 40px 'Noto Serif TC', sans-serif"
+    ctx.fillText("TCTC 繁體中文打字中心", 50, 80)
 
     ctx.fillStyle = "rgba(255,255,255,0.5)"
     ctx.font = "16px 'Noto Serif TC', sans-serif"
     ctx.fillText("TRADITIONAL CHINESE TYPING CENTER", 50, 105)
-
-    // ===== 頭像（右上角，圓形）=====
-    // 只有玩家設定過頭像才畫這一塊；沒有的話這個 if 整段跳過，不留空位、不畫預設剪影
-    if(avatar_img){
-        const avatar_size = 110
-        const avatar_x = SHARE_CARD_WIDTH - avatar_size - 50
-        const avatar_y = 45
-        const avatar_center_x = avatar_x + avatar_size / 2
-        const avatar_center_y = avatar_y + avatar_size / 2
-
-        // ---- 用 ctx.clip() 把接下來的繪圖範圍裁成一個圓形 ----
-        // save()/restore() 是一組的：save() 把目前的繪圖狀態（含 clip 範圍）存起來，
-        // 之後 restore() 一叫，clip 範圍就會還原，不會連累後面畫的其他東西也被裁切成圓形。
-        ctx.save()
-        ctx.beginPath()
-        ctx.arc(avatar_center_x, avatar_center_y, avatar_size / 2, 0, Math.PI * 2)
-        ctx.closePath()
-        ctx.clip()
-        ctx.drawImage(avatar_img, avatar_x, avatar_y, avatar_size, avatar_size)
-        ctx.restore()   // 還原 clip 範圍，避免下面畫的東西也被裁成圓形
-
-        // ---- 頭像外面再描一圈金色框，跟網站上 .profile_avatar_preview 的視覺風格一致 ----
-        ctx.strokeStyle = "#c9a84c"
-        ctx.lineWidth = 2
-        ctx.beginPath()
-        ctx.arc(avatar_center_x, avatar_center_y, avatar_size / 2, 0, Math.PI * 2)
-        ctx.stroke()
-    }
 
     // ===== 關卡 / 模式名稱 =====
     if(sub_label){
