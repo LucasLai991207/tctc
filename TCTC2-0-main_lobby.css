@@ -30,7 +30,15 @@
 /* main block */
 
 .main_lobby_main_frame_mainblock{
-    width: 45vw;
+    /* ===== 【修正】原本 width:45vw 是獨立算「螢幕寬度」的百分比，完全不知道
+       旁邊 .main_lobby_main_frame_map_selector（章節欄）實際佔了多少空間。
+       螢幕越寬，旁邊章節欄的 min-width:20vw 也跟著長大（沒有上限），
+       flex 版面被迫把空間讓給章節欄，關卡這欄反而被壓縮、顯得沒在變寬。
+       改用 flex:1 讓這一欄「吃掉章節欄用剩的所有空間」，兩欄的比例才會
+       穩定跟著容器（.main_lobby_main_frame_row，上限 900px）走，
+       不會各自對著 viewport 打自己的算盤。 ===== */
+    flex: 1 1 auto;
+    min-width: 0;   /* flex item 預設 min-width:auto 會被內容撐開，歸零讓 flex:1 的縮放邏輯正常生效 */
     max-width: 60rem;
 
     margin-top: 20px;
@@ -456,8 +464,18 @@
 
     position: relative;
 
-    min-width: 20vw;
-    /* max-width: 230px; */
+    /* ===== 【修正】原本是 min-width:20vw，沒有上限，螢幕越寬這個「最小寬度」
+       就越大——這是章節欄一直變寬、把空間從關卡欄搶走的根本原因。
+       原本下面還留著一行被註解掉的 max-width:230px，但就算恢復那一行也治
+       不好：CSS 規則本身規定「min-width 圓 max-width 衝突時 min-width 贏」，
+       所以只要螢幕寬到讓 20vw 超過 230px（大約 1150px 寬以上，一般桌機都會
+       超過），max-width 早就形同虛設。改用 clamp(下限, 理想值, 上限) 才能真
+       的同時保住「不會小於 170px」跟「不會大於 230px」這兩個邊界，中間
+       20vw 那段才會照原本的意圖，隨螢幕小範圍微調。
+       flex-shrink:0 讓這欄的寬度完全交給 clamp() 決定，不會被 flex 演算法
+       另外再壓縮——章節欄穩定不動，關卡欄（flex:1）才能穩定吃掉剩下的空間。 ===== */
+    width: clamp(170px, 20vw, 230px);
+    flex-shrink: 0;
     align-self: stretch;
 
     margin-top: 20px;
@@ -1028,6 +1046,8 @@
 
     color: black;
     font-size: 1.1rem;
+
+    transition: all 200ms ease-in-out;
 }
 
 .nav_dropdown_arrow {

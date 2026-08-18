@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>我的教室 - TCTC 繁體中文打字練習中心</title>
+    <meta name="description" content="老師建立教室、學生加入教室，一起追蹤打字練習進度。">
+    <meta name="robots" content="noindex, nofollow">
+
+    <meta name="google-site-verification" content="fHfTpW9ouqdLEFGEQhLvwelT1xdZ7Sxmi-iKBHY7S_8" />
+
+    <link rel="icon" href="favicon-32x32.png" type="image/png" sizes="32x32">
+
+    <meta property="og:image" content="https://lucaslai991207.github.io/tctc/os_image.png">
+    <meta property="og:title" content="TCTC 繁體中文打字中心 - 我的教室">
+
+    <link rel="stylesheet" href="TCTC2-0-intro_lobby.css">
+    <link rel="stylesheet" href="TCTC2-0-main_lobby.css">
+    <link rel="stylesheet" href="TCTC2-0-ranking.css">
+    <link rel="stylesheet" href="TCTC2-0-classroom.css">
+    <link rel="stylesheet" href="TCTC2-0-auth_ui.css">
+    <!-- 【新增】班級任務彈窗通知沿用全站成就通知的樣式，跟 achievements.html 一致 -->
+    <link rel="stylesheet" href="TCTC2-0-achv_notify.css">
+    <script src="TCTC2-0-theme.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@200;300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav id="nav">
+        <img src="TCTC2.0 logo.png" class="logo_style" onclick="window.location.href='TCTC2-0-main.html'">
+        <div class="nav_css">
+            <div onclick="window.location.href='TCTC2-0-details.html'">常見問題</div>
+            <div class="nav_dropdown">
+                模式 <span class="nav_dropdown_arrow">≡</span>
+                <div class="nav_dropdown_menu">
+                    <div class="nav_dropdown_panel">
+                        <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-main.html'">主線模式</div>
+                        <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-challenge_lobby.html'">挑戰模式</div>
+                        <!-- 【新增】自訂模式入口 -->
+                        <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-custom.html'">自訂模式</div>
+                    </div>
+                </div>
+            </div>
+            <div class="nav_dropdown">
+                更多 <span class="nav_dropdown_arrow">≡</span>
+                <div class="nav_dropdown_menu">
+                    <div class="nav_dropdown_panel">
+                        <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-ranking.html'">排行榜</div>
+                        <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-profile.html'">設定</div>
+                        <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-achievements.html'">個人榮譽牆</div>
+                        <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-classroom.html'">我的教室</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="cls_main_style">
+        <section class="cls_first_section">
+            <div class="main_lobby_main_frame">
+                <div class="main_lobby_back_to_intro_button" onclick="window.history.back()">
+                    <img src="back_pointer_gold.png" alt="返回">
+                </div>
+            </div>
+
+            <div class="cls_container">
+                <div class="cls_header">
+                    <h1 class="cls_page_title">我的教室</h1>
+                </div>
+
+                <!-- ===== 載入中 ===== -->
+                <div id="cls_loading" class="cls_status_card">
+                    <p class="cls_status_text">載入中...</p>
+                </div>
+
+                <!-- ===== 【新增】未登入提示 =====
+                     不管是想加入教室（學生）還是建立教室（老師），都需要先登入正式帳號——
+                     訪客的匿名身份換瀏覽器/清資料就會消失，加入紀錄留在老師名單上會變成
+                     一堆找不到真人的「幽靈學生」，所以這裡直接擋下來，不給任何輸入欄位。 -->
+                <div id="cls_login_required" class="is_hidden cls_status_card">
+                    <p class="cls_status_title">請先登入才能使用教室功能</p>
+                    <p class="cls_status_text">不管你是想「加入」還是「建立」教室，都需要先登入正式帳號（不能用訪客身份），這樣你的教室紀錄才不會因為換瀏覽器或清除資料而消失。請先到右上角登入或註冊，完成後重新整理這個頁面即可。</p>
+                </div>
+
+                <!-- ===== 【新增】老師視角：教室列表（根目錄，一師多室）=====
+                     老師登入這個頁面永遠先看到這裡，列出自己開的所有教室，
+                     點「管理」才進到下面的單一教室儀表板。 -->
+                <div id="cls_teacher_list" class="is_hidden">
+                    <div class="cls_card">
+                        <p class="cls_card_title">
+                            我的教室
+                            <span class="cls_student_count" id="cls_list_count">0 間教室</span>
+                        </p>
+                        <div class="cls_list_grid" id="cls_list_grid"></div>
+                        <p class="cls_empty_text is_hidden" id="cls_list_empty">尚未建立任何教室，在下面建立第一間吧！</p>
+                    </div>
+
+                    <div class="cls_card">
+                        <p class="cls_card_title">建立新教室</p>
+                        <p class="cls_info_hint">建立後會拿到一組邀請代碼，分享給學生即可。可以同時開好幾間教室分開管理（例如不同班級），方便辦班際比賽時分開統計。</p>
+                        <div class="cls_form_row">
+                            <input type="text" id="cls_create_name_input" class="cls_input" maxlength="40" placeholder="例如：ＸＸ國小三年一班">
+                            <button type="button" class="cls_primary_btn" id="cls_create_btn">建立教室</button>
+                        </div>
+                        <p class="cls_form_msg" id="cls_create_msg"></p>
+                    </div>
+                </div>
+
+                <!-- ===== 老師視角：單一教室管理儀表板 ===== -->
+                <div id="cls_teacher_dashboard" class="is_hidden">
+                    <span class="cls_back_btn" id="cls_back_to_list_btn">← 返回我的教室列表</span>
+
+                    <div class="cls_card">
+                        <p class="cls_card_title">教室資訊</p>
+                        <div class="cls_info_row">
+                            <span class="cls_info_label">教室名稱</span>
+                            <span class="cls_info_value" id="cls_classroom_name">—</span>
+                        </div>
+                        <div class="cls_info_row">
+                            <span class="cls_info_label">邀請代碼</span>
+                            <span class="cls_join_code_display">
+                                <span class="cls_info_value cls_join_code_text" id="cls_join_code">------</span>
+                                <button type="button" class="cls_copy_btn" id="cls_copy_code_btn">複製</button>
+                            </span>
+                        </div>
+                        <p class="cls_info_hint">把邀請代碼給學生，請他們到這個頁面輸入代碼即可加入。</p>
+
+                        <!-- ===== 【新增】解散教室 ===== -->
+                        <button type="button" class="cls_danger_btn" id="cls_dissolve_btn">解散這間教室</button>
+                    </div>
+
+                    <!-- ===== 【新增】班級戰績：方便老師拿來辦班際比賽 ===== -->
+                    <div class="cls_card">
+                        <p class="cls_card_title">班級統計</p>
+                        <div class="cls_stats_grid" id="cls_stats_grid"></div>
+                    </div>
+
+                    <!-- ===== 【新增】班級任務：老師指派任務，追蹤全班/個人完成度 =====
+                         「指派新任務」按鈕放在標題列右側，跟「學生名單」標題列右側放
+                         人數徽章是同一種排版邏輯（.cls_card_title 本來就是 flex 兩端對齊），
+                         這裡右邊換成一顆可以點的按鈕而已。 -->
+                    <div class="cls_card">
+                        <p class="cls_card_title">
+                            班級任務
+                            <button type="button" class="cls_primary_btn cls_task_new_btn" id="cls_new_task_btn">指派新任務</button>
+                        </p>
+
+                        <!-- 新增任務表單：預設隱藏，點「指派新任務」才展開 -->
+                        <div class="cls_task_form is_hidden" id="cls_task_form">
+                            <label class="cls_field_label">任務標題</label>
+                            <input type="text" id="cls_task_title_input" class="cls_input" maxlength="40" placeholder="例如：累積打字挑戰">
+
+                            <div class="cls_task_form_row">
+                                <div>
+                                    <label class="cls_field_label">追蹤指標</label>
+                                    <select id="cls_task_metric_select" class="cls_input">
+                                        <option value="total_chars_typed">累積打字字數</option>
+                                        <option value="xp">累積 XP</option>
+                                        <option value="stage_completion_percent">關卡完成度(%)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="cls_field_label">目標型態</label>
+                                    <select id="cls_task_goal_select" class="cls_input">
+                                        <option value="individual">個人目標（每人各自達標）</option>
+                                        <option value="collective">班級共同目標（全班加總）</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="cls_task_form_row">
+                                <div>
+                                    <label class="cls_field_label">目標數值</label>
+                                    <input type="number" id="cls_task_target_input" class="cls_input" min="1" placeholder="例如：10000">
+                                </div>
+                                <div>
+                                    <label class="cls_field_label">截止日期</label>
+                                    <input type="date" id="cls_task_deadline_input" class="cls_input">
+                                </div>
+                            </div>
+
+                            <div class="cls_task_form_actions">
+                                <button type="button" class="cls_primary_btn" id="cls_task_submit_btn">建立任務</button>
+                                <button type="button" class="cls_secondary_btn" id="cls_task_cancel_btn">取消</button>
+                            </div>
+                            <p class="cls_form_msg" id="cls_task_form_msg"></p>
+                        </div>
+
+                        <div id="cls_task_list"></div>
+                    </div>
+
+                    <div class="cls_card">
+                        <p class="cls_card_title">
+                            學生名單
+                            <span class="cls_student_count" id="cls_student_count">0 位學生</span>
+                        </p>
+                        <div class="cls_table_scroll">
+                            <div class="cls_row cls_row_head">
+                                <span>名字</span>
+                                <span>等級</span>
+                                <span>WPM</span>
+                                <span>正確率</span>
+                                <span>關卡完成度</span>
+                                <span>操作</span>
+                            </div>
+                            <div id="cls_student_list"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== 學生視角：已加入某間教室 =====
+                     【修改】多一行「授課老師」，並在下面加入班級任務清單卡片
+                     （老師出的任務 + 我的貢獻進度條），離開教室按鈕維持在最下面。 -->
+                <div id="cls_student_status" class="is_hidden cls_status_card">
+                    <p class="cls_status_title">你目前在教室：<span id="cls_my_classroom_name">—</span></p>
+                    <p class="cls_status_text">授課老師：<span id="cls_my_teacher_name">—</span></p>
+
+                    <div id="cls_my_task_list" class="cls_task_list_student"></div>
+
+                    <button type="button" class="cls_danger_btn" id="cls_leave_btn">離開這間教室</button>
+                </div>
+
+
+                <!-- ===== 【修改】已登入、但還沒開過教室也還沒加入教室：讓他自己選「加入」還是「建立」=====
+                     這個面板現在只有已經登入正式帳號的人看得到（未登入的人會被導去上面的
+                     cls_login_required），所以這裡不需要再顯示登入提示，直接給兩個真正
+                     可以操作的入口即可：加入教室（學生）／建立我的第一間教室（老師）。 -->
+                <div id="cls_join_create_panel" class="is_hidden">
+                    <div class="cls_card">
+                        <p class="cls_card_title">加入教室</p>
+                        <p class="cls_info_hint">輸入老師給你的 6 碼邀請代碼。</p>
+                        <div class="cls_form_row">
+                            <input type="text" id="cls_join_code_input" class="cls_input" maxlength="6" placeholder="例如：AB3F9K">
+                            <button type="button" class="cls_primary_btn" id="cls_join_btn">加入</button>
+                        </div>
+                        <p class="cls_form_msg" id="cls_join_msg"></p>
+                    </div>
+
+                    <div class="cls_card">
+                        <p class="cls_card_title">你是老師嗎？</p>
+                        <p class="cls_info_hint">想建立與管理教室的話，點下面的按鈕開始，之後可以同時開好幾間教室分開管理。</p>
+                        <button type="button" class="cls_primary_btn" id="cls_goto_create_btn">建立我的第一間教室</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="intro_footer">
+        <div class="footer_div">
+            <div class="footer_col">
+                <p class="footer_col_title">回報問題</p>
+                <a class="footer_link" href="https://forms.gle/xJcvq3AZ4PeNd3eq5" target="_blank" rel="noopener">遇到Bug？點我回報</a>
+            </div>
+            <div class="footer_col">
+                <p class="footer_col_title">聯絡我們</p>
+                <a class="footer_link" href="mailto:tctc.official.tw@gmail.com">✉ tctc.official.tw@gmail.com</a>
+            </div>
+            <div class="footer_col">
+                <p class="footer_col_title">平台連結</p>
+                <a class="footer_link" href="https://www.youtube.com/channel/UCIA5fwMrvGpvcQbG0ZX2ZLA" target="_blank" rel="noopener">Youtube</a>
+            </div>
+        </div>
+
+        <div class="footer_copyright">
+            &copy; 2026 TCTC2.0 繁中打字中心. All Rights Reserved.
+        </div>
+    </footer>
+
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+    <script src="TCTC2-0-firebase.js?v=4"></script>
+    <script src="TCTC2-0-auth_ui.js"></script>
+
+    <script src="TCTC2-0-online_time.js"></script>
+
+    <script src="TCTC2-0-level_data.js"></script>
+    <script src="TCTC2-0-xp_data.js"></script>
+    <script src="TCTC2-0-achv_data.js"></script>
+    <!-- 【新增】班級任務彈窗通知借用這支檔案的通知容器/彈窗渲染邏輯，
+         務必放在 classroom.js 之前載入 -->
+    <script src="TCTC2-0-achv_notify.js"></script>
+
+    <script src="TCTC2-0-classroom.js?v=3"></script>
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="070df494-4361-4dce-ad65-a25b404811e9"></script>
+</body>
+</html>

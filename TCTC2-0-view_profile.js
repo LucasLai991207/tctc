@@ -1,17 +1,4 @@
-/* ============================================================
-   TCTC2-0-view_profile.js
-   排行榜點名字進來的「唯讀公開個人資料頁」
 
-   進入方式：TCTC2-0-view_profile.html?id={anon_id}，id 是被查看那個
-   玩家的 anon_id（見 TCTC2-0-ranking.js 的 Get_Player_Name_Link_HTML）。
-
-   隱私規則（跟 TCTC2-0-firebase.js 的 Get_Public_Player_Profile 對應）：
-   - 對方把 player_stats/{anon_id}/hide_profile_view 設成 true：
-     不管讀到多少資料，這裡一律只顯示「未公開」，不渲染任何統計/成就。
-   - id 剛好是自己：略過隱私檢查，永遠看得到（用 Get_Own_Player_Stats，
-     不是 Get_Public_Player_Profile），並顯示一條「這是你自己的預覽」提示條，
-     這樣玩家調整開關前後都能親自確認畫面長怎樣。
-   ============================================================ */
 
 // ===== 讀取網址上的 ?id= 參數 =====
 function VP_Get_Target_Anon_Id(){
@@ -136,6 +123,64 @@ function VP_Render_Achievements(streakData, statsData){
 // ===== 主渲染：把整包 player_stats 原始資料畫成頁面內容 =====
 // raw：player_stats/{anon_id} 的原始節點內容（Get_Public_Player_Profile 或
 // Get_Own_Player_Stats 回傳的物件）。is_self 用來決定要不要顯示提示條。
+/* ------------------------------------------------------------
+   ===== 【新增】按讚按鈕邏輯 =====
+   跟 VP_Render_Profile 分開寫成獨立函式，單純是不想讓那支已經很長的
+   函式再變得更長——邏輯上完全是 VP_Render_Profile 的一部分，只在那裡
+   被呼叫一次，不是給其他頁面共用的通用工具。
+   ------------------------------------------------------------ */
+function VP_Init_Like_Button(raw, is_self){
+    const btnEl = document.getElementById("vp_like_btn")
+    if(!btnEl) return
+
+    if(is_self){
+        btnEl.classList.add("is_hidden")
+        return
+    }
+
+    const target_id = VP_Get_Target_Anon_Id()
+    const iconEl = document.getElementById("vp_like_icon")
+    const countEl = document.getElementById("vp_like_count")
+
+    btnEl.classList.remove("is_hidden")
+    if(countEl) countEl.textContent = raw.like_count || 0
+
+    function Set_Liked_Visual(){
+        btnEl.classList.add("vp_like_btn_liked")
+        btnEl.disabled = true
+        if(iconEl) iconEl.textContent = "♥"
+    }
+
+    if(typeof Get_Own_Like_Status !== "function" || typeof Like_Player !== "function"){
+        // 找不到這兩個函式代表沒載入到新版 firebase.js，按鈕先關掉比顯示一顆
+        // 按了沒反應的死按鈕誠實
+        btnEl.classList.add("is_hidden")
+        return
+    }
+
+    // 先問過「我是不是已經讚過這個人」，已經讚過就直接顯示已讚狀態，
+    // 不用等玩家點下去才發現自己讚過了
+    Get_Own_Like_Status(target_id, function(already_liked){
+        if(already_liked) Set_Liked_Visual()
+    })
+
+    btnEl.addEventListener("click", function(){
+        if(btnEl.disabled) return
+        btnEl.disabled = true   // 送出去之前先鎖住，避免手滑連點兩次同時發出兩個請求
+
+        Like_Player(target_id, function(success){
+            if(success){
+                Set_Liked_Visual()
+                if(countEl) countEl.textContent = (raw.like_count || 0) + 1
+            } else {
+                // 失敗最常見的原因是「已經讚過了」（規則擋下重複寫入）——
+                // 直接當作已讚處理，不用另外跳錯誤訊息
+                Set_Liked_Visual()
+            }
+        })
+    })
+}
+
 function VP_Render_Profile(raw, is_self){
     raw = raw || {}
 
@@ -168,6 +213,14 @@ function VP_Render_Profile(raw, is_self){
             levelSlotEl.innerHTML = ""
         }
     }
+
+    // ===== 【新增】按讚按鈕 =====
+    // 看自己的預覽頁：不顯示按鈕（不能讚自己，顯示了也點不出東西）。
+    // 看別人：讚數直接沿用 raw.like_count（Get_Public_Player_Profile／
+    // Get_Own_Player_Stats 本來就會把整個 player_stats 節點帶回來，不用
+    // 為了這顆數字多發一次請求），是否「已經讚過」則需要另外問一次
+    // player_likes/{target}/{我的 anon_id}，這筆資料不在 player_stats 底下。
+    VP_Init_Like_Button(raw, is_self)
 
     // ===== 【新增】XP 進度條 =====
     // XP_Get_Level_Progress() 定義在 TCTC2-0-xp_data.js，回傳

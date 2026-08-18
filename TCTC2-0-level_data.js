@@ -1736,7 +1736,7 @@ function render_stage(difficulty, chapter){             //渲染關卡
             html += `
                 <div class="main_lobby_stage_limit">
                     <span class="main_lobby_stage_limit_chip">最低 ${stage.wpm_min} WPM</span>
-                    <span class="main_lobby_stage_limit_chip">🎯 正確率 ${stage.acc_min}%</span>
+                    <span class="main_lobby_stage_limit_chip">正確率 ${stage.acc_min}%</span>
                 </div>
                 `
         }

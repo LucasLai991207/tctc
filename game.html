@@ -1134,6 +1134,8 @@
                     <div class="nav_dropdown_panel">
                         <div class="nav_dropdown_item nav_dropdown_item_active" onclick="window.location.href='TCTC2-0-main.html'">主線模式</div>
                         <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-challenge_lobby.html'">挑戰模式</div>
+                        <!-- 【新增】自訂模式入口 -->
+                        <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-custom.html'">自訂模式</div>
                     </div>
                 </div>
             </div>
@@ -1143,7 +1145,9 @@
                     <div class="nav_dropdown_panel">
                         <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-ranking.html'">排行榜</div>
                         <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-profile.html'">設定</div>
-                        <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-achievements.html'">個人榮譽獎</div>
+                        <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-achievements.html'">個人榮譽牆</div>
+                        <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-classroom.html'">我的教室</div>
+
                     </div>
                 </div>
             </div>
@@ -2399,6 +2403,35 @@
             // 逐字注音模式：target_get 是每個按鍵按對就 +1，
             // 所以這裡直接用 target 字串長度（已經包含注音、聲調、空白、Enter符號）
             return (stage.target || "").length
+        }
+
+        /* ============================================================
+           【新增】把 target_get 換算成「真正的中文字數」，給累積打字字數
+           （成就系統／班級任務／未來任何跟「打了幾個字」有關的統計）使用。
+           ------------------------------------------------------------
+           - 直接輸入模式（IME）：target_get 本來就是逐字比對出來的「真正
+             打對字數」，不用轉換，原封不動回傳。
+           - 逐字注音模式：target_get 是「按鍵次數」——注音符號、聲調、
+             標點符號、空白鍵都各自算一次按鍵，一個中文字平均要按 2～4 次
+             鍵才能組成（聲母＋韻母＋聲調），標點/空白通常各自只佔 1 個按鍵。
+             這裡統一用「每 3 個按鍵換算成 1 個字」，跟上面 ShowResult()
+             算 WPM 本來就用的同一個比例一致（wpm 那裡也是先除以 3），
+             不是另外發明一套新標準。
+           - 用 Math.floor（無條件捨去）而不是四捨五入或無條件進位：
+             要「湊滿 3 個按鍵」才真正算進 1 個字，只打了 1、2 個按鍵、
+             還沒湊滿 3 個的零頭這次不計入——這樣才符合「三個才算一個字」
+             的字面意思（湊不滿 3 個，就還不算數），而不是「打了就多少
+             算一點」的無條件進位/四捨五入，那樣還是會出現「打 1 個按鍵
+             卻拿到 0.33 個字」的灌水空間。
+           ------------------------------------------------------------
+           注意：這裡刻意只影響「送去雲端累加」的數字，不影響結果畫面上
+           顯示的「正確字數」（那個維持原本 target_get，代表「這次按對
+           幾次鍵」，是關卡內的即時回饋，跟「career 累積打了幾個字」是
+           兩件不同的事，沒有必要綁在一起）。
+           ============================================================ */
+        function Compute_Real_Char_Count(target_get, stage){
+            if(Is_Box_Input_Stage(stage)) return target_get
+            return Math.floor(target_get / 3)
         }
 
         // ===== 【新增】用目標 wpm 換算出這一關要倒數幾秒 =====
@@ -4078,10 +4111,13 @@
                 if(typeof Sync_Player_Stats === "function"){
                     Sync_Player_Stats(wpm, acc)
                 }
-                // 【新增】累積字數成就：跟 Sync_Player_Stats 用同一個門檻
-                // （counts_for_leaderboard），累加這次打對的字數
+                // 【修正】累積字數成就／班級任務：跟 Sync_Player_Stats 用同一個門檻
+                // （counts_for_leaderboard），累加這次「真正打出來的中文字數」——
+                // 原本直接傳 target_get，在逐字注音模式下那其實是「按鍵次數」
+                // （一個字要按 2～4 次鍵），會把累積字數灌水成實際的 2～4 倍。
+                // 改用 Compute_Real_Char_Count() 統一換算成真正字數再送出。
                 if(typeof Sync_Chars_Typed === "function"){
-                    Sync_Chars_Typed(target_get)
+                    Sync_Chars_Typed(Compute_Real_Char_Count(target_get, stage))
                 }
                 // 【新增】主線模式每完成一次算數的測驗，給固定的 XP_CONFIG.actions.stage_clear。
                 // 首次破關的額外獎勵已經在 firebase.js 的 Sync_Stage_Completion() 裡發過了，
