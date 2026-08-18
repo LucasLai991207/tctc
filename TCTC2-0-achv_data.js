@@ -28,21 +28,21 @@ const ACHV_CATEGORIES = [
         titleIcon: ACHV_ICON_FLAME,
         achievements: [
             {
-                key: "login_streak", name: "連續登入", icon: ACHV_ICON_FLAME,
+                key: "login_streak", name: "連續登入 - 連續沒中斷的登入天數", icon: ACHV_ICON_FLAME,
                 dataSource: "streak", metric: "longest_streak",
                 thresholds: [3, 7, 14, 30],
                 condition: (t) => `連續登入達 ${t} 天`,
                 format: (v) => `${Math.round(v)} 天`
             },
             {
-                key: "total_days", name: "累積登入", icon: ACHV_ICON_CALENDAR_CHECK,
+                key: "total_days", name: "累積登入 - 所有累積的登入天數", icon: ACHV_ICON_CALENDAR_CHECK,
                 dataSource: "streak", metric: "total_login_days",
                 thresholds: [5, 20, 50, 100],
                 condition: (t) => `累積登入達 ${t} 天`,
                 format: (v) => `${Math.round(v)} 天`
             },
             {
-                key: "comeback", name: "中斷後回歸", icon: ACHV_ICON_COMPASS,
+                key: "comeback", name: "中斷後回歸 - 中斷登入一天以上後回歸", icon: ACHV_ICON_COMPASS,
                 dataSource: "streak", metric: "longest_gap_days",
                 thresholds: [1, 7, 15, 30],
                 condition: (t) => `隔了 ${t} 天後回來`,
@@ -56,28 +56,28 @@ const ACHV_CATEGORIES = [
         titleIcon: ACHV_ICON_PULSE,
         achievements: [
             {
-                key: "page_views", name: "瀏覽次數", icon: ACHV_ICON_EYE,
+                key: "page_views", name: "瀏覽次數 - 總頁面刷新次數", icon: ACHV_ICON_EYE,
                 dataSource: "stats", metric: "page_views",
                 thresholds: [100, 500, 1000, 2500],
                 condition: (t) => `網站瀏覽次數累積達 ${t.toLocaleString("zh-TW")} 次`,
                 format: (v) => `${Math.round(v).toLocaleString("zh-TW")} 次`
             },
             {
-                key: "online_time", name: "遊玩時長", icon: ACHV_ICON_CLOCK,
+                key: "online_time", name: "遊玩時長 - 累積總在線時長", icon: ACHV_ICON_CLOCK,
                 dataSource: "stats", metric: "online_seconds",
                 thresholds: [1800, 3600, 10800, 36000],
                 condition: (t) => `累積在線時長達到 ${ACHV_Format_Duration(t)}`,
                 format: (v) => ACHV_Format_Duration(v)
             },
             {
-                key: "total_points", name: "積分累積", icon: ACHV_ICON_STAR,
+                key: "total_points", name: "積分累積 - 挑戰模式總積分", icon: ACHV_ICON_STAR,
                 dataSource: "stats", metric: "total_points",
                 thresholds: [50, 200, 600, 1500],
                 condition: (t) => `挑戰模式累積積分達到 ${t.toLocaleString("zh-TW")} 分`,
                 format: (v) => `${Math.round(v).toLocaleString("zh-TW")} 分`
             },
             {
-                key: "popularity", name: "人氣王", icon: ACHV_ICON_HEART,
+                key: "popularity", name: "人氣王 - 獲得其他玩家讚數", icon: ACHV_ICON_HEART,
                 dataSource: "stats", metric: "like_count",
                 thresholds: [1, 10, 25, 67],
                 condition: (t) => `獲得其他玩家的讚達到 ${t} 個`,
@@ -91,7 +91,7 @@ const ACHV_CATEGORIES = [
         titleIcon: ACHV_ICON_KEYBOARD,
         achievements: [
             {
-                key: "total_chars", name: "累積字數", icon: ACHV_ICON_KEYBOARD,
+                key: "total_chars", name: "累積字數 - 玩家打出的總「文字」數量累積", icon: ACHV_ICON_KEYBOARD,
                 dataSource: "stats", metric: "total_chars_typed",
                 thresholds: [1000, 10000, 50000, 200000],
                 condition: (t) => `累積輸入 ${t.toLocaleString("zh-TW")} 字`,
@@ -112,7 +112,7 @@ const ACHV_CATEGORIES = [
         titleIcon: ACHV_ICON_FLAG,
         achievements: [
             {
-                key: "easy_completion", name: "初級完成度", icon: ACHV_ICON_BOOK,
+                key: "easy_completion", name: "初級完成度 - 主線模式初級關卡的完成百分比", icon: ACHV_ICON_BOOK,
                 dataSource: "stats", requiresLevelData: true,
                 certificateLevel: "easy",   // 【新增】滿級（100%）時，榮譽牆會多顯示一個列印證書的連結
                 getValue: (data) => {
@@ -125,7 +125,7 @@ const ACHV_CATEGORIES = [
                 format: (v) => `${Math.round(v)}%`
             },
             {
-                key: "medium_completion", name: "中級完成度", icon: ACHV_ICON_KEYBOARD,
+                key: "medium_completion", name: "中級完成度 - 主線模式中級關卡的完成百分比", icon: ACHV_ICON_KEYBOARD,
                 dataSource: "stats", requiresLevelData: true,
                 certificateLevel: "medium",   // 【新增】同上，中級也有證書；高級刻意不加──能打完的人太少，做了也沒什麼人用得到
                 getValue: (data) => {
@@ -138,7 +138,7 @@ const ACHV_CATEGORIES = [
                 format: (v) => `${Math.round(v)}%`
             },
             {
-                key: "hard_completion", name: "高級完成度", icon: ACHV_ICON_SPEED,
+                key: "hard_completion", name: "高級完成度 - 主線模式高級關卡的完成百分比", icon: ACHV_ICON_SPEED,
                 dataSource: "stats", requiresLevelData: true,
                 getValue: (data) => {
                     const total = ACHV_Get_Total_Stage_Count("hard")
@@ -150,7 +150,7 @@ const ACHV_CATEGORIES = [
                 format: (v) => `${Math.round(v)}%`
             },
             {
-                key: "total_completion", name: "總關卡完成度", icon: ACHV_ICON_FLAG,
+                key: "total_completion", name: "總關卡完成度 - 主線模式所有關卡的完成百分比", icon: ACHV_ICON_FLAG,
                 dataSource: "stats", requiresLevelData: true,
                 getValue: (data) => {
                     const totalStages = ACHV_Get_Total_Stage_Count("easy") + ACHV_Get_Total_Stage_Count("medium") + ACHV_Get_Total_Stage_Count("hard")
@@ -169,14 +169,14 @@ const ACHV_CATEGORIES = [
         titleIcon: ACHV_ICON_SPEED,
         achievements: [
             {
-                key: "wpm", name: "挑戰模式 WPM 達標", icon: ACHV_ICON_SPEED,
+                key: "wpm", name: "挑戰模式 WPM 達標 - 挑戰模式WPM達到特定數值", icon: ACHV_ICON_SPEED,
                 dataSource: "stats", metric: "best_challenge_wpm",
                 thresholds: [20, 50, 100, 180],
                 condition: (t) => `挑戰模式單次 WPM 達到 ${t}`,
                 format: (v) => `${Math.round(v)} WPM`
             },
             {
-                key: "wpm_streak", name: "連續維持高速", icon: ACHV_ICON_TRENDING_UP,
+                key: "wpm_streak", name: "連續維持高速 - 挑戰模式連續7場都達到特定速度", icon: ACHV_ICON_TRENDING_UP,
                 dataSource: "stats", metric: "high_wpm_streak",
                 thresholds: [35, 70, 100, 150],
                 condition: (t) => `挑戰模式連續 7 場 WPM 都達到 ${t} 以上`,
@@ -190,21 +190,21 @@ const ACHV_CATEGORIES = [
         titleIcon: ACHV_ICON_TARGET,
         achievements: [
             {
-                key: "acc", name: "挑戰模式單次正確率達標", icon: ACHV_ICON_TARGET,
+                key: "acc", name: "挑戰模式超級精準 - 挑戰模式單次達到特定正確率", icon: ACHV_ICON_TARGET,
                 dataSource: "stats", metric: "best_challenge_acc",
                 thresholds: [90, 95, 98, 100],
                 condition: (t) => `挑戰模式單次正確率達到 ${t}%`,
                 format: (v) => `${Math.round(v * 10) / 10}%`
             },
             {
-                key: "perfect", name: "挑戰模式滿分次數", icon: ACHV_ICON_CHECK_CIRCLE,
+                key: "perfect", name: "挑戰模式極致精準 - 挑戰模式單次正確率達到100%次數", icon: ACHV_ICON_CHECK_CIRCLE,
                 dataSource: "stats", metric: "perfect_challenge_count",
                 thresholds: [1, 3, 5, 10],
                 condition: (t) => `挑戰模式單次正確率達到 100% 共 ${t} 次`,
                 format: (v) => `${Math.round(v)} 次`
             },
             {
-                key: "acc_streak", name: "連續高準確率", icon: ACHV_ICON_SHIELD,
+                key: "acc_streak", name: "連續高準確率 - 挑戰模式單次正確率達到90%以上次數", icon: ACHV_ICON_SHIELD,
                 dataSource: "stats", metric: "high_acc_challenge_streak",
                 thresholds: [3, 5, 10, 30],
                 condition: (t) => `挑戰模式連續 ${t} 次正確率達到 90% 以上`,
@@ -212,7 +212,6 @@ const ACHV_CATEGORIES = [
             }
         ]
     }
-    // 「特殊」分類先擱置，見 achievements.html 的佔位區塊
 ]
 
 // ===== 秒數轉人類可讀時長 =====
