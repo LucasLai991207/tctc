@@ -620,7 +620,7 @@ function Render_Player_Leaderboard(list) {
             metric2_text = "—"
         } else if (player_metric === "achievements_unlocked") {
             // 【新增】解鎖成就數量榜：跟 page_views 一樣沒有適合搭配顯示的第二欄
-            metric1_text = `${entry.achievements_unlocked ?? 0} 項`
+            metric1_text = `${entry.achievements_unlocked ?? 0} 等`
             metric2_text = "—"
         }
 
@@ -817,7 +817,7 @@ function Switch_Player_Metric(metric) {
         stage_label_el2.style.display = "block"
 
         stage_label_el.textContent = "玩家總榜｜解鎖成就數量最多"
-        stage_label_el2.textContent = "採計標準：不限測驗次數，統計個人榮譽牆目前累積解鎖的成就總數（銅/銀/金/白金各算一項），需造訪過榮譽牆頁面才會同步最新數字"
+        stage_label_el2.textContent = "採計標準：統計個人榮譽牆目前累積解鎖的成就等級（銅/銀/金/白金各算一等）"
         col_header_metric1_el.textContent = "解鎖成就"
         col_header_metric2_el.textContent = ""
     } else {

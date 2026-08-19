@@ -238,15 +238,6 @@ document.addEventListener("DOMContentLoaded", function(){
             Sync_Achievements_Unlocked(overview.unlocked)
         }
 
-        // ===== 【新增】用這次已經抓好的 streak + stats 資料，順便跑一次成就通知比對 =====
-        // 這裡刻意「重複利用」剛剛渲染畫面用的同一份 results，不再另外發一次
-        // Firebase 請求。之所以在榮譽牆頁面也要跑這個比對（而不是只靠其他頁面
-        // 的即時觸發），是因為榮譽牆頁面同時具備「Level_Data + streak + stats」
-        // 三種資料來源，是全站唯一一個「關卡完成度」分類成就能被正確計算與
-        // 建立 baseline 的頁面之一（另一個是 game.html / main.html / profile.html，
-        // 這幾個頁面也都有載入 level_data.js）。ACHV_Notify_Diff() 定義在
-        // TCTC2-0-achv_notify.js，這裡用 typeof 保護，避免忘記載入該檔案時
-        // 直接噴錯、拖累整個榮譽牆頁面渲染失敗。
         if(typeof ACHV_Notify_Diff === "function"){
             ACHV_Notify_Diff(results[0], results[1]).forEach(function(item){
                 if(typeof ACHV_Notify_Show_Toast === "function") ACHV_Notify_Show_Toast(item)

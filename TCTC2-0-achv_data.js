@@ -42,7 +42,7 @@ const ACHV_CATEGORIES = [
                 format: (v) => `${Math.round(v)} 天`
             },
             {
-                key: "comeback", name: "中斷後回歸 - 中斷登入一天以上後回歸", icon: ACHV_ICON_COMPASS,
+                key: "comeback", name: "中斷後回歸 - 中斷登入特定天數以上後回歸", icon: ACHV_ICON_COMPASS,
                 dataSource: "streak", metric: "longest_gap_days",
                 thresholds: [1, 7, 15, 30],
                 condition: (t) => `隔了 ${t} 天後回來`,
@@ -77,7 +77,7 @@ const ACHV_CATEGORIES = [
                 format: (v) => `${Math.round(v).toLocaleString("zh-TW")} 分`
             },
             {
-                key: "popularity", name: "人氣王 - 獲得其他玩家讚數", icon: ACHV_ICON_HEART,
+                key: "popularity", name: "人氣王 - 獲得其他玩家讚數達特定數值", icon: ACHV_ICON_HEART,
                 dataSource: "stats", metric: "like_count",
                 thresholds: [1, 10, 25, 67],
                 condition: (t) => `獲得其他玩家的讚達到 ${t} 個`,
@@ -214,7 +214,6 @@ const ACHV_CATEGORIES = [
     }
 ]
 
-// ===== 秒數轉人類可讀時長 =====
 function ACHV_Format_Duration(totalSeconds){
     const seconds = Math.max(0, Math.round(totalSeconds || 0))
     const minutes = Math.floor(seconds / 60)
