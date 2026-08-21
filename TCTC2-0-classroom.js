@@ -39,7 +39,7 @@
            avg_wpm, avg_acc, online_seconds, total_points,
            total_chars_typed, achievements_unlocked, joined_at }
          【新增】xp、total_chars_typed：給「班級戰績」卡片加總用
-         （總XP、總打字數、班級之星）。
+         （總XP、總中文字數、班級之星）。
 
    player_stats/{anon_id}/classroom_id : classroom_id （這台裝置目前
        加入的教室，v2 一樣是單一值，學生仍然限定同時只能加入一間）
@@ -259,6 +259,10 @@ function CLS_Build_Student_Summary(stats){
         online_seconds: stats.online_seconds || 0,
         total_points: stats.total_points || 0,
         total_chars_typed: stats.total_chars_typed || 0,
+        // 【新增】給「累積注音數（含空白、符號）」這個新的任務指標讀取現在值用，
+        // 跟 total_chars_typed 並列、互不覆蓋，寫入端見 firebase.js 的
+        // Sync_Zhuyin_Keys_Typed
+        total_zhuyin_keys_typed: stats.total_zhuyin_keys_typed || 0,
         achievements_unlocked: stats.achievements_unlocked || 0,
         joined_at: firebase.database.ServerValue.TIMESTAMP
     }
@@ -596,7 +600,11 @@ function CLS_Compute_Completion_Percent(student){
    classroom_tasks/{classroom_id}/{task_id}
        meta: { title, metric, goal_type, target_value, deadline,
                created_at, created_by }
-           metric     : "total_chars_typed" | "xp" | "stage_completion_percent"
+           metric     : "total_chars_typed" | "total_zhuyin_keys_typed" | "xp" | "stage_completion_percent"
+               【新增】total_zhuyin_keys_typed：跟 total_chars_typed 是完全獨立的
+               兩個欄位，分別對應「累積中文字數」與「累積注音數（含空白、符號）」，
+               寫入端見 firebase.js 的 Sync_Chars_Typed / Sync_Zhuyin_Keys_Typed，
+               不會互相影響、互相覆蓋。
            goal_type  : "individual"（每人各自要達標）| "collective"（全班加總）
            deadline   : 毫秒時間戳（那天 23:59:59）
        baselines/{anon_id} : number
@@ -613,7 +621,11 @@ function CLS_Compute_Completion_Percent(student){
    ------------------------------------------------------------ */
 
 const CLS_TASK_METRIC_LABELS = {
-    total_chars_typed: "累積打字字數",
+    total_chars_typed: "累積中文字數",
+    // 【新增】跟 total_chars_typed 是兩個獨立欄位（見 firebase.js 的
+    // Sync_Zhuyin_Keys_Typed），只會被逐字注音模式的關卡累加，直接輸入
+    // （IME）模式不會動到這個數字
+    total_zhuyin_keys_typed: "累積注音數（含空白、符號）",
     xp: "累積 XP",
     stage_completion_percent: "關卡完成度"
 }

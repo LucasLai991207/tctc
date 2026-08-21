@@ -1134,8 +1134,6 @@
                     <div class="nav_dropdown_panel">
                         <div class="nav_dropdown_item nav_dropdown_item_active" onclick="window.location.href='TCTC2-0-main.html'">主線模式</div>
                         <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-challenge_lobby.html'">挑戰模式</div>
-                        <!-- 【新增】自訂模式入口 -->
-                        <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-custom.html'">自訂模式</div>
                     </div>
                 </div>
             </div>
@@ -1485,6 +1483,10 @@
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
     <script src="TCTC2-0-firebase.js?v=3"></script>
+    <!-- 【新增】常見錯字統計的本機暫存佇列，Check_Text_Input_Match / Time_Up
+         裡的 Queue_Char_Mistakes()、ShowResult() 裡的 Sync_Char_Mistakes()
+         都需要這支檔案 -->
+    <script src="TCTC2-0-mistake_track.js"></script>
     <!-- 【新增】帳號系統：nav 上的帳號按鈕跟登入/註冊彈窗 -->
     <script src="TCTC2-0-auth_ui.js"></script>
     <!-- 【新增】在線時長追蹤（全站共用，每個頁面都要載入） -->
@@ -2516,11 +2518,19 @@
                     const target_text = Clean_Target1_For_Typing(stage.target1).trim()
                     const typed_text = input_el.value
                     let correct_count = 0
+                    // 【新增】常見錯字統計：時間到強制結算，也要跟正常打完一樣收集
+                    // 這次「目標字元對不上」的字元，不要因為是超時結束就漏掉這批資料
+                    const mistake_chars = []
                     const compare_len = Math.min(typed_text.length, target_text.length)
                     for(let i = 0; i < compare_len; i++){
-                        if(typed_text[i] === target_text[i]) correct_count++
+                        if(typed_text[i] === target_text[i]){
+                            correct_count++
+                        } else {
+                            mistake_chars.push(target_text[i])
+                        }
                     }
                     target_get = correct_count
+                    if(typeof Queue_Char_Mistakes === "function") Queue_Char_Mistakes(mistake_chars)
                 }
                 // 直接輸入模式要鎖住 input，避免玩家在結果畫面跳出的瞬間還打字
                 input_el.disabled = true
@@ -2849,9 +2859,17 @@
 
                 // 逐字比對，算出「真正」打對幾個字、打錯幾個字
                 let correct_count = 0
+                // 【新增】常見錯字統計：跟正確字數用同一個迴圈順手收集「目標字元
+                // 對不上」的字元，不用另外再跑一次比對——見 TCTC2-0-mistake_track.js
+                const mistake_chars = []
                 for(let i = 0; i < target_text.length; i++){
-                    if(typed_text[i] === target_text[i]) correct_count++
+                    if(typed_text[i] === target_text[i]){
+                        correct_count++
+                    } else {
+                        mistake_chars.push(target_text[i])
+                    }
                 }
+                if(typeof Queue_Char_Mistakes === "function") Queue_Char_Mistakes(mistake_chars)
 
                 // 正確字數：用來算 WPM，也顯示在結果畫面的「正確字數」欄位
                 target_get = correct_count
@@ -4007,6 +4025,10 @@
 
             Stop_Timer() // 關卡結束，停止右上角計時器
 
+            // 【新增】常見錯字統計：不管這次有沒有過關都同步，因為打錯的字
+            // 才是這個功能真正想蒐集的資料，不應該只採計「過關」的測驗
+            if(typeof Sync_Char_Mistakes === "function") Sync_Char_Mistakes()
+
             const stage = FindStage(stageId)
             console.log(stage)
 
@@ -4091,6 +4113,28 @@
             // 只上傳「有實際計入平均值」的關卡類型，跟上面採計平均wpm的條件一致，
             // 避免隨便重打、還沒過關的嘗試也塞進排行榜。
             const counts_for_leaderboard = (stage.name === "章節驗收" || stage.name === "精熟度測試" || stage.type === "基礎輸入" || stage.type === "速度挑戰" || stage.type === "綜合練習") && (!Is_Box_Input_Stage(stage) || stage_is_passed)
+
+            /* ============================================================
+               【新增】累積字數／累積注音數的獨立採計門檻（counts_for_accumulation）
+               ------------------------------------------------------------
+               為什麼不直接沿用 counts_for_leaderboard：
+               那個門檻只認「章節驗收／精熟度測試」這兩個名稱、或「基礎輸入／
+               速度挑戰／綜合練習」這三種 type，主線初級模式裡佔絕大多數的
+               一般「注音練習」型個別關卡完全不在這份白名單裡。結果是老師在
+               班級任務出「累積 3000 字」，學生打再多初級模式的練習關卡，
+               數字永遠不會動——因為連字數同步都沒被觸發過，不是任務系統
+               本身算錯，是上游根本沒把這些關卡的字數送上雲端。
+
+               新門檻改成：只要「不是純教學說明關卡」且「這次真的打出東西」
+               （target_get > 0）就採計，直接輸入模式（IME）維持原本
+               「要過關才算」的保護（避免半途放棄的輸入也被計入），跟
+               counts_for_leaderboard 原本對 IME 類型的處理邏輯一致，
+               只是拿掉了「一定要是驗收/基礎輸入/速度挑戰/綜合練習」這條
+               名稱／type 白名單限制。
+               ============================================================ */
+            const is_pure_tutorial_stage = (stage.type === "基本介紹" || stage.id === "1-9-1" || stage.id === "2-1-0")
+            const counts_for_accumulation = !is_pure_tutorial_stage && target_get > 0 && (!Is_Box_Input_Stage(stage) || stage_is_passed)
+
             if(counts_for_leaderboard){
                 // ===== 【新增】把算出 wpm/acc 的原始數字一起存起來，跟挑戰模式那邊做法一致，
                 // 方便之後把整包排行榜資料匯出做異常分析（不是即時擋作弊，是事後稽核用）。
@@ -4111,14 +4155,6 @@
                 if(typeof Sync_Player_Stats === "function"){
                     Sync_Player_Stats(wpm, acc)
                 }
-                // 【修正】累積字數成就／班級任務：跟 Sync_Player_Stats 用同一個門檻
-                // （counts_for_leaderboard），累加這次「真正打出來的中文字數」——
-                // 原本直接傳 target_get，在逐字注音模式下那其實是「按鍵次數」
-                // （一個字要按 2～4 次鍵），會把累積字數灌水成實際的 2～4 倍。
-                // 改用 Compute_Real_Char_Count() 統一換算成真正字數再送出。
-                if(typeof Sync_Chars_Typed === "function"){
-                    Sync_Chars_Typed(Compute_Real_Char_Count(target_get, stage))
-                }
                 // 【新增】主線模式每完成一次算數的測驗，給固定的 XP_CONFIG.actions.stage_clear。
                 // 首次破關的額外獎勵已經在 firebase.js 的 Sync_Stage_Completion() 裡發過了，
                 // 這裡發的是「每次都給」的那一份，兩者互不重複、互不取代。
@@ -4126,6 +4162,30 @@
                     Sync_XP(XP_CONFIG.actions.stage_clear)
                 }
             }
+
+            // 【修改】累積字數／累積注音數：改成獨立於 counts_for_leaderboard 之外，
+            // 用上面新增的 counts_for_accumulation 判斷，讓主線初級模式的個別練習
+            // 關卡也能被算進去，詳細原因見 counts_for_accumulation 那段註解。
+            if(counts_for_accumulation){
+                // ===== 累積中文字數：直接輸入模式（IME）的 target_get 本來就是真正字數；
+                // 逐字注音模式用 Compute_Real_Char_Count() 換算成真正字數（按鍵次數 / 3），
+                // 避免把按鍵次數直接當字數，灌水成實際的 2～4 倍。=====
+                if(typeof Sync_Chars_Typed === "function"){
+                    Sync_Chars_Typed(Compute_Real_Char_Count(target_get, stage))
+                }
+                // ===== 【新增】累積注音數（含空白、符號）：只有逐字注音模式才有意義——
+                // target_get 在這個模式下本來就是「每個注音符號／聲調／空白鍵／
+                // 標點符號鍵按對一次 +1」的原始按鍵次數（見前面 target_get++ 的比對
+                // 邏輯），不需要另外換算，直接把原始值傳給 Sync_Zhuyin_Keys_Typed。
+                // 直接輸入模式（IME）沒有「按注音鍵」這件事，故意不同步這個欄位，
+                // 讓「累積中文字數」跟「累積注音數」兩個班級任務指標各自獨立、
+                // 互不干擾：中文字數不管哪種輸入模式都會累積，注音數只有逐字
+                // 注音模式才會累積。 =====
+                if(!Is_Box_Input_Stage(stage) && typeof Sync_Zhuyin_Keys_Typed === "function"){
+                    Sync_Zhuyin_Keys_Typed(target_get)
+                }
+            }
+
             // 這關本來就不計分/這次沒過關門檻，排行榜也不會有這次的資料，按鈕就不顯示，
             // 避免玩家點進去看到空的以為壞掉了
             const rank_view_btn = document.getElementById("rank_view_btn")
@@ -4591,15 +4651,12 @@
         })
 
 
-        // 綁定倒數設定彈出視窗的事件（只需要綁一次）
         Bind_Countdown_Modal_Events()
 
-        // 綁定「打不出標點符號？」說明視窗的事件（只需要綁一次）
         Bind_Punct_Modal_Events()
 
-        Build_Live_Keyboard()  // 【新增】頁面載入時建立一次即時反饋鍵盤
+        Build_Live_Keyboard()  
 
-        // nit初始化建畫面＃＃＃
         Init()
     
     </script>
