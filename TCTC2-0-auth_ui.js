@@ -500,4 +500,11 @@
         })
         Refresh_Nav_Account_State()
     })
+
+   
+    window.addEventListener("pageshow", function (event) {
+        if (event.persisted) {
+            Refresh_Nav_Account_State()
+        }
+    })
 })()

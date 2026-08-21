@@ -635,16 +635,20 @@ function Sync_Stage_Completion(stageId){
     })
 }
 
-// ===== 【新增】累積打字字數（榮譽牆「累積字數」成就用）=====
+// ===== 【新增】累積中文字數（榮譽牆「累積字數」成就＋班級任務「累積中文字數」用）=====
 // 算的是「這次真正打出來的中文字數」——不是每個模式都跟結果畫面上顯示的
 // 「正確字數」同一個數字：直接輸入模式（IME）兩者相同；逐字注音模式的
 // 「正確字數」其實是按鍵次數（一個字要按 2～4 次鍵），呼叫端
 // （game.html 的 Compute_Real_Char_Count()）已經先換算成真正字數才傳進來，
 // 這裡收到的一律當作「真正字數」處理，不用再另外判斷模式。
-// 只算打對的字，不算錯字，避免玩家亂打灌數字。呼叫時機比照 Sync_Player_Stats：
-// 只有「這次成績有算進排行榜/平均值」的情況下才呼叫（主線模式看
-// counts_for_leaderboard，挑戰模式看 cg_meets_points_threshold），跟其他統計
-// 欄位採計標準一致。
+// 只算打對的字，不算錯字，避免玩家亂打灌數字。
+// 【修改】呼叫時機原本比照 Sync_Player_Stats（只有 counts_for_leaderboard /
+// cg_meets_points_threshold 為 true 才呼叫），但這個門檻是「排行榜/平均值只
+// 採計正式測驗關卡」的標準，會連帶把主線初級模式裡大量「注音練習」類型的
+// 個別關卡排除在外，導致玩家實際打了很多字，累積字數卻完全不動、班級任務
+// 也追蹤不到。現在改成呼叫端（game.html）用獨立的 counts_for_accumulation
+// 門檻判斷，只要是「真的完成一次有內容的關卡」就採計，不再跟排行榜資格
+// 綁在一起，詳見 game.html 內 counts_for_accumulation 那段註解。
 // 用 transaction() 累加。Rules 沒辦法驗證「這次加的量剛好等於玩家真的打對
 // 幾個字」（那需要額外一個欄位把這次的量也公開寫出來給 Rules 讀，等於給
 // 玩家看到怎麼繞過），所以退而求其次：Rules 只擋「新值必須比舊值大，且
@@ -676,6 +680,39 @@ function Sync_Chars_Typed(charCount){
         }
     }).catch(function(error){
         console.warn("[player_stats] total_chars_typed 同步失敗（很可能是 Firebase Rules 還沒加上這個欄位的規則）：", error.message)
+    })
+}
+
+// ===== 【新增】累積注音數，含空白鍵、標點符號鍵（班級任務「累積注音數」專用）=====
+// 跟上面 Sync_Chars_Typed 是「同一次結算、兩個完全獨立的欄位」，故意不共用
+// player_stats 底下同一個數字，理由是兩者的「單位」本質不同：
+//   - total_chars_typed：真正的中文字數（逐字注音模式已經 /3 換算過）
+//   - total_zhuyin_keys_typed：注音鍵盤上「按對」的原始按鍵次數，
+//     聲母／韻母／聲調／空白鍵（輕聲、詞語間隔）／標點符號鍵全部算，
+//     沒有做任何換算——這正是逐字注音模式底下 target_get 這個變數
+//     本來的意義（見 game.html Init 附近 target_get++ 的比對邏輯），
+//     直接原封不動傳進來就是這個指標要的值。
+// 只有「逐字注音」模式才有意義：直接輸入模式（IME）打字時完全不會
+// 按注音鍵，呼叫端（game.html）本來就只在 !Is_Box_Input_Stage(stage)
+// 時才呼叫這支函式，這裡不用再重複判斷模式，只做基本的參數保護。
+// 【重要】呼叫這支函式時，故意不像 Sync_Chars_Typed 那樣額外發 XP——
+// 同一次結算已經靠 Sync_Chars_Typed 依真正字數發過一次「打字量 XP」了，
+// 如果這裡又依按鍵次數（同一份真實打字量的另一種度量）再發一次，
+// 等於同一次的辛苦被算成兩份 XP，會讓逐字注音模式的玩家不成比例地
+// 領先——這個函式的職責純粹是「給老師的班級任務一個獨立可追蹤的數字」，
+// 不是另一個 XP 來源。
+function Sync_Zhuyin_Keys_Typed(keyCount){
+    if(typeof keyCount !== "number" || isNaN(keyCount) || keyCount <= 0) return Promise.resolve()
+
+    const anon_id = Get_Anon_Id()
+    if(!anon_id) return Promise.resolve()
+
+    const rounded = Math.round(keyCount)
+
+    return tctc_db.ref(`player_stats/${anon_id}/total_zhuyin_keys_typed`).transaction(function(current){
+        return (current || 0) + rounded
+    }).catch(function(error){
+        console.warn("[player_stats] total_zhuyin_keys_typed 同步失敗（很可能是 Firebase Rules 還沒加上這個欄位的規則）：", error.message)
     })
 }
 

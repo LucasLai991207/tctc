@@ -216,10 +216,7 @@
     cursor: pointer;
     transition: all 150ms ease;
 }
-.cls_primary_btn:hover{
-    background-color: transparent;
-    color: var(--champagne-gold);
-}
+
 .cls_primary_btn:disabled{
     opacity: 0.6;
     cursor: default;
@@ -458,16 +455,13 @@
 /* ===== 返回教室列表的小連結 ===== */
 .cls_back_btn{
     display: inline-block;
-    margin-bottom: 1.2rem;
+    margin-bottom: 1.5rem;
 
     color: rgba(var(--text-rgb), 0.55);
-    font-size: 0.82rem;
+    font-size: 1.1rem;
     letter-spacing: 1px;
     cursor: pointer;
     transition: color 150ms ease;
-}
-.cls_back_btn:hover{
-    color: var(--champagne-gold);
 }
 
 /* ===== 【新增】班級戰績：給老師一眼看出全班整體表現，方便班際比賽 =====
@@ -734,10 +728,6 @@
 
     cursor: pointer;
     transition: all 150ms ease;
-}
-.cls_task_detail_toggle_btn:hover{
-    border-color: var(--champagne-gold);
-    color: var(--champagne-gold);
 }
 
 /* ===== 【新增】展開後的「每人進度」明細區塊 =====

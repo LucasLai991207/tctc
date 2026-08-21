@@ -109,7 +109,7 @@
 
                 <!-- ===== 老師視角：單一教室管理儀表板 ===== -->
                 <div id="cls_teacher_dashboard" class="is_hidden">
-                    <span class="cls_back_btn" id="cls_back_to_list_btn">← 返回我的教室列表</span>
+                    <span class="cls_back_btn" id="cls_back_to_list_btn">← 回去教室列表</span>
 
                     <div class="cls_card">
                         <p class="cls_card_title">教室資訊</p>
@@ -155,7 +155,10 @@
                                 <div>
                                     <label class="cls_field_label">追蹤指標</label>
                                     <select id="cls_task_metric_select" class="cls_input">
-                                        <option value="total_chars_typed">累積打字字數</option>
+                                        <option value="total_chars_typed">累積中文字數</option>
+                                        <!-- 【新增】跟「累積中文字數」是兩個獨立指標，各自累加各自的 Firebase 欄位，
+                                             互不干擾：只有玩逐字注音模式（不是直接輸入/IME）才會累積這個數字 -->
+                                        <option value="total_zhuyin_keys_typed">累積注音數（含空白、符號）</option>
                                         <option value="xp">累積 XP</option>
                                         <option value="stage_completion_percent">關卡完成度(%)</option>
                                     </select>
