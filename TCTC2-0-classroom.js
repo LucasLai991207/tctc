@@ -1,68 +1,3 @@
-/* ============================================================
-   TCTC2-0-classroom.js
-   班級教室功能
-
-   ============================================================
-   【架構核心：為什麼要另外開一份「精簡摘要」，不直接讀 player_stats】
-   ============================================================
-   老師開啟教室頁面時，畫面需要「全班每個人」的名字／等級／關卡完成度。
-   如果直接讀每個學生的 player_stats/{anon_id}，會連同大頭貼 Base64、
-   wpm_history、挑戰紀錄……等完全用不到、但體積可能不小的欄位一起下載，
-   讀一次全班 = 頻寬乘以「學生人數 × 每人完整資料大小」，這正是免費版
-   Firebase（每月 10GB 下載流量）最容易被燒掉的地方。
-
-   解法：另外開一個 classroom_students/{classroom_id}/{anon_id} 節點，
-   只存畫面真正會用到的欄位，學生加入教室、或之後重新整理頁面時才會
-   覆寫這份摘要。老師端只需要讀這一份小節點，不管全班幾十人，每次讀取
-   都是「幾十 KB 等級」而不是「幾 MB 等級」。
-
-   ============================================================
-   【資料結構總覽】（v2：一師多室）
-   ============================================================
-   classrooms/{classroom_id}
-       : { name, teacher_uid, join_code, created_at, student_count }
-         【新增】student_count：這間教室目前人數，靠 transaction 增減，
-         給「教室列表」頁用——列表要同時顯示好幾間教室的人數，如果每間
-         都整包下載 classroom_students 才能數人頭，流量會被列表頁吃掉，
-         這個欄位讓列表頁只需要讀 classrooms/{id} 這個輕量節點。
-
-   classroom_codes/{join_code}        : classroom_id （用代碼查教室 id）
-
-   teacher_classrooms/{uid}/{classroom_id} : true
-       【修改】原本是 teacher_classroom/{uid} = classroom_id（單一值，
-       一師一室）。現在改成一個 map，key 是這個老師開的每一間教室 id，
-       value 固定是 true（只是用來「有沒有這個 key」判斷歸屬，不是拿
-       value 本身做事）。一個老師底下可以掛很多間教室。
-
-   classroom_students/{classroom_id}/{anon_id}
-       : { name, level, xp, stages_completed_easy/medium/hard,
-           avg_wpm, avg_acc, online_seconds, total_points,
-           total_chars_typed, achievements_unlocked, joined_at }
-         【新增】xp、total_chars_typed：給「班級戰績」卡片加總用
-         （總XP、總中文字數、班級之星）。
-
-   player_stats/{anon_id}/classroom_id : classroom_id （這台裝置目前
-       加入的教室，v2 一樣是單一值，學生仍然限定同時只能加入一間）
-
-   ============================================================
-   【已知限制，之後想加強再處理】
-   ============================================================
-   摘要只在「加入當下」跟「學生重新打開這個頁面」時同步一次，不會在
-   學生打完一關的當下即時更新。要做到即時，需要在 firebase.js 裡加一段
-   「順便同步教室摘要」的呼叫——這次先不動 firebase.js，避免一次改動
-   牽連太多既有功能，之後穩定了再考慮要不要接上去。
-
-   student_count 是靠 transaction 獨立維護的計數器，跟 classroom_students
-   底下實際的筆數理論上要一致，但如果哪次 update() 寫到一半斷線（例如
-   踢出學生那個 multi-path update 成功、但後面的 count transaction 沒發出
-   去），數字有機率跟真實人數對不上一兩個。這個風險本來就存在於任何
-   「非原子性維護的計數器」設計，先接受這個小誤差，之後如果真的對不上
-   太多，再考慮改成「進儀表板時順便用 classroom_students 的實際筆數校正」。
-   ============================================================ */
-
-// ===== 產生 6 碼邀請代碼 =====
-// 字元表故意排除 0/O/1/I 這幾個容易看錯的符號，畢竟代碼是要給學生用眼睛
-// 抄或用手打的，不是給程式讀的，可讀性比理論上的隨機空間大小更重要
 const CLS_CODE_CHARS = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
 
 function CLS_Generate_Join_Code(){
@@ -73,18 +8,10 @@ function CLS_Generate_Join_Code(){
     return code
 }
 
-// ===== 判斷目前是不是「已登入的正式帳號」（不是訪客的匿名登入）=====
-// 直接吃 Wait_For_Auth_Ready() 給的 user 物件（Firebase Auth 的第一手資料），
-// 不查 localStorage，確保跟 Rules 看到的 auth 永遠是同一份。
 function CLS_Is_Teacher_Eligible(user){
     return !!(user && user.isAnonymous === false)
 }
 
-// ===== 【新增】增減某間教室的人數計數器 =====
-// 用 transaction 而不是直接 .set()，避免「同時有兩個學生加入/離開」
-// 導致其中一次寫入被另一次覆蓋、數字算錯的 race condition。
-// 這是「盡力而為」的計數器，不是關鍵資料（真正的名單以 classroom_students
-// 為準），失敗了也不需要中斷主要操作的 callback，所以這裡不接 callback。
 function CLS_Adjust_Student_Count(classroom_id, delta){
     if(!classroom_id) return
     tctc_db.ref(`classrooms/${classroom_id}/student_count`).transaction(function(current){
@@ -95,16 +22,7 @@ function CLS_Adjust_Student_Count(classroom_id, delta){
     })
 }
 
-/* ------------------------------------------------------------
-   建立教室
-   ------------------------------------------------------------
-   步驟：
-   1. 用 push().key 生一組不會重複的教室 id
-   2. 抽一組 6 碼邀請代碼，用 transaction() 去「卡位」classroom_codes/{code}
-   3. 卡位成功後，寫入教室 metadata，並把這間教室掛進
-      teacher_classrooms/{uid}/{classroom_id}（v2：多室索引，不再覆蓋
-      舊教室，一個老師底下可以同時掛很多間）
-   ------------------------------------------------------------ */
+
 function CLS_Create_Classroom(name, callback){
     if(typeof Wait_For_Auth_Ready !== "function"){
         callback({ error: "write_failed" })
@@ -593,57 +511,21 @@ function CLS_Compute_Completion_Percent(student){
     return totalStages > 0 ? Math.round((completed / totalStages) * 100) : 0
 }
 
-/* ============================================================
-   【新增】班級任務系統
-   ------------------------------------------------------------
-   資料結構：
-   classroom_tasks/{classroom_id}/{task_id}
-       meta: { title, metric, goal_type, target_value, deadline,
-               created_at, created_by }
-           metric     : "total_chars_typed" | "total_zhuyin_keys_typed" | "xp" | "stage_completion_percent"
-               【新增】total_zhuyin_keys_typed：跟 total_chars_typed 是完全獨立的
-               兩個欄位，分別對應「累積中文字數」與「累積注音數（含空白、符號）」，
-               寫入端見 firebase.js 的 Sync_Chars_Typed / Sync_Zhuyin_Keys_Typed，
-               不會互相影響、互相覆蓋。
-           goal_type  : "individual"（每人各自要達標）| "collective"（全班加總）
-           deadline   : 毫秒時間戳（那天 23:59:59）
-       baselines/{anon_id} : number
-           這個學生「第一次被這個任務算到」當下的指標原始值，用來當
-           貢獻度的起跑點——貢獻度 = 現在的值 - baseline，不會把任務
-           出來之前、學生本來就累積的量也算進達標門檻。
-           寫入時機有兩種，寫的人不一樣，但都只會寫一次（Rules 用
-           !data.exists() 擋住覆寫，跟student_count那種「開放寫入但
-           用規則保護」的手法是同一套邏輯）：
-           (a) 老師建立任務當下，幫「當時已經在教室裡」的每個學生各寫一筆
-           (b) 學生任務建立「之後」才加入教室，或任務出來時他人不在線上，
-               之後第一次看到這個任務時，由學生自己的瀏覽器幫自己補一筆
-               （見 CLS_Ensure_My_Task_Baselines）
-   ------------------------------------------------------------ */
-
 const CLS_TASK_METRIC_LABELS = {
     total_chars_typed: "累積中文字數",
-    // 【新增】跟 total_chars_typed 是兩個獨立欄位（見 firebase.js 的
-    // Sync_Zhuyin_Keys_Typed），只會被逐字注音模式的關卡累加，直接輸入
-    // （IME）模式不會動到這個數字
     total_zhuyin_keys_typed: "累積注音數（含空白、符號）",
     xp: "累積 XP",
     stage_completion_percent: "關卡完成度"
 }
 
-// ===== 依指標種類，從一份「學生摘要物件」算出這個指標「現在」的原始數值 =====
-// stage_completion_percent 沒有現成欄位存著，借用上面的 CLS_Compute_Completion_Percent()
-// 現場算——這樣「任務進度看到的百分比」跟「學生名單那條進度條」永遠是同一套公式算出來的，
-// 不會出現兩個地方顯示的關卡完成度對不上的情況。
+
 function CLS_Get_Metric_Value(summary, metric){
     if(!summary) return 0
     if(metric === "stage_completion_percent") return CLS_Compute_Completion_Percent(summary)
     return summary[metric] || 0
 }
 
-// ===== 老師建立任務 =====
-// studentsSnapshot：目前這間教室 classroom_students 的完整內容（老師端本來就
-// 整包下載過一次，直接沿用，不用再多發一次 Firebase 請求），用來幫每個已經
-// 在教室裡的學生，各自算出「這個指標現在的值」當基準值。
+
 function CLS_Create_Task(classroom_id, taskData, studentsSnapshot, callback){
     if(!classroom_id){
         callback({ error: "invalid_target" })
@@ -739,10 +621,6 @@ function CLS_Ensure_My_Task_Baselines(classroom_id, tasks, my_summary, callback)
     })
 }
 
-// ===== 算出「這個學生」在這個任務裡的貢獻度：現在值 - 基準值，最低是 0 =====
-// Math.max(0, ...) 是保險：理論上指標只會越變越大（打字字數、XP、關卡完成度
-// 都是累加型數據，不會倒退），但如果哪天基準值補寫的時機比預期晚、算出負數，
-// 至少畫面不會顯示「貢獻 -30 字」這種荒謬的數字。
 function CLS_Get_Task_Contribution(task, anon_id, summary){
     if(!task.meta) return 0
     const baseline = (task.baselines && task.baselines[anon_id] !== undefined)
@@ -782,27 +660,7 @@ function CLS_Format_Task_Value(metric, value){
     return Math.round(value).toLocaleString("zh-TW")
 }
 
-/* ============================================================
-   【新增】班級任務彈窗通知（每次進度推進都彈，不再卡門檻）
-   ------------------------------------------------------------
-   跟 achv_notify.js 的作法一致：本機 localStorage 記住「這個任務上次
-   看到的進度數值」，每次重新檢查時拿現在的進度重新比對，只要比上次
-   記錄的還高（哪怕只多一點點），就算一次推進，彈窗顯示「這次增加了
-   多少 + 目前進度 / 目標（百分比）」。
 
-   【修改】原本是把 0~100% 切成 25/50/75/100 四個門檻，只有「跨過門檻」
-   才彈窗（模擬成就系統的分級感），但這樣玩家打完一關、進度明明有動，
-   卻常常因為還沒跨過下一個門檻而完全沒反應，不符合「打完一關就想看到
-   回饋」的需求。現在改成直接比較「這次的原始進度值」跟「上次記錄的
-   原始進度值」，只要有增加就彈，不再需要門檻切分。
-
-   共同目標（goal_type: "collective"）用「全班加總進度」去比較，個人
-   目標則用「我自己的貢獻度」去比較，這點跟原本邏輯一致，沒有變。
-
-   彈窗的徽章顏色仍然沿用銅/銀/金/白金，但現在純粹是「目前進度落在
-   哪個百分比區間」的裝飾用途，不再是「有沒有跨過門檻」的判斷依據——
-   判斷依據只剩下「current 是否比上次記錄的還高」這一件事。
-   ------------------------------------------------------------ */
 const CLS_NOTIFY_SEEN_KEY = "tctc2.0-cls_seen_progress"   // { task_id: 已看過的最新進度原始值 }
 
 function CLS_Notify_Get_Seen(){
