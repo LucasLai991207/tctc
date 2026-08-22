@@ -79,7 +79,7 @@ const ACHV_CATEGORIES = [
             {
                 key: "popularity", name: "人氣王 - 獲得其他玩家讚數達特定數值", icon: ACHV_ICON_HEART,
                 dataSource: "stats", metric: "like_count",
-                thresholds: [1, 10, 25, 67],
+                thresholds: [2, 8, 20, 50],
                 condition: (t) => `獲得其他玩家的讚達到 ${t} 個`,
                 format: (v) => `${Math.round(v)} 讚`
             }
