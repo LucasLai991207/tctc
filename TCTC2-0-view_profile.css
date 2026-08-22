@@ -45,6 +45,32 @@
     max-width: 30rem;
 }
 
+.vp_blocked_bio{
+    margin-top: 1.6rem;
+    padding-top: 1.6rem;
+    border-top: 1px solid rgba(var(--accent-rgb), 0.15);
+}
+.vp_blocked_bio_name{
+    color: rgba(var(--text-rgb), 0.85);
+    font-family: "Noto Serif TC", serif;
+    font-size: 1.1rem;
+    font-weight: 500;
+    letter-spacing: 1px;
+    margin: 0 0 0.6rem;
+}
+.vp_blocked_bio_intro{
+    color: rgba(var(--text-rgb), 0.55);
+    font-size: 0.85rem;
+    line-height: 1.7;
+    letter-spacing: 0.5px;
+
+    margin: 0 auto;
+    max-width: 28rem;
+
+    white-space: pre-wrap;   /* 簡介可能有換行，保留玩家原本輸入的排版，跟 .vp_player_intro 一致 */
+    word-break: break-word;
+}
+
 /* ===== 自己預覽自己公開頁時的提示條 ===== */
 .vp_self_banner{
     background-color: rgba(var(--accent-rgb), 0.08);
