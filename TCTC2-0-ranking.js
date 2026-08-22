@@ -75,38 +75,6 @@ function Escape_Html(text) {
     return div.innerHTML
 }
 
-// ===== 【新增】玩家名字旁邊的 LV 小標籤 =====
-//
-// 【重要】entry 沒有 xp 欄位分成兩種完全不同的意思，不能用同一種方式處理：
-//   (1) 玩家總榜：entry 直接來自 player_stats/{anon_id} 整包記錄，
-//       xp 欄位「不存在」代表這個玩家從來沒有任何 XP 進帳（例如根本沒打過字），
-//       這是一個真實、有意義的狀態——就是 LV 0，不該被隱藏不顯示。
-//   (2) 主線關卡／挑戰模式：entry 來自 leaderboard/{stageId} 或
-//       challenge_leaderboard/{comboId} 這兩個獨立節點，資料庫規則只允許
-//       這兩個節點存 name/wpm/acc/timestamp，「根本沒有 xp 這個欄位可以查」，
-//       不存在代表「不知道」，不是「這個人是 LV 0」——如果這裡也顯示 LV 0，
-//       等於是編造一個可能是錯的數字。要讓這兩個模式也能正確顯示 LV，
-//       需要另外修改 TCTC2-0-firebase.js，讓上傳分數時順便存一份 xp 快照
-//       進那兩個節點，這支檔案目前沒有調整那一段。
-//
-// 用 assume_zero_if_missing 這個參數區分兩種情境：
-//   true  → 沒有 xp 就當作 0（玩家總榜用這個）
-//   false → 沒有 xp 就不顯示（主線關卡／挑戰模式維持這個，預設值）
-// ===== 【修正】排行榜點名字 → 查看該玩家的個人資料頁 =====
-// 統一由這個函式組出名字欄位的 HTML，兩種榜（Render_Leaderboard /
-// Render_Player_Leaderboard）都呼叫這裡，不要各自重複寫一份判斷邏輯。
-//
-// 點自己的名字：跟點別人一樣，導去 view_profile.html?id={自己的 anon_id}。
-// 原本這裡是直接跳 profile.html（設定頁），理由是「編輯」對自己更有用，
-// 但玩家實際想看到的其實是「別人點我的名字會看到什麼樣子」——現在統一
-// 走 view_profile.html，該頁面本來就有 is_self 判斷，會額外顯示一條
-// 「這是你自己的預覽」提示條，並附上連去 profile.html 編輯的連結，
-// 兩種需求（先看預覽／要編輯）都還是能滿足，只是預覽變成預設路徑。
-// 點別人的名字：導去 view_profile.html?id={anon_id}，由該頁面自己
-// 去檢查對方有沒有把個人資料設為公開。
-//
-// 沒有 _anon_id（理論上不該發生，兩種榜的資料來源都會帶這個欄位）就
-// 不加 onclick，退回純文字顯示，避免點下去導向一個 id=undefined 的爛連結。
 function Get_Player_Name_Link_HTML(entry, display_name_html){
     if(!entry || !entry._anon_id){
         return display_name_html
