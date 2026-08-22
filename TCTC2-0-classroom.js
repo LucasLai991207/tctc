@@ -783,38 +783,27 @@ function CLS_Format_Task_Value(metric, value){
 }
 
 /* ============================================================
-   【新增】班級任務彈窗通知（達成 / 進度推進）
+   【新增】班級任務彈窗通知（每次進度推進都彈，不再卡門檻）
    ------------------------------------------------------------
    跟 achv_notify.js 的作法一致：本機 localStorage 記住「這個任務上次
-   看到的進度里程碑」，每次重新整理／打開教室頁時拿現在的進度重新比對，
-   進度往前推進了（跨過 25%／50%／75%／100% 其中一個門檻）才彈窗，
-   不是每次重新整理都彈，也不會把「這支腳本上線前就已經達到的進度」
-   當成新推進補彈一次。
+   看到的進度數值」，每次重新檢查時拿現在的進度重新比對，只要比上次
+   記錄的還高（哪怕只多一點點），就算一次推進，彈窗顯示「這次增加了
+   多少 + 目前進度 / 目標（百分比）」。
 
-   跟成就系統的差異：成就的四個門檻是四個獨立設計好的數值（例如
-   3/7/14/30 天），這裡的四個門檻是「同一個 target_value 的
-   25/50/75/100%」——任務本身只有一個目標值，沒有天生的分級可以借用，
-   所以借用「百分比切成四段」模擬出跟成就一樣的漸進感。100% 那一段
-   （milestone 4）直接視覺沿用 achv_notify 的白金配色，文字改成
-   「已達成」，跟榮譽牆「這是最高等級」的語感一致，但不會讓學生誤會
-   任務系統也分金牌銀牌。
+   【修改】原本是把 0~100% 切成 25/50/75/100 四個門檻，只有「跨過門檻」
+   才彈窗（模擬成就系統的分級感），但這樣玩家打完一關、進度明明有動，
+   卻常常因為還沒跨過下一個門檻而完全沒反應，不符合「打完一關就想看到
+   回饋」的需求。現在改成直接比較「這次的原始進度值」跟「上次記錄的
+   原始進度值」，只要有增加就彈，不再需要門檻切分。
 
-   共同目標（goal_type: "collective"）的里程碑用「全班加總進度」去算，
-   這樣同一個班級任務，班上每個人看到的里程碑會是同一個數字，符合
-   「全班一起達成」的直覺；個人目標則用「我自己的貢獻度」去算。
+   共同目標（goal_type: "collective"）用「全班加總進度」去比較，個人
+   目標則用「我自己的貢獻度」去比較，這點跟原本邏輯一致，沒有變。
 
-   【刻意的範圍限制】只在教室頁面自己的渲染流程裡檢查（掛在
-   CLS_Render_Student_Tasks 的兩個呼叫點後面），不像 achv_notify.js
-   那樣掛在 firebase.js 每次寫入 player_stats 成功的回呼裡、散布到
-   全站各頁面。這是刻意維持跟本檔案開頭「這次先不動 firebase.js，
-   避免一次改動牽連太多既有功能」同一個決定——如果之後想做到
-   「打完一關的當下」就跳通知，而不是「下次打開教室頁」才跳，
-   再考慮要不要接上 firebase.js。
+   彈窗的徽章顏色仍然沿用銅/銀/金/白金，但現在純粹是「目前進度落在
+   哪個百分比區間」的裝飾用途，不再是「有沒有跨過門檻」的判斷依據——
+   判斷依據只剩下「current 是否比上次記錄的還高」這一件事。
    ------------------------------------------------------------ */
-const CLS_NOTIFY_SEEN_KEY = "tctc2.0-cls_seen_tasks"   // { task_id: 已看過的最高里程碑(0~4) }
-const CLS_NOTIFY_MILESTONE_TITLES = [null, "進度達 25%", "進度達 50%", "進度達 75%", "已達成"]
-// 索引對應 ACHV_TIER_CLASSES（achv_data.js）：1~4 分別借用銅/銀/金/白金的配色
-const CLS_NOTIFY_MILESTONE_TIER_CLASSES = [null, "pach_tier_bronze", "pach_tier_silver", "pach_tier_gold", "pach_tier_platinum"]
+const CLS_NOTIFY_SEEN_KEY = "tctc2.0-cls_seen_progress"   // { task_id: 已看過的最新進度原始值 }
 
 function CLS_Notify_Get_Seen(){
     try {
@@ -833,24 +822,22 @@ function CLS_Notify_Save_Seen(seen){
     }
 }
 
-// 依「目前進度佔目標值的比例」算出里程碑索引：0=未達25%，1~3=25/50/75%，4=100%（含以上）
-function CLS_Get_Task_Milestone(current, target){
-    if(!target || target <= 0) return 0
-    const percent = (current / target) * 100
-    if(percent >= 100) return 4
-    if(percent >= 75) return 3
-    if(percent >= 50) return 2
-    if(percent >= 25) return 1
-    return 0
+// 純粹給彈窗徽章挑一個裝飾用的顏色，跟「要不要彈窗」的判斷完全無關
+function CLS_Get_Progress_Tier_Class(percent){
+    if(percent >= 100) return "pach_tier_platinum"
+    if(percent >= 75) return "pach_tier_gold"
+    if(percent >= 50) return "pach_tier_silver"
+    if(percent >= 25) return "pach_tier_bronze"
+    return ""
 }
 
 // 核心比對邏輯：傳入這次渲染用的同一份 tasksReady / my_summary / studentsSnapshot
 // （跟 CLS_Render_Student_Tasks 共用同一份，不重新多發一次 Firebase 請求），
-// 回傳「這次真的偵測到推進里程碑」的陣列（可能是空陣列）
+// 回傳「這次真的偵測到進度推進」的陣列（可能是空陣列），不管推進了多少
 function CLS_Notify_Diff(tasksReady, my_summary, studentsSnapshot){
     const anon_id = Get_Anon_Id()
     const seen = CLS_Notify_Get_Seen()
-    const newlyReached = []
+    const newlyAdvanced = []
     let seenChanged = false
 
     Object.keys(tasksReady || {}).forEach(function(task_id){
@@ -862,34 +849,41 @@ function CLS_Notify_Diff(tasksReady, my_summary, studentsSnapshot){
             ? CLS_Get_Task_Collective_Total(task, studentsSnapshot || {})
             : CLS_Get_Task_Contribution(task, anon_id, my_summary)
 
-        const newMilestone = CLS_Get_Task_Milestone(current, target)
-        const storedMilestone = seen[task_id]
+        const stored = seen[task_id]   // undefined 代表「這支瀏覽器從來沒記錄過這個任務」
 
-        if(storedMilestone === undefined){
+        if(stored === undefined){
             // 第一次看到這個任務：只建立 baseline，不彈窗——避免任務剛出現、
             // 或這支腳本剛上線那一刻，把學生早就累積好的進度當成
             // 「這次才推進」轟炸彈窗，跟 achv_notify.js 的設計取捨一致
-            seen[task_id] = newMilestone
+            seen[task_id] = current
             seenChanged = true
             return
         }
 
-        if(newMilestone > storedMilestone){
-            newlyReached.push({
+        if(current > stored){
+            // 【修改】只要比上次記錄的高就算推進，不再要求跨過 25/50/75/100
+            // 其中一個門檻——這樣玩家打完一關，只要這關對這個任務有貢獻，
+            // 就一定會看到彈窗，符合「每一次都要有回饋」的需求
+            const percent = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0
+            newlyAdvanced.push({
                 title: task.meta.title,
-                milestone: newMilestone,
-                milestoneTitle: CLS_NOTIFY_MILESTONE_TITLES[newMilestone]
+                metric: task.meta.metric,
+                delta: current - stored,
+                current: current,
+                target: target,
+                percent: percent,
+                reached: target > 0 && current >= target
             })
-            seen[task_id] = newMilestone
+            seen[task_id] = current
             seenChanged = true
         }
-        // newMilestone <= storedMilestone：一律不降記錄、不彈窗，理由同
-        // achv_notify.js——可能是資料還沒完全同步完成時讀到的暫時低值
+        // current <= stored：一律不降記錄、不彈窗，理由同 achv_notify.js——
+        // 可能是資料還沒完全同步完成時讀到的暫時低值
     })
 
     if(seenChanged) CLS_Notify_Save_Seen(seen)
 
-    return newlyReached
+    return newlyAdvanced
 }
 
 // ===== 彈窗渲染：直接沿用 achv_notify.js 已經建好的通知容器／CSS class，
@@ -904,17 +898,20 @@ function CLS_Notify_Show_Toast(item){
     }
 
     const container = ACHV_Notify_Ensure_Container()
-    const tierClass = CLS_NOTIFY_MILESTONE_TIER_CLASSES[item.milestone]
+    const tierClass = item.reached ? "pach_tier_platinum" : CLS_Get_Progress_Tier_Class(item.percent)
     const icon = (typeof ACHV_ICON_FLAG !== "undefined") ? ACHV_ICON_FLAG : ""
+
+    const deltaText = CLS_Format_Task_Value(item.metric, item.delta)
+    const progressText = `${CLS_Format_Task_Value(item.metric, item.current)} / ${CLS_Format_Task_Value(item.metric, item.target)}（${item.percent}%）`
 
     const toast = document.createElement("div")
     toast.className = "achv_notify_toast"
     toast.innerHTML = `
         <div class="achv_notify_medal ${tierClass}">${icon}</div>
         <div class="achv_notify_body">
-            <p class="achv_notify_eyebrow">班級任務</p>
+            <p class="achv_notify_eyebrow">班級任務・${item.reached ? "已達成" : "+" + deltaText}</p>
             <p class="achv_notify_name">${CLS_Escape_Html(item.title)}</p>
-            <p class="achv_notify_tier">${item.milestoneTitle}</p>
+            <p class="achv_notify_tier">${progressText}</p>
         </div>
     `
     // 點一下通知卡直接跳去教室頁看完整進度，順便當作「立刻關閉」的手動方式，
@@ -937,6 +934,84 @@ function CLS_Notify_Show_Toast(item){
         toast.classList.add("achv_notify_toast_hide")
         setTimeout(function(){ toast.remove() }, 320)
     }, 4800)
+}
+
+/* ============================================================
+   【新增】跨頁面版的班級任務通知檢查
+   ------------------------------------------------------------
+   上面的 CLS_Notify_Diff / CLS_Notify_Show_Toast 原本只掛在教室頁面
+   自己的渲染流程裡（見 CLS_Render_Student_Tasks 兩個呼叫點後面），玩家
+   要「下次打開教室頁」才會看到任務推進的通知——這是本檔案開頭那段
+   【刻意的範圍限制】註解講的、當初先不接 firebase.js 的取捨。
+
+   這裡補上那個後續：一個不依賴教室頁面 DOM、可以從任何頁面呼叫的
+   獨立版本，自己重新走一次「讀 classroom_id → 我的 summary → 班級
+   任務 → 里程碑比對」的完整流程，讓玩家「打完一關的當下」就能在
+   game.html / TCTC2-0-challenge.html 上直接看到教室任務推進的彈窗，
+   不用先跳轉去教室頁才看得到。
+
+   呼叫端：TCTC2-0-firebase.js 裡幾個「這次寫入真的成功了」的 Sync_XXX
+   回呼點（Sync_Stage_Completion / Sync_Chars_Typed /
+   Sync_Zhuyin_Keys_Typed），跟 ACHV_Schedule_Notify_Check（achv_notify.js）
+   用的是同一批掛勾點、同一顆「result.committed」訊號，理由也一樣：
+   同一次結算背後是好幾個各自獨立、互不等待的 transaction，用 debounce
+   （CLS_Schedule_Task_Notify_Check）讓它們先安定下來，才真正檢查一次。
+
+   如果玩家根本沒加入任何教室，這裡只花一次 player_stats/classroom_id
+   的讀取就結束，成本很低，所以不用另外判斷「現在是不是在教室頁」才呼叫，
+   每個有載入這支檔案的頁面都可以放心呼叫。
+   ------------------------------------------------------------ */
+function CLS_Check_Task_Notify(){
+    if(typeof Get_Anon_Id !== "function" || typeof tctc_db === "undefined") return
+
+    const anon_id = Get_Anon_Id()
+    if(!anon_id) return
+
+    tctc_db.ref(`player_stats/${anon_id}/classroom_id`).once("value").then(function(snap){
+        const classroom_id = snap.val()
+        if(!classroom_id) return   // 沒加入任何教室，不用往下做
+
+        // 跟教室頁面同一套流程：先補齊我最新的 summary（任務貢獻度要用
+        // 「現在的指標值」才準），再載入任務、補齊 baseline、跑里程碑比對
+        CLS_Refresh_My_Summary(classroom_id, function(refreshResult){
+            const my_summary = refreshResult.summary || {}
+
+            CLS_Load_Tasks(classroom_id, function(tasks){
+                CLS_Ensure_My_Task_Baselines(classroom_id, tasks, my_summary, function(tasksReady){
+                    // 只有真的有共同目標任務時，才多花一次讀取抓全班資料算加總，
+                    // 理由跟教室頁面那邊的 needsCollective 判斷完全一致
+                    const needsCollective = Object.keys(tasksReady).some(function(id){
+                        return tasksReady[id].meta && tasksReady[id].meta.goal_type === "collective"
+                    })
+
+                    if(needsCollective){
+                        tctc_db.ref(`classroom_students/${classroom_id}`).once("value").then(function(studentsSnap){
+                            const studentsVal = studentsSnap.val() || {}
+                            CLS_Notify_Diff(tasksReady, my_summary, studentsVal).forEach(CLS_Notify_Show_Toast)
+                        })
+                    } else {
+                        CLS_Notify_Diff(tasksReady, my_summary, null).forEach(CLS_Notify_Show_Toast)
+                    }
+                })
+            })
+        })
+    }).catch(function(error){
+        console.warn("[classroom] 打完關卡後檢查班級任務進度失敗：", error.message)
+    })
+}
+
+// debounce 理由跟 achv_notify.js 的 ACHV_Schedule_Notify_Check 完全一樣：
+// 同一次結算會觸發好幾個各自獨立的 Sync_XXX transaction，重複呼叫這支
+// 函式只會延後、不會疊加，等所有寫入安定下來後才真正檢查一次，避免
+// 同一次結算被拆成好幾次讀取、甚至彈出好幾張內容重複的通知卡
+const CLS_TASK_NOTIFY_DEBOUNCE_MS = 1200
+let cls_task_notify_debounce_timer = null
+function CLS_Schedule_Task_Notify_Check(){
+    if(cls_task_notify_debounce_timer) clearTimeout(cls_task_notify_debounce_timer)
+    cls_task_notify_debounce_timer = setTimeout(function(){
+        cls_task_notify_debounce_timer = null
+        CLS_Check_Task_Notify()
+    }, CLS_TASK_NOTIFY_DEBOUNCE_MS)
 }
 
 /* ------------------------------------------------------------
@@ -1427,6 +1502,14 @@ function CLS_Render_Teacher_Dashboard(data){
 let CLS_Current_Auth_User = null
 
 document.addEventListener("DOMContentLoaded", function(){
+    // 【新增】守衛：這支檔案現在也會被 game.html / challenge.html 載入
+    // （只為了用上面的 CLS_Check_Task_Notify / CLS_Schedule_Task_Notify_Check，
+    // 不需要教室頁面本身的登入判斷／面板切換邏輯）。用 cls_loading 這個只有
+    // TCTC2-0-classroom.html 才有的元素當「現在是不是真的在教室頁」的判斷依據，
+    // 不是就直接跳過，避免在其他頁面白跑一次 Wait_For_Auth_Ready 跟一堆
+    // 教室專屬的 Firebase 讀取、或是對著不存在的面板元素操作。
+    if(!document.getElementById("cls_loading")) return
+
     if(typeof Get_Anon_Id !== "function" || typeof tctc_db === "undefined"){
         console.warn("[classroom] 找不到 Get_Anon_Id / tctc_db，請確認有先載入 TCTC2-0-firebase.js")
         return

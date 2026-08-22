@@ -12,7 +12,7 @@ function VP_Show_Loading(){
     if(contentEl) contentEl.classList.add("is_hidden")
 }
 
-function VP_Show_Blocked(title, text){
+function VP_Show_Blocked(title, text, bioData){
     const loadingEl = document.getElementById("vp_loading_state")
     if(loadingEl) loadingEl.classList.add("is_hidden")
     const contentEl = document.getElementById("vp_content")
@@ -25,6 +25,38 @@ function VP_Show_Blocked(title, text){
     const textEl = document.getElementById("vp_blocked_text")
     if(titleEl && title) titleEl.textContent = title
     if(textEl && text) textEl.textContent = text
+
+    // ============================================================
+    // 【新增】簡介永遠公開，跟「允許其他玩家查看我的個人資料」開關脫鉤
+    // ------------------------------------------------------------
+    // 玩家關掉那個開關擋掉的是榮譽牆/統計數字，簡介比較接近「自我介紹／
+    // 留言板」的性質，公開出來對其他玩家比較有用（例如想知道這是誰、
+    // 老師想看班上學生簡介），所以刻意讓它不受這個隱私開關影響——
+    // 就算個人資料被設成不公開，這裡還是會把名字+簡介露出來，只有
+    // 榮譽牆/統計數字繼續被擋下。
+    //
+    // bioData 只有「result.hidden === true」這條路徑才會帶進來（見下面
+    // DOMContentLoaded 的呼叫點）。其他呼叫 VP_Show_Blocked() 的地方
+    // （找不到玩家／讀取失敗／連結缺資訊）沒有玩家資料可以顯示，不會
+    // 傳第三個參數，這裡的 if 判斷會自動把這個區塊藏起來，維持原本
+    // 「只有標題+說明文字」的樣子。
+    // ============================================================
+    const bioWrapEl = document.getElementById("vp_blocked_bio")
+    const bioNameEl = document.getElementById("vp_blocked_bio_name")
+    const bioIntroEl = document.getElementById("vp_blocked_bio_intro")
+
+    if(bioWrapEl){
+        if(bioData){
+            bioWrapEl.classList.remove("is_hidden")
+            // 用 textContent，理由跟 VP_Render_Profile 裡名字/簡介的寫法一致：
+            // 玩家自訂輸入不可信，textContent 天生不會被當 HTML 解析，
+            // 不需要另外呼叫 Escape_Html
+            if(bioNameEl) bioNameEl.textContent = bioData.name || "訪客"
+            if(bioIntroEl) bioIntroEl.textContent = bioData.intro || "這位玩家還沒有寫簡介。"
+        } else {
+            bioWrapEl.classList.add("is_hidden")
+        }
+    }
 }
 
 // ===== 秒數轉人類可讀時長（跟 profile.js 的 Format_Online_Seconds_For_Profile 邏輯一致）=====
@@ -338,7 +370,16 @@ document.addEventListener("DOMContentLoaded", function(){
             return
         }
         if(result.hidden){
-            VP_Show_Blocked("此玩家沒有公開個人資料", "這位玩家已將個人資料設為不公開，無法查看成就與統計數字。")
+            // 【修改】第三個參數帶入 name/intro，讓 VP_Show_Blocked() 就算在
+            // 「個人資料不公開」這條路徑，也能把簡介露出來——見 VP_Show_Blocked
+            // 內部那段【新增】的完整說明。result.name / result.intro 由
+            // firebase.js 的 Get_Public_Player_Profile() 在 hidden 分支裡
+            // 額外帶出來，不需要在這裡多發一次請求。
+            VP_Show_Blocked(
+                "此玩家沒有公開個人資料",
+                "這位玩家已將個人資料設為不公開，無法查看成就與統計數字。",
+                { name: result.name, intro: result.intro }
+            )
             return
         }
         VP_Render_Profile(result, false)
