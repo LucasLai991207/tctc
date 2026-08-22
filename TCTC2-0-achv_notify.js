@@ -151,20 +151,6 @@ function ACHV_Notify_Run(){
     })
 }
 
-// ============================================================
-// 給「會寫入成就相關資料」的地方呼叫的入口，例如挑戰結算、關卡破關、
-// 登入記錄成功。
-//
-// 【為什麼要 debounce，而不是直接呼叫 ACHV_Notify_Run()】
-// 像 Submit_Challenge_Score_To_Leaderboard() 一次動作背後其實踢出了
-// 5 個各自獨立、互不等待的 Firebase transaction（best_challenge_wpm、
-// high_wpm_streak、best_challenge_acc、perfect_challenge_count、
-// high_acc_challenge_streak）。如果每個 transaction 各自完成時都馬上
-// 呼叫 ACHV_Notify_Run()，同一次挑戰結算會在幾百毫秒內連續發出 5 次
-// Firebase 讀取請求，而且前幾次讀到的可能還是「其他 transaction 還沒
-// 寫完」的中途狀態，容易漏判。用 debounce（同一段時間內重複呼叫只保留
-// 最後一次）讓所有相關寫入都「安定下來」之後，只真正檢查一次就好。
-// ============================================================
 function ACHV_Schedule_Notify_Check(){
     if(achv_notify_debounce_timer) clearTimeout(achv_notify_debounce_timer)
     achv_notify_debounce_timer = setTimeout(function(){
@@ -173,14 +159,6 @@ function ACHV_Schedule_Notify_Check(){
     }, ACHV_NOTIFY_DEBOUNCE_MS)
 }
 
-// ============================================================
-// 彈窗渲染
-// ============================================================
-
-// 確保頁面上有一個固定在最頂端的通知堆疊容器，沒有就建立一個。
-// 用 document.body.appendChild 動態建立，而不是要求每個 HTML 頁面
-// 自己手動加這段 <div>——這樣只要載入這支 JS，任何頁面都能用，不用
-// 逐一回去改十幾個 .html 檔案的 <body> 內容。
 function ACHV_Notify_Ensure_Container(){
     let container = document.getElementById("achv_notify_stack")
     if(!container){
