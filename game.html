@@ -1475,6 +1475,13 @@
     <script src="TCTC2-0-achv_data.js"></script>
     <!--全站成就解鎖彈窗通知模組 -->
     <script src="TCTC2-0-achv_notify.js"></script>
+    <!-- 【新增】只為了用裡面的 CLS_Check_Task_Notify / CLS_Schedule_Task_Notify_Check，
+         讓打完關卡時如果有加入教室，班級任務進度也能當場跳彈窗，不用先跳去教室頁。
+         這支檔案內建守衛（找不到 #cls_loading 就跳過頁面初始化），可以放心跟
+         achv_notify.js 一樣全站共用，不會誤觸教室頁自己的登入/面板邏輯。
+         務必放在 firebase.js 之後、achv_notify.js 之後（CLS_Notify_Show_Toast
+         沿用 achv_notify.js 建立的通知容器）。 -->
+    <script src="TCTC2-0-classroom.js"></script>
     <!-- 【新增】XP／等級系統設定檔：務必放在 firebase.js 之前，
          firebase.js 裡的 Sync_XP / Sync_Stage_Completion / Sync_Chars_Typed
          都會讀 XP_CONFIG 裡的數值 -->

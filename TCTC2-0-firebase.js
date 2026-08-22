@@ -622,6 +622,14 @@ function Sync_Stage_Completion(stageId){
         if(result && result.committed && typeof ACHV_Schedule_Notify_Check === "function"){
             ACHV_Schedule_Notify_Check()
         }
+        // 【新增】關卡完成度寫入成功後，順便觸發一次班級任務通知檢查（debounce），
+        // 讓玩家在教室裡設定的「完成關卡數」任務也能在打完關卡的當下跳彈窗，
+        // 不用先跳去教室頁才看到進度推進。CLS_Schedule_Task_Notify_Check
+        // 定義在 TCTC2-0-classroom.js，用 typeof 保護，頁面沒載入該檔案
+        // （例如還沒改到的舊頁面）就單純跳過，不影響原本的關卡完成寫入流程。
+        if(result && result.committed && typeof CLS_Schedule_Task_Notify_Check === "function"){
+            CLS_Schedule_Task_Notify_Check()
+        }
         // 【新增】首次破關成功寫入後，順便發「首次破關獎勵」的 XP。
         // 只在這裡發（不在 game.html 裡另外呼叫），因為「這關是不是第一次破」
         // 這個判斷本來就已經在這支函式的呼叫端做過一次、又在這支函式的
@@ -671,6 +679,10 @@ function Sync_Chars_Typed(charCount){
         if(result && result.committed && typeof ACHV_Schedule_Notify_Check === "function"){
             ACHV_Schedule_Notify_Check()
         }
+        // 【新增】同步觸發一次班級任務通知檢查（例如老師設的「累積字數」任務）
+        if(result && result.committed && typeof CLS_Schedule_Task_Notify_Check === "function"){
+            CLS_Schedule_Task_Notify_Check()
+        }
         // 【新增】依「這次打對的字數」換算 XP（主線／挑戰模式都會呼叫這支函式，
         // 所以兩邊的「打字量 XP」自動統一套用同一套換算比例，不用各自另外算一次）。
         // 用 Math.floor 無條件捨去，避免「打 1 個字就進位成 1 XP」這種灌水漏洞。
@@ -711,6 +723,15 @@ function Sync_Zhuyin_Keys_Typed(keyCount){
 
     return tctc_db.ref(`player_stats/${anon_id}/total_zhuyin_keys_typed`).transaction(function(current){
         return (current || 0) + rounded
+    }).then(function(result){
+        // 【新增】這個欄位本來就是「班級任務『累積注音數』專用」，寫入成功後
+        // 觸發一次班級任務通知檢查最合理——理由跟 Sync_Stage_Completion /
+        // Sync_Chars_Typed 裡加的那兩處一致，用同一顆 result.committed 訊號。
+        // 這裡故意不順便呼叫 ACHV_Schedule_Notify_Check：目前榮譽牆沒有任何
+        // 成就是用 total_zhuyin_keys_typed 這個指標算的，加了也不會有效果。
+        if(result && result.committed && typeof CLS_Schedule_Task_Notify_Check === "function"){
+            CLS_Schedule_Task_Notify_Check()
+        }
     }).catch(function(error){
         console.warn("[player_stats] total_zhuyin_keys_typed 同步失敗（很可能是 Firebase Rules 還沒加上這個欄位的規則）：", error.message)
     })
@@ -1472,7 +1493,18 @@ function Get_Public_Player_Profile(anon_id, callback) {
                 return
             }
             if (val.hide_profile_view === true) {
-                callback({ hidden: true, exists: true })
+                // ===== 【修改】簡介不受這個開關影響，永遠公開 =====
+                // 理由見 view_profile.js 的 VP_Show_Blocked() 內部說明：這個
+                // 開關擋的是「榮譽牆/統計數字」，簡介比較接近自我介紹，公開
+                // 出來對其他玩家比較有用，所以就算 hidden，還是把 name/intro
+                // 一起帶出去，讓呼叫端能單獨顯示這兩個欄位，其餘欄位一律不給
+                // （不能只給 hidden:true 就什麼都不帶，不然呼叫端沒東西可顯示）
+                callback({
+                    hidden: true,
+                    exists: true,
+                    name: val.name || "訪客",
+                    intro: val.intro || ""
+                })
                 return
             }
 
