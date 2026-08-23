@@ -8,9 +8,13 @@ function CLS_Generate_Join_Code(){
     return code
 }
 
+// ===== 判斷目前是不是「已登入的正式帳號」（不是訪客的匿名登入）=====
+// 直接吃 Wait_For_Auth_Ready() 給的 user 物件（Firebase Auth 的第一手資料），
+// 不查 localStorage，確保跟 Rules 看到的 auth 永遠是同一份。
 function CLS_Is_Teacher_Eligible(user){
     return !!(user && user.isAnonymous === false)
 }
+
 
 function CLS_Adjust_Student_Count(classroom_id, delta){
     if(!classroom_id) return
@@ -22,7 +26,16 @@ function CLS_Adjust_Student_Count(classroom_id, delta){
     })
 }
 
-
+/* ------------------------------------------------------------
+   建立教室
+   ------------------------------------------------------------
+   步驟：
+   1. 用 push().key 生一組不會重複的教室 id
+   2. 抽一組 6 碼邀請代碼，用 transaction() 去「卡位」classroom_codes/{code}
+   3. 卡位成功後，寫入教室 metadata，並把這間教室掛進
+      teacher_classrooms/{uid}/{classroom_id}（v2：多室索引，不再覆蓋
+      舊教室，一個老師底下可以同時掛很多間）
+   ------------------------------------------------------------ */
 function CLS_Create_Classroom(name, callback){
     if(typeof Wait_For_Auth_Ready !== "function"){
         callback({ error: "write_failed" })
@@ -511,21 +524,57 @@ function CLS_Compute_Completion_Percent(student){
     return totalStages > 0 ? Math.round((completed / totalStages) * 100) : 0
 }
 
+/* ============================================================
+   【新增】班級任務系統
+   ------------------------------------------------------------
+   資料結構：
+   classroom_tasks/{classroom_id}/{task_id}
+       meta: { title, metric, goal_type, target_value, deadline,
+               created_at, created_by }
+           metric     : "total_chars_typed" | "total_zhuyin_keys_typed" | "xp" | "stage_completion_percent"
+               【新增】total_zhuyin_keys_typed：跟 total_chars_typed 是完全獨立的
+               兩個欄位，分別對應「累積中文字數」與「累積注音數（含空白、符號）」，
+               寫入端見 firebase.js 的 Sync_Chars_Typed / Sync_Zhuyin_Keys_Typed，
+               不會互相影響、互相覆蓋。
+           goal_type  : "individual"（每人各自要達標）| "collective"（全班加總）
+           deadline   : 毫秒時間戳（那天 23:59:59）
+       baselines/{anon_id} : number
+           這個學生「第一次被這個任務算到」當下的指標原始值，用來當
+           貢獻度的起跑點——貢獻度 = 現在的值 - baseline，不會把任務
+           出來之前、學生本來就累積的量也算進達標門檻。
+           寫入時機有兩種，寫的人不一樣，但都只會寫一次（Rules 用
+           !data.exists() 擋住覆寫，跟student_count那種「開放寫入但
+           用規則保護」的手法是同一套邏輯）：
+           (a) 老師建立任務當下，幫「當時已經在教室裡」的每個學生各寫一筆
+           (b) 學生任務建立「之後」才加入教室，或任務出來時他人不在線上，
+               之後第一次看到這個任務時，由學生自己的瀏覽器幫自己補一筆
+               （見 CLS_Ensure_My_Task_Baselines）
+   ------------------------------------------------------------ */
+
 const CLS_TASK_METRIC_LABELS = {
     total_chars_typed: "累積中文字數",
+    // 【新增】跟 total_chars_typed 是兩個獨立欄位（見 firebase.js 的
+    // Sync_Zhuyin_Keys_Typed），只會被逐字注音模式的關卡累加，直接輸入
+    // （IME）模式不會動到這個數字
     total_zhuyin_keys_typed: "累積注音數（含空白、符號）",
     xp: "累積 XP",
     stage_completion_percent: "關卡完成度"
 }
 
-
+// ===== 依指標種類，從一份「學生摘要物件」算出這個指標「現在」的原始數值 =====
+// stage_completion_percent 沒有現成欄位存著，借用上面的 CLS_Compute_Completion_Percent()
+// 現場算——這樣「任務進度看到的百分比」跟「學生名單那條進度條」永遠是同一套公式算出來的，
+// 不會出現兩個地方顯示的關卡完成度對不上的情況。
 function CLS_Get_Metric_Value(summary, metric){
     if(!summary) return 0
     if(metric === "stage_completion_percent") return CLS_Compute_Completion_Percent(summary)
     return summary[metric] || 0
 }
 
-
+// ===== 老師建立任務 =====
+// studentsSnapshot：目前這間教室 classroom_students 的完整內容（老師端本來就
+// 整包下載過一次，直接沿用，不用再多發一次 Firebase 請求），用來幫每個已經
+// 在教室裡的學生，各自算出「這個指標現在的值」當基準值。
 function CLS_Create_Task(classroom_id, taskData, studentsSnapshot, callback){
     if(!classroom_id){
         callback({ error: "invalid_target" })
@@ -621,6 +670,10 @@ function CLS_Ensure_My_Task_Baselines(classroom_id, tasks, my_summary, callback)
     })
 }
 
+// ===== 算出「這個學生」在這個任務裡的貢獻度：現在值 - 基準值，最低是 0 =====
+// Math.max(0, ...) 是保險：理論上指標只會越變越大（打字字數、XP、關卡完成度
+// 都是累加型數據，不會倒退），但如果哪天基準值補寫的時機比預期晚、算出負數，
+// 至少畫面不會顯示「貢獻 -30 字」這種荒謬的數字。
 function CLS_Get_Task_Contribution(task, anon_id, summary){
     if(!task.meta) return 0
     const baseline = (task.baselines && task.baselines[anon_id] !== undefined)
@@ -660,7 +713,27 @@ function CLS_Format_Task_Value(metric, value){
     return Math.round(value).toLocaleString("zh-TW")
 }
 
+/* ============================================================
+   【新增】班級任務彈窗通知（每次進度推進都彈，不再卡門檻）
+   ------------------------------------------------------------
+   跟 achv_notify.js 的作法一致：本機 localStorage 記住「這個任務上次
+   看到的進度數值」，每次重新檢查時拿現在的進度重新比對，只要比上次
+   記錄的還高（哪怕只多一點點），就算一次推進，彈窗顯示「這次增加了
+   多少 + 目前進度 / 目標（百分比）」。
 
+   【修改】原本是把 0~100% 切成 25/50/75/100 四個門檻，只有「跨過門檻」
+   才彈窗（模擬成就系統的分級感），但這樣玩家打完一關、進度明明有動，
+   卻常常因為還沒跨過下一個門檻而完全沒反應，不符合「打完一關就想看到
+   回饋」的需求。現在改成直接比較「這次的原始進度值」跟「上次記錄的
+   原始進度值」，只要有增加就彈，不再需要門檻切分。
+
+   共同目標（goal_type: "collective"）用「全班加總進度」去比較，個人
+   目標則用「我自己的貢獻度」去比較，這點跟原本邏輯一致，沒有變。
+
+   彈窗的徽章顏色仍然沿用銅/銀/金/白金，但現在純粹是「目前進度落在
+   哪個百分比區間」的裝飾用途，不再是「有沒有跨過門檻」的判斷依據——
+   判斷依據只剩下「current 是否比上次記錄的還高」這一件事。
+   ------------------------------------------------------------ */
 const CLS_NOTIFY_SEEN_KEY = "tctc2.0-cls_seen_progress"   // { task_id: 已看過的最新進度原始值 }
 
 function CLS_Notify_Get_Seen(){
@@ -702,10 +775,36 @@ function CLS_Notify_Diff(tasksReady, my_summary, studentsSnapshot){
         const task = tasksReady[task_id]
         if(!task.meta) return   // 保險：忽略資料不完整的殘留節點
 
-        const target = task.meta.target_value
-        const current = (task.meta.goal_type === "collective")
+        const meta = task.meta
+
+        // ===== 【修正 bug】已截止的任務不再檢查 =====
+        // 原本這裡完全沒看 deadline，只要玩家繼續打字讓底層指標（例如累積
+        // 字數）往上長，就會被判定成「推進」而彈窗——即使這個任務早就
+        // 過期，教室頁上也已經把它標成「已截止」排到最後了。跟 isExpired
+        // 的判斷式故意抄成跟 CLS_Build_Student_Task_Row_HTML／
+        // CLS_Build_Teacher_Task_Row_HTML 裡完全一樣的寫法（都是
+        // `meta.deadline && Date.now() > meta.deadline`），確保「教室頁面
+        // 顯示已截止」跟「還會不會跳通知」這兩件事永遠是同一個判斷結果，
+        // 不會對不上。
+        const isExpired = meta.deadline && Date.now() > meta.deadline
+        if(isExpired) return
+
+        const target = meta.target_value
+
+        // ===== 【修正 bug】達成目標後要封頂，不能讓 current 一直往上長 =====
+        // 底層指標（例如累積字數／注音按鍵數）是玩家全站共用、會持續累加的
+        // 原始數值，任務只是拿它跟 target_value 比大小，玩家達成目標後只要
+        // 繼續打字，這個原始數值還是會一直變大——如果不封頂，就會出現
+        // 「目標明明是 50，卻顯示 60/50」這種超過目標的畫面，而且因為
+        // current 還在持續變大（> stored），會被誤判成「又推進了」，導致
+        // 一個早就達成的任務每次打完關卡都還在跳通知。用 Math.min 把
+        // current 鎖在 target 這個上限：一旦達到 target，current 就永遠
+        // 停在 target，「current > stored」的條件從此不會再成立，任務
+        // 自然停止繼續彈窗，不需要另外寫一個「已達成就跳過」的旗標。
+        const rawCurrent = (meta.goal_type === "collective")
             ? CLS_Get_Task_Collective_Total(task, studentsSnapshot || {})
             : CLS_Get_Task_Contribution(task, anon_id, my_summary)
+        const current = (target > 0) ? Math.min(rawCurrent, target) : rawCurrent
 
         const stored = seen[task_id]   // undefined 代表「這支瀏覽器從來沒記錄過這個任務」
 
@@ -724,8 +823,8 @@ function CLS_Notify_Diff(tasksReady, my_summary, studentsSnapshot){
             // 就一定會看到彈窗，符合「每一次都要有回饋」的需求
             const percent = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0
             newlyAdvanced.push({
-                title: task.meta.title,
-                metric: task.meta.metric,
+                title: meta.title,
+                metric: meta.metric,
                 delta: current - stored,
                 current: current,
                 target: target,
