@@ -465,7 +465,7 @@
     position: relative;
 
 
-    width: clamp(170px, 21vw, 400px);
+    width: clamp(170px, 21vw, 250px);
     flex-shrink: 0;
     align-self: stretch;
 
