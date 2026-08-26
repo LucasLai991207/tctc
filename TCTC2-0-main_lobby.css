@@ -459,7 +459,7 @@
     position: relative;
 
 
-    width: clamp(170px, 21vw, 275px);
+    width: clamp(170px, 21vw, 285px);
     flex-shrink: 0;
     align-self: stretch;
 
@@ -498,6 +498,7 @@
     box-sizing: border-box;
     padding-left: 1rem;
     font-weight: 400;
+    font-size: 0.9rem;
 
     border-top: 1px solid rgba(var(--accent-rgb), 0.4);
     background-color: var(--dark-blue);
