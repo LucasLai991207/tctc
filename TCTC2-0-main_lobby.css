@@ -464,17 +464,8 @@
 
     position: relative;
 
-    /* ===== 【修正】原本是 min-width:20vw，沒有上限，螢幕越寬這個「最小寬度」
-       就越大——這是章節欄一直變寬、把空間從關卡欄搶走的根本原因。
-       原本下面還留著一行被註解掉的 max-width:230px，但就算恢復那一行也治
-       不好：CSS 規則本身規定「min-width 圓 max-width 衝突時 min-width 贏」，
-       所以只要螢幕寬到讓 20vw 超過 230px（大約 1150px 寬以上，一般桌機都會
-       超過），max-width 早就形同虛設。改用 clamp(下限, 理想值, 上限) 才能真
-       的同時保住「不會小於 170px」跟「不會大於 230px」這兩個邊界，中間
-       20vw 那段才會照原本的意圖，隨螢幕小範圍微調。
-       flex-shrink:0 讓這欄的寬度完全交給 clamp() 決定，不會被 flex 演算法
-       另外再壓縮——章節欄穩定不動，關卡欄（flex:1）才能穩定吃掉剩下的空間。 ===== */
-    width: clamp(170px, 20vw, 230px);
+
+    width: clamp(170px, 22vw, 400px);
     flex-shrink: 0;
     align-self: stretch;
 

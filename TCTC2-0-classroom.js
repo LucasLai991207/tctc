@@ -26,16 +26,6 @@ function CLS_Adjust_Student_Count(classroom_id, delta){
     })
 }
 
-/* ------------------------------------------------------------
-   建立教室
-   ------------------------------------------------------------
-   步驟：
-   1. 用 push().key 生一組不會重複的教室 id
-   2. 抽一組 6 碼邀請代碼，用 transaction() 去「卡位」classroom_codes/{code}
-   3. 卡位成功後，寫入教室 metadata，並把這間教室掛進
-      teacher_classrooms/{uid}/{classroom_id}（v2：多室索引，不再覆蓋
-      舊教室，一個老師底下可以同時掛很多間）
-   ------------------------------------------------------------ */
 function CLS_Create_Classroom(name, callback){
     if(typeof Wait_For_Auth_Ready !== "function"){
         callback({ error: "write_failed" })
@@ -72,13 +62,6 @@ function _CLS_Create_Classroom_After_Auth_Ready(user, name, callback){
                 return
             }
 
-            // 【修改】一次寫三個路徑：教室本身、代碼卡位（已在上面完成）、
-            // 老師的多教室索引（用 update() 加一個 key，不會動到這個老師
-            // 底下其他已存在的教室）
-            // 【修改】多存一個 teacher_name，這是「建立教室當下」老師帳號的顯示名稱快照
-            // （優先用 Google/Email 帳號的 displayName，沒有的話退回 email，兩者都沒有就顯示「老師」）。
-            // 這是快照不是即時值：如果老師之後改了 Google 顯示名稱，這裡不會跟著變，
-            // 跟全站其他「建立當下寫死一份摘要」的設計一致（例如 classroom_students 的摘要）。
             const updates = {}
             updates[`classrooms/${classroom_id}`] = {
                 name: name,
@@ -105,20 +88,7 @@ function _CLS_Create_Classroom_After_Auth_Ready(user, name, callback){
     try_claim_code(0)
 }
 
-/* ------------------------------------------------------------
-   【新增】解散教室
-   ------------------------------------------------------------
-   老師專屬的危險操作，一次清掉這間教室所有痕跡：
-   1. classrooms/{id} 本體
-   2. classroom_codes/{join_code}（不然代碼會卡死，之後任何人都搶不到）
-   3. teacher_classrooms/{uid}/{id}（從這個老師的教室索引移除）
-   4. classroom_students/{id} 整包名單
-   5. 【重要】所有還在名單裡的學生，player_stats/{anon}/classroom_id
-      要清空——不然學生下次打開教室頁面，會拿著一個已經不存在的
-      classroom_id 去讀 classrooms/{id}，讀回 null，卡在一個
-      「顯示（教室已被刪除）」但技術上還是「已加入」的尷尬狀態，
-      沒辦法用正常的「加入教室」流程重新開始。
-   ------------------------------------------------------------ */
+
 function CLS_Dissolve_Classroom(classroom_id, teacher_uid, join_code, callback){
     if(!classroom_id){
         callback({ error: "invalid_target" })
@@ -128,15 +98,7 @@ function CLS_Dissolve_Classroom(classroom_id, teacher_uid, join_code, callback){
     tctc_db.ref(`classroom_students/${classroom_id}`).once("value").then(function(snapshot){
         const students = snapshot.val() || {}
 
-        // ===== 【修正】拆成兩步，不能跟刪除 classrooms/{id} 放進同一個 update() =====
-        // classroom_codes/{code} 的刪除規則要用 root.child('classrooms')...('teacher_uid')
-        // 去確認發起者就是這間教室的老師。但 Firebase 對 multi-path update() 評估規則時，
-        // root.child() 讀到的是「這次 update 整包寫完之後」的狀態——如果 classrooms/{id}
-        // 也在同一個 update() 裡被砍掉，規則看到的 teacher_uid 已經是空的，永遠對不上
-        // auth.uid，導致整包 update 被拒絕（連帶其他路徑也一起失敗，因為 multi-path
-        // update 是要嘛全部成功要嘛全部失敗）。
-        // 解法：邀請代碼一定要在 classrooms/{id} 還活著的時候，用單獨一次寫入先釋放掉，
-        // 確定成功之後，才進行第二步刪除教室本體 + 其餘的清理。
+
         const freeCodeStep = join_code
             ? tctc_db.ref(`classroom_codes/${join_code}`).remove()
             : Promise.resolve()
@@ -713,27 +675,6 @@ function CLS_Format_Task_Value(metric, value){
     return Math.round(value).toLocaleString("zh-TW")
 }
 
-/* ============================================================
-   【新增】班級任務彈窗通知（每次進度推進都彈，不再卡門檻）
-   ------------------------------------------------------------
-   跟 achv_notify.js 的作法一致：本機 localStorage 記住「這個任務上次
-   看到的進度數值」，每次重新檢查時拿現在的進度重新比對，只要比上次
-   記錄的還高（哪怕只多一點點），就算一次推進，彈窗顯示「這次增加了
-   多少 + 目前進度 / 目標（百分比）」。
-
-   【修改】原本是把 0~100% 切成 25/50/75/100 四個門檻，只有「跨過門檻」
-   才彈窗（模擬成就系統的分級感），但這樣玩家打完一關、進度明明有動，
-   卻常常因為還沒跨過下一個門檻而完全沒反應，不符合「打完一關就想看到
-   回饋」的需求。現在改成直接比較「這次的原始進度值」跟「上次記錄的
-   原始進度值」，只要有增加就彈，不再需要門檻切分。
-
-   共同目標（goal_type: "collective"）用「全班加總進度」去比較，個人
-   目標則用「我自己的貢獻度」去比較，這點跟原本邏輯一致，沒有變。
-
-   彈窗的徽章顏色仍然沿用銅/銀/金/白金，但現在純粹是「目前進度落在
-   哪個百分比區間」的裝飾用途，不再是「有沒有跨過門檻」的判斷依據——
-   判斷依據只剩下「current 是否比上次記錄的還高」這一件事。
-   ------------------------------------------------------------ */
 const CLS_NOTIFY_SEEN_KEY = "tctc2.0-cls_seen_progress"   // { task_id: 已看過的最新進度原始值 }
 
 function CLS_Notify_Get_Seen(){
