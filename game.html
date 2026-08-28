@@ -1795,7 +1795,7 @@
         let key_intro_idx = 0                 // 目前教到第幾顆（從 0 開始）
         let key_intro_on_done = null          // 教完之後要呼叫的 callback（會是「重新呼叫一次 Init()」）
         let key_intro_render_target = null    // 【新增】這次要把教學步驟畫在哪個容器；null 代表用預設的 game_char_container（整頁教學關新按鍵）
-        let key_intro_is_inline = false       // 【新增】true 代表這是「教學說明頁內嵌的互動練習」（1-0-1 / 1-9-1 / 2-1-0 等），
+        let key_intro_is_inline = false       // 【新增】true 代表這是「教學說明頁內嵌的互動練習」（1-0-1 / 1-8-1 / 2-1-0 等），
                                                // 跟正式關卡教新鍵的整頁流程分開處理收尾動作（不用還原鍵盤開關按鈕等頁面元件）
         let key_intro_title = "新按鍵教學"     // 【新增】這次練習要顯示的標題文字，inline 模式可以自訂（例如「標點符號練習」）
 
@@ -3286,7 +3286,7 @@
 
             // 【新增】判斷這一關是不是「教學關」（基本介紹 / 1-9-1 選字教學 / 2-1-0 標點符號教學）
             // 教學關只有文字說明，不需要計時，右上角的計時器 / 倒數設定按鈕在這種關卡很礙眼，所以整組隱藏
-            const is_tutorial_stage = (stage.type === "基本介紹" || stage.id === "1-9-1" || stage.id === "2-1-0")
+            const is_tutorial_stage = (stage.type === "基本介紹" || stage.id === "1-8-1" || stage.id === "2-1-0")
 
             const timer_wrap_el = document.querySelector(".game_timer_wrap")
             if(timer_wrap_el){
@@ -3387,7 +3387,7 @@
 
             //教學關
         
-            if(stage.type === "基本介紹" || stage.id === "1-9-1" || stage.id === "2-1-0"){
+            if(stage.type === "基本介紹" || stage.id === "1-8-1" || stage.id === "2-1-0"){
                 const hint = document.querySelector(".game_input_hint")
                 hint.style.display = "none";
                 
@@ -3608,7 +3608,7 @@
                                 打注音要快，核心原則就是：「絕對不要用滑鼠去點選字視窗」。以下是從選字、改字到記憶字詞的必學操作。
                             </p>
 
-                            <div style="background-color: rgba(14, 36, 62, 0.6); padding: 1.2rem; border-radius: 8px; border-left: 4px solid var(--champagne-gold); margin-bottom: 1.5rem; line-height: 1.9rem;">
+                            <div style="background-color: var(--dark-blue); padding: 1.2rem; border-radius: 8px; border-left: 4px solid var(--champagne-gold); margin-bottom: 1.5rem; line-height: 1.9rem;">
                                 <div style="color: var(--champagne-gold); font-size: 1.1rem;padding-bottom: 0.3rem;">選字輸入法的秘訣：</div>
                                 <span style="color: var(--champagne-gold); font-size: 1rem;">1.快速叫出選字視窗 ：</span> <br>
                                     <b> 當你打完一串注音，發現系統自動選的字是錯的：</b><br>
@@ -4100,7 +4100,7 @@
                只是拿掉了「一定要是驗收/基礎輸入/速度挑戰/綜合練習」這條
                名稱／type 白名單限制。
                ============================================================ */
-            const is_pure_tutorial_stage = (stage.type === "基本介紹" || stage.id === "1-9-1" || stage.id === "2-1-0")
+            const is_pure_tutorial_stage = (stage.type === "基本介紹" || stage.id === "1-8-1" || stage.id === "2-1-0")
             const counts_for_accumulation = !is_pure_tutorial_stage && target_get > 0 && (!Is_Box_Input_Stage(stage) || stage_is_passed)
 
             if(counts_for_leaderboard){
