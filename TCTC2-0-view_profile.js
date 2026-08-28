@@ -26,21 +26,7 @@ function VP_Show_Blocked(title, text, bioData){
     if(titleEl && title) titleEl.textContent = title
     if(textEl && text) textEl.textContent = text
 
-    // ============================================================
-    // 【新增】簡介永遠公開，跟「允許其他玩家查看我的個人資料」開關脫鉤
-    // ------------------------------------------------------------
-    // 玩家關掉那個開關擋掉的是榮譽牆/統計數字，簡介比較接近「自我介紹／
-    // 留言板」的性質，公開出來對其他玩家比較有用（例如想知道這是誰、
-    // 老師想看班上學生簡介），所以刻意讓它不受這個隱私開關影響——
-    // 就算個人資料被設成不公開，這裡還是會把名字+簡介露出來，只有
-    // 榮譽牆/統計數字繼續被擋下。
-    //
-    // bioData 只有「result.hidden === true」這條路徑才會帶進來（見下面
-    // DOMContentLoaded 的呼叫點）。其他呼叫 VP_Show_Blocked() 的地方
-    // （找不到玩家／讀取失敗／連結缺資訊）沒有玩家資料可以顯示，不會
-    // 傳第三個參數，這裡的 if 判斷會自動把這個區塊藏起來，維持原本
-    // 「只有標題+說明文字」的樣子。
-    // ============================================================
+
     const bioWrapEl = document.getElementById("vp_blocked_bio")
     const bioNameEl = document.getElementById("vp_blocked_bio_name")
     const bioIntroEl = document.getElementById("vp_blocked_bio_intro")
@@ -72,20 +58,6 @@ function VP_Format_Online_Seconds(total_seconds){
     return `${minutes} 分 ${seconds} 秒`
 }
 
-/* ------------------------------------------------------------
-   ===== 【改版】已解鎖成就清單 =====
-   原本這裡（VP_Build_Badge_HTML / VP_Render_Category）是完整複製一份
-   TCTC2-0-achievements.js 的渲染邏輯：不管解鎖與否，每個分類底下的
-   每一項成就都會整條列出來、每項還帶一條自己的進度條——在「查看別人
-   的公開頁」這個情境下太雜太長（別人還沒達成什麼，其實不是訪客真正
-   關心的資訊）。
-
-   改成 VP_Build_Unlocked_List_Item()：只負責畫「單一已解鎖成就」的
-   一行（圖示＋名稱＋位階），不畫進度條、不畫 caption。
-   VP_Render_Achievements() 則取代原本的 VP_Render_Category()：一次
-   掃過 ACHV_CATEGORIES 裡所有成就，篩出「tierIndex > 0（至少拿到銅牌）」
-   的項目，其餘（未達標／pending 尚未開發）一律不進清單。
-   ------------------------------------------------------------ */
 
 // 單一已解鎖成就的清單項目。tierIndex 由呼叫端算好傳進來（1~4，
 // 對應銅/銀/金/白金），這支函式本身不做任何門檻判斷，只負責排版。
@@ -217,6 +189,133 @@ function VP_Init_Like_Button(raw, is_self){
     })
 }
 
+/* ------------------------------------------------------------
+   ===== 【新增】檢舉按鈕邏輯 =====
+   跟 VP_Init_Like_Button 同一個層級，一樣分開寫成獨立函式，只在
+   VP_Render_Profile 裡被呼叫一次，不是共用工具。
+
+   跟按讚不同的地方：
+   - 檢舉可以重複送出（同一個人可能想換個理由、或這個玩家又犯了一次），
+     所以沒有「先查有沒有檢舉過」這一步，也沒有「已檢舉」的鎖住視覺，
+     每次點開都是一個全新、空白的表單。
+   - 一定要寫理由（純文字，必填），分類勾選框是額外的結構化資訊，
+     方便之後人工看 player_reports 時快速分類，兩者都要有內容才能送出。
+   - 用跳出視窗（modal）而不是像讚一樣單純切換按鈕樣式，因為需要
+     使用者額外輸入內容，不能靠一次點擊就完成。
+   ------------------------------------------------------------ */
+let vp_toast_timer = null
+function VP_Show_Toast(message, is_error){
+    const toastEl = document.getElementById("vp_toast")
+    if(!toastEl) return
+
+    toastEl.textContent = message
+    toastEl.classList.toggle("profile_toast_error", !!is_error)
+    toastEl.classList.add("profile_toast_show")
+
+    if(vp_toast_timer) clearTimeout(vp_toast_timer)
+    vp_toast_timer = setTimeout(function(){
+        toastEl.classList.remove("profile_toast_show")
+    }, 2600)
+}
+
+function VP_Init_Report_Button(is_self, target_name){
+    const btnEl = document.getElementById("vp_report_btn")
+    if(!btnEl) return
+
+    // 看自己的預覽頁：不能檢舉自己，按鈕直接不顯示，跟讚按鈕的處理一致
+    if(is_self) return
+
+    const target_id = VP_Get_Target_Anon_Id()
+
+    if(typeof Report_Player !== "function"){
+        // 找不到 Report_Player 代表沒載入到新版 firebase.js，
+        // 按鈕先關掉比顯示一顆按了沒反應的死按鈕誠實
+        return
+    }
+
+    btnEl.classList.remove("is_hidden")
+
+    const backdropEl = document.getElementById("vp_report_backdrop")
+    const textareaEl = document.getElementById("vp_report_textarea")
+    const errorEl = document.getElementById("vp_report_error")
+    const submitBtnEl = document.getElementById("vp_report_submit_btn")
+    const cancelBtnEl = document.getElementById("vp_report_cancel_btn")
+    const categoryInputs = document.querySelectorAll("#vp_report_category_list input[type=checkbox]")
+
+    function Reset_Form(){
+        if(textareaEl) textareaEl.value = ""
+        categoryInputs.forEach(function(input){ input.checked = false })
+        if(errorEl){
+            errorEl.textContent = ""
+            errorEl.classList.add("is_hidden")
+        }
+        if(submitBtnEl){
+            submitBtnEl.disabled = false
+            submitBtnEl.textContent = "送出檢舉"
+        }
+    }
+
+    function Open_Modal(){
+        Reset_Form()
+        if(backdropEl) backdropEl.classList.remove("is_hidden")
+    }
+
+    function Close_Modal(){
+        if(backdropEl) backdropEl.classList.add("is_hidden")
+    }
+
+    btnEl.addEventListener("click", Open_Modal)
+    if(cancelBtnEl) cancelBtnEl.addEventListener("click", Close_Modal)
+
+    // 點背景（陰影區）也能關閉，但點模態視窗本體不能，靠事件冒泡判斷
+    // 是不是「直接點在背景」上，是常見的 modal 關閉手法
+    if(backdropEl){
+        backdropEl.addEventListener("click", function(event){
+            if(event.target === backdropEl) Close_Modal()
+        })
+    }
+
+    if(submitBtnEl){
+        submitBtnEl.addEventListener("click", function(){
+            const reason = textareaEl ? textareaEl.value.trim() : ""
+            const categories = Array.from(categoryInputs)
+                .filter(function(input){ return input.checked })
+                .map(function(input){ return input.value })
+
+            if(!reason){
+                if(errorEl){
+                    errorEl.textContent = "請填寫檢舉原因"
+                    errorEl.classList.remove("is_hidden")
+                }
+                return
+            }
+            if(categories.length === 0){
+                if(errorEl){
+                    errorEl.textContent = "請至少勾選一個檢舉分類"
+                    errorEl.classList.remove("is_hidden")
+                }
+                return
+            }
+
+            if(errorEl){
+                errorEl.textContent = ""
+                errorEl.classList.add("is_hidden")
+            }
+            submitBtnEl.disabled = true   // 送出前先鎖住，避免手滑連點兩次同時發出兩個請求
+            submitBtnEl.textContent = "送出中..."
+
+            Report_Player(target_id, target_name, categories, reason, function(success){
+                Close_Modal()
+                if(success){
+                    VP_Show_Toast("已送出檢舉，感謝你的回報")
+                } else {
+                    VP_Show_Toast("檢舉送出失敗，請稍後再試一次", true)
+                }
+            })
+        })
+    }
+}
+
 function VP_Render_Profile(raw, is_self){
     raw = raw || {}
 
@@ -250,20 +349,11 @@ function VP_Render_Profile(raw, is_self){
         }
     }
 
-    // ===== 【新增】按讚按鈕 =====
-    // 看自己的預覽頁：不顯示按鈕（不能讚自己，顯示了也點不出東西）。
-    // 看別人：讚數直接沿用 raw.like_count（Get_Public_Player_Profile／
-    // Get_Own_Player_Stats 本來就會把整個 player_stats 節點帶回來，不用
-    // 為了這顆數字多發一次請求），是否「已經讚過」則需要另外問一次
-    // player_likes/{target}/{我的 anon_id}，這筆資料不在 player_stats 底下。
+
     VP_Init_Like_Button(raw, is_self)
 
-    // ===== 【新增】XP 進度條 =====
-    // XP_Get_Level_Progress() 定義在 TCTC2-0-xp_data.js，回傳
-    // { level, current, needed, percent }：current/needed 是「這一級目前
-    // 累積多少 XP／這一級總共要多少 XP」，percent 是算好的百分比，
-    // 不用自己重算一次公式（跟 main.html 的 xp_display.js 共用同一套邏輯，
-    // 兩邊算出來的數字保證一致）。
+    VP_Init_Report_Button(is_self, raw.name)
+
     const xpWrapEl = document.getElementById("vp_xp_wrap")
     if(xpWrapEl){
         if(typeof XP_Get_Level_Progress === "function"){

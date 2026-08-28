@@ -116,7 +116,13 @@
                     </div>
 
                     <div class="profile_card" style="margin-bottom: 1.6rem;">
-                        <p class="profile_card_title">統計資料</p>
+                        <div class="vp_stat_card_head">
+                            <p class="profile_card_title vp_stat_card_head_title">統計資料</p>
+
+                            <button type="button" class="vp_report_btn is_hidden" id="vp_report_btn">
+                                 檢舉 ⚠️
+                            </button>
+                        </div>
                         <div class="profile_stat_list">
                             <div class="profile_stat_row">
                                 <span class="profile_stat_label">主線平均WPM</span>
@@ -179,6 +185,43 @@
             </div>
         </section>
     </main>
+
+
+    <div class="vp_report_backdrop is_hidden" id="vp_report_backdrop">
+        <div class="vp_report_modal">
+            <p class="vp_report_modal_title">檢舉該玩家</p>
+
+            <p class="vp_report_field_label">檢舉分類（可複選）</p>
+            <div class="vp_report_category_list" id="vp_report_category_list">
+                <label class="vp_report_category_item">
+                    <input type="checkbox" value="暱稱不雅"> 暱稱不雅
+                </label>
+                <label class="vp_report_category_item">
+                    <input type="checkbox" value="速度異常"> 數據異常
+                </label>
+                <label class="vp_report_category_item">
+                    <input type="checkbox" value="疑似作弊"> 作弊
+                </label>
+                <label class="vp_report_category_item">
+                    <input type="checkbox" value="其他"> 其他
+                </label>
+            </div>
+
+            <p class="vp_report_field_label">詳細說明（必填）</p>
+            <textarea class="vp_report_textarea" id="vp_report_textarea" maxlength="500" placeholder="請「具體」描述檢舉原因"></textarea>
+
+            <p class="vp_report_error is_hidden" id="vp_report_error"></p>
+
+            <div class="vp_report_modal_actions">
+                <button type="button" class="vp_report_cancel_btn" id="vp_report_cancel_btn">取消</button>
+                <button type="button" class="vp_report_submit_btn" id="vp_report_submit_btn">送出檢舉</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 更新/檢舉等操作的成功/失敗提示，沿用 profile.css 的 .profile_toast 樣式，
+         這個頁面本來就有連結 profile.css（給統計卡片用），不需要額外多載入 -->
+    <div id="vp_toast" class="profile_toast"></div>
 
     <footer class="intro_footer">
         <div class="footer_div">

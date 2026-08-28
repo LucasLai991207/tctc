@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <title>開始打字測驗 - TCTC 繁體中文打字練習中心</title>
-    <meta name="description" content="立即開始 TCTC 繁體中文打字測驗！挑戰你的每分鐘字數（WPM），精準記錄錯字與速度，快來挑戰你的極限紀錄！"> 
+    <meta name="description" content="立即開始 TCTC 繁體中文打字測驗！挑戰你的每分鐘字數（WPM），精準記錄錯字與速度，快來重新整理挑戰你的極限紀錄！"> 
     <meta name="robots" content="index, follow">
-    <meta name="keywords" content="打字練習, 打字網站, 中文打字, 繁體中文打字, 練打字, WPM, TCTC, tctc, 打字測試, 打字, 打字網站, 練習打字, 初學者打字, 中文, 繁體中文, 繁中打字, 繁體中文打字網站">
+    <meta name="keywords" content="打字練習, 中文打字, 繁體中文打字, 練打字, WPM, TCTC, 打字測試, 打字, 打字網站, 練習打字, 初學者打字, tctc, 中文, 繁體中文, 繁中打字, 繁體中文打字網站">
 
     <meta name="google-site-verification" content="fHfTpW9ouqdLEFGEQhLvwelT1xdZ7Sxmi-iKBHY7S_8" /> <!--google驗證-->
 
     <!--瀏覽器分頁小圖-->
-    <link rel="icon" href="favicon-32x32.jpg" type="image/png" sizes="96x96">
+    <link rel="icon" href="favicon-32x32.png" type="image/png" sizes="32x32">
     
     <!-- 社群分享預覽圖-->
     <meta property="og:image" content="https://lucaslai991207.github.io/tctc/os_image.png">
@@ -369,7 +369,7 @@
             width: min(40rem, 90vw);
         }
         .cg_punct_content{
-            background-color: var(--dark-blue);
+            background-color: rgba(14, 36, 62, 0.6);
             padding: 1rem;
             border-radius: 4px;
             margin-top: 0.2rem;
@@ -1498,6 +1498,10 @@
     <script src="TCTC2-0-auth_ui.js"></script>
     <!-- 【新增】在線時長追蹤（全站共用，每個頁面都要載入） -->
     <script src="TCTC2-0-online_time.js"></script>
+    <!-- 【新增】反作弊鑑識資料蒐集，純前端計數，不主動發送任何請求，
+         詳見檔案內的說明。務必放在遊戲邏輯之前載入，這樣後面的
+         keydown handler 觸發時，這支檔案的 capture 監聽器一定已經掛上。 -->
+    <script src="TCTC2-0-integrity.js"></script>
     <!-- 【新增】打字音效（共用模組，哪頁要用哪頁自己載入） -->
     <script src="TCTC2-0-typing_sound.js"></script>
     <!-- 【新增】成績分享卡片（共用模組，哪頁要用哪頁自己載入） -->
@@ -3248,6 +3252,12 @@
         //初始化畫面 每次「再試一次」也會呼叫
 
         function Init() {
+            // 【新增】每次開始這一關（含「再試一次」重打），重置一次鑑識計數器起點，
+            // 這樣送出成績時 TCTC_Integrity.getAttemptSnapshot() 算出來的
+            // keydown_count / untrusted_key_events 才是「這次作答」的數字，
+            // 不是從頁面一開始載入就累加到現在的總數
+            if(typeof TCTC_Integrity !== "undefined") TCTC_Integrity.markAttemptStart()
+
             // if(next_stage_is_exists){
             //     document.querySelector(".next_game_btn").style.display = "block";
 
@@ -3323,7 +3333,8 @@
             game_over = false   // 【新增】重打/換關，結果畫面的鎖也要解除
 
 
-
+            // 【新增】判斷這一關是不是「教學關」（基本介紹 / 1-9-1 選字教學 / 2-1-0 標點符號教學）
+            // 教學關只有文字說明，不需要計時，右上角的計時器 / 倒數設定按鈕在這種關卡很礙眼，所以整組隱藏
             const is_tutorial_stage = (stage.type === "基本介紹" || stage.id === "1-9-1" || stage.id === "2-1-0")
 
             const timer_wrap_el = document.querySelector(".game_timer_wrap")
@@ -3602,7 +3613,7 @@
                             </p>
                             
                             <button style="width: 10rem; height: 3rem; margin: auto; margin-top: 1.5rem; background-color: var(--champagne-gold); display: flex; justify-content: center; align-items: center; color: var(--dark-blue); font-family: 'Noto Serif TC', serif; font-size: 1rem; letter-spacing: 2px; border: none; border-radius: 4px; cursor: pointer; transition: all 200ms ease;" 
-                                    onclick="window.location.href='game.html?stage=1-1-1'">
+                                    onclick="window.location.href='game.html?stage=1-2-1'">
                                 進入實戰練習 →
                             </button>
                         </div>`
@@ -3773,7 +3784,7 @@
                             </p>
                             
                             <button id="tut210_next_btn" style="display:none; width: 10rem; height: 3rem; margin: auto; margin-top: 1.5rem; background-color: var(--champagne-gold); display: flex; justify-content: center; align-items: center; color: var(--dark-blue); font-family: 'Noto Serif TC', serif; font-size: 1rem; letter-spacing: 2px; border: none; border-radius: 4px; cursor: pointer; transition: all 200ms ease;" 
-                                    onclick="window.location.href='game.html?stage=2-1-1'">
+                                    onclick="window.location.href='game.html?stage=1-9-2'">
                                 進入輸入練習 →
                             </button>
                         </div>`
@@ -4150,6 +4161,14 @@
                 const raw_stats = Is_Box_Input_Stage(stage)
                     ? { correct: target_get, correction_count: wrong_key_times, duration_seconds: Math.round(timeUsed) }
                     : { correct: target_get, wrong: wrong_key_times, duration_seconds: Math.round(timeUsed) }
+
+                // 【新增】把 TCTC_Integrity 蒐集到的這次作答鑑識資料（session_id／
+                // keydown_count／untrusted_key_events）一起展開進 raw_stats，
+                // 跟 correct/wrong/duration_seconds 存在同一筆分數紀錄底下，
+                // 之後匯出 json 時不用另外對照兩個地方的資料
+                if(typeof TCTC_Integrity !== "undefined"){
+                    Object.assign(raw_stats, TCTC_Integrity.getAttemptSnapshot())
+                }
 
                 if(typeof Submit_Score_To_Leaderboard === "function"){
                     Submit_Score_To_Leaderboard(stageId, wpm, acc, raw_stats)

@@ -1583,6 +1583,66 @@ function Like_Player(target_anon_id, callback) {
 }
 
 /* ============================================================
+   【新增】檢舉玩家
+   ------------------------------------------------------------
+   跟按讚（Like_Player）不同，檢舉允許同一個人對同一個目標重複送出
+   （玩家可能想換個理由重新檢舉、或同一個對象又犯了一次），所以不能
+   像 player_likes 那樣用「目標的 anon_id + 檢舉者的 anon_id」當 key
+   卡住只能寫一次，改用 push() 讓每一筆檢舉都是獨立的節點，天生
+   允許同一組（檢舉者, 被檢舉者）出現很多筆紀錄。
+
+   player_reports/{target_anon_id}/{push_id} = {
+       reporter_anon_id, categories, reason, timestamp
+   }
+
+   跟本站其他 anon_id 相關的寫入一樣，這裡沒有、也沒辦法用 Firebase
+   Auth 去驗證「$reporterId 真的是打這支 API 的那個人」——訪客身分
+   本來就是自己存在 localStorage 的 anon_id。多一層保護的意義在於
+   擋掉最基本的重放/竄改，不是防止蓄意繞過的作弊者，這點跟 Like_Player
+   的信任層級是一致的。真正要處理檢舉內容，還是得靠後台人工看過
+   player_reports 這個節點（目前還沒有後台介面，資料先落地，之後
+   要做審核頁面的話直接讀這個節點即可）。
+
+   database.rules.json 需要對應補一段規則，允許任何人對
+   player_reports/{target_anon_id} 底下 push 新節點（.write: true 或
+   限定成只能新增、不能修改/刪除既有節點），沒有加規則的話這裡的
+   .push() 會被預設規則擋下、寫入失敗。
+   ============================================================ */
+function Report_Player(target_anon_id, target_name, categories, reason, callback) {
+    const anon_id = Get_Anon_Id()
+    if (!target_anon_id || target_anon_id === anon_id) {
+        callback(false)   // 不能檢舉自己
+        return
+    }
+
+    const trimmed_reason = (reason || "").trim()
+    if (!trimmed_reason) {
+        callback(false)   // 理由必填，前端理論上已經擋過一次，這裡再擋一次保險
+        return
+    }
+
+    tctc_db.ref(`player_reports/${target_anon_id}`).push({
+        reporter_anon_id: anon_id,
+        // 【新增】把「被檢舉當下」的暱稱一起存起來，省得每次處理檢舉都要
+        // 手動跳去 player_stats/{target_anon_id}/name 對照。這裡刻意存
+        // 「檢舉當下」的暱稱快照，不是即時查詢——玩家之後改名了，這筆
+        // 舊檢舉紀錄上的名字不會跟著變，這樣反而更準確地反映「當初被
+        // 檢舉的那個暱稱」，跟改名前後的行為對得起來
+        target_name: (target_name || "訪客").slice(0, 20),
+        categories: Array.isArray(categories) ? categories : [],
+        reason: trimmed_reason.slice(0, 500),   // 限制長度，避免有人塞超長文字
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+    })
+        .then(function () {
+            callback(true)
+        })
+        .catch(function (error) {
+            console.warn("[report] 送出檢舉失敗：", error.message)
+            callback(false)
+        })
+}
+
+/* ============================================================
    【新增】刪除這個瀏覽器（anon_id）在雲端留下的所有資料
    ------------------------------------------------------------
    刻意「不」刪除的東西：
