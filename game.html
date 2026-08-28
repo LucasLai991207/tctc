@@ -1582,9 +1582,7 @@
 
 
         // ===== 【新增】即時反饋虛擬鍵盤 =====
-        // 完整實體鍵盤排列（大千式注音鍵位），盡量比照真實鍵盤的位置，
-        // 包含 Backspace / Tab / CapsLock / Shift / Ctrl 這些功能鍵（純視覺，不參與比對）。
-        // type: "zhuyin" 從 bopomofo 對照表取字；"blank" 純功能鍵，固定顯示 label。
+
         const kb_layout = [
             [
                 {key:"1"},{key:"2"},{key:"3"},{key:"4"},{key:"5"},{key:"6"},{key:"7"},{key:"8"},{key:"9"},{key:"0"},{key:"-"},
@@ -1610,12 +1608,7 @@
                 {key:"CtrlLeft", type:"blank", label:"Ctrl", wide:"kb_wide_1"},
                 {key:" ", label_top:"", label_bottom:"SPACE", wide:"kb_space_narrow"},
                 {key:"CtrlRight", type:"blank", label:"Ctrl", wide:"kb_wide_1"},
-                // ===== 【修改】方向鍵改成跟空白鍵「同一排」，不再另外多開兩排——
-                // 多開兩排會讓整個鍵盤變高，頁面可能被撐到需要捲動，跟「鍵盤固定在畫面上、
-                // 不會滾動視窗」的需求牴觸。改成 type:"arrow_cluster"，Build_Live_Keyboard
-                // 看到這個 type 會另外處理：在這一格裡面自己排成上下兩小排矮扁的鍵
-                // （上排只有 ↑、下排 ← ↓ →），塞進跟這排其他按鍵差不多的高度裡。
-                // 空白鍵改用 kb_space_narrow（比原本窄），騰出寬度給方向鍵組使用。
+
                 {
                     type: "arrow_cluster",
                     keys: [
@@ -1639,24 +1632,7 @@
             return kb_physical_alias[dict_key] || dict_key
         }
 
-        // ===== 【新增】標點符號的「輔助鍵」對照表 =====
-        // 之前虛擬鍵盤只會亮「主鍵」（例如打，只亮 , 鍵），
-        // 但實際上 Windows 大千注音要打出全形標點，
-        // 逗號/句號要按 Ctrl + 主鍵，冒號/問號/驚嘆號要按 Ctrl + Shift + 主鍵，
-        // 只亮一顆鍵會讓玩家誤以為單壓那顆鍵就能打出標點，所以另外記錄「這顆主鍵
-        // 需要同時按住哪些輔助鍵」，讓 Sync_Live_Keyboard 把輔助鍵也一起亮起來。
-        //
-        // 【修正bug】key 改成用 bopomofo 對照表裡「原始的 dict key」，不能用
-        // Resolve_Physical_Key() 之後的「物理鍵位」字串！因為同一顆物理鍵在大千注音
-        // 鍵盤上常常「身兼兩用」：例如 , 鍵本身直接打出來是注音 ㄝ（不需要任何輔助鍵），
-        // 但要打出全形逗號「，」則要 Ctrl + ,。如果表用物理鍵位當 key（例如拿 ","
-        // 當 key），Sync_Live_Keyboard 只要目標字落在同一顆物理鍵上，不管目標其實
-        // 是 ㄝ 還是 ，，都會查到同一筆輔助鍵設定，導致打 ㄝ 這種一般注音符號時
-        // 也被誤判成要按 Ctrl（回報的 bug：目標明明是 ㄝ，卻顯示 Ctrl + ㄝ）。
-        // 改成用 dict key 當索引就不會有這個問題：ㄝ 用的 dict key 是 ","；
-        // 全形逗號「，」在 bopomofo 表裡是獨立的另一個 dict key "，"（兩者是不同的
-        // 字串，一定不會互相碰撞），查表天生就不會混到一起。
-        // value：需要同時按住的輔助鍵陣列（對應 kb_layout 裡功能鍵的 key，例如 "CtrlLeft"）
+
         const kb_punct_modifier_keys = {
             "，": ["CtrlLeft"],                 // 逗號，：Ctrl + ,
             "。": ["CtrlLeft"],                 // 句號。：Ctrl + .
@@ -1748,12 +1724,7 @@
             }
         }
 
-        // 反查：某個注音符號／聲調／標點對應到 bopomofo 表裡的「原始 dict key」
-        // 【修正bug】改成回傳「未經 Resolve_Physical_Key() 轉換」的原始 dict key，
-        // 不要在這裡就先轉成物理鍵位——因為 kb_punct_modifier_keys 現在改成用
-        // dict key 查表（原因見上面 kb_punct_modifier_keys 的註解），呼叫端
-        // Sync_Live_Keyboard 需要保留這個原始 dict key 才能正確查到輔助鍵，
-        // 同時另外呼叫 Resolve_Physical_Key() 算出「主鍵要亮在鍵盤上的哪個物理位置」。
+
         function Find_Key_For_Zhuyin(expected_char){
             for(const key in bopomofo){
                 if(bopomofo[key] === expected_char) return key
@@ -2140,10 +2111,7 @@
             }
         })
 
-        // ===== 【新增】1-0-3 專用：手指分工小測驗 =====
-        // 跟 key_intro 系統分開一套獨立的狀態機（不影響其他頁面／不會互相干擾），
-        // 隨機出題「這個注音符號該用哪根手指」，玩家直接在鍵盤上按下對應的鍵作答，
-        // 答對答錯都會告訴玩家正確答案是哪根手指，最後顯示總結分數。
+
         const finger_quiz_map = [
             {key:"1",finger:"左手小指"},{key:"q",finger:"左手小指"},{key:"a",finger:"左手小指"},{key:"z",finger:"左手小指"},
             {key:"2",finger:"左手無名指"},{key:"w",finger:"左手無名指"},{key:"s",finger:"左手無名指"},
@@ -2447,14 +2415,7 @@
             return Math.floor(target_get / 3)
         }
 
-        // ===== 【新增】用目標 wpm 換算出這一關要倒數幾秒 =====
-        // 【修正】新增 is_box_input 參數，修掉「倒數時間只有正確時間 1/3」的 bug：
-        // 「逐字注音」模式的 total_units 是「按鍵次數」（見 Get_Stage_Total_Units），
-        // 平均每個中文字要按 3 次鍵（聲母＋韻母＋聲調），所以要乘 wpm*3 才能換算成「按鍵次數/分鐘」，這段沒問題。
-        // 但「直接輸入」模式（基礎輸入／中級直接輸入／高級速度挑戰）的 total_units
-        // 本來就已經是 Get_Stage_Total_Units() 算出來的「真正字數」，
-        // WPM 的定義就是「字數/分鐘」，這裡如果還乘以 3，
-        // 等於把該有的秒數硬生生除掉 3 倍，導致玩家被迫用 3 倍速打字才能在時間內打完。
+
         function Calculate_Countdown_Seconds(total_units, wpm, is_box_input){
             // 直接輸入模式：units_per_minute 就是 wpm 本身（字數/分鐘）
             // 逐字注音模式：units_per_minute 要乘以 3（按鍵次數/分鐘）
@@ -2842,17 +2803,7 @@
                     behavior: "smooth"
                 })
             }
-            // 【修改】原本這裡是「拿這次新增的字元跟目標句子同一個位置比對，對上了才播音效」，
-            // 但玩家是用注音輸入法打字：組字中的每一次按鍵，event.isComposing 都是 true，
-            // 上面第 1595 行 `if(event && event.isComposing) return` 早就把這個函式擋掉了，
-            // 真正能跑到這裡的，只有「選字選完、字元定案」的那一次 input 事件——
-            // 也就是說，玩家明明按了一整串注音符號鍵（ㄋ、ㄧ、ˇ...），卻只有選字完成那一下
-            // 才有機會聽到音效，其餘每一次按鍵完全沒有回饋，聽起來就像大部分時候都是靜音的。
-            // 空白鍵更明顯：Zhuyin 輸入法的空白鍵大多是拿來「選第一個候選字」，
-            // 幾乎不會真的在 typed_text 裡產生一個字元完全相等的空白字元 " "，
-            // 所以 Play_Space_Sound() 這個分支實際上幾乎永遠不會被觸發。
-            // 現在把播音效的邏輯整個搬到下面新增的 keydown 監聽器（Play_Typing_Feedback_Sound），
-            // 只要玩家按下鍵盤就給聲音回饋，不再依賴「這個鍵有沒有讓輸入框內容變成正確答案」。
+
             text_input_prev_typed_length = typed_text.length
 
             // 【修改】原本一定要「一字不差」才會結束關卡，玩家打錯就永遠卡住。
@@ -3646,7 +3597,7 @@
                     // 【新增】手指分工小測驗：隨機出 5 題注音符號，讓玩家直接在鍵盤上按對應鍵
                     Start_Finger_Quiz(document.getElementById("tut103_quiz"), 5)
                 }
-                else if(stage.id === "1-9-1"){
+                else if(stage.id === "1-8-1"){
                     game_char_container.innerHTML = `
                         <div style="text-align: left; max-width: 900px; margin: 0 auto; font-family: 'Noto Serif TC', serif; color: white; font-weight: 150; position: relative; font-size: 0.9rem">
                             <p style="font-size: 1.4rem; color: var(--champagne-gold); text-align: center; margin-bottom: 1.5rem; font-weight: 500;">
