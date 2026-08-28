@@ -438,6 +438,11 @@ function cg_start_timer(){
     cg_start_time = Date.now()
     cg_last_tick_second = null   // 【新增】每次重新開始倒數都要重置，不然下一輪最後3秒不會再嗶
 
+    // 【新增】重置鑑識計數器起點，理由跟 game.html 的 Init() 一致——
+    // 讓這次挑戰結算時算出來的 keydown_count / untrusted_key_events
+    // 只反映「這次挑戰」，不是從頁面載入就累加到現在的總數
+    if(typeof TCTC_Integrity !== "undefined") TCTC_Integrity.markAttemptStart()
+
     cg_timer_handle = setInterval(function(){
         const elapsedSec = (Date.now() - cg_start_time) / 1000
         const remaining = cg_duration_seconds - elapsedSec
@@ -970,6 +975,11 @@ function cg_finish_challenge(){
         duration_seconds: Math.round(elapsedSeconds),
         correction_count: cg_correction_count,
         skip_count: cg_skip_count
+    }
+
+    // 【新增】理由同 game.html：把這次挑戰的鑑識資料一起併進 raw_stats
+    if(typeof TCTC_Integrity !== "undefined"){
+        Object.assign(raw_stats, TCTC_Integrity.getAttemptSnapshot())
     }
 
     if(cg_meets_points_threshold && typeof Submit_Challenge_Score_To_Leaderboard === "function"){
