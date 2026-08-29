@@ -4597,9 +4597,7 @@
                     return
                 }
 
-                // 不是卡住格（第一次犯錯，給一次免費跳過的機會）：
-                // 這格直接標成紅框（wrong），游標直接跳到下一格（變金框 current），
-                // 跟「打對」時的捲動邏輯一致。
+      
                 Flash_Keyboard_Key(key, false)  // 【新增】鍵盤閃紅色
                 wrong_key_times++   //錯誤次數 +1
                 Play_Wrong_Sound()   // 打錯時的音效
