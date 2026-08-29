@@ -52,6 +52,8 @@
                     </div>
                 </div>
             </div>
+            <!-- 【新增】Discord 社群連結，開新分頁不離開網站 -->
+            <div onclick="window.open('https://discord.gg/PQJyqPN5R', '_blank')">Discord</div>
         </div>
     </nav>
 
@@ -118,9 +120,12 @@
                     <div class="profile_card" style="margin-bottom: 1.6rem;">
                         <div class="vp_stat_card_head">
                             <p class="profile_card_title vp_stat_card_head_title">統計資料</p>
-
+                            <!-- ===== 【新增】檢舉按鈕：移到統計資料標頭右邊，不再擠在玩家名字那排——
+                                 名字那排東西已經很多（LV標籤、讚、簡介、XP條），檢舉又是低頻的
+                                 「次要操作」，放進卡片標頭跟卡片本身的內容關聯性也更高，
+                                 看自己的預覽頁時 JS 不會把它顯示出來 -->
                             <button type="button" class="vp_report_btn is_hidden" id="vp_report_btn">
-                                 檢舉 ⚠️
+                                <span class="vp_report_icon">🚩</span> 檢舉
                             </button>
                         </div>
                         <div class="profile_stat_list">
@@ -186,10 +191,15 @@
         </section>
     </main>
 
-
+    <!-- ===== 【新增】檢舉表單彈窗 =====
+         整站目前沒有現成的 modal 元件可以沿用，這裡自己開一組獨立的
+         vp_report_ 前綴 class，樣式寫在 view_profile.css，不影響其他頁面。
+         結構跟 profile.html 的 .profile_danger_confirm（危險操作確認區塊）
+         走同一種「先隱藏、由 JS 加 is_hidden 控制顯示」的做法，只是這裡
+         需要蓋在整個頁面上方，所以額外包一層全螢幕的半透明背景。 -->
     <div class="vp_report_backdrop is_hidden" id="vp_report_backdrop">
         <div class="vp_report_modal">
-            <p class="vp_report_modal_title">檢舉該玩家</p>
+            <p class="vp_report_modal_title">檢舉這位玩家</p>
 
             <p class="vp_report_field_label">檢舉分類（可複選）</p>
             <div class="vp_report_category_list" id="vp_report_category_list">
@@ -197,10 +207,10 @@
                     <input type="checkbox" value="暱稱不雅"> 暱稱不雅
                 </label>
                 <label class="vp_report_category_item">
-                    <input type="checkbox" value="速度異常"> 數據異常
+                    <input type="checkbox" value="速度異常"> 速度異常
                 </label>
                 <label class="vp_report_category_item">
-                    <input type="checkbox" value="疑似作弊"> 作弊
+                    <input type="checkbox" value="疑似作弊"> 疑似作弊
                 </label>
                 <label class="vp_report_category_item">
                     <input type="checkbox" value="其他"> 其他
@@ -208,13 +218,13 @@
             </div>
 
             <p class="vp_report_field_label">詳細說明（必填）</p>
-            <textarea class="vp_report_textarea" id="vp_report_textarea" maxlength="500" placeholder="請「具體」描述檢舉原因"></textarea>
+            <textarea class="vp_report_textarea" id="vp_report_textarea" maxlength="500" placeholder="請具體描述檢舉原因，方便我們後續查證..."></textarea>
 
             <p class="vp_report_error is_hidden" id="vp_report_error"></p>
 
             <div class="vp_report_modal_actions">
                 <button type="button" class="vp_report_cancel_btn" id="vp_report_cancel_btn">取消</button>
-                <button type="button" class="vp_report_submit_btn" id="vp_report_submit_btn">送出</button>
+                <button type="button" class="vp_report_submit_btn" id="vp_report_submit_btn">送出檢舉</button>
             </div>
         </div>
     </div>
@@ -236,6 +246,7 @@
             <div class="footer_col">
                 <p class="footer_col_title">平台連結</p>
                 <a class="footer_link" href="https://www.youtube.com/channel/UCIA5fwMrvGpvcQbG0ZX2ZLA" target="_blank" rel="noopener">Youtube</a>
+                <a class="footer_link" href="https://discord.gg/PQJyqPN5R" target="_blank" rel="noopener">Discord</a>  
             </div>
         </div>
 
