@@ -21,6 +21,7 @@
 
     <link rel="stylesheet" href="TCTC2-0-intro_lobby.css">
     <link rel="stylesheet" href="TCTC2-0-main_lobby.css">
+    <link rel="stylesheet" href="TCTC2-0-mobile.css">
     <!-- 【新增】帳號系統彈窗樣式 -->
     <link rel="stylesheet" href="TCTC2-0-auth_ui.css">
     <!--成就彈窗-->
@@ -1506,6 +1507,7 @@
     <script src="TCTC2-0-typing_sound.js"></script>
     <!-- 【新增】成績分享卡片（共用模組，哪頁要用哪頁自己載入） -->
     <script src="TCTC2-0-share_card.js"></script>
+    <script src="TCTC2-0-mobile_nav.js"></script>    
     <script>
 
         // 【新增】頁面一載入就準備好打字音效（建立 AudioContext + 非同步載入音效檔）
@@ -1513,12 +1515,7 @@
         // 【新增】左上角打字音效開關，跟設定頁的開關共用同一份 localStorage 狀態
         Init_Sound_Toggle_Btn()
 
-        // ===== 【新增】左上角打字音效開關 =====
-        // 外觀邏輯比照 kb_toggle_btn，只是這裡不是用「同一張圖 + opacity 變淡」表現關閉狀態，
-        // 而是直接把 <img> 的 src 換成另一張圖（medium-volume.png / mute.png），
-        // 一眼就看得出目前是有聲還是靜音。實際的開關狀態不是這顆按鈕自己管理，
-        // 是共用 TCTC2-0-typing_sound.js 裡的 Get_Typing_Sound_Enabled() / Set_Typing_Sound_Enabled()，
-        // 所以在這裡按跟在設定頁按 checkbox 效果完全一樣，兩邊狀態會同步。
+
         function Init_Sound_Toggle_Btn(){
             const btn = document.getElementById("sound_toggle_btn")
             const icon = document.getElementById("sound_toggle_icon")
@@ -1543,19 +1540,12 @@
             })
         }
 
-        // ===== 讀取 URL 參數 =====
-        // window.location.search 是網址裡 ? 之後的部分，例如 "?stage=1-2-1"
-        // URLSearchParams 把它解析成可以用 .get() 查詢的格式
-        // params.get("stage") 取出 stage 的值，存進 stageId
+
         const params = new URLSearchParams(window.location.search)
 
         const stageId = params.get("stage")  //***********************
 
-        // ===== 【新增】記憶功能：記錄「最後一次進入的關卡」 =====
-        // 只要這個關卡頁面有成功載入(stageId 不是 null)，就立刻存進 localStorage。
-        // 這樣不管玩家是打完自然跳回、還是按左上角「←」中途退出，
-        // 都會在「離開前的當下」就已經存好最新的關卡編號，
-        // 不需要另外攔截每一個「返回大廳」的按鈕。
+
         if (stageId) {
             localStorage.setItem("tctc_last_stage", stageId)
         }
