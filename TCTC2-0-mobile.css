@@ -1,0 +1,361 @@
+/* ============================================================
+   TCTC2-0-mobile.css
+   手機版適配樣式（第一版）
+
+   ⚠️ 目前手邊只有 HTML / JS，沒有實際的
+   main_lobby.css / intro_lobby.css / achievements.css / ranking.css
+   等檔案，所以這份是根據 class 命名規則推測出來的「保守通用版」，
+   目的是先讓手機能正常瀏覽、字放大、選單能用，
+   細節排版建議實機測試後再回饋微調。
+
+   引用順序：放在其他頁面 CSS 之後、TCTC2-0-theme.js 之前或之後皆可，
+   只要在所有 <link rel="stylesheet"> 的最後面即可（確保覆蓋得了原本樣式）。
+   ============================================================ */
+
+@media (max-width: 768px) {
+
+    html {
+        font-size: 17px;
+        overflow-x: hidden;
+        width: 100%;
+    }
+
+    body {
+        -webkit-text-size-adjust: 100%;
+        overflow-x: hidden;
+        width: 100%;
+        /* 對照 intro_lobby.css：nav 是固定 58px 高的 fixed 元素，
+           body 原本就有 padding-top: 63px 讓內容不被蓋住，這裡沿用不用改 */
+    }
+
+    /* ---------- Nav / 漢堡選單 ----------
+       nav 本身高度是 intro_lobby.css 寫死的 58px，這裡絕對不能加 padding
+       把它撐高，不然 body 的 padding-top:63px 會對不齊，內容跑到 nav 底下去 */
+    #nav {
+        position: fixed;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 58px;
+        box-sizing: border-box;
+        padding: 0 0.8rem;
+    }
+
+    #nav .logo_style {
+        height: 2rem;
+        width: auto;
+    }
+
+    /* 桌面版原本用 hover 展開的選單列，手機預設整個藏起來，
+       改由漢堡按鈕 + .nav_mobile_open 控制顯示 */
+    #nav .nav_css {
+        display: none;
+    }
+
+    /* 抽屜背景用 --darker-blue（跟全站深色背景一致），文字用 --text-rgb，
+       這兩個變數在 profile.css / ranking.css 都有定義成正確色碼，
+       只有 intro_lobby.css 自己那份 --dark-blue / --champagne-gold 是壞的
+       self-reference（intro_lobby.css 內寫 --dark-blue: var(--dark-blue)），
+       這裡改用 --darker-blue（intro_lobby.css 裡這個變數本身沒壞）保險一點 */
+    #nav.nav_mobile_open .nav_css {
+        display: flex;
+        flex-direction: column;
+        position: fixed;
+        top: 0;
+        right: 0;
+        height: 100vh;
+        width: min(80vw, 320px);
+        background-color: var(--darker-blue, #0b1a37);
+        padding: 5rem 1.5rem 2rem;
+        box-shadow: -4px 0 24px rgba(0, 0, 0, 0.4);
+        z-index: 100000;
+        overflow-y: auto;
+        gap: 0.5rem;
+    }
+
+    #nav.nav_mobile_open .nav_css > div {
+        font-size: 1.15rem;
+        padding: 0.9rem 0.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.92) !important;
+        margin-right: 0 !important;
+    }
+
+    .tctc_mobile_hamburger {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 5px;
+        width: 2rem;
+        height: 2rem;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        z-index: 100001;
+        flex-shrink: 0;
+    }
+
+    .tctc_mobile_hamburger span {
+        display: block;
+        height: 3px;
+        border-radius: 2px;
+        background-color: var(--champagne-gold, #c9a84c);
+        transition: transform 0.25s ease, opacity 0.25s ease;
+    }
+
+    #nav.nav_mobile_open .tctc_mobile_hamburger span:nth-child(1) {
+        transform: translateY(8px) rotate(45deg);
+    }
+    #nav.nav_mobile_open .tctc_mobile_hamburger span:nth-child(2) {
+        opacity: 0;
+    }
+    #nav.nav_mobile_open .tctc_mobile_hamburger span:nth-child(3) {
+        transform: translateY(-8px) rotate(-45deg);
+    }
+
+    .tctc_mobile_overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 99999;
+    }
+    #nav.nav_mobile_open ~ .tctc_mobile_overlay {
+        display: block;
+    }
+
+    /* 下拉選單（模式／更多）改成點擊展開的 accordion，取代 hover */
+    .nav_dropdown_menu {
+        display: none !important;
+        position: static !important;
+        box-shadow: none !important;
+        background: transparent !important;
+    }
+    .nav_dropdown.nav_dropdown_open .nav_dropdown_menu {
+        display: block !important;
+    }
+    .nav_dropdown_panel {
+        padding-left: 1rem;
+    }
+    .nav_dropdown_item {
+        font-size: 1.05rem;
+        padding: 0.6rem 0;
+    }
+    .nav_dropdown_arrow {
+        float: right;
+    }
+
+    /* ---------- 首頁大標題區塊 ---------- */
+    .intro_first_section_text0-0 { font-size: 0.9rem; }
+    .intro_first_section_text0-1 { font-size: 1.8rem; }
+    .intro_first_section_text1-1 { font-size: 1.5rem; line-height: 1.5; }
+    .intro_first_section_text4-1 { font-size: 0.95rem; }
+
+    .intro_second_section_text2-1,
+    .intro_third_section_text1-1 {
+        font-size: 1rem;
+        line-height: 1.8;
+    }
+
+    /* ---------- 卡片型 grid/flex 容器：手機一律改直排 ---------- */
+    .si-feature_grid,
+    .intro_third_section_flex,
+    .achv_streak_strip,
+    .ranking_metric_group,
+    .ranking_selector_row {
+        display: flex;
+        flex-direction: column !important;
+        gap: 1rem;
+    }
+
+    .si-feature_card,
+    .si-difficulty_card {
+        width: 100% !important;
+        box-sizing: border-box;
+    }
+
+    /* ===== 【關鍵修正】難度卡片容器在 intro_lobby.css 裡被寫死 width:70rem
+       (=1120px)，不管螢幕多窄都不會縮，這才是「背景 100vw 卻破破的」的真正
+       元凶——這個 1120px 的固定寬度把整個頁面撐超過 100vw，導致頁面出現
+       橫向可捲動空間，只要稍微橫捲就會看到背景區塊右邊露出沒畫到的空白。
+       這裡強制蓋掉那個固定寬度，改成跟隨螢幕寬度。 =====*/
+    .intro_third_section_flex {
+        width: 100% !important;
+        height: auto !important;
+        box-sizing: border-box;
+    }
+    .intro_third_section_style {
+        height: auto;
+        padding-bottom: 3rem;
+    }
+
+    /* ---------- 排行榜 ----------
+       ranking.css 的 .ranking_list_header / .ranking_row 用
+       grid-template-columns: 4.5rem 1fr 10rem 6rem，四欄在手機上會擠爆，
+       改成每一列直接拆成「名次+玩家」一行、「WPM+正確率」一行的兩行卡片 */
+    .ranking_container {
+        padding: 0 0.8rem;
+        box-sizing: border-box;
+        margin-top: 4.5rem; /* 讓固定在畫面上的 .ranking_total_views 徽章不會壓到標題 */
+    }
+
+    .ranking_title {
+        font-size: 1.7rem;
+    }
+
+    .ranking_total_views {
+        top: 4.2rem;
+        right: 1rem;
+        font-size: 0.65rem;
+    }
+
+    .ranking_list_header,
+    .ranking_row {
+        grid-template-columns: 3rem 1fr auto;
+        grid-template-rows: auto auto;
+        row-gap: 0.3rem;
+        padding: 0.7rem 0.9rem;
+    }
+
+    .ranking_list_header .rank_col_rank,
+    .ranking_row .rank_col_rank {
+        grid-row: 1;
+        grid-column: 1;
+    }
+    .ranking_list_header .rank_col_name,
+    .ranking_row .rank_col_name {
+        grid-row: 1;
+        grid-column: 2;
+    }
+    .ranking_list_header .rank_col_wpm,
+    .ranking_row .rank_col_wpm {
+        grid-row: 2;
+        grid-column: 1 / 3;
+        text-align: left;
+        font-size: 0.85rem;
+        opacity: 0.85;
+    }
+    .ranking_list_header .rank_col_acc,
+    .ranking_row .rank_col_acc {
+        grid-row: 1;
+        grid-column: 3;
+        text-align: right;
+    }
+    .ranking_list_header .rank_col_acc {
+        grid-row: 1 / 3;
+        align-self: center;
+    }
+
+    .ranking_metric_group .ranking_select {
+        font-size: 0.78rem;
+        padding: 0.4rem 0.7rem;
+    }
+
+    /* ---------- 榮譽牆：徽章列改直排，資訊不擠在一行 ---------- */
+    .achv_badge_row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    .achv_badge_name {
+        font-size: 1.05rem;
+    }
+
+    /* ---------- 個人設定頁 ----------
+       profile.css 本身已經有 @media (max-width: 46rem) 把兩欄改單欄，
+       這裡只補手機上頭像列跟按鈕排列的細節 */
+    .profile_avatar_row {
+        flex-wrap: wrap;
+    }
+    .profile_page_title {
+        font-size: 1.7rem;
+    }
+
+    /* ---------- 玩家公開頁（view_profile） ---------- */
+    .vp_player_name {
+        font-size: 1.5rem;
+    }
+    .vp_report_modal {
+        padding: 1.3rem 1.1rem;
+    }
+
+    /* ---------- 通用：避免任何區塊把手機畫面撐寬 ---------- */
+    main, section, .main_lobby_main_frame {
+        max-width: 100vw;
+        box-sizing: border-box;
+    }
+
+    /* ============================================================
+       ---------- 打字遊戲畫面（game.html）----------
+       這些 class 定義在 game.html 自己內嵌的 <style> 裡（不是外部 CSS），
+       但因為 mobile.css 是最後載入、選擇器夠具體，一樣蓋得過去。
+       ============================================================ */
+
+    /* .game_main 原本固定 width:70vw，桌機上兩側留白很正常，
+       手機上留白會把本來就不夠的空間再切掉一塊，改成 92vw 盡量用滿 */
+    .game_main {
+        width: 92vw;
+        margin-top: 4.2rem; /* 對齊 58px 高的 nav，避免第一次進來被蓋到 */
+        gap: 1.2rem;
+    }
+
+    /* .game_char_container 原本 width:120%（故意比 .game_main 寬，
+       桌機上是為了塞更多字），92vw 的 92%*1.2 還在安全範圍內可以維持，
+       但保險起見手機上直接收回 100%，避免任何極端字數情況下爆版 */
+    .game_char_container {
+        width: 100%;
+        padding: 0.8rem 0.3rem;
+    }
+    .game_char_box {
+        width: 2.6rem;
+        height: 3.2rem;
+        font-size: 1.5rem;
+    }
+
+    /* 左上角控制列（返回／排名／再試一次）跟右上角計時器，
+       原本用固定 rem 數值定位，是抓桌機視窗算的，手機螢幕窄，
+       兩邊間距要收窄，不然容易貼太邊緣或跟字框重疊 */
+    .game_top_left_controls {
+        top: 4.5rem;
+        left: 0.8rem;
+        gap: 0.6rem;
+    }
+    .game_timer_wrap {
+        top: 4.5rem;
+        right: 0.8rem;
+    }
+
+    /* 中級關卡的示範圖片：typing_img_2 在 HTML 裡是 inline style 寫死
+       width:600px / height:200px，inline style 特異度最高，一般 CSS 蓋不過，
+       這裡用 !important 才蓋得掉，不然手機上這張圖會直接把畫面撐寬 */
+    #typing_img_2 {
+        width: 100% !important;
+        height: auto !important;
+        max-width: 92vw !important;
+    }
+    #typing_img_1 {
+        max-width: 92vw !important;
+    }
+
+    .game_stage_name { font-size: 1.5rem; }
+
+    /* 結果結算彈窗：三個統計數字（準確率/正確字數/錯誤次數）原本 gap:3rem，
+       手機寬度塞不下，縮小間距跟字級 */
+    .game_result {
+        padding: 1.4rem 1rem;
+        width: 92vw;
+        box-sizing: border-box;
+    }
+    .game_result_wpm { font-size: 2.8rem; }
+    .game_result_row { gap: 1.2rem; }
+    .game_result_stat_num { font-size: 1.5rem; }
+    .game_result_share_rank_row {
+        flex-direction: column;
+        gap: 0.6rem;
+        width: 100%;
+    }
+}
+
+/* live_keyboard／kb_toggle_btn 原本在 720px 以下就會被 game.html 自己的
+   內嵌 <style> 隱藏掉（因為手機沒有實體鍵盤可以對照虛擬鍵盤），
+   這裡不用重複處理，維持原本邏輯即可 */
