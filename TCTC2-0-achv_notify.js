@@ -1,4 +1,3 @@
-
 const ACHV_XP_TIER_KEYS = [null, "bronze", "silver", "gold", "platinum"]
 
 const ACHV_NOTIFY_SEEN_KEY = "tctc2.0-achv_seen_tiers"   // localStorage：{ 成就key: 已看過的最高等級 }
@@ -120,6 +119,45 @@ function ACHV_Notify_Diff(streakData, statsData){
 }
 
 // ============================================================
+// 【新增】算出「目前總共解鎖到第幾階」的總和（邏輯跟 achievements.js 的
+// ACHV_Render_All 完全一致，只是這裡不用畫面、單純算數字），給
+// ACHV_Notify_Run 同步進 player_stats/{anon_id}/achievements_unlocked 用。
+//
+// 依賴檢查比照 ACHV_Notify_Diff 的保守做法：只要這個頁面沒載入計算
+// 「連續登入」或「關卡完成度」需要的依賴（login_streak.js / level_data.js），
+// 就整個回傳 null、不同步——寧可這次沒同步到，也不要把一個因為缺資料而
+// 偏低的總數寫上雲端（Firebase Rules 有擋「只能往上寫」，偏低的值本來就
+// 會被拒絕，這裡先擋掉只是避免每次都白跑一次註定失敗的寫入 + 主控台噴警告）。
+// ============================================================
+function ACHV_Notify_Get_Total_Unlocked(streakData, statsData){
+    if(typeof ACHV_CATEGORIES === "undefined") return null
+
+    // 【修正】原本這裡還會檢查 typeof TCTC_Get_Streak_Data === "function" 跟
+    // typeof Level_Data !== "undefined"，缺任一個依賴就整個放棄同步——
+    // 但 game.html（真正觸發破關/挑戰結算的頁面）跟 index.html 根本沒載入
+    // login_streak.js，導致「連續登入」這個分類永遠被視為缺依賴，整個
+    // 同步直接跳過，等於玩家還是要跑去某個特定頁面（榮譽牆／排行榜）才會
+    // 刷新到雲端，沒有真正解決「不去榮譽牆就不會更新」的問題。
+    //
+    // 拿掉這兩個守門判斷是安全的：ACHV_Get_Unlocked_Tiers() 在缺資料時本來
+    // 就會安全地算成 0（見 achv_data.js），頂多是這一頁少算到「連續登入」
+    // 或「關卡完成度」那幾項，算出一個偏低、不完整的總數；而 Firebase Rules
+    // 對 achievements_unlocked 有「newData.val() >= data.val()」的規則，
+    // 偏低的值直接會被伺服器拒絕寫入（只是主控台印一次警告），永遠不會
+    // 誤把雲端已經記錄的真實數字蓋成比較小的值。所以「盡量算、盡量同步」
+    // 比「缺一項依賴就整個放棄」更好——至少能同步到這一頁確實算得出來的
+    // 那些分類，不用再靠玩家自己點進榮譽牆才會更新。
+    let total = 0
+    ACHV_CATEGORIES.forEach(function(category){
+        category.achievements.forEach(function(achv){
+            const data = achv.dataSource === "streak" ? streakData : statsData
+            total += ACHV_Get_Unlocked_Tiers(achv, data)
+        })
+    })
+    return total
+}
+
+// ============================================================
 // 對外主流程：抓資料 -> 比對 -> 彈窗
 // 任何頁面只要呼叫這個函式，就會完整跑一次「讀最新雲端資料、跟本機
 // baseline 比對、有新解鎖就彈窗」的流程
@@ -148,6 +186,17 @@ function ACHV_Notify_Run(){
     Promise.all([streakPromise, statsPromise]).then(function(results){
         const newlyUnlocked = ACHV_Notify_Diff(results[0], results[1])
         newlyUnlocked.forEach(ACHV_Notify_Show_Toast)
+
+        // 【新增】排行榜的「成就等級」榜排序用的就是雲端這個欄位，原本只有
+        // 造訪榮譽牆頁面才會寫入，導致沒去過榮譽牆的玩家排行榜數字停留在
+        // 舊的、偏低的值，排序看起來就會亂掉。這裡接上 ACHV_Notify_Run 本來
+        // 就有的「動作觸發 -> 抓資料 -> 比對」流程，改成只要有觸發這個流程
+        // （破關、挑戰結算、登入、或任何一頁的保底檢查）就順便同步一次，
+        // 不用再等玩家自己點進榮譽牆。
+        if(typeof Sync_Achievements_Unlocked === "function"){
+            const total = ACHV_Notify_Get_Total_Unlocked(results[0], results[1])
+            if(total !== null) Sync_Achievements_Unlocked(total)
+        }
     })
 }
 

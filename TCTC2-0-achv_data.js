@@ -256,3 +256,23 @@ function ACHV_Get_Unlocked_Tiers(achv, data){
     const value = achv.getValue ? achv.getValue(data) : (data ? (data[achv.metric] || 0) : 0)
     return ACHV_Get_Tier_Index(value, achv.thresholds)
 }
+
+
+function ACHV_Compute_Total_From_Raw_Player_Stats(player_stats_record){
+    if(!player_stats_record) return 0
+
+    const streakData = {
+        longest_streak: player_stats_record.streak_longest || 0,
+        total_login_days: player_stats_record.streak_total_days || 0,
+        longest_gap_days: player_stats_record.longest_gap_days || 0
+    }
+
+    let total = 0
+    ACHV_CATEGORIES.forEach(function(category){
+        category.achievements.forEach(function(achv){
+            const data = achv.dataSource === "streak" ? streakData : player_stats_record
+            total += ACHV_Get_Unlocked_Tiers(achv, data)
+        })
+    })
+    return total
+}

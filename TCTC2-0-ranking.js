@@ -479,7 +479,7 @@ function Load_Own_Challenge_Rank(combo_id) {
    不同的東西（平均WPM、測驗次數、在線時長……），所以欄位標題也要跟著動態改字。
    ============================================================ */
 
-let player_metric = "avg_wpm" // "avg_wpm" | "avg_acc" | "online_seconds" | "total_points" | "page_views" | "streak_longest" | "streak_total_days" | "achievements_unlocked"
+let player_metric = "avg_wpm" // "avg_wpm" | "avg_acc" | "online_seconds" | "total_points" | "page_views" | "streak_longest" | "streak_total_days" | "achievements_unlocked" | "xp"
 
 const player_metric_buttons = {
     avg_wpm: document.getElementById("ranking_player_metric_wpm"),
@@ -492,7 +492,9 @@ const player_metric_buttons = {
     streak_longest: document.getElementById("ranking_player_metric_streak"),
     streak_total_days: document.getElementById("ranking_player_metric_login_days"),
     // 【新增】解鎖成就數量榜的按鈕
-    achievements_unlocked: document.getElementById("ranking_player_metric_achv")
+    achievements_unlocked: document.getElementById("ranking_player_metric_achv"),
+    // 【新增】玩家等級榜的按鈕
+    xp: document.getElementById("ranking_player_metric_level")
 }
 
 // 把「總秒數」轉成「X 小時 Y 分」這種給人看的格式。
@@ -522,10 +524,21 @@ function Get_Player_Metric_Value(entry) {
     // Get_Top_Players_By_Streak / Get_Top_Players_By_Total_Login_Days 排序用的欄位完全一致
     if (player_metric === "streak_longest") return entry.streak_longest ?? 0
     if (player_metric === "streak_total_days") return entry.streak_total_days ?? 0
-    // 【新增】achievements_unlocked 對應「解鎖成就數量榜」，欄位名稱要跟
-    // player_stats/{anon_id} 底下實際存的欄位、以及 firebase.js 的
-    // Get_Top_Players_By_Achievements_Unlocked 排序用的欄位完全一致
-    if (player_metric === "achievements_unlocked") return entry.achievements_unlocked ?? 0
+    // 【新增】achievements_unlocked 對應「解鎖成就數量榜」。
+    // 【修改】不再讀雲端的 achievements_unlocked 快取欄位——那個欄位需要
+    // 玩家自己觸發過同步才會更新，容易跟他實際的統計數字對不起來。改成優先
+    // 使用 Load_Player_Leaderboard() 那邊現場算好、掛在 entry._achv_level
+    // 上的值；如果這個 entry 沒有（例如這個函式被其他地方單獨呼叫），
+    // 才退回用 ACHV_Compute_Total_From_Raw_Player_Stats() 現場算一次。
+    if (player_metric === "achievements_unlocked") {
+        if (typeof entry._achv_level === "number") return entry._achv_level
+        return (typeof ACHV_Compute_Total_From_Raw_Player_Stats === "function")
+            ? ACHV_Compute_Total_From_Raw_Player_Stats(entry)
+            : (entry.achievements_unlocked ?? 0)
+    }
+    // 【新增】xp 對應「玩家等級榜」，欄位名稱要跟 player_stats/{anon_id} 底下
+    // 實際存的 xp 欄位、以及 firebase.js 的 Get_Top_Players_By_XP 排序用的欄位完全一致
+    if (player_metric === "xp") return entry.xp ?? 0
     return entry.online_seconds ?? 0 // 預設：在線時長榜
 }
 
@@ -587,9 +600,16 @@ function Render_Player_Leaderboard(list) {
             metric1_text = `${entry.streak_total_days ?? 0} 天`
             metric2_text = "—"
         } else if (player_metric === "achievements_unlocked") {
-            // 【新增】解鎖成就數量榜：跟 page_views 一樣沒有適合搭配顯示的第二欄
-            metric1_text = `${entry.achievements_unlocked ?? 0} 等`
+            // 【修改】跟 Get_Player_Metric_Value 一樣，改用現場算出的等級顯示，
+            // 不再讀雲端可能過期的 achievements_unlocked 欄位
+            metric1_text = `${Get_Player_Metric_Value(entry)} 等`
             metric2_text = "—"
+        } else if (player_metric === "xp") {
+            // 【新增】玩家等級榜：主欄顯示換算後的等級（跟名字旁邊的 LV 標籤同一套算法），
+            // 第二欄補上實際 XP 數值，方便玩家比較「同等級但 XP 進度不同」的情況
+            const level_val = (typeof XP_Get_Level === "function") ? XP_Get_Level(entry.xp ?? 0) : "-"
+            metric1_text = `LV ${level_val}`
+            metric2_text = `${entry.xp ?? 0} XP`
         }
 
         const name_html = Get_Player_Name_Link_HTML(entry, Escape_Html(entry.name || "訪客"))
@@ -616,7 +636,8 @@ function Load_Player_Leaderboard() {
         && typeof Get_Top_Players_By_Page_Views === "function"
         && typeof Get_Top_Players_By_Streak === "function" // 【新增】
         && typeof Get_Top_Players_By_Total_Login_Days === "function" // 【新增】
-        && typeof Get_Top_Players_By_Achievements_Unlocked === "function" // 【新增】
+        && typeof Get_All_Player_Stats_For_Achievement_Level === "function" // 【修改】
+        && typeof Get_Top_Players_By_XP === "function" // 【新增】
 
     if (!has_firebase_functions) {
         loading_msg_el.textContent = "排行榜載入失敗，請確認 Firebase 設定是否正確。"
@@ -666,10 +687,55 @@ function Load_Player_Leaderboard() {
     } else if (player_metric === "streak_total_days") {
         Get_Top_Players_By_Total_Login_Days(on_result)
     } else if (player_metric === "achievements_unlocked") {
-        Get_Top_Players_By_Achievements_Unlocked(on_result)
+        // 【修改】不再用雲端欄位排序，改成抓整個 player_stats 節點、對每個人
+        // 現場算出真正的成就等級，濾掉 0 級（跟其他榜「0 不上榜」邏輯一致），
+        // 由高到低排序後才取前 50 名——把算出來的等級掛在 entry._achv_level
+        // 上，Get_Player_Metric_Value() / Render_Player_Leaderboard() 會直接
+        // 讀這個值，不用重算一次。
+        Get_All_Player_Stats_For_Achievement_Level(function (list) {
+            const with_level = list.map(function (entry) {
+                entry._achv_level = (typeof ACHV_Compute_Total_From_Raw_Player_Stats === "function")
+                    ? ACHV_Compute_Total_From_Raw_Player_Stats(entry)
+                    : (entry.achievements_unlocked ?? 0)
+                return entry
+            }).filter(function (entry) { return entry._achv_level > 0 })
+
+            with_level.sort(function (a, b) { return b._achv_level - a._achv_level })
+            on_result(with_level.slice(0, 50))
+        })
+    } else if (player_metric === "xp") {
+        Get_Top_Players_By_XP(on_result)
     } else {
         Get_Top_Players_By_Online_Time(on_result)
     }
+}
+
+// ===== 【新增】給「成就等級」這個指標算「自己實際排第幾」=====
+// 跟其他指標不一樣：這個指標的排序依據是現場算出來的等級，不是資料庫裡的
+// 欄位，沒辦法交給 Firebase orderByChild 排序，只能把整個節點抓下來、
+// 自己排序、自己找位置——邏輯對稱於 Load_Player_Leaderboard() 裡
+// achievements_unlocked 分支的做法，兩處篩選/排序條件務必保持一致。
+function Load_Own_Achievement_Level_Rank() {
+    if (typeof Get_All_Player_Stats_For_Achievement_Level !== "function") return
+    if (typeof ACHV_Compute_Total_From_Raw_Player_Stats !== "function") return
+    if (typeof Get_Anon_Id !== "function") return
+
+    const anon_id = Get_Anon_Id()
+
+    Get_All_Player_Stats_For_Achievement_Level(function (list) {
+        const with_level = list.map(function (entry) {
+            entry._achv_level = ACHV_Compute_Total_From_Raw_Player_Stats(entry)
+            return entry
+        })
+
+        const own_entry = with_level.find(function (e) { return e._anon_id === anon_id })
+        if (!own_entry || own_entry._achv_level < 1) return // 還沒達標（0 級不上榜），不顯示浮窗
+
+        with_level.sort(function (a, b) { return b._achv_level - a._achv_level })
+        const own_index = with_level.findIndex(function (e) { return e._anon_id === anon_id })
+
+        Show_Self_Rank_Bar(own_index + 1, own_entry.name, `${own_entry._achv_level} 等`)
+    })
 }
 
 // ===== 【新增】查詢並顯示「自己在玩家總榜（目前選的指標）的實際名次」，不管有沒有進 Top 50 都會呼叫 =====
@@ -677,6 +743,14 @@ function Load_Player_Leaderboard() {
 // 內部呼叫 _Get_Top_Players 時用的參數完全對應，不然算出來的名次/門檻會跟真正榜單對不起來
 // ——例如榜單因為沒人達標而顯示「沒人上榜」時，浮窗也必須跟著不顯示，不能自相矛盾。
 function Load_Own_Player_Rank() {
+    // 【修改】成就等級榜排序依據是現場算出來的值，不是資料庫欄位，
+    // 走獨立的 Load_Own_Achievement_Level_Rank()，不進下面共用的
+    // Get_Own_Player_Rank(order_by_field, ...) 邏輯
+    if (player_metric === "achievements_unlocked") {
+        Load_Own_Achievement_Level_Rank()
+        return
+    }
+
     if (typeof Get_Own_Player_Rank !== "function") return
 
     let order_by_field, min_count_field, min_count
@@ -696,12 +770,10 @@ function Load_Own_Player_Rank() {
     } else if (player_metric === "streak_total_days") {
         // 【修改】0 天不上榜：邏輯同上
         order_by_field = "streak_total_days"; min_count_field = "streak_total_days"; min_count = 1
-    } else if (player_metric === "achievements_unlocked") {
-        // 【修改】0 項不上榜：門檻欄位改成用自己（achievements_unlocked）當門檻，
-        // 至少要解鎖 1 項，邏輯跟 total_points 榜、以及上面 streak_longest/
-        // streak_total_days 的「0 不上榜」規則一致，這樣「自己排名」浮窗才會
-        // 跟 Get_Top_Players_By_Achievements_Unlocked 的過濾邏輯保持一致
-        order_by_field = "achievements_unlocked"; min_count_field = "achievements_unlocked"; min_count = 1
+    } else if (player_metric === "xp") {
+        // 【新增】0 級不上榜：邏輯跟 total_points 一致，
+        // 至少要有 1 點 XP 才會顯示「自己排名」浮窗
+        order_by_field = "xp"; min_count_field = "xp"; min_count = 1
     } else {
         order_by_field = "online_seconds"; min_count_field = null; min_count = 0
     }
@@ -716,7 +788,10 @@ function Load_Own_Player_Rank() {
         else if (player_metric === "page_views") value_text = `${result.value ?? 0} 次`
         else if (player_metric === "streak_longest") value_text = `連續 ${result.value ?? 0} 天` // 【新增】
         else if (player_metric === "streak_total_days") value_text = `${result.value ?? 0} 天` // 【新增】
-        else if (player_metric === "achievements_unlocked") value_text = `${result.value ?? 0} 項` // 【新增】
+        else if (player_metric === "xp") { // 【新增】
+            const own_level = (typeof XP_Get_Level === "function") ? XP_Get_Level(result.value ?? 0) : "-"
+            value_text = `LV ${own_level}（${result.value ?? 0} XP）`
+        }
         else value_text = Format_Online_Seconds(result.value)
 
         Show_Self_Rank_Bar(result.rank, result.name, value_text)
@@ -788,6 +863,14 @@ function Switch_Player_Metric(metric) {
         stage_label_el2.textContent = "採計標準：統計個人榮譽牆目前累積解鎖的成就等級（銅/銀/金/白金各算一等）"
         col_header_metric1_el.textContent = "解鎖成就"
         col_header_metric2_el.textContent = ""
+    } else if (metric === "xp") {
+        // 【新增】玩家等級榜：文案風格比照 total_points（有明確門檻：至少 1 點 XP 才上榜）
+        stage_label_el2.style.display = "block"
+
+        stage_label_el.textContent = "玩家總榜｜等級最高"
+        stage_label_el2.textContent = "採計標準：依累積經驗值（XP）換算等級排序，需至少累積 1 點 XP 才會上榜"
+        col_header_metric1_el.textContent = "等級"
+        col_header_metric2_el.textContent = "經驗值"
     } else {
         stage_label_el2.style.display = "block"
 
@@ -902,7 +985,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     //網址明講 mode=player，就進玩家總榜（可選帶 metric 參數直接定位到某個指標）
     if (url_mode === "player") {
-        const valid_metrics = ["avg_wpm", "avg_acc", "online_seconds", "total_points", "page_views", "streak_longest", "streak_total_days", "achievements_unlocked"]
+        const valid_metrics = ["avg_wpm", "avg_acc", "online_seconds", "total_points", "page_views", "streak_longest", "streak_total_days", "achievements_unlocked", "xp"]
         player_metric = valid_metrics.includes(url_metric) ? url_metric : "avg_wpm"
         Switch_Ranking_Mode("player")
         return

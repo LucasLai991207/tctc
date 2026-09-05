@@ -72,11 +72,7 @@
     font-size: 1rem;
     letter-spacing: 2px;
 }
-/* ===== 【重新設計】副標2（採計標準說明）=====
-   原本跟副標同一種「一行文字置中」的排法，只是字變小變灰，
-   但視覺上還是「標題堆疊裡的第三層」，感覺很多行字疊在一起。
-   改成膠囊提示框，讓它讀起來像「附加說明」而不是「另一行標題」，
-   跟上面的標題群組明確分開一個層級。 */
+
 .ranking_subtitle2{
     display: inline-block;
 
@@ -326,4 +322,78 @@
 
 .is_hidden{
     display: none !important;
+}
+
+/* ============================================================
+   【新增】自己名次浮窗 —— 固定貼在畫面底部置中
+   ------------------------------------------------------------
+   對應 ranking.js 裡的 Show_Self_Rank_Bar()／Hide_Self_Rank_Bar()：
+   玩家達標（例如成就等級榜門檻 achievements_unlocked >= 1、或其他
+   任何一種榜單）但沒擠進 Top 50 時，用這個浮窗顯示「我實際排第幾」，
+   不然玩家會誤以為自己達標了卻完全沒有名次。
+
+   視覺語言比照 achv_notify_toast（深底+金框+陰影），因為都是「浮在
+   畫面上、貼底部或頂部置中」的同類型元件，讓玩家一眼認出這是同一
+   套系統的通知樣式。z-index 給 500 就夠——不像 achv_notify 需要蓋過
+   auth 彈窗，這裡只要蓋過一般頁面內容即可。
+   ============================================================ */
+.ranking_self_rank_bar{
+    position: fixed;
+    bottom: 0.8rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 500;
+
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+
+    max-width: 90vw;
+
+    background-color: var(--dark-blue);
+    border: 1px solid var(--champagne-gold);
+    border-radius: 8%;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), 0 0 0 3px rgba(var(--accent-rgb), 0.12);
+
+    padding: 0.65rem 1.3rem;
+
+    color: rgba(var(--text-rgb), 0.92);
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+.ranking_self_bar_label{
+    color: var(--champagne-gold);
+    font-size: 0.72rem;
+    letter-spacing: 2px;
+    flex-shrink: 0;
+}
+.ranking_self_bar_rank{
+    color: var(--champagne-gold);
+    font-weight: 700;
+    margin-right: 0.5rem;
+}
+.ranking_self_bar_name{
+    margin-right: 0.5rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.ranking_self_bar_value{
+    color: rgba(var(--text-rgb), 0.6);
+}
+
+@media (max-width: 30rem){
+    .ranking_self_rank_bar{
+        max-width: 94vw;
+        font-size: 0.78rem;
+        padding: 0.55rem 1rem;
+    }
+    .ranking_self_bar_name{
+        max-width: 7rem;
+        display: inline-block;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        vertical-align: bottom;
+    }
 }
