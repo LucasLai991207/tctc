@@ -704,6 +704,23 @@
         box-sizing: border-box;
     }
 
+    .detail_main_box {
+        padding: 5.5vw 4vw !important;
+    }
+    .detail_ans {
+        width: 100% !important;
+        margin-left: 0 !important;
+        margin-bottom: 3rem;
+        font-size: 0.92rem;
+        line-height: 1.7;
+    }
+    .detail_h2 {
+        font-size: 1.05rem;
+    }
+    .detail_h1 {
+        font-size: 1.6rem;
+    }
+
     .main_lobby_main_frame_mode_selector_intro {
         width: 1.6rem !important;
         height: 1.6rem !important;
