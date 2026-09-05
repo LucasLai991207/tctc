@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>排行榜 - TCTC 繁體中文打字練習中心</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="查看各關卡的打字速度排行榜，看看自己的WPM在所有玩家中排第幾名！">
     <meta name="robots" content="index, follow">
 
@@ -73,10 +74,7 @@
             <div class="ranking_container">
                 <p class="ranking_total_views" id="ranking_total_views">網站總瀏覽次數：載入中...</p>
                 <div class="ranking_header">
-                    <!-- 【新增】網站總瀏覽次數：放在整個排行榜區塊最上方，不受下面「主線關卡/挑戰模式/玩家總榜」
-                         分頁切換影響，隨時都會顯示。初始文字先給「載入中...」，等 TCTC2-0-ranking.js
-                         呼叫 Get_Total_Page_Views() 拿到雲端數字後才會被換掉。
-                         【重新設計】用 align-self: flex-end（見CSS）靠右浮成小徽章，跟下面的標題群組脫鉤 -->
+
 
                     <h1 class="ranking_title">Top 50 排行榜</h1>
                     <p class="ranking_subtitle" id="ranking_stage_label">載入中...</p>
@@ -103,10 +101,7 @@
                     <select id="ranking_cg_seconds_select" class="ranking_select"></select>
                 </div>
 
-                <!-- 【重新設計】原本7顆按鈕平鋪一排，長短不一容易折行折得很亂。
-                     現在依語意分成兩組（表現／活躍度），並加上 ranking_player_metric_row
-                     這個 class 讓CSS改成「一組一列、置中」的排法。按鈕的 id / onclick 完全沒動，
-                     JS 是用 getElementById 抓取，不受這裡重新排版的影響。 -->
+
                 <div class="ranking_selector_row ranking_player_metric_row is_hidden" id="ranking_player_selector_row">
                     <div class="ranking_metric_group">
                         <span class="ranking_metric_group_label">表現</span>
@@ -115,6 +110,8 @@
                         <button type="button" class="ranking_select" id="ranking_player_metric_points" onclick="Switch_Player_Metric('total_points')">積分</button>
                         <!-- 【新增】解鎖成就數量榜：結構跟其他按鈕完全一樣，只是 metric 參數換成 "achievements_unlocked" -->
                         <button type="button" class="ranking_select" id="ranking_player_metric_achv" onclick="Switch_Player_Metric('achievements_unlocked')">成就等級</button>
+                        <!-- 【新增】玩家等級榜：結構跟其他按鈕完全一樣，metric 參數換成 "xp"（用 xp 排序，等級是 xp 換算出來的顯示值） -->
+                        <button type="button" class="ranking_select" id="ranking_player_metric_level" onclick="Switch_Player_Metric('xp')">玩家等級</button>
                     </div>
                     <div class="ranking_metric_group">
                         <span class="ranking_metric_group_label">活躍度</span>
@@ -140,6 +137,19 @@
                         這一關目前還沒有任何人上榜，快去成為第一名吧！
                     </div>
                 </div>
+            </div>
+
+            <!-- 【新增】自己名次浮窗：固定貼在畫面底部置中，顯示「我沒擠進 Top 50，但我實際排第幾」。
+                 對應的抓資料/顯示邏輯（Show_Self_Rank_Bar / Load_Own_Player_Rank 等）本來就在
+                 ranking.js 裡，一直都有在跑，只是這個容器一直沒補進 HTML，導致玩家達標
+                 （例如成就等級榜門檻 achievements_unlocked >= 1）卻沒擠進 Top 50 時，
+                 完全看不到自己的名次——不是沒有名次，是浮窗容器不存在，Show_Self_Rank_Bar()
+                 裡的 `if (!self_rank_bar_el || !self_rank_text_el) return` 直接安靜跳過。
+                 is_hidden 預設隱藏，每次切換榜單/分頁時 Hide_Self_Rank_Bar() 會先蓋回去，
+                 確定「這份榜單有查到自己的名次」才會被 Show_Self_Rank_Bar() 打開。 -->
+            <div class="ranking_self_rank_bar is_hidden" id="ranking_self_rank_bar">
+                <span class="ranking_self_bar_label">名次</span>
+                <span id="ranking_self_rank_text"></span>
             </div>
         </section>
     </main>

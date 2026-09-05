@@ -1164,15 +1164,46 @@ function Get_Top_Players_By_Total_Login_Days(callback, limit) {
         callback(list.slice(0, limit || 50))
     })
 }
-// 【修改】解鎖成就數量最多榜：要求 achievements_unlocked >= 1，濾掉「一項成就都
-// 還沒解鎖」的玩家不該佔用榜單名額——道理跟 total_points 要求 >= 1 積分一致
-// （0 積分/0 項成就都代表「這個指標上其實還沒有任何實質成績」，不該上榜）。
-// 用 achievements_unlocked 自己當 min_count_field，是同一個查詢欄位兼當門檻欄位，
-// 跟 Get_Top_Players_By_Points("total_points", "total_points", 1, ...) 的寫法完全對稱。
-// 排序用的 achievements_unlocked 欄位由 TCTC2-0-achievements.js 頁面
-// 造訪時同步寫入，見 Sync_Achievements_Unlocked() 上方的完整說明。
-function Get_Top_Players_By_Achievements_Unlocked(callback, limit) {
-    _Get_Top_Players("achievements_unlocked", "achievements_unlocked", 1, function (list) {
+// 【修改】解鎖成就數量最多榜：原本用玩家瀏覽器自己同步的 achievements_unlocked
+// 欄位排序，只要某個玩家沒有觸發過那次同步（沒去過榮譽牆、或某次同步剛好
+// 缺依賴），這個欄位就會跟他實際的統計數字對不起來，導致「明明成就等級
+// 很高卻沒上榜」——不管加多少個同步觸發點都無法根治，因為只要有一個玩家
+// 沒碰到那些觸發點，這個 bug 就會一直存在。
+//
+// 修正做法：不再依賴任何玩家自己同步過的衍生欄位，直接把整個 player_stats
+// 節點下載下來，回傳給呼叫端（ranking.js，已載入 achv_data.js）用
+// ACHV_Compute_Total_From_Raw_Player_Stats() 對每個人的原始統計數字現場
+// 算一次真正的等級，再自己排序——這樣不管這個玩家上次何時觸發過同步，
+// 算出來的都是資料庫裡現在真正的統計數字換算出的正確等級。
+//
+// 【取捨】不能再用 orderByChild + limitToLast 只抓一小批候選名單（排序
+// 依據是現場算出來的，沒辦法交給 Firebase 排序），要整個節點下載下來——
+// 這跟 Get_Own_Player_Rank() 目前的做法是同一種取捨（見那個函式上方的
+// 說明），對這個網站目前的規模沒問題。
+function Get_All_Player_Stats_For_Achievement_Level(callback) {
+    tctc_db.ref("player_stats").once("value")
+        .then(function (snapshot) {
+            const list = []
+            snapshot.forEach(function (child) {
+                const val = child.val()
+                val._anon_id = child.key
+                if (val.hide_from_leaderboard === true) return
+                list.push(val)
+            })
+            callback(list)
+        })
+        .catch(function (error) {
+            console.log("[leaderboard] 讀取玩家總榜（成就等級）失敗：", error)
+            callback([])
+        })
+}
+// 【新增】玩家等級最高榜：直接排 xp（累積經驗值），不用另外把「等級」這個
+// 由 xp 換算出來的衍生值存進 Firebase 再排一次——XP_Get_Level(xp) 是嚴格
+// 遞增函式，排 xp 的結果跟排等級的結果永遠一致。要求 xp >= 1，濾掉還沒
+// 累積過任何經驗值、等級掛零的玩家，邏輯跟 total_points／
+// achievements_unlocked 兩個榜完全對稱。
+function Get_Top_Players_By_XP(callback, limit) {
+    _Get_Top_Players("xp", "xp", 1, function (list) {
         callback(list.slice(0, limit || 50))
     })
 }

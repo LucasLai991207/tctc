@@ -1,21 +1,7 @@
-/* ============================================================
-   TCTC2-0-mobile.css
-   手機版適配樣式（第一版）
-
-   ⚠️ 目前手邊只有 HTML / JS，沒有實際的
-   main_lobby.css / intro_lobby.css / achievements.css / ranking.css
-   等檔案，所以這份是根據 class 命名規則推測出來的「保守通用版」，
-   目的是先讓手機能正常瀏覽、字放大、選單能用，
-   細節排版建議實機測試後再回饋微調。
-
-   引用順序：放在其他頁面 CSS 之後、TCTC2-0-theme.js 之前或之後皆可，
-   只要在所有 <link rel="stylesheet"> 的最後面即可（確保覆蓋得了原本樣式）。
-   ============================================================ */
-
 @media (max-width: 768px) {
 
     html {
-        font-size: 17px;
+        font-size: 16px;
         overflow-x: hidden;
         width: 100%;
     }
@@ -24,13 +10,9 @@
         -webkit-text-size-adjust: 100%;
         overflow-x: hidden;
         width: 100%;
-        /* 對照 intro_lobby.css：nav 是固定 58px 高的 fixed 元素，
-           body 原本就有 padding-top: 63px 讓內容不被蓋住，這裡沿用不用改 */
+        
     }
 
-    /* ---------- Nav / 漢堡選單 ----------
-       nav 本身高度是 intro_lobby.css 寫死的 58px，這裡絕對不能加 padding
-       把它撐高，不然 body 的 padding-top:63px 會對不齊，內容跑到 nav 底下去 */
     #nav {
         position: fixed;
         display: flex;
@@ -39,6 +21,9 @@
         height: 58px;
         box-sizing: border-box;
         padding: 0 0.8rem;
+        
+        z-index: 100010 !important;
+        opacity: 1 !important; 
     }
 
     #nav .logo_style {
@@ -46,20 +31,14 @@
         width: auto;
     }
 
-    /* 桌面版原本用 hover 展開的選單列，手機預設整個藏起來，
-       改由漢堡按鈕 + .nav_mobile_open 控制顯示 */
     #nav .nav_css {
         display: none;
     }
 
-    /* 抽屜背景用 --darker-blue（跟全站深色背景一致），文字用 --text-rgb，
-       這兩個變數在 profile.css / ranking.css 都有定義成正確色碼，
-       只有 intro_lobby.css 自己那份 --dark-blue / --champagne-gold 是壞的
-       self-reference（intro_lobby.css 內寫 --dark-blue: var(--dark-blue)），
-       這裡改用 --darker-blue（intro_lobby.css 裡這個變數本身沒壞）保險一點 */
     #nav.nav_mobile_open .nav_css {
         display: flex;
         flex-direction: column;
+        align-items: stretch; 
         position: fixed;
         top: 0;
         right: 0;
@@ -79,6 +58,9 @@
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         color: rgba(255, 255, 255, 0.92) !important;
         margin-right: 0 !important;
+        width: 100%;
+        box-sizing: border-box;
+        text-align: left;
     }
 
     .tctc_mobile_hamburger {
@@ -124,48 +106,153 @@
         display: block;
     }
 
-    /* 下拉選單（模式／更多）改成點擊展開的 accordion，取代 hover */
+    .nav_dropdown {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        width: 100%;
+        gap: 0 !important;
+    }
     .nav_dropdown_menu {
         display: none !important;
         position: static !important;
+        transform: none !important;
         box-shadow: none !important;
         background: transparent !important;
+        width: 100%;
     }
     .nav_dropdown.nav_dropdown_open .nav_dropdown_menu {
         display: block !important;
     }
     .nav_dropdown_panel {
         padding-left: 1rem;
+        
+        background-color: transparent !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        margin-top: 0 !important;
+        padding-top: 0.2rem !important;
+        padding-bottom: 0.2rem !important;
     }
     .nav_dropdown_item {
         font-size: 1.05rem;
         padding: 0.6rem 0;
+        color: rgba(255, 255, 255, 0.75) !important;
+    }
+    .nav_dropdown_item:hover {
+        background-color: transparent !important;
+        color: var(--champagne-gold, #c9a84c) !important;
     }
     .nav_dropdown_arrow {
         float: right;
     }
 
-    /* ---------- 首頁大標題區塊 ---------- */
-    .intro_first_section_text0-0 { font-size: 0.9rem; }
-    .intro_first_section_text0-1 { font-size: 1.8rem; }
-    .intro_first_section_text1-1 { font-size: 1.5rem; line-height: 1.5; }
-    .intro_first_section_text4-1 { font-size: 0.95rem; }
-
-    .intro_second_section_text2-1,
-    .intro_third_section_text1-1 {
-        font-size: 1rem;
-        line-height: 1.8;
+    body {
+        letter-spacing: 1px;
     }
 
-    /* ---------- 卡片型 grid/flex 容器：手機一律改直排 ---------- */
+    .intro_first_section_text0-0 {
+        font-size: 0.68rem;
+        margin-top: 5.5rem; 
+        letter-spacing: 1px;
+        text-align: center;
+        width: 100%;
+        padding: 0 1rem;
+        box-sizing: border-box;
+    }
+    .intro_first_section_text0-1 { font-size: 0.8rem; text-align: center; }
+    .intro_first_section_text1 { padding-top: 1rem; }
+    .intro_first_section_text1-1 {
+        font-size: 1.7rem;
+        line-height: 1.5;
+        padding: 0 1rem;
+        text-align: center;
+    }
+    .intro_first_section_text4-1 {
+        font-size: 0.85rem;
+        margin-bottom: 3rem;
+        padding: 0 1.2rem;
+        text-align: center;
+        line-height: 1.7;
+    }
+    .intro_first_section_text5_button {
+        font-size: 1.1rem;
+        padding: 0.8rem 1.8rem;
+        letter-spacing: 2px;
+    }
+
+    .intro_second_section {
+        height: auto;
+        min-height: 0;
+        padding-bottom: 3rem;
+    }
+    .intro_second_section_text1 {
+        padding-left: 0;
+        text-align: center;
+    }
+    .intro_second_section_text1-1 {
+        margin-left: 0;
+        padding-top: 2.5rem;
+        font-size: 1.05rem;
+    }
+    .intro_second_section_text1-2 {
+        font-size: 1.6rem;
+    }
+    
+    .intro_second_section_text2 {
+        padding-left: 1.2rem;
+        padding-right: 1.2rem;
+        padding-top: 1.5rem;
+    }
+    .intro_second_section_text2-1 {
+        font-size: 0.95rem;
+        line-height: 1.9;
+        letter-spacing: 0.05rem;
+    }
+
+    .intro_features_section {
+        padding-top: 3rem;
+        padding-bottom: 3rem;
+    }
+    .intro_third_section_text1 { margin-top: 2.5rem; }
+    .intro_third_section_text1-1 {
+        font-size: 1.05rem;
+        padding-left: 1.2rem;
+    }
+    .intro_third_section_text1-2 {
+        font-size: 1.6rem;
+        padding-left: 1.2rem;
+        margin-bottom: 1.5rem;
+    }
+    .intro_second_section_text2-1,
+    .intro_third_section_text1-1 {
+        font-size: 0.95rem;
+        line-height: 1.8;
+    }
+    .si-feature_grid {
+        padding-left: 1.2rem;
+        padding-right: 1.2rem;
+    }
+    .si-difficulty_name { font-size: 1.4rem; }
+    .si-difficulty_desc { font-size: 0.88rem; line-height: 1.7; }
+
     .si-feature_grid,
     .intro_third_section_flex,
     .achv_streak_strip,
-    .ranking_metric_group,
     .ranking_selector_row {
         display: flex;
         flex-direction: column !important;
         gap: 1rem;
+    }
+
+    .ranking_metric_group {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+        gap: 0.5rem !important;
+    }
+    .ranking_mode_tabs {
+        justify-content: center !important;
     }
 
     .si-feature_card,
@@ -174,11 +261,39 @@
         box-sizing: border-box;
     }
 
-    /* ===== 【關鍵修正】難度卡片容器在 intro_lobby.css 裡被寫死 width:70rem
-       (=1120px)，不管螢幕多窄都不會縮，這才是「背景 100vw 卻破破的」的真正
-       元凶——這個 1120px 的固定寬度把整個頁面撐超過 100vw，導致頁面出現
-       橫向可捲動空間，只要稍微橫捲就會看到背景區塊右邊露出沒畫到的空白。
-       這裡強制蓋掉那個固定寬度，改成跟隨螢幕寬度。 =====*/
+    .si-next-wrap {
+        position: static !important;
+        left: auto !important;
+        bottom: auto !important;
+        transform: none !important;
+        text-align: center;
+        margin-top: 2rem;
+        padding-bottom: 1.5rem;
+    }
+    .intro_first_section {
+        height: auto !important;
+        min-height: 100vh;
+        padding-bottom: 2rem;
+    }
+
+    .footer_div {
+        flex-direction: column;
+        align-items: center;
+        gap: 1.8rem;
+        padding: 0 1.5rem;
+        box-sizing: border-box;
+    }
+    .footer_div div {
+        margin-top: 0;
+    }
+    .footer_col {
+        align-items: center;
+        text-align: center;
+    }
+    .intro_footer {
+        padding: 2rem 0 1.4rem;
+    }
+
     .intro_third_section_flex {
         width: 100% !important;
         height: auto !important;
@@ -189,14 +304,10 @@
         padding-bottom: 3rem;
     }
 
-    /* ---------- 排行榜 ----------
-       ranking.css 的 .ranking_list_header / .ranking_row 用
-       grid-template-columns: 4.5rem 1fr 10rem 6rem，四欄在手機上會擠爆，
-       改成每一列直接拆成「名次+玩家」一行、「WPM+正確率」一行的兩行卡片 */
     .ranking_container {
         padding: 0 0.8rem;
         box-sizing: border-box;
-        margin-top: 4.5rem; /* 讓固定在畫面上的 .ranking_total_views 徽章不會壓到標題 */
+        margin-top: 4.5rem; 
     }
 
     .ranking_title {
@@ -209,41 +320,18 @@
         font-size: 0.65rem;
     }
 
+    .ranking_list_wrap {
+        overflow-x: auto;
+    }
     .ranking_list_header,
     .ranking_row {
-        grid-template-columns: 3rem 1fr auto;
-        grid-template-rows: auto auto;
-        row-gap: 0.3rem;
-        padding: 0.7rem 0.9rem;
+        grid-template-columns: 3.5rem 1fr 6rem 4.5rem;
+        min-width: 24rem;
+        padding: 0.6rem 0.8rem;
+        font-size: 0.82rem;
     }
-
-    .ranking_list_header .rank_col_rank,
-    .ranking_row .rank_col_rank {
-        grid-row: 1;
-        grid-column: 1;
-    }
-    .ranking_list_header .rank_col_name,
-    .ranking_row .rank_col_name {
-        grid-row: 1;
-        grid-column: 2;
-    }
-    .ranking_list_header .rank_col_wpm,
-    .ranking_row .rank_col_wpm {
-        grid-row: 2;
-        grid-column: 1 / 3;
-        text-align: left;
-        font-size: 0.85rem;
-        opacity: 0.85;
-    }
-    .ranking_list_header .rank_col_acc,
-    .ranking_row .rank_col_acc {
-        grid-row: 1;
-        grid-column: 3;
-        text-align: right;
-    }
-    .ranking_list_header .rank_col_acc {
-        grid-row: 1 / 3;
-        align-self: center;
+    .rank_col_rank {
+        font-size: 0.9rem;
     }
 
     .ranking_metric_group .ranking_select {
@@ -251,7 +339,6 @@
         padding: 0.4rem 0.7rem;
     }
 
-    /* ---------- 榮譽牆：徽章列改直排，資訊不擠在一行 ---------- */
     .achv_badge_row {
         flex-direction: column;
         align-items: flex-start;
@@ -261,9 +348,6 @@
         font-size: 1.05rem;
     }
 
-    /* ---------- 個人設定頁 ----------
-       profile.css 本身已經有 @media (max-width: 46rem) 把兩欄改單欄，
-       這裡只補手機上頭像列跟按鈕排列的細節 */
     .profile_avatar_row {
         flex-wrap: wrap;
     }
@@ -271,7 +355,6 @@
         font-size: 1.7rem;
     }
 
-    /* ---------- 玩家公開頁（view_profile） ---------- */
     .vp_player_name {
         font-size: 1.5rem;
     }
@@ -279,55 +362,421 @@
         padding: 1.3rem 1.1rem;
     }
 
-    /* ---------- 通用：避免任何區塊把手機畫面撐寬 ---------- */
+    .main_lobby_main_frame_row {
+        width: 92vw !important;
+        flex-direction: column-reverse !important; 
+        gap: 1rem !important;
+        padding: 0 !important;
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        margin-bottom: 1rem !important;
+    }
+
+    .main_lobby_main_frame_profileblock {
+        width: 92vw !important;
+        margin-top: 4.8rem !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 0.8rem !important;
+        padding: 0.9rem 1rem !important;
+    }
+    .profile_avatar_container {
+        width: 3rem !important;
+        height: 3rem !important;
+        flex-shrink: 0;
+    }
+    .avatar_default_head {
+        width: 1.05rem !important;
+        height: 1.05rem !important;
+        margin-bottom: 2px !important;
+    }
+    .avatar_default_body {
+        width: 3rem !important;
+        height: 1.4rem !important;
+    }
+    .main_lobby_main_frame_player_profile {
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        text-align: left;
+        background-color: transparent !important;
+        border-radius: 0 !important;
+        padding: 0 !important;
+        gap: 0.5rem 0 !important;
+        flex: 1;
+        min-width: 0;
+    }
+    .main_lobby_main_frame_player_profile_left_div {
+        flex: 1 1 100% !important;
+        align-items: flex-start !important;
+        min-width: 0;
+        max-width: 100%;
+    }
+    .main_lobby_main_frame_player_profile_left_div_name {
+        display: block;
+        font-size: 0.95rem !important;
+        max-width: 100% !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis;
+    }
+    .main_lobby_main_frame_player_profile_left_div_username {
+        max-width: 60vw;
+        display: inline-block;
+        vertical-align: bottom;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis;
+    }
+    .main_lobby_main_frame_player_profile_left_div_rank {
+        font-size: 0.7rem !important;
+        opacity: 0.7;
+    }
+    .main_lobby_main_frame_profileblock_wpm,
+    .main_lobby_main_frame_profileblock_acc,
+    .cg_profileblock_points {
+        width: auto !important;
+        flex: 1 1 0 !important;
+        text-align: center;
+        padding-top: 0.5rem;
+        margin-top: 0.3rem;
+        border-top: 1px solid rgba(var(--accent-rgb, 201, 168, 76), 0.15);
+    }
+
+    .main_lobby_main_frame_mode_selector_intro,
+    .main_lobby_main_frame_mode_selector {
+        width: 92vw !important;
+        flex-direction: column !important;
+        gap: 1rem !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+    .main_lobby_main_frame_map_selector {
+        width: 100% !important;
+        padding: 1rem !important;
+        box-sizing: border-box !important;
+    }
+
+    .main_lobby_chapter_selector_text1 {
+        position: static !important;
+        display: block !important;
+        width: 100% !important;
+        box-sizing: border-box;
+        text-align: center;
+        padding: 0.5rem 0.8rem !important;
+        margin-bottom: 0.8rem;
+        font-size: 0.85rem !important;
+        color: var(--champagne-gold, #c9a84c) !important;
+        letter-spacing: 1px;
+        background-color: rgba(var(--accent-rgb, 201, 168, 76), 0.06);
+        border: 1px solid rgba(var(--accent-rgb, 201, 168, 76), 0.35);
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 150ms ease, border-color 150ms ease;
+    }
+    .main_lobby_chapter_selector_text1:active {
+        background-color: rgba(var(--accent-rgb, 201, 168, 76), 0.14);
+        border-color: var(--champagne-gold, #c9a84c);
+    }
+    .main_lobby_chapter_selector_text1::after {
+        content: " ▾";
+        color: var(--champagne-gold, #c9a84c);
+    }
+    .main_lobby_main_frame_map_selector.cg_chapter_open .main_lobby_chapter_selector_text1::after {
+        content: " ▴";
+    }
+    .main_lobby_chapter_list_style {
+        max-height: 0 !important;
+        overflow: hidden !important;
+        transition: max-height 260ms ease, opacity 220ms ease;
+        opacity: 0;
+    }
+    .main_lobby_main_frame_map_selector.cg_chapter_open .main_lobby_chapter_list_style {
+        max-height: 60rem !important; 
+        opacity: 1;
+    }
+
+    .main_lobby_mode_beginner,
+    .main_lobby_mode_medium,
+    .main_lobby_mode_master,
+    .main_lobby_mode_beginner_complete,
+    .main_lobby_mode_medium_complete,
+    .main_lobby_mode_master_complete {
+        width: 100% !important;
+        max-width: none !important;
+        height: auto !important;
+        min-height: 0 !important;
+        box-sizing: border-box;
+        padding: 0.6rem 0.9rem !important;
+    }
+    .main_lobby_mode_beginner_text1-0 {
+        font-size: 0.7rem;
+    }
+    .main_lobby_mode_beginner_text1-1 {
+        font-size: 1.05rem;
+        margin: 0.2rem 0;
+    }
+    .main_lobby_mode_beginner_text1-2 {
+        font-size: 0.78rem;
+        line-height: 1.5;
+    }
+    .main_lobby_mode_tag {
+        width: 0.7rem !important;
+        height: 0.7rem !important;
+        top: 0.5rem !important;
+        right: 0.5rem !important;
+    }
+
+    .main_lobby_main_frame_mode_selector .main_lobby_mode_beginner,
+    .main_lobby_main_frame_mode_selector .main_lobby_mode_medium,
+    .main_lobby_main_frame_mode_selector .main_lobby_mode_master,
+    .main_lobby_main_frame_mode_selector .main_lobby_mode_beginner_complete,
+    .main_lobby_main_frame_mode_selector .main_lobby_mode_medium_complete,
+    .main_lobby_main_frame_mode_selector .main_lobby_mode_master_complete {
+        display: none !important;
+        opacity: 0;
+        transform: translateY(-4px);
+        transition: opacity 220ms ease, transform 220ms ease;
+    }
+    .main_lobby_main_frame_mode_selector .main_lobby_mode_golden_shadow {
+        display: block !important;
+        opacity: 1;
+        transform: none;
+    }
+    .main_lobby_main_frame_mode_selector.main_lobby_mode_open .main_lobby_mode_beginner,
+    .main_lobby_main_frame_mode_selector.main_lobby_mode_open .main_lobby_mode_medium,
+    .main_lobby_main_frame_mode_selector.main_lobby_mode_open .main_lobby_mode_master,
+    .main_lobby_main_frame_mode_selector.main_lobby_mode_open .main_lobby_mode_beginner_complete,
+    .main_lobby_main_frame_mode_selector.main_lobby_mode_open .main_lobby_mode_medium_complete,
+    .main_lobby_main_frame_mode_selector.main_lobby_mode_open .main_lobby_mode_master_complete {
+        display: block !important;
+        opacity: 1;
+        transform: none;
+    }
+    /* 保險：第一次造訪、還沒選過難度時，三張卡都還沒有 golden_shadow，
+       這種情況下不要整組消失變成空白，全部顯示出來讓玩家自己選 */
+    .main_lobby_main_frame_mode_selector:not(:has(.main_lobby_mode_golden_shadow)) .main_lobby_mode_beginner,
+    .main_lobby_main_frame_mode_selector:not(:has(.main_lobby_mode_golden_shadow)) .main_lobby_mode_medium,
+    .main_lobby_main_frame_mode_selector:not(:has(.main_lobby_mode_golden_shadow)) .main_lobby_mode_master,
+    .main_lobby_main_frame_mode_selector:not(:has(.main_lobby_mode_golden_shadow)) .main_lobby_mode_beginner_complete,
+    .main_lobby_main_frame_mode_selector:not(:has(.main_lobby_mode_golden_shadow)) .main_lobby_mode_medium_complete,
+    .main_lobby_main_frame_mode_selector:not(:has(.main_lobby_mode_golden_shadow)) .main_lobby_mode_master_complete {
+        display: block !important;
+        opacity: 1;
+        transform: none;
+    }
+
+    .main_lobby_mode_toggle_btn {
+        width: 92vw;
+        box-sizing: border-box;
+        margin: 0 auto 0.6rem;
+        padding: 0.5rem 0.8rem;
+
+        text-align: center;
+        color: var(--champagne-gold, #c9a84c);
+        font-size: 0.85rem;
+        letter-spacing: 1px;
+
+        background-color: rgba(var(--accent-rgb, 201, 168, 76), 0.06);
+        border: 1px solid rgba(var(--accent-rgb, 201, 168, 76), 0.35);
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 150ms ease, border-color 150ms ease;
+    }
+    .main_lobby_mode_toggle_btn:active {
+        background-color: rgba(var(--accent-rgb, 201, 168, 76), 0.14);
+        border-color: var(--champagne-gold, #c9a84c);
+    }
+
+    .cg_difficulty_selector {
+        width: 92vw !important;
+        flex-direction: column !important;
+        flex-wrap: nowrap !important;
+        gap: 0.6rem !important;
+    }
+    .cg_difficulty_card {
+        min-width: 0 !important;
+        width: 100% !important;
+        box-sizing: border-box;
+        display: none !important;
+    }
+    .cg_difficulty_card.cg_difficulty_selected {
+        display: block !important;
+    }
+    .cg_difficulty_selector.cg_diff_open .cg_difficulty_card {
+        display: block !important;
+    }
+    .cg_difficulty_toggle_btn {
+        width: 92vw;
+        box-sizing: border-box;
+        margin: 0 auto 0.6rem;
+        padding: 0.5rem 0.8rem;
+
+        text-align: center;
+        color: var(--champagne-gold, #c9a84c);
+        font-size: 0.85rem;
+        letter-spacing: 1px;
+
+        background-color: rgba(var(--accent-rgb, 201, 168, 76), 0.06);
+        border: 1px solid rgba(var(--accent-rgb, 201, 168, 76), 0.35);
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 150ms ease, border-color 150ms ease;
+    }
+    .cg_difficulty_toggle_btn:active {
+        background-color: rgba(var(--accent-rgb, 201, 168, 76), 0.14);
+        border-color: var(--champagne-gold, #c9a84c);
+    }
+
+    .main_lobby_difficulty_selector {
+        width: 92vw !important;
+        max-width: 92vw !important;
+        margin-top: 5.5rem !important;
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: 78vh !important;
+        overflow-y: auto;
+        padding-bottom: 1.2rem !important;
+    }
+    .main_lobby_difficulty_selector_text1 {
+        margin-left: 0 !important;
+        padding: 0 1rem;
+    }
+    .main_lobby_difficulty_selector_text1-1 {
+        font-size: 1.5rem !important;
+    }
+    .main_lobby_difficulty_selector_row {
+        flex-direction: column !important;
+        width: 90% !important;
+        height: auto !important;
+        gap: 0.8rem !important;
+        padding: 0.8rem 0;
+    }
+    .main_lobby_difficulty_seletor_easy,
+    .main_lobby_difficulty_seletor_medium,
+    .main_lobby_difficulty_seletor_hard {
+        width: 100% !important;
+        height: auto !important;
+        margin-left: 0 !important;
+        padding-bottom: 1rem;
+    }
+    .main_lobby_difficulty_Level2_style {
+        font-size: 1.3rem !important;
+        padding-top: 0.5rem !important;
+    }
+    .main_lobby_difficulty_easy_intro {
+        font-size: 0.82rem !important;
+        line-height: 1.6;
+    }
+    .main_lobby_difficulty_easy_intro2 {
+        height: auto !important;
+        margin-top: 1rem !important;
+        padding-bottom: 0.8rem;
+    }
+    .main_lobby_difficulty_easy_intro2-1 {
+        height: 2.4rem !important;
+        margin-top: 0.6rem;
+    }
+
+    .nickname_setup_card {
+        max-width: 92vw !important;
+        padding: 1.8rem 1.3rem !important;
+    }
+    .nickname_setup_title {
+        font-size: 1.35rem;
+    }
+    .nickname_setup_desc {
+        font-size: 0.78rem;
+        line-height: 1.7;
+    }
+    .nickname_setup_input {
+        width: 100% !important;
+    }
+    .nickname_setup_actions {
+        flex-direction: column !important;
+        gap: 0.6rem !important;
+    }
+    .nickname_setup_skip_btn,
+    .nickname_setup_confirm_btn {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .main_lobby_main_frame_mode_selector_intro {
+        width: 1.6rem !important;
+        height: 1.6rem !important;
+        position: static;
+        margin-top: 0.5rem;
+    }
+
+    .main_lobby_map_stage {
+        padding-right: 2.4rem;
+    }
+
     main, section, .main_lobby_main_frame {
         max-width: 100vw;
         box-sizing: border-box;
     }
 
-    /* ============================================================
-       ---------- 打字遊戲畫面（game.html）----------
-       這些 class 定義在 game.html 自己內嵌的 <style> 裡（不是外部 CSS），
-       但因為 mobile.css 是最後載入、選擇器夠具體，一樣蓋得過去。
-       ============================================================ */
-
-    /* .game_main 原本固定 width:70vw，桌機上兩側留白很正常，
-       手機上留白會把本來就不夠的空間再切掉一塊，改成 92vw 盡量用滿 */
     .game_main {
         width: 92vw;
-        margin-top: 4.2rem; /* 對齊 58px 高的 nav，避免第一次進來被蓋到 */
+        margin-top: 8.6rem; 
         gap: 1.2rem;
     }
 
-    /* .game_char_container 原本 width:120%（故意比 .game_main 寬，
-       桌機上是為了塞更多字），92vw 的 92%*1.2 還在安全範圍內可以維持，
-       但保險起見手機上直接收回 100%，避免任何極端字數情況下爆版 */
     .game_char_container {
         width: 100%;
-        padding: 0.8rem 0.3rem;
+        padding: 0.6rem 0.2rem;
+        gap: 0.35rem !important;
     }
     .game_char_box {
-        width: 2.6rem;
-        height: 3.2rem;
-        font-size: 1.5rem;
+        width: 1.9rem;
+        height: 2.4rem;
+        font-size: 1.15rem;
     }
 
-    /* 左上角控制列（返回／排名／再試一次）跟右上角計時器，
-       原本用固定 rem 數值定位，是抓桌機視窗算的，手機螢幕窄，
-       兩邊間距要收窄，不然容易貼太邊緣或跟字框重疊 */
+    #game_container_input_id {
+        font-size: 1.05rem !important;
+        line-height: 1.9 !important;
+    }
+
     .game_top_left_controls {
-        top: 4.5rem;
-        left: 0.8rem;
-        gap: 0.6rem;
+        top: 4.3rem;
+        left: 0.6rem;
+        gap: 0.3rem;
+    }
+    .game_back_btn,
+    .game_rank_floating_btn,
+    .kb_toggle_btn,
+    .sound_toggle_btn,
+    .game_retry_fixed_btn {
+        width: 1.7rem !important;
+        height: 1.7rem !important;
+    }
+    .game_back_btn img,
+    .game_rank_floating_btn img,
+    .kb_toggle_btn img,
+    .sound_toggle_btn img,
+    .game_retry_fixed_btn img {
+        height: 1.1rem !important;
     }
     .game_timer_wrap {
-        top: 4.5rem;
-        right: 0.8rem;
+        top: 6.4rem; 
+        right: 0.6rem;
+        gap: 0.4rem;
+    }
+    .game_timer {
+        height: 1.7rem;
+        padding: 0 0.7rem;
+        font-size: 1rem;
+    }
+    .countdown_settings_btn {
+        width: 1.7rem !important;
+        height: 1.7rem !important;
     }
 
-    /* 中級關卡的示範圖片：typing_img_2 在 HTML 裡是 inline style 寫死
-       width:600px / height:200px，inline style 特異度最高，一般 CSS 蓋不過，
-       這裡用 !important 才蓋得掉，不然手機上這張圖會直接把畫面撐寬 */
     #typing_img_2 {
         width: 100% !important;
         height: auto !important;
@@ -339,8 +788,6 @@
 
     .game_stage_name { font-size: 1.5rem; }
 
-    /* 結果結算彈窗：三個統計數字（準確率/正確字數/錯誤次數）原本 gap:3rem，
-       手機寬度塞不下，縮小間距跟字級 */
     .game_result {
         padding: 1.4rem 1rem;
         width: 92vw;
@@ -355,7 +802,3 @@
         width: 100%;
     }
 }
-
-/* live_keyboard／kb_toggle_btn 原本在 720px 以下就會被 game.html 自己的
-   內嵌 <style> 隱藏掉（因為手機沒有實體鍵盤可以對照虛擬鍵盤），
-   這裡不用重複處理，維持原本邏輯即可 */
