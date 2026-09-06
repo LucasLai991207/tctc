@@ -506,20 +506,7 @@
             }
         })
 
-        // ===== 【新增】記憶功能：回到大廳時，自動定位到上次退出的關卡 =====
-        // 【找到真正的成因】TCTC2-0-difficulty_selet.js 裡的
-        // Difficulty_Choose_Easy/Medium/Hard() 內部固定寫死：
-        //     render_stage(difficulty, Level_Data[difficulty].chapter[0])
-        // 也就是每次選難度（包含開頁時用 tctc2.0-saved_difficulty 自動重選）
-        // 都會強制渲染「第一章」，這就是「回大廳一定跳回 1-1」的真正原因。
-        //
-        // 【解法邏輯】render_chapter() / render_stage() 都是同步的 DOM 操作
-        // （單純 forEach + createElement + appendChild，沒有非同步等待），
-        // 所以不需要用 MutationObserver。真正的關鍵是「執行順序」：
-        // difficulty_selet.js 也註冊了一個 DOMContentLoaded 監聽器，
-        // 監聽器會依「註冊順序」依序執行——我們的 <script> 標籤排在它後面，
-        // 所以只要一樣用 DOMContentLoaded 註冊，就保證會在它「跳回 1-1」
-        // 的邏輯跑完之後才執行，正好可以用來覆寫成正確的章節與關卡。
+
         document.addEventListener("DOMContentLoaded", function () {
             const lastStage = localStorage.getItem("tctc_last_stage") // 例如 "1-5-2"
             if (!lastStage) return // 玩家還沒玩過任何關卡，getItem 找不到會回傳 null

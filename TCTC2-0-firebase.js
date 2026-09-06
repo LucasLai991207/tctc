@@ -132,17 +132,42 @@ function Get_Player_Display_Name(callback) {
     })
 }
 
+const FORBIDDEN_WORDS = [
+  "fuck", "shit", "bitch", "asshole", "bastard", "pussy", "cunt", "fk",
+  "幹你娘", "操你媽", "機掰", "靠北", "靠腰", "三小", "我操", "去死", "死一死", 
+  "他媽的", "你媽的", "渣男", "雜碎", "垃圾", "白痴", "智障", "腦殘", 
+  "賤人", "婊子", "死全家", "草泥馬", "我是gay"
+];
+
 function Validate_Username_Format(raw_name) {
-    if (!raw_name || raw_name.length === 0) {
-        return { valid: false, reason: "名字不可為空白" }
-    }
-    if (raw_name[0] === " ") {
-        return { valid: false, reason: "名字開頭不可以是空格" }
-    }
-    if (raw_name.length > 13) {
-        return { valid: false, reason: "名字不可超過 13 個字" }
-    }
-    return { valid: true }
+  if (typeof raw_name !== "string" || raw_name.trim().length === 0) {
+    return { valid: false, reason: "名字不可為空白" };
+  }
+
+  if (/^\s/.test(raw_name)) {
+    return { valid: false, reason: "名字開頭不可以是空格" };
+  }
+
+  const actualLength = [...raw_name].length;
+  if (actualLength > 13) {
+    return { valid: false, reason: "名字不可超過 13 個字" };
+  }
+
+  const normalized = raw_name
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/[\s_\-.\u200B-\u200D\uFEFF`~!@#$%^&*()_+=[\]{}|\\:;"'<>,.?/~\u3000-\u303F\uFF00-\uFFEF]/g, "");
+
+  if (normalized.length === 0) {
+    return { valid: false, reason: "名字不可全為標點符號或空格" };
+  }
+
+  const isForbidden = FORBIDDEN_WORDS.some(word => normalized.includes(word));
+  if (isForbidden) {
+    return { valid: false, reason: "名稱不雅" };
+  }
+
+  return { valid: true };
 }
 
 // Firebase 的 key 不能包含 . # $ [ ] / 這幾個字元，用底線取代掉；
