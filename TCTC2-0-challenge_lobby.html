@@ -265,6 +265,8 @@
                         <div class="main_lobby_main_frame_player_profile_left_div">
                             <p class="main_lobby_main_frame_player_profile_left_div_name">
                                 <span class="main_lobby_main_frame_player_profile_left_div_username">玩家</span>
+                                <!-- 【新增】LV 標籤，xp_display.js 會自動填入並在下方插入 XP 進度條 -->
+                                <span class="main_lobby_main_frame_player_profile_left_div_LV">LV 0</span>
                             </p>
                             <p class="main_lobby_main_frame_player_profile_left_div_rank">挑戰模式</p>
                         </div>
@@ -419,6 +421,11 @@
     <script src="TCTC2-0-achv_notify.js"></script>
 
     <script src="TCTC2-0-online_time.js"></script>
+    <!-- 【新增】LV／XP 進度條：跟主大廳共用同一支檔案，靠 class 選取器
+         （.main_lobby_main_frame_player_profile_left_div_LV / _rank）自動掛上去，
+         不用另外寫一份重複邏輯。務必放在 xp_data.js 之後、firebase.js 之後。 -->
+    <script src="TCTC2-0-xp_data.js"></script>
+    <script src="TCTC2-0-xp_display.js"></script>
     <!-- 【新增】把玩家在設定頁面上傳的頭像顯示在這裡的頭像框裡（只讀 localStorage，不碰 Firebase） -->
     <script src="TCTC2-0-avatar_display.js"></script>
     <script src="TCTC2-0-challenge_lobby.js"></script>

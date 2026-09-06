@@ -27,6 +27,8 @@
     <link rel="stylesheet" href="TCTC2-0-auth_ui.css">
     <!--成就彈窗-->
     <link rel="stylesheet" href="TCTC2-0-achv_notify.css">
+    <!-- 【新增】XP 增加/升級提示卡樣式 -->
+    <link rel="stylesheet" href="TCTC2-0-xp_notify.css">
     <!-- 【新增】全站配色主題系統：務必放在 CSS 之後、其他 script 之前，同步載入避免換色閃爍 -->
     <script src="TCTC2-0-theme.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1488,6 +1490,10 @@
          firebase.js 裡的 Sync_XP / Sync_Stage_Completion / Sync_Chars_Typed
          都會讀 XP_CONFIG 裡的數值 -->
     <script src="TCTC2-0-xp_data.js"></script>
+    <!-- 【新增】XP 增加/升級提示卡：Sync_XP() 內部會用 typeof 檢查這支檔案
+         有沒有載入，放在 firebase.js 之前之後都可以（實際呼叫發生在破關結算
+         的當下，不是頁面載入當下），這裡跟 xp_data.js 放一起方便維護 -->
+    <script src="TCTC2-0-xp_notify.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
