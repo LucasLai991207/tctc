@@ -891,8 +891,23 @@ function Sync_XP(amount){
     const anon_id = Get_Anon_Id()
     if(!anon_id) return Promise.resolve()
 
+    // 【新增】升級動畫需要「這次加之前」跟「加之後」的 XP 才能判斷有沒有跨過
+    // 等級門檻。所有 XP 寫入（主線破關、首次破關獎勵、打字量、挑戰模式、
+    // 成就解鎖、每日登入……）最終都只會經過這一支函式，所以只要在這裡集中
+    // 判斷一次，不管呼叫端是誰，動畫都會自動一致地觸發，不用在每個呼叫端
+    // 各自重複判斷。xp_before 用 transaction() 的 updateFunction 參數拿，
+    // 這個函式在有競爭時可能被 Firebase 重試呼叫多次，但最後一次呼叫時的
+    // current 值就是真正被寫入那次的「加之前」基準，安全可靠。
+    let xp_before = 0
     return tctc_db.ref(`player_stats/${anon_id}/xp`).transaction(function(current){
-        return (current || 0) + Math.round(amount)
+        xp_before = current || 0
+        return xp_before + Math.round(amount)
+    }).then(function(result){
+        if(result && result.committed && typeof XP_Notify_Show === "function"){
+            const xp_after = (result.snapshot ? result.snapshot.val() : null) || 0
+            XP_Notify_Show(xp_after - xp_before, xp_before, xp_after)
+        }
+        return result
     }).catch(function(error){
         console.warn("[player_stats] xp 同步失敗（很可能是 Firebase Rules 還沒加上 xp 欄位的規則）：", error.message)
     })

@@ -215,7 +215,7 @@ const Level_Data = {
                     {
                         id:"2-2-3", 
                         name : "注音輸入法的誕生", 
-                        name2:"", 
+                        namㄦe2:"", 
                         name3:"括號內的注音不需要打喔~", 
                         type:"綜合練習", 
                         level:"☆☆☆★★★★", 

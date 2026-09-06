@@ -1,0 +1,162 @@
+/* ============================================================
+   TCTC2-0-xp_notify.css
+   XP 增加 / 升級提示卡
+
+   配色跟 achv_notify.css 完全一致（champagne gold + deep navy），
+   但故意放在畫面「底部」置中，跟 achv_notify（頂部）分開——
+   主線/挑戰模式結算常常同時觸發「XP 增加」跟「成就解鎖」兩種通知，
+   分開上下兩處堆疊，才不會兩套通知擠在同一個位置互相搶版面。
+   ============================================================ */
+:root{
+    --darker-blue : #0b1a37;
+    --dark-blue : #0B1E36;
+    --champagne-gold : #c9a84c;
+    --accent-rgb : 201, 168, 76;
+    --text-rgb : 255, 255, 255;
+}
+
+.xp_notify_stack{
+    position: fixed;
+    bottom: 1.2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    /* 【修正】原本設 9998（比 achv_notify_stack 低一階），但 game.html 自己的
+       結算畫面 #game_result 用的是 9999，把提示卡整個蓋住、完全看不到。
+       改成明確高於目前站上所有已知的 z-index（結算畫面 9999、achv_notify
+       9999、auth 彈窗 10000），不再假設「比 9999 低一點」就夠安全。 */
+    z-index: 10010;
+
+    display: flex;
+    flex-direction: column-reverse;   /* 新的提示卡從下往上疊，最新一張永遠貼在畫面最下面 */
+    align-items: center;
+    gap: 0.5rem;
+
+    pointer-events: none;
+}
+
+/* ===== 一般：單純 +N XP 的小提示 ===== */
+.xp_notify_toast{
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+
+    background-color: var(--dark-blue);
+    border: 1px solid rgba(var(--accent-rgb), 0.4);
+    border-radius: 999px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+
+    padding: 0.45rem 1rem;
+
+    pointer-events: none;
+
+    opacity: 0;
+    transform: translateY(0.6rem) scale(0.96);
+    transition: opacity 220ms ease, transform 220ms ease;
+}
+.xp_notify_toast_show{
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+.xp_notify_toast_hide{
+    opacity: 0;
+    transform: translateY(0.4rem) scale(0.98);
+}
+
+.xp_notify_plain_text{
+    margin: 0;
+    color: var(--champagne-gold);
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: 1px;
+    white-space: nowrap;
+}
+
+/* ===== 升級：比一般提示更醒目，但不用彈跳感的光暈——改用一道金色光帶
+   從卡片左側掃過去一次，搭配跟 auth 彈窗（authModalRise）同一組
+   cubic-bezier 緩動的輕微浮現，安靜一點，跟全站其他彈窗的語言一致 ===== */
+.xp_notify_toast_levelup{
+    position: relative;
+    overflow: hidden;   /* 讓下面的光帶只在卡片內部滑過，不溢出卡片邊界 */
+
+    border: 1px solid var(--champagne-gold);
+    border-radius: 10px;
+    padding: 0.7rem 1.3rem;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(var(--accent-rgb), 0.25);
+}
+/* 光帶本體：斜切的漸層色塊，預設停在卡片左側外面，顯示時才掃到右側外面 */
+.xp_notify_toast_levelup::before{
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -60%;
+    width: 35%;
+    height: 100%;
+    background: linear-gradient(115deg, transparent, rgba(var(--accent-rgb), 0.35), transparent);
+    transform: skewX(-20deg);
+    pointer-events: none;
+}
+.xp_notify_toast_levelup.xp_notify_toast_show{
+    animation: xpLevelupSettle 420ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.xp_notify_toast_levelup.xp_notify_toast_show::before{
+    animation: xpLevelupSweep 900ms ease-out 120ms;   /* 延遲 120ms，等卡片先浮現定位，光帶再掃過去 */
+}
+@keyframes xpLevelupSettle{
+    from{ opacity: 0; transform: translateY(0.5rem) scale(0.97); }
+    to{ opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes xpLevelupSweep{
+    from{ left: -60%; }
+    to{ left: 130%; }
+}
+@media (prefers-reduced-motion: reduce){
+    .xp_notify_toast_levelup.xp_notify_toast_show,
+    .xp_notify_toast_levelup.xp_notify_toast_show::before{ animation: none; }
+}
+
+.xp_notify_levelup_badge{
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 2.6rem;
+    height: 2.6rem;
+    border-radius: 50%;
+
+    background: linear-gradient(135deg, #b08d57, var(--champagne-gold));
+    color: var(--darker-blue);
+
+    font-family: "Noto Serif TC", serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.xp_notify_body{ min-width: 0; }
+.xp_notify_eyebrow{
+    margin: 0;
+    color: var(--champagne-gold);
+    font-size: 0.68rem;
+    letter-spacing: 2px;
+}
+.xp_notify_name{
+    margin: 0.1rem 0 0;
+    color: rgba(var(--text-rgb), 0.94);
+    font-size: 0.95rem;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+.xp_notify_sub{
+    margin: 0.1rem 0 0;
+    color: rgba(var(--text-rgb), 0.55);
+    font-size: 0.76rem;
+    letter-spacing: 0.5px;
+}
+
+@media (max-width: 26rem){
+    .xp_notify_toast{ max-width: 88vw; }
+    .xp_notify_name{ white-space: normal; }
+}
