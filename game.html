@@ -206,6 +206,35 @@
             gap: 0.6rem;
             z-index: 100;
         }
+        /* ===== 【新增】直接輸入模式的即時 WPM / 正確率，樣式比照 .game_timer 圓角膠囊，
+           但寬度會隨內容變化，所以不用固定 width，讓兩個數字自己撐開 ===== */
+        .game_live_stats {
+            display: none;   /* 預設隱藏，只有直接輸入模式才由 JS 切成 flex，見 Init() 裡的切換邏輯 */
+            align-items: center;
+            gap: 0.9rem;
+
+            height: 2.3rem;
+            padding: 0 1.1rem;
+
+            background-color: var(--dark-blue);
+            border-radius: 10rem;
+        }
+        .game_live_stat{
+            display: flex;
+            align-items: baseline;
+            gap: 0.35rem;
+
+            font-family: "Noto Serif TC", serif;
+            color: rgba(255,255,255,0.5);
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            white-space: nowrap;
+        }
+        .game_live_stat span{
+            color: var(--champagne-gold);
+            font-size: 1rem;
+            font-weight: 500;
+        }
         .game_timer {
             height: 2.3rem;
 
@@ -1070,6 +1099,19 @@
             .live_keyboard { display: none !important; }
             .kb_toggle_btn { display: none !important; }
         }
+        /* 【新增】手機寬度不夠放「計時器 + 即時數據」整排，把即時數據的字級/間距縮小 */
+        @media (max-width: 480px) {
+            .game_live_stats{
+                gap: 0.55rem;
+                padding: 0 0.7rem;
+            }
+            .game_live_stat{
+                font-size: 0.68rem;
+            }
+            .game_live_stat span{
+                font-size: 0.88rem;
+            }
+        }
 
         /* ===== 【新增】新按鍵互動教學畫面 ===== */
         .key_intro_wrap {
@@ -1165,7 +1207,10 @@
         <!-- 【新增】打字音效開關：同一排最後一顆，圖示會依照目前開/關狀態換成
              medium-volume.png（有聲）或 mute.png（靜音），初始圖示由 JS 在頁面載入時決定 -->
         <button type="button" class="sound_toggle_btn" id="sound_toggle_btn" title="開啟/關閉打字音效"><img id="sound_toggle_icon" src="mute.png" alt="音效開關"></button>
-        <div class="game_retry_fixed_btn" id="game_retry_fixed_btn" title="再試一次" onclick="Init()"><img src="refresh-arrow.png" alt="再試一次"></div>
+        <!-- 【修改】改成整頁重新整理（而不是呼叫 Init() 軟重設），
+             這樣每次「再試一次」都會被 TCTC2-0-firebase.js 的 Sync_Pending_Page_Views() 記成一次新的瀏覽次數，
+             跟「刷新頁面或換頁都要算一次」的既有設計一致 -->
+        <div class="game_retry_fixed_btn" id="game_retry_fixed_btn" title="再試一次" onclick="window.location.reload()"><img src="refresh-arrow.png" alt="再試一次"></div>
     </div>
 
     <!--外層容器：讓「倒數設定按鈕」跟「計時器」水平並排、同高對齊，整組固定在原本計時器的位置-->
@@ -1174,6 +1219,14 @@
         <button type="button" class="countdown_settings_btn" id="countdown_settings_btn" title="倒數模式設定"><img src="alarm.png" alt="倒數模式設定"></button>
 
         <div class="game_timer" id="game_timer">00：00</div>
+
+        <!--【新增】直接輸入模式（基礎輸入／中級「直接輸入」／高級速度挑戰）專用的即時數據，
+             跟挑戰模式頂欄的 WPM / 正確率是同一套樣式；逐字注音模式不需要這組數字
+             （因為每打一個字就已經即時上色反饋了），預設隱藏，由 JS 依關卡類型切換-->
+        <div class="game_live_stats" id="game_live_stats">
+            <div class="game_live_stat">WPM<span id="game_live_wpm">0</span></div>
+            <div class="game_live_stat">正確率<span id="game_live_acc">100%</span></div>
+        </div>
     </div>
 
     <!--倒數設定彈出視窗，預設隱藏（display:none 由 CSS 的 .show 控制）-->
@@ -1312,7 +1365,8 @@
         <div class="live_keyboard" id="live_keyboard"></div>
 
         <div class="game_input_hint">--真正的高手打字從不看鍵盤--<span class="cg_punct_hint_btn" id="game_punct_hint_btn">打不出標點符號？</span></div>
-        <button class="game_retry_btn" onclick="Init()">再試一次</button>
+        <!-- 【修改】同上，改成整頁重新整理 -->
+        <button class="game_retry_btn" onclick="window.location.reload()">再試一次</button>
         <div class="game_result" id="game_result" style="z-index: 9999;">
             <div class="game_result_title">RESULT</div>
             <!-- 【新增】過關／未過關狀態徽章 + 未過關提示句，內容由 ShowResult() 動態填入 -->
@@ -2429,8 +2483,51 @@
             return String(m).padStart(2, "0") + "：" + String(s).padStart(2, "0")
         }
 
+        // ===== 【新增】直接輸入模式專用：即時算出目前的 WPM / 正確率，更新到 .game_live_stats =====
+        // 跟挑戰模式的 cg_update_live_stats() 是同一套邏輯：
+        //   - WPM：目前為止「真正打對」的字數 ÷ 經過的分鐘數，再套用跟 ShowResult() 一致的
+        //     「除以3再乘3」換算（直接輸入模式的 WPM 定義是「每 3 個字視為 1 word」）
+        //   - 正確率：打對字數 ÷（已經打的字數 + 已經按過的 Backspace 次數）
+        // 只有 Is_Box_Input_Stage(stage) 的關卡才會呼叫這個函式，逐字注音模式完全不受影響。
+        function Update_Live_Box_Stats(){
+            const stage = FindStage(stageId)
+            if(!stage || !Is_Box_Input_Stage(stage)) return
+
+            const wpmEl = document.getElementById("game_live_wpm")
+            const accEl = document.getElementById("game_live_acc")
+            if(!wpmEl || !accEl) return
+
+            const input_el = document.getElementById("game_container_input_id")
+            const typed_text = input_el ? input_el.value : ""
+            const target_text = Clean_Target1_For_Typing(stage.target1).trim()
+
+            let correct_count = 0
+            const compare_len = Math.min(typed_text.length, target_text.length)
+            for(let i = 0; i < compare_len; i++){
+                if(typed_text[i] === target_text[i]) correct_count++
+            }
+
+            const elapsedMin = (isRunning && startTime)
+                ? Math.max((Date.now() - startTime) / 60000, 1 / 60)
+                : (1 / 60)
+
+            let wpm = Math.ceil((correct_count / 3) / elapsedMin)
+            wpm = Math.ceil(wpm * 3)
+
+            const acc_attempts = typed_text.length + wrong_key_times
+            const acc = acc_attempts > 0 ? Math.round((correct_count / acc_attempts) * 100) : 100
+
+            wpmEl.textContent = String(wpm)
+            accEl.textContent = acc + "%"
+        }
+
         function Update_Timer_Display(){
             const timerEl = document.getElementById("game_timer")
+
+            // 【新增】即使計時器本身這一格因為某些原因提早 return，
+            // 直接輸入模式的即時數據還是要照樣每秒更新一次，兩者互不依賴
+            Update_Live_Box_Stats()
+
             if(!timerEl || !startTime) return
 
             const elapsed = (Date.now() - startTime) / 1000
@@ -2783,6 +2880,10 @@
             // 【新增】即時逐字比對：每打一個字就馬上把上面的目標句子對應那一格上色，
             // 打對變綠色、打錯變紅色，玩家不用等打完整句才知道哪裡打錯
             Update_Target1_Highlight(typed_text, target_text)
+
+            // 【新增】每次輸入都馬上更新一次即時 WPM / 正確率，不用等 Update_Timer_Display
+            // 的每秒 interval，打字當下就能看到數字變化，跟挑戰模式的即時反饋節奏一致
+            Update_Live_Box_Stats()
 
             // 【新增】還在用輸入法組字（選字視窗還沒關閉）時，
             // input.value 裡的內容還不是最終選定的字，這時候只更新上色即可，
@@ -3304,6 +3405,18 @@
                     kb_wrap_el.style.display = "none"   // 這關鍵盤沒用，強制隱藏，不受開關偏好影響
                 }
             }
+
+            // 【新增】直接輸入模式（基礎輸入／中級「直接輸入」／高級速度挑戰）才顯示即時 WPM/正確率，
+            // 跟挑戰模式頂欄的即時數據同一套邏輯；逐字注音模式每打一個字就即時上色了，不需要這組數字。
+            // 每次進新的一關（或按「再試一次」）都要歸零，不然會殘留上一次的數字閃一下才被蓋掉。
+            const live_stats_el = document.getElementById("game_live_stats")
+            if(live_stats_el){
+                live_stats_el.style.display = (!is_tutorial_stage && Is_Box_Input_Stage(stage)) ? "flex" : "none"
+            }
+            const live_wpm_el = document.getElementById("game_live_wpm")
+            const live_acc_el = document.getElementById("game_live_acc")
+            if(live_wpm_el) live_wpm_el.textContent = "0"
+            if(live_acc_el) live_acc_el.textContent = "100%"
 
             // ===== 【新增】判斷這一關是否要套用倒數模式 =====
             // 中級、高級關卡都支援倒數模式；初級跟基礎輸入關卡不支援
@@ -4017,12 +4130,23 @@
             // 【修改】輸入框模式（基礎輸入 / 中級「直接輸入」）原本直接把 acc 設成 100%，
             // 因為以前一定要「一字不差」才會跳出結果畫面。
             // 現在 Check_Text_Input_Match() 改成「字數打滿就結束」，就算整句都打錯也會進到這裡，
-            // 所以這裡要換成「真正的逐字正確率」：打對字數 ÷ 目標句子總字數。
+            // 所以這裡要換成「真正的逐字正確率」：打對字數 ÷ 總嘗試次數。
             // target_get 在 Check_Text_Input_Match() 裡已經被設成「真正打對的字數」了。
+            //
+            // 【修正】原本分母只有 target_text_for_acc.length（目標句子總字數），
+            // 代表只要「最後打出來的結果對」，中間不管打錯幾次、按了幾次 Backspace 改回來，
+            // 正確率都不會受影響——這跟挑戰模式（TCTC2-0-challenge.js 的 cg_update_live_stats /
+            // Finish_Challenge）的算法不一致，那邊的分母會加上 cg_correction_count
+            // （玩家按過幾次 Backspace / Delete），因為「打錯需要修正」本身就是一次錯誤的嘗試。
+            // 這裡改成同一套邏輯：分母 = 目標字數 + wrong_key_times。
+            // wrong_key_times 在直接輸入模式底下，本來就是「每按一次 Backspace 就 +1」
+            // （見 Render_Text_Input_Stage() 裡掛的 keydown 監聽器），意義完全對應
+            // 挑戰模式的 cg_correction_count，這裡直接沿用，不用另外開一個變數。
             if(Is_Box_Input_Stage(stage)){
                 const target_text_for_acc = Clean_Target1_For_Typing(stage.target1).trim()
-                acc = target_text_for_acc.length > 0
-                    ? Math.round((target_get / target_text_for_acc.length) * 100)
+                const acc_attempts = target_text_for_acc.length + wrong_key_times
+                acc = acc_attempts > 0
+                    ? Math.round((target_get / acc_attempts) * 100)
                     : 0
             }
 
@@ -4289,7 +4413,7 @@
             nextBtn.classList.remove("next_game_btn_retry")
             if(!stage_is_passed){
                 nextBtn.textContent = "再來一次"
-                nextBtn.onclick = function(){ Init() }
+                nextBtn.onclick = function(){ window.location.reload() }   // 【修改】同上，改成整頁重新整理
                 nextBtn.classList.add("next_game_btn_retry")
             }
             else if(hasNext){

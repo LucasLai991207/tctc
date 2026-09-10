@@ -164,7 +164,7 @@
             font-size: 0.95rem;
             letter-spacing: 2px;
             border: 1px solid rgba(var(--accent-rgb),0.4);
-            border-radius: 20px;
+            border-radius: 4px;
             padding: 0.35rem 1rem;
         }
         .cg_timer{
@@ -537,7 +537,11 @@
     <div class="game_rank_floating_btn" id="cg_rank_floating_btn" title="查看這個組合的排名（不用打完也能看）" onclick="View_Challenge_Ranking()"><img src="trophy_gold.png" alt="排行榜"></div>
     <!-- ===== 【修改】再試一次：改成跟 game.html 一樣的浮動圖示按鈕，取代原本
          畫面底部 .cg_action_row 裡的文字按鈕，直接呼叫跟原本同一個 Restart_Challenge() ===== -->
-    <div class="game_retry_fixed_btn" id="cg_retry_floating_btn" title="再試一次" onclick="Restart_Challenge()"><img src="refresh-arrow.png" alt="再試一次"></div>
+    <!-- 【修改】改成整頁重新整理（而不是呼叫 Restart_Challenge() 軟重設），
+         這樣每次「再試一次」都會被 TCTC2-0-firebase.js 的 Sync_Pending_Page_Views() 記成一次新的瀏覽次數，
+         跟「刷新頁面或換頁都要算一次」的既有設計一致；URL 上的 difficulty/seconds/stage 參數重新整理後不會變，
+         回來會是同一個挑戰組合 -->
+    <div class="game_retry_fixed_btn" id="cg_retry_floating_btn" title="再試一次" onclick="window.location.reload()"><img src="refresh-arrow.png" alt="再試一次"></div>
     <!-- ===== 【新增】打字音效開關：排在再試一次右邊，圖示會依照目前開/關狀態
          換成 medium-volume.png（有聲）或 mute.png（靜音），初始圖示由 challenge.js 在頁面載入時決定 ===== -->
     <div class="game_sound_toggle_btn" id="cg_sound_toggle_btn" title="開啟/關閉打字音效"><img id="cg_sound_toggle_icon" src="mute.png" alt="音效開關"></div>
@@ -612,7 +616,8 @@
                 <div id="cg_result_highest_wpm">瞬時最高CPM </div>
             </div>
             <div class="cg_action_row" style="justify-content:center;">
-                <button class="cg_btn" onclick="Restart_Challenge()">再來一次</button>
+                <!-- 【修改】同上，改成整頁重新整理 -->
+                <button class="cg_btn" onclick="window.location.reload()">再來一次</button>
                 <!-- 【修正】「查看排名」跟「分享成績卡」包成一組，兩顆永遠黏在一起、
                      並排顯示——外層 .cg_action_row 就算因為螢幕太窄而換行，
                      也是整組一起被推到下一行，不會被拆散到不同行去。 -->
