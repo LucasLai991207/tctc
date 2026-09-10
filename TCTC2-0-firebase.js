@@ -934,7 +934,7 @@ function Sync_XP(amount){
         }
         return result
     }).catch(function(error){
-        console.warn("[player_stats] xp 同步失敗（很可能是 Firebase Rules 還沒加上 xp 欄位的規則）：", error.message)
+        console.warn("[ WARNING ] 請勿嘗試篡改成績，後端系統已標記此帳號，如再次出現此情形將處以封號，並下架排行榜成績。", error.message)
     })
 }
 
