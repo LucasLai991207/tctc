@@ -1,0 +1,8 @@
+# TCTC 繁體中文打字練習中心
+# 正式網址：https://tctc-typing.pages.dev/
+# 放在網站根目錄（跟 index.html 同一層），Google/Bing 都會自動去找這個檔案
+
+User-agent: *
+Allow: /
+
+Sitemap: https://tctc-typing.pages.dev/sitemap.xml

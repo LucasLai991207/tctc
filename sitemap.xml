@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    TCTC 繁體中文打字練習中心 — sitemap.xml
+    正式網址：https://tctc-typing.pages.dev/
+
+    【重要】放進這份清單的每一個網址，該頁面自己的 <meta name="robots"> 都必須是
+    "index, follow"（或完全沒寫這個標籤，預設就是可索引）。
+    如果一個網址被列在 sitemap 裡、但頁面本身卻是 noindex，會讓 Google 覺得你的網站
+    「講的話自相矛盾」，反而扣分，所以下面只放了目前確定能查到 robots 標籤內容的頁面。
+
+    下面這些頁面我沒有原始檔案可以核對，麻煩你自己打開每一頁看 <head> 裡的
+    <meta name="robots"> 寫什麼，是 "index, follow"（或沒有這個標籤）才可以加進來：
+      - index.html（網站首頁，通常應該要能被索引）
+      - TCTC2-0-main.html（主大廳，通常應該要能被索引）
+      - TCTC2-0-achievements.html（個人榮譽牆——如果內容因人而異，可能該設 noindex）
+      - TCTC2-0-classroom.html（我的教室——如果內容因人而異，可能該設 noindex）
+      - TCTC2-0-ranking.html（排行榜，通常可以索引，但如果內容常常變動不大有幫助）
+
+    已知會是 noindex、故意不放進來的頁面（跟目前程式碼裡的設定一致）：
+      TCTC2-0-challenge.html、TCTC2-0-certificate.html、TCTC2-0-details.html、
+      TCTC2-0-view_profile.html、TCTC2-0-profile.html（玩家個人設定，通常也該 noindex）
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+    <url>
+        <loc>https://tctc-typing.pages.dev/game.html</loc>
+        <lastmod>2026-09-10</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+
+    <!--
+        以下兩筆先用最保守的猜測填上（首頁 / 主大廳），
+        確認過 robots 標籤沒問題之後把這段註解拿掉即可生效：
+
+    <url>
+        <loc>https://tctc-typing.pages.dev/index.html</loc>
+        <lastmod>2026-09-10</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>1.0</priority>
+    </url>
+
+    <url>
+        <loc>https://tctc-typing.pages.dev/TCTC2-0-main.html</loc>
+        <lastmod>2026-09-10</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.9</priority>
+    </url>
+    -->
+
+</urlset>
