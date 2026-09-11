@@ -248,6 +248,15 @@
     letter-spacing: 0.5px;
 }
 
+.auth_field_hint{
+    margin: -0.8rem 0 1.1rem;
+
+    color: rgba(var(--text-rgb), 0.38);
+    font-size: 0.74rem;
+    letter-spacing: 0.5px;
+    line-height: 1.5;
+}
+
 /* ===== 主要提交按鈕 =====
    保留全站慣用的「金底深字，hover 反轉成金字空心」，
    但加一點呼吸感陰影，讓它看起來更像實體的按壓元件 */
