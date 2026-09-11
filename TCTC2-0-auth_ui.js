@@ -64,10 +64,12 @@
                     <div class="auth_divider"><span>或</span></div>
 
                     <label class="auth_field_label">Email</label>
-                    <input type="email" class="auth_input" id="auth_register_email" placeholder="you@example.com" autocomplete="email">
+                    <input type="email" class="auth_input" id="auth_register_email" placeholder="yourname@example.com" autocomplete="email">
 
                     <label class="auth_field_label">密碼</label>
-                    <input type="password" class="auth_input" id="auth_register_password" placeholder="至少 6 個字元" autocomplete="new-password">
+                    <input type="password" class="auth_input" id="auth_register_password" placeholder="至少 8 碼，需同時包含英文字母與數字" autocomplete="new-password">
+                    <!-- 【新增】密碼規則提示：跟 Handle_Register_Submit() 裡的檢查條件一一對應，
+                         玩家打錯格式時不用等按下註冊才知道規則是什麼 -->
 
                     <label class="auth_field_label">確認密碼</label>
                     <input type="password" class="auth_input" id="auth_register_password2" placeholder="再輸入一次" autocomplete="new-password">
@@ -292,6 +294,30 @@
         }).join("")
     }
 
+    // ===== 【新增】常見到爆的弱密碼黑名單 =====
+    // 這些密碼就算符合「8碼+英數混合」的規則，也幾乎一定出現在外洩密碼資料庫裡
+    // （例如 12345678、password1 這種），格式再嚴也擋不住，所以額外用清單擋掉。
+    // 只列最經典、最常見的幾個當第一道防線，不用求全——真正擋掉「外洩過」這件事
+    // 終究要靠下面的長度+英數混合規則，把密碼空間撐大到不容易剛好撞進外洩清單。
+    const AUTH_WEAK_PASSWORD_BLOCKLIST = [
+        "12345678", "123456789", "1234567890", "password", "password1",
+        "qwerty123", "abc12345", "11111111", "00000000", "iloveyou1"
+    ]
+
+    // ===== 【新增】檢查密碼格式，回傳 null 代表通過，否則回傳要顯示的錯誤訊息 =====
+    // 規則：至少 8 碼、同時要有英文字母跟數字、不能是清單裡的常見弱密碼。
+    // 這組規則沒辦法保證 Chrome 之後一定不會跳「這組密碼曾經外洩過」的提示
+    // （那是瀏覽器自己比對 Google 的外洩密碼資料庫，網站這邊管不到），
+    // 但外洩清單裡幾乎都是短、簡單、規律的密碼，把長度和組成規則拉高，
+    // 密碼落在那些清單裡的機率會大幅降低。
+    function Get_Password_Format_Error(password){
+        if(password.length < 8) return "密碼至少需要 8 個字元"
+        if(!/[a-zA-Z]/.test(password)) return "密碼需要包含至少一個英文字母"
+        if(!/[0-9]/.test(password)) return "密碼需要包含至少一個數字"
+        if(AUTH_WEAK_PASSWORD_BLOCKLIST.includes(password.toLowerCase())) return "這組密碼太常見了，請換一組比較不容易被猜到的密碼"
+        return null
+    }
+
     /* ============================================================
        註冊表單送出 —— Email/密碼
        ============================================================ */
@@ -305,8 +331,9 @@
             Show_Auth_Error("auth_register_error", "請填寫 Email 跟密碼")
             return
         }
-        if (password.length < 6) {
-            Show_Auth_Error("auth_register_error", "密碼至少需要 6 個字元")
+        const password_format_error = Get_Password_Format_Error(password)
+        if (password_format_error) {
+            Show_Auth_Error("auth_register_error", password_format_error)
             return
         }
         if (password !== password2) {
