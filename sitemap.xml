@@ -6,11 +6,7 @@
         <changefreq>monthly</changefreq>
         <priority>0.8</priority>
     </url>
-
-    <!--
-        以下兩筆先用最保守的猜測填上（首頁 / 主大廳），
-        確認過 robots 標籤沒問題之後把這段註解拿掉即可生效：
-
+    
     <url>
         <loc>https://tctc-typing.pages.dev/index.html</loc>
         <lastmod>2026-09-10</lastmod>
@@ -24,6 +20,5 @@
         <changefreq>weekly</changefreq>
         <priority>0.9</priority>
     </url>
-    -->
 
 </urlset>
