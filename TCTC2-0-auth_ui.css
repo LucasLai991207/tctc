@@ -248,15 +248,6 @@
     letter-spacing: 0.5px;
 }
 
-.auth_field_hint{
-    margin: -0.8rem 0 1.1rem;
-
-    color: rgba(var(--text-rgb), 0.38);
-    font-size: 0.74rem;
-    letter-spacing: 0.5px;
-    line-height: 1.5;
-}
-
 /* ===== 主要提交按鈕 =====
    保留全站慣用的「金底深字，hover 反轉成金字空心」，
    但加一點呼吸感陰影，讓它看起來更像實體的按壓元件 */
@@ -365,8 +356,47 @@
     padding: 2.4rem 0;
 }
 
-/* ===== Nav 上的帳號項目（未登入顯示「註冊」／已登入顯示「登出」） ===== */
+/* ===== Nav 上的帳號項目（未登入顯示「註冊」／已登入顯示帳號名稱＋登出） ===== */
 #auth_nav_item{
     white-space: nowrap;
     color: black;
+}
+.auth_nav_name{
+    margin-right: 0.8rem;
+    font-weight: 500;
+}
+.auth_nav_logout{
+    opacity: 0.65;
+}
+.auth_nav_logout:hover{
+    opacity: 1;
+}
+
+/* ===== 登入/登出提示 toast ===== */
+.auth_toast{
+    position: fixed;
+    left: 50%;
+    bottom: 2rem;
+    transform: translateX(-50%) translateY(0.6rem);
+    z-index: 10020;
+
+    background-color: var(--dark-blue);
+    color: rgba(var(--text-rgb), 0.92);
+
+    border: 1px solid var(--champagne-gold);
+    border-radius: 2px;
+
+    padding: 0.7rem 1.4rem;
+
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+
+    opacity: 0;
+    pointer-events: none;
+
+    transition: opacity 220ms ease, transform 220ms ease;
+}
+.auth_toast.auth_toast_show{
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
 }

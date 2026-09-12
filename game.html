@@ -1570,6 +1570,10 @@
     <!-- 【新增】成績分享卡片（共用模組，哪頁要用哪頁自己載入） -->
     <script src="TCTC2-0-share_card.js"></script>
     <script src="TCTC2-0-mobile_nav.js"></script>    
+    <!-- 【新增】教學關卡拆頁系統：tutorial_data 放內容資料，tutorial_engine 負責畫面切換/上一頁下一頁/互動卡關，
+         必須放在下面這支主要的 inline script 之前載入，因為 Init() 裡會直接呼叫 Render_Tutorial_Stage() -->
+    <script src="TCTC2-0-tutorial_data.js"></script>
+    <script src="TCTC2-0-tutorial_engine.js"></script>
     <script>
 
         // 【新增】頁面一載入就準備好打字音效（建立 AudioContext + 非同步載入音效檔）
@@ -2082,13 +2086,13 @@
                 ime_sim_container.innerHTML = Ime_Sim_Wrap(
                     "1 / 5",
                     "請按 <b style='color:var(--champagne-gold);'>↓（方向鍵下）</b>，叫出選字視窗",
-                    '<div style="text-align:center; font-size:1.3rem; color:#eee;">你打了 <b style="color:var(--champagne-gold);">ㄉㄚˇ</b>，系統自動選成了「<span style="text-decoration:underline wavy var(--error-red);">大</span>」（打錯了）</div>'
+                    '<div style="text-align:center; font-size:1.3rem; color:#eee;">你要打 <b style="color:var(--champagne-gold);">「舞」</b>，系統自動選成了「<span style="text-decoration:underline wavy var(--error-red);">五</span>」</div>'
                 )
             } else if(ime_sim_state === 1){
                 ime_sim_container.innerHTML = Ime_Sim_Wrap(
                     "2 / 5",
                     "選字視窗跳出來了！請按數字鍵 <b style='color:var(--champagne-gold);'>2</b>，選出正確的字",
-                    Ime_Sim_Candidate_Html(["大","打","答","dá","搭"], 2)
+                    Ime_Sim_Candidate_Html(["五","舞","武","午","伍"], 2)
                 )
             } else if(ime_sim_state === 2){
                 ime_sim_container.innerHTML = Ime_Sim_Wrap(
@@ -2106,7 +2110,7 @@
                 ime_sim_container.innerHTML = Ime_Sim_Wrap(
                     "5 / 5",
                     "請按數字鍵 <b style='color:var(--champagne-gold);'>3</b>，選出正確的字「們」",
-                    Ime_Sim_Candidate_Html(["門","悶","們","聞"], 3)
+                    Ime_Sim_Candidate_Html(["門","捫","們","悶"], 3)
                 )
             } else {
                 ime_sim_active = false
@@ -3505,381 +3509,11 @@
                 game_retry_btn.style.display = "none";
                 if(game_retry_fixed_btn) game_retry_fixed_btn.style.display = "none"   // 【新增】教學關同樣隱藏左上角再試一次
 
-                if(stage.id === "1-0-1"){
-                    game_char_container.innerHTML = `
-                    
-                    <div style="text-align: left; max-width: 900px; margin: 0 auto; font-family: 'Noto Serif TC', serif;color: white;font-weight: 150;position: relative;font-size: 0.9rem;font-weight:300">
-
-                        
-                        <p style="font-size: 1.4rem; color: var(--champagne-gold); text-align: center; margin-bottom: 1.5rem; font-weight: 500;">
-                            開始打字的第一步：摸到那條「線」
-                        </p>
-                        
-                        <p style="margin-bottom: 1.2rem; color: #ffffff;font-weight: 300;">
-                            所有打字高手在打字時，眼睛是不看鍵盤的。他們之所以不會按錯，是因為雙手食指隨時都靠在<b style="font-weight: 400;color: var(--champagne-gold)">「基準鍵（Home Row）」</b>上。
-                        </p>
-
-                        <div style="background-color: var(--light-blue); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--champagne-gold); margin-bottom: 1.5rem;">
-                            <b style="color: var(--champagne-gold);line-height: 2rem">請現在跟著做：</b><br>
-                            1. 將左手食指放在鍵盤的 <b style=" color: var(--champagne-gold);font-size: 1.1rem">F</b> 鍵上（注音 <b style=" color: var(--champagne-gold);font-size: 1.1rem">ㄑ</b>）<br>
-                            2. 將右手食指放在鍵盤的 <b style=" color: var(--champagne-gold);font-size: 1.1rem">J</b> 鍵上（注音 <b style=" color: var(--champagne-gold);font-size: 1.1rem">ㄨ</b>）
-                        </div>
-
-                        
-
-                        <p style="color: var(--champagne-gold); font-size: 1.2rem; text-align: center; margin-top: 1.5rem; margin-bottom: 0.8rem;font-weight: 500">
-                            請依照畫面指示，依序按下 F 鍵、再按下 J 鍵（請切換到英文輸入法）
-                        </p>
-                        <div id="tut101_practice"></div>
-
-                        <p style="margin-bottom: 1.2rem; line-height: 1.8rem;">
-                            💡 <b>摸到了嗎？</b> <br>
-                            這兩個按鍵上有一個<b style="font-weight: 500;color: var(--champagne-gold)">凸起的小橫線</b>。這條橫線就是盲打的基礎。不論你的手指移到多遠去按別的字，按完後，兩隻食指都必須立刻<b>「彈回」</b>這兩個定位點。
-                        </p>
-
-                        <p id="tut101_next_hint" style="color: gray; font-size: 0.9rem; text-align: center; margin-top: 2rem;">
-                            完成上面的練習後，就可以進入下一頁囉！
-                        </p>
-                        <button id="tut101_next_btn" style="display:none; width: 10rem; height: 3rem; margin: auto; margin-top: 1.5rem; background-color: var(--champagne-gold); display: flex; justify-content: center; align-items: center; color: var(--dark-blue); font-family: 'Noto Serif TC', serif; font-size: 1rem; letter-spacing: 2px; border: none; border-radius: 4px; cursor: pointer; transition: all 200ms ease;""
-                                onclick="window.location.href='game.html?stage=1-0-2'">
-                            下一頁 →
-                        </button>                    
-                        </div>
-
-                        
-                        `
-                        
-                    let progress = JSON.parse(localStorage.getItem("stage_progress")) || {} 
-                    // 【新增】補上防重複判斷——這裡原本沒有任何 is_first_time_clear 檢查，
-                    // 每次重新造訪這關都會無條件寫 true，如果不擋，Firebase 完成數會被重複灌水
-                    const is_first_time_clear_101 = progress[stageId] !== true
-                    if(is_first_time_clear_101 && typeof Sync_Stage_Completion === "function"){
-                        Sync_Stage_Completion(stageId)
-                    }
-                    progress[stageId] = true
-                    localStorage.setItem("stage_progress", JSON.stringify(progress))
-
-                    // 【新增】內嵌互動練習：依序按 F（ㄑ）、J（ㄨ），完成後才讓「下一頁」按鈕出現
-                    Start_Inline_Key_Practice(
-                        document.getElementById("tut101_practice"),
-                        ["ㄑ", "ㄨ"],
-                        function(){
-                            const next_btn = document.getElementById("tut101_next_btn")
-                            const next_hint = document.getElementById("tut101_next_hint")
-                            if(next_hint) next_hint.textContent = "太棒了！雙手已經找到基準鍵的位置了 🎉"
-                            if(next_btn) next_btn.style.display = "flex"
-                        },
-                        "基準鍵練習"
-                    )
-                }
-                else if(stage.id === "1-0-2"){
-                    game_char_container.innerHTML = `
-                        <div style="text-align: left; max-width: 900px; margin: 0 auto; font-family: 'Noto Serif TC', serif; color: white; font-weight: 150; position: relative;font-size: 0.9rem">
-                            <p style="font-size: 1.4rem; color: var(--champagne-gold); text-align: center; margin-bottom: 1.5rem; font-weight: 500;">
-                                探索鍵盤：什麼是「大千式排列」？
-                            </p>
-                            
-                            <p style="margin-bottom: 1.2rem; color: #ffffff; font-weight: 250; line-height: 1.8rem;">
-                                大千式排列是由大千公司設計、後來成為台灣國家標準（CNS 2690）的注音輸入法鍵盤排列方式。<br>市面上99%的鍵盤佈局都為此種形式，掌握他的排列規則，能有效提升打字速度。                            </p>
-
-                            <div style="background-color: var(--light-blue); padding: 1.2rem; border-radius: 8px; border-left: 4px solid var(--champagne-gold); margin-bottom: 1.5rem; line-height: 1.8rem;">
-                                <b style="color: var(--champagne-gold); font-size: 1.1rem;line-height:2rem">．三大排列隱藏規則：</b><br>
-                                <span style="color: var(--champagne-gold);font-size: 1rem;font-weight: 500;">1. 聲母由上往下排：</span> 鍵盤最左邊那一縱列，<b>1➔Q➔A➔Z</b>，剛好對應 <b style="font-size: 1rem;">ㄅㄆㄇㄈ</b>接著往右看第二列 <b>&nbsp &nbsp &nbsp2➔W➔S➔X</b>，就是 <b style="font-size: 1rem;">ㄉㄊㄋㄌ</b>。它是「由上往下、再由左往右」整齊排列的。<br>
-                                <button class="tut_demo_btn" style="margin-left:0.5rem; font-size:0.8rem; padding:0.2rem 0.6rem; background:transparent; border:1px solid var(--champagne-gold); color:var(--champagne-gold); border-radius:4px; cursor:pointer;margin-bottom:1rem;" onclick="Highlight_Keys_Temporarily(['1','q','a','z','2','w','s','x'], true)">👆 在鍵盤上示範</button><br>
-                                <span style="color: var(--champagne-gold);font-size: 1rem;font-weight: 500;"">2. 韻母藏在右手邊：</span> 介音（ㄧㄨㄩ）和韻母（ㄚㄛㄜㄝ...）幾乎全部集中在鍵盤的<b>右手邊</b>。
-                                <button class="tut_demo_btn" style="margin-left:0.5rem; font-size:0.8rem; padding:0.2rem 0.6rem; background:transparent; border:1px solid var(--champagne-gold); color:var(--champagne-gold); border-radius:4px; cursor:pointer;margin-bottom:1rem;" onclick="Highlight_Keys_Temporarily(['u','i','o','p','j','k','l',';','m',',','.','/'], false)">👆 在鍵盤上示範</button><br>
-                                <span style="color: var(--champagne-gold);font-size: 1rem;font-weight: 500;"">3. 聲調在鍵盤上排：</span> 輕聲、二聲、三聲、四聲（˙ ˊ ˇ ˋ）整齊地排在數字鍵 7、6、3、4。
-                                <button class="tut_demo_btn" style="margin-left:0.5rem; font-size:0.8rem; padding:0.2rem 0.6rem; background:transparent; border:1px solid var(--champagne-gold); color:var(--champagne-gold); border-radius:4px; cursor:pointer;margin-bottom:1rem;" onclick="Highlight_Keys_Temporarily(['7','6','3','4'], false)">👆 在鍵盤上示範</button>
-                            </div>
-
-                            <p style="margin-bottom: 1.2rem; line-height: 1.8rem;">
-                                💡 <b style="color: var(--champagne-gold);font-size: 1rem;">為什麼要這樣設計？</b> <br>
-                                因為打一個完整的中文字，順序一定是<b>「聲母 ➔ 介音 ➔ 韻母 ➔ 聲調」</b>。這種排列讓你的雙手在打字時，自然會形成<b>「左右交替」</b>的流暢節奏，打起來速度最快、最省力。
-                            </p>
-
-                            <p style="color: gray; font-size: 0.9rem; text-align: center; margin-top: 2rem;">
-                                初步理解大千式鍵盤後，我們要準備正式敲下第一個字了！
-                            </p>
-                            
-                            <button style="width: 10rem; height: 3rem; margin: auto; margin-top: 1.5rem; background-color: var(--champagne-gold); display: flex; justify-content: center; align-items: center; color: var(--dark-blue); font-family: 'Noto Serif TC', serif; font-size: 1rem; letter-spacing: 2px; border: none; border-radius: 4px; cursor: pointer; transition: all 200ms ease;" 
-                                    onclick="window.location.href='game.html?stage=1-0-3'">
-                                下一頁 →
-                            </button>
-                        </div>`
-                    let progress = JSON.parse(localStorage.getItem("stage_progress")) || {} 
-                    // 【新增】補上防重複判斷，理由跟 1-0-1 那處完全一樣
-                    const is_first_time_clear_102 = progress[stageId] !== true
-                    if(is_first_time_clear_102 && typeof Sync_Stage_Completion === "function"){
-                        Sync_Stage_Completion(stageId)
-                    }
-                    progress[stageId] = true
-                    localStorage.setItem("stage_progress", JSON.stringify(progress))
-
-                    // 【新增】這頁的「在鍵盤上示範」按鈕需要看得到即時鍵盤，強制打開
-                    {
-                        const kb_wrap_el = document.getElementById("live_keyboard")
-                        if(kb_wrap_el){
-                            kb_wrap_el.style.display = ""
-                            kb_wrap_el.classList.remove("kb_hidden")
-                        }
-                    }
-                }
-                else if(stage.id === "1-0-3"){
-                    game_char_container.innerHTML = `
-                        <div style="text-align: left; max-width: 900px; margin: 0 auto; font-family: 'Noto Serif TC', serif; color: white; font-weight: 150; position: relative; font-size: 0.9rem">
-                            <p style="font-size: 1.4rem; color: var(--champagne-gold); text-align: center; margin-bottom: 1.5rem; font-weight: 500;">
-                                鍵盤指法：十指的「守備範圍」
-                            </p>
-                            
-                            <p style="margin-bottom: 1.2rem; color: #ffffff; font-weight: 300; line-height: 1.8rem;">
-                                想提升打字速度，<b>「各司其職」</b>至關重要。鍵盤上的按鍵不是垂直的，而是向左傾斜。每隻手指都有自己專屬管轄的「傾斜縱列」！
-                            </p>
-
-                            <div style="background-color: var(--light-blue); padding: 1.2rem; border-radius: 8px; border-left: 4px solid var(--champagne-gold); margin-bottom: 1.5rem; line-height: 1.8rem;">
-                                <b style="color: var(--champagne-gold); font-size: 1.1rem;">雙手手指正確分工：</b> <br>
-                                <span style="color: var(--champagne-gold); font-size: 1rem;">1. 左手四指（由外往內）：</span> <br>
-                                 • 小指專管：<b style="font-size: 1.2rem">ㄅ ㄆ ㄇ ㄈ</b>
-                                 <button class="tut_demo_btn" style="margin-left:0.4rem; font-size:0.75rem; padding:0.15rem 0.5rem; background:transparent; border:1px solid var(--champagne-gold); color:var(--champagne-gold); border-radius:4px; cursor:pointer;" onclick="Highlight_Keys_Temporarily(['1','q','a','z'], false)">👆 示範</button><br>
-                                 • 無名指管：<b style="font-size: 1.2rem">ㄉ ㄊ ㄋ</b>
-                                 <button class="tut_demo_btn" style="margin-left:0.4rem; font-size:0.75rem; padding:0.15rem 0.5rem; background:transparent; border:1px solid var(--champagne-gold); color:var(--champagne-gold); border-radius:4px; cursor:pointer;" onclick="Highlight_Keys_Temporarily(['2','w','s'], false)">👆 示範</button><br>
-                                 • 中指專管：<b style="font-size: 1.2rem"> ˇ ㄍ ㄎ ㄌ</b>
-                                 <button class="tut_demo_btn" style="margin-left:0.4rem; font-size:0.75rem; padding:0.15rem 0.5rem; background:transparent; border:1px solid var(--champagne-gold); color:var(--champagne-gold); border-radius:4px; cursor:pointer;" onclick="Highlight_Keys_Temporarily(['3','e','d','x'], false)">👆 示範</button><br>
-                                 • 食指管轄：<b style="font-size: 1.2rem">4 ㄐ ㄑ ㄏ 5 ㄔ ㄕ ㄒ 6</b>
-                                 <button class="tut_demo_btn" style="margin-left:0.4rem; font-size:0.75rem; padding:0.15rem 0.5rem; background:transparent; border:1px solid var(--champagne-gold); color:var(--champagne-gold); border-radius:4px; cursor:pointer;" onclick="Highlight_Keys_Temporarily(['4','r','f','c','5','t','g','v','6'], false)">👆 示範</button><br>
-                                <span style="color: var(--champagne-gold); font-size: 1rem;">2. 右手四指（由內往外）：</span> <br>
-                                 • 食指管轄：<b style="font-size: 1.2rem">7 ㄗ ㄘ ㄖ ˙ ㄧ ㄨ ㄙ ㄩ</b>
-                                 <button class="tut_demo_btn" style="margin-left:0.4rem; font-size:0.75rem; padding:0.15rem 0.5rem; background:transparent; border:1px solid var(--champagne-gold); color:var(--champagne-gold); border-radius:4px; cursor:pointer;" onclick="Highlight_Keys_Temporarily(['7','y','h','b','u','j','n','m'], false)">👆 示範</button><br>
-                                 • 中指專管：<b style="font-size: 1.2rem">ㄚ ㄛ ㄜ ㄝ</b>
-                                 <button class="tut_demo_btn" style="margin-left:0.4rem; font-size:0.75rem; padding:0.15rem 0.5rem; background:transparent; border:1px solid var(--champagne-gold); color:var(--champagne-gold); border-radius:4px; cursor:pointer;" onclick="Highlight_Keys_Temporarily(['8','i','k',','], false)">👆 示範</button><br>
-                                 • 無名指管：<b style="font-size: 1.2rem">ㄞ ㄟ ㄠ ㄡ 0</b>
-                                 <button class="tut_demo_btn" style="margin-left:0.4rem; font-size:0.75rem; padding:0.15rem 0.5rem; background:transparent; border:1px solid var(--champagne-gold); color:var(--champagne-gold); border-radius:4px; cursor:pointer;" onclick="Highlight_Keys_Temporarily(['9','o','l','.','0'], false)">👆 示範</button><br>
-                                 • 小指專管：<b style="font-size: 1.2rem">ㄦ ㄣ ㄤ ㄥ</b> 以及右側所有標點符號與功能鍵。
-                                 <button class="tut_demo_btn" style="margin-left:0.4rem; font-size:0.75rem; padding:0.15rem 0.5rem; background:transparent; border:1px solid var(--champagne-gold); color:var(--champagne-gold); border-radius:4px; cursor:pointer;" onclick="Highlight_Keys_Temporarily(['-','p',';','/','[',']','\\\\','Backspace'], false)">👆 示範</button><br>
-                                <span style="color: var(--champagne-gold); font-size: 1rem;">3. 大拇指：</span> 雙手大拇指只專職負責敲擊<b>空白鍵</b>。
-                                 <button class="tut_demo_btn" style="margin-left:0.4rem; font-size:0.75rem; padding:0.15rem 0.5rem; background:transparent; border:1px solid var(--champagne-gold); color:var(--champagne-gold); border-radius:4px; cursor:pointer;" onclick="Highlight_Keys_Temporarily([' '], false)">👆 示範</button>
-                            </div>
-
-                            <p style="margin-bottom: 1.2rem; line-height: 1.8rem;">
-                                💡 <b>盲打的核心心法：</b> <br>
-                                當某一隻手指移開基準鍵去按別的字時，<b>其他手指要盡量留在原位</b>，按完的那隻手指要立刻「彈回」定位點（F 和 J）。只要保持這個節奏，打字速度就會開始暴增！
-                            </p>
-
-                            <div style="background-color: var(--light-blue); padding: 1.2rem; border-radius: 8px; border-left: 4px solid var(--champagne-gold); margin-bottom: 1.5rem;">
-                                <b style="color: var(--champagne-gold);">小測驗：考考你的手指分工</b><br>
-                                <p style="margin:0.5rem 0; color:#ccc; font-size:0.85rem;">畫面會隨機出一個注音符號，想好該用哪根手指後，直接在鍵盤上按下對應的鍵就好！</p>
-                                <div id="tut103_quiz"></div>
-                            </div>
-
-                            <p style="color: gray; font-size: 1.5rem; text-align: center; margin-top: 2rem;">
-                                切記，正確率大於速度!！永遠記住這點 然後開始你的打字旅程吧~
-                            </p>
-                            
-                            <button style="width: 10rem; height: 3rem; margin: auto; margin-top: 1.5rem; background-color: var(--champagne-gold); display: flex; justify-content: center; align-items: center; color: var(--dark-blue); font-family: 'Noto Serif TC', serif; font-size: 1rem; letter-spacing: 2px; border: none; border-radius: 4px; cursor: pointer; transition: all 200ms ease;" 
-                                    onclick="window.location.href='game.html?stage=1-2-1'">
-                                進入實戰練習 →
-                            </button>
-                        </div>`
-                    let progress = JSON.parse(localStorage.getItem("stage_progress")) || {} 
-
-                    const is_first_time_clear = progress[stageId] !== true;
-
-                    if(is_first_time_clear){
-                       increase_stage_count(get_difficulty_by_stageid(stage.id))
-
-                        // 【新增】跟本機的 increase_stage_count() 並列，兩邊互不影響——
-                        // 這行負責同步進 Firebase player_stats，給榮譽牆的關卡完成度成就用
-                        if(typeof Sync_Stage_Completion === "function"){
-                            Sync_Stage_Completion(stage.id)
-                        }
-
-                        progress[stageId] = true
-                        localStorage.setItem("stage_progress", JSON.stringify(progress))
-                    }
-
-                    // 【新增】這頁的「示範」按鈕跟下面的小測驗都需要看得到即時鍵盤，強制打開
-                    {
-                        const kb_wrap_el = document.getElementById("live_keyboard")
-                        if(kb_wrap_el){
-                            kb_wrap_el.style.display = ""
-                            kb_wrap_el.classList.remove("kb_hidden")
-                        }
-                    }
-
-                    // 【新增】手指分工小測驗：隨機出 5 題注音符號，讓玩家直接在鍵盤上按對應鍵
-                    Start_Finger_Quiz(document.getElementById("tut103_quiz"), 5)
-                }
-                else if(stage.id === "1-8-1"){
-                    game_char_container.innerHTML = `
-                        <div style="text-align: left; max-width: 900px; margin: 0 auto; font-family: 'Noto Serif TC', serif; color: white; font-weight: 150; position: relative; font-size: 0.9rem">
-                            <p style="font-size: 1.4rem; color: var(--champagne-gold); text-align: center; margin-bottom: 1.5rem; font-weight: 500;">
-                                注音「選字」流暢度教學：手不離鍵盤的關鍵訣竅
-                            </p>
-                            
-                            <p style="margin-bottom: 1.2rem; color: #ffffff; font-weight: 100; line-height: 1.8rem;">
-                                打注音要快，核心原則就是：「絕對不要用滑鼠去點選字視窗」。以下是從選字、改字到記憶字詞的必學操作。
-                            </p>
-
-                            <div style="background-color: var(--dark-blue); padding: 1.2rem; border-radius: 8px; border-left: 4px solid var(--champagne-gold); margin-bottom: 1.5rem; line-height: 1.9rem;font-weight:300">
-                                <div style="color: var(--champagne-gold); font-size: 1.1rem;padding-bottom: 0.3rem;font-weight:500">選字輸入法的秘訣：</div>
-                                <span style="color: var(--champagne-gold); font-size: 1rem;font-weight:400">1.快速叫出選字視窗 ：</span> <br>
-                                    <b> 當你打完一串注音，發現系統自動選的字是錯的：</b><br>
-                                        • 微軟注音 (Windows)：按 ↓ (方向鍵下) 或者是 Space (空白鍵)，就會直接彈出選字清單。<br>
-                                        • Mac 內建注音：按 Space (空白鍵)，就會彈出選字清單。<br><br>
-                                        
-                                <span style="color: var(--champagne-gold); font-size: 1rem;font-weight:400">2.新手地雷－滑鼠挑字：</span> <br>
-                                    <b> 選字清單有很多頁、很多字時，請用以下鍵盤按鍵來選：</b><br>
-                                        • 看下一頁 / 上一頁：按 Page Down / Page Up，或是按 ↓ / ↑ 一行一行找。<br>
-                                        • 直接按數字選字：選字清單的字旁邊都有編號，直接按鍵盤最上方的數字鍵，就會自動填入。<br><br>
-                                
-                                <span style="color: var(--champagne-gold); font-size: 1rem;font-weight:400">3.其中一個字選錯了怎麼改：</span> <br>
-                                    <b> 很多人打了一長串字，發現中間有一個字錯了，就全部刪掉重打，這樣超慢..</b><br>
-                                    <p>正確做法：<br>
-                                        • 先不要按 Enter，字底下還有虛線時。<br>
-                                        • 用 ← 或 → (左右方向鍵)，把游標移動到那個錯字後面。<br>
-                                        • 按 ↓ (方向鍵下) 叫出該字的選字窗。<br>
-                                        • 按數字鍵選對的字，修正完後，再把游標移到最後面繼續打。<br><br>
-
-                                <span style="color: var(--champagne-gold); font-size: 1rem;">4.一定要照注音順序打嗎(重要！！)：</span> <br>
-                                    <b> 傳統打「強」字（ㄑㄧㄤˊ），手指必須強制順序：左手按 ㄑ ➔ 右手按 ㄧ ➔ 右手按 ㄤˊ</b><br>
-                                    <p>偷吃步做法：<br>
-                                        • 你可以兩隻手同時一起按下去。即使你先按了 ㄤ，再按 ㄧ，最後才按 ㄑ（鍵盤顯示 ㄤㄧㄑ），只要你在這三個符號後面直接按空白鍵或接著打下一個字，輸入法會自動在後台「重新排列組合」，100% 精準自動選出「強」這個字。<br>
-                                        
-                                
-
-                            </div>
-
-
-                            
-                            
-                            <button id="tut191_next_btn" style="display:none; width: 10rem; height: 3rem; margin: auto; margin-top: 1.5rem; background-color: var(--champagne-gold); display: flex; justify-content: center; align-items: center; color: var(--dark-blue); font-family: 'Noto Serif TC', serif; font-size: 1rem; letter-spacing: 2px; border: none; border-radius: 4px; cursor: pointer; transition: all 200ms ease;" 
-                                    onmouseover="this.style.backgroundColor='#fff'; this.style.boxShadow='0 0 10px var(--champagne-gold)';" 
-                                    onmouseout="this.style.backgroundColor='var(--champagne-gold)'; this.style.boxShadow='none';"
-                                    onclick="window.location.href='game.html?stage=1-9-2'">
-                                進入輸入練習 →
-                            </button>
-                        </div>`
-                    let progress = JSON.parse(localStorage.getItem("stage_progress")) || {} 
-
-                    const is_first_time_clear = progress[stageId] !== true;                  
-
-                    if(is_first_time_clear){
-                       increase_stage_count(get_difficulty_by_stageid(stage.id))
-
-                        // 【新增】跟本機的 increase_stage_count() 並列，兩邊互不影響——
-                        // 這行負責同步進 Firebase player_stats，給榮譽牆的關卡完成度成就用
-                        if(typeof Sync_Stage_Completion === "function"){
-                            Sync_Stage_Completion(stage.id)
-                        }
-
-                        progress[stageId] = true
-                        localStorage.setItem("stage_progress", JSON.stringify(progress))
-                    }
-
-                    // 【新增】模擬練習需要看得到即時鍵盤，強制打開
-                    {
-                        const kb_wrap_el = document.getElementById("live_keyboard")
-                        if(kb_wrap_el){
-                            kb_wrap_el.style.display = ""
-                            kb_wrap_el.classList.remove("kb_hidden")
-                        }
-                    }
-
-                    // 【新增】選字流程模擬：完成後才讓「進入輸入練習」按鈕出現
-                    Start_IME_Selection_Sim(document.getElementById("tut191_sim"), function(){
-                        const next_btn = document.getElementById("tut191_next_btn")
-                        const next_hint = document.getElementById("tut191_next_hint")
-                        if(next_hint) next_hint.textContent = "熟悉整套流程了嗎？以後手不用離開鍵盤，選字改字都能一氣呵成 🎉"
-                        if(next_btn) next_btn.style.display = "flex"
-                    })
-                }
-                else if(stage.id === "2-1-0"){
-                    game_char_container.innerHTML = `
-                        <div style="text-align: left; max-width: 900px; margin: 0 auto; font-family: 'Noto Serif TC', serif; color: white; font-weight: 150; position: relative; font-size: 0.9rem">
-                            <p style="font-size: 1.4rem; color: var(--champagne-gold); text-align: center; margin-bottom: 1.5rem; font-weight: 500;">
-                                標點符號輸入教學（重要‼️）
-                            </p>
-                            
-                            <p style="margin-bottom: 1.2rem; color: #ffffff; font-weight: 300; line-height: 1.8rem;">
-                                如果你是Windows用戶，那麼你一定有遇過「」打不出來 然後要上網查的困擾，以下是常用字符的教學，這些用法在以後的模式也常會用到 請務必詳讀：<br>
-                                (以下教學皆為全形符號)
-                            </p>
-
-                            <div style="background-color: var(--light-blue); padding: 1.2rem; border-radius: 8px; border-left: 4px solid var(--champagne-gold); margin-bottom: 1.5rem; line-height: 1.9rem;">
-                                <div style="color: var(--champagne-gold); font-size: 1.1rem;padding-bottom: 0.2rem;font-weight: 350;">各種符號輸入的指法：</div><br>
-                                <span style="color: var(--champagne-gold); font-size: 1rem;font-weight: 400;"> 引號「」</span> <br>
-                                        • Windows ：Ctrl + [ + ↓選擇 ，就會直接彈出選字清單。(持續按住ctrl 點一下 [ 之後使用方向鍵調整至需要的符號)<br>
-                                        • Mac ：直接按下鍵盤右上角的符號即可打出<br><br>
-                                        
-                                <span style="color: var(--champagne-gold); font-size: 1rem;font-weight: 400;">頓號、</span> <br>
-                                        •  Windows ：Ctrl + '（'為上引號，在Enter鍵左邊）。<br>
-                                        •  Mac ：直接按下鍵盤右上角的符號即可打出<br><br>
-                                
-                                <span style="color: var(--champagne-gold); font-size: 1rem;font-weight: 400;">冒號：</span> <br>
-                                        •  Windows ：Ctrl + shift + ; （;為注音ㄤ的按鍵）<br>
-                                        •  Mac ：shift + ;<br><br>
-
-                                <span style="color: var(--champagne-gold); font-size: 1rem;font-weight: 400;">問號？</span> <br>
-                                        •  Windows ：Ctrl + shift + / （/為注音ㄥ的按鍵）<br>
-                                        •  Mac ：shift + /<br><br>
-                                <span style="color: var(--champagne-gold); font-size: 1rem;font-weight: 400;">驚嘆號！</span> <br>
-                                        •  Windows ：Ctrl + shift + 1 （1為注音ㄅ的按鍵）<br>
-                                        •  Mac ：shift + 1<br><br>
-                                <span style="color: var(--champagne-gold); font-size: 1rem;font-weight: 400;">逗號，</span> <br>
-                                        •  Windows ：Ctrl + ,（,為注音ㄝ的按鍵）<br>
-                                        •  Mac ：shift + ,<br><br>
-                                <span style="color: var(--champagne-gold); font-size: 1rem;font-weight: 400;">句號。</span> <br>
-                                        •  Windows ：Ctrl + . （1為注音ㄡ的按鍵）<br>
-                                        •  Mac ：shift + .<br><br>
-
-                            </div>
-
-        
-
-                            <div style="background-color: var(--light-blue); padding: 1.2rem; border-radius: 8px; border-left: 4px solid var(--champagne-gold); margin-bottom: 1.5rem;">
-                                <b style="color: var(--champagne-gold);">⌨️ 實際打打看：標點符號互動練習</b><br>
-                                <p style="margin:0.5rem 0; color:#ccc; font-size:0.85rem;">依序出現「」、、：？！，。這幾個標點，跟著鍵盤上的金框提示，實際按一次組合鍵。</p>
-                                <div id="tut210_practice"></div>
-                            </div>
-
-                            <p id="tut210_next_hint" style="color: gray; font-size: 1.2rem; text-align: center; margin-top: 2rem;">
-                                完成上面的互動練習後，就可以進入下一頁囉！
-                            </p>
-                            
-                            <button id="tut210_next_btn" style="display:none; width: 10rem; height: 3rem; margin: auto; margin-top: 1.5rem; background-color: var(--champagne-gold); display: flex; justify-content: center; align-items: center; color: var(--dark-blue); font-family: 'Noto Serif TC', serif; font-size: 1rem; letter-spacing: 2px; border: none; border-radius: 4px; cursor: pointer; transition: all 200ms ease;" 
-                                    onclick="window.location.href='game.html?stage=1-9-2'">
-                                進入輸入練習 →
-                            </button>
-                        </div>`
-                    let progress = JSON.parse(localStorage.getItem("stage_progress")) || {} 
-
-                    const is_first_time_clear = progress[stageId] !== true;                  
-
-                    if(is_first_time_clear){
-                       increase_stage_count(get_difficulty_by_stageid(stage.id))
-
-                        // 【新增】跟本機的 increase_stage_count() 並列，兩邊互不影響——
-                        // 這行負責同步進 Firebase player_stats，給榮譽牆的關卡完成度成就用
-                        if(typeof Sync_Stage_Completion === "function"){
-                            Sync_Stage_Completion(stage.id)
-                        }
-
-                        progress[stageId] = true
-                        localStorage.setItem("stage_progress", JSON.stringify(progress))
-                    }
-
-                    // 【新增】標點符號互動練習：完成後才讓「進入輸入練習」按鈕出現
-                    Start_Inline_Key_Practice(
-                        document.getElementById("tut210_practice"),
-                        ["「", "」", "、", "：", "？", "！", "，", "。"],
-                        function(){
-                            const next_btn = document.getElementById("tut210_next_btn")
-                            const next_hint = document.getElementById("tut210_next_hint")
-                            if(next_hint) next_hint.textContent = "太棒了！這些標點符號的組合鍵你都打過一次了 🎉"
-                            if(next_btn) next_btn.style.display = "flex"
-                        },
-                        "標點符號練習"
-                    )
-                }
+                // 【重構】教學關內容全部搬進 TCTC2-0-tutorial_data.js（每一關拆成好幾個「畫面」，
+                // 一次只顯示一小段，看完按下一頁再換下一段，互動練習可以直接插在任何一個畫面中間），
+                // 畫面切換、上一頁/下一頁、互動練習卡關全部交給 TCTC2-0-tutorial_engine.js 統一處理。
+                // 這裡不再對每個 stage.id 各寫一大段 innerHTML，只要呼叫 Render_Tutorial_Stage 就好。
+                Render_Tutorial_Stage(stage, stageId, game_char_container)
             }
             
             else if(stage.name === "章節驗收" && stage.type === "注音練習"){

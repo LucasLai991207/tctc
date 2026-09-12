@@ -26,6 +26,14 @@
     // { method: "email" | "google", email, password }
     let pending_register = null
 
+    const AUTH_TOAST_PENDING_KEY = "tctc2.0-auth_toast_pending"
+
+    function Escape_Html(str) {
+        const div = document.createElement("div")
+        div.textContent = str
+        return div.innerHTML
+    }
+
     // guest_preview：進到註冊分頁時就先預讀一次目前訪客資料（見下方
     // Preload_Guest_Preview 的說明，包含「為什麼要提前讀，不能等按下註冊
     // 才讀」的技術原因——跟 Google 登入彈窗的瀏覽器安全限制有關）
@@ -64,12 +72,10 @@
                     <div class="auth_divider"><span>或</span></div>
 
                     <label class="auth_field_label">Email</label>
-                    <input type="email" class="auth_input" id="auth_register_email" placeholder="yourname@example.com" autocomplete="email">
+                    <input type="email" class="auth_input" id="auth_register_email" placeholder="you@example.com" autocomplete="email">
 
                     <label class="auth_field_label">密碼</label>
-                    <input type="password" class="auth_input" id="auth_register_password" placeholder="至少 8 碼，需同時包含英文字母與數字" autocomplete="new-password">
-                    <!-- 【新增】密碼規則提示：跟 Handle_Register_Submit() 裡的檢查條件一一對應，
-                         玩家打錯格式時不用等按下註冊才知道規則是什麼 -->
+                    <input type="password" class="auth_input" id="auth_register_password" placeholder="至少 6 個字元" autocomplete="new-password">
 
                     <label class="auth_field_label">確認密碼</label>
                     <input type="password" class="auth_input" id="auth_register_password2" placeholder="再輸入一次" autocomplete="new-password">
@@ -294,30 +300,6 @@
         }).join("")
     }
 
-    // ===== 【新增】常見到爆的弱密碼黑名單 =====
-    // 這些密碼就算符合「8碼+英數混合」的規則，也幾乎一定出現在外洩密碼資料庫裡
-    // （例如 12345678、password1 這種），格式再嚴也擋不住，所以額外用清單擋掉。
-    // 只列最經典、最常見的幾個當第一道防線，不用求全——真正擋掉「外洩過」這件事
-    // 終究要靠下面的長度+英數混合規則，把密碼空間撐大到不容易剛好撞進外洩清單。
-    const AUTH_WEAK_PASSWORD_BLOCKLIST = [
-        "12345678", "123456789", "1234567890", "password", "password1",
-        "qwerty123", "abc12345", "11111111", "00000000", "iloveyou1"
-    ]
-
-    // ===== 【新增】檢查密碼格式，回傳 null 代表通過，否則回傳要顯示的錯誤訊息 =====
-    // 規則：至少 8 碼、同時要有英文字母跟數字、不能是清單裡的常見弱密碼。
-    // 這組規則沒辦法保證 Chrome 之後一定不會跳「這組密碼曾經外洩過」的提示
-    // （那是瀏覽器自己比對 Google 的外洩密碼資料庫，網站這邊管不到），
-    // 但外洩清單裡幾乎都是短、簡單、規律的密碼，把長度和組成規則拉高，
-    // 密碼落在那些清單裡的機率會大幅降低。
-    function Get_Password_Format_Error(password){
-        if(password.length < 8) return "密碼至少需要 8 個字元"
-        if(!/[a-zA-Z]/.test(password)) return "密碼需要包含至少一個英文字母"
-        if(!/[0-9]/.test(password)) return "密碼需要包含至少一個數字"
-        if(AUTH_WEAK_PASSWORD_BLOCKLIST.includes(password.toLowerCase())) return "這組密碼太常見了，請換一組比較不容易被猜到的密碼"
-        return null
-    }
-
     /* ============================================================
        註冊表單送出 —— Email/密碼
        ============================================================ */
@@ -331,9 +313,8 @@
             Show_Auth_Error("auth_register_error", "請填寫 Email 跟密碼")
             return
         }
-        const password_format_error = Get_Password_Format_Error(password)
-        if (password_format_error) {
-            Show_Auth_Error("auth_register_error", password_format_error)
+        if (password.length < 6) {
+            Show_Auth_Error("auth_register_error", "密碼至少需要 6 個字元")
             return
         }
         if (password !== password2) {
@@ -437,11 +418,37 @@
         Refresh_Nav_Account_State()
         Close_Auth_Modal()
 
+        const display_name = localStorage.getItem("username") || localStorage.getItem(AUTH_ACCOUNT_DISPLAY_KEY) || "已登入玩家"
+        sessionStorage.setItem(AUTH_TOAST_PENDING_KEY, "已登入：" + display_name)
+
         // 登入後畫面上很多統計數字（profile.js 的雲端統計、nav 上的暱稱……）
         // 是頁面載入當下就讀好塞進 DOM 的，不是即時反應 localStorage 變化，
         // 直接重新整理頁面最單純，能確保所有地方都換成新身份的資料，
         // 不用一個個手動找出哪些 UI 需要重新渲染
-        setTimeout(function () { window.location.reload() }, 300)
+        window.location.reload()
+    }
+
+    /* ============================================================
+       登入/登出提示 toast
+       ============================================================ */
+    function Build_Auth_Toast_Html() {
+        if (document.getElementById("auth_toast")) return
+        const toast = document.createElement("div")
+        toast.id = "auth_toast"
+        toast.className = "auth_toast"
+        document.body.appendChild(toast)
+    }
+
+    let auth_toast_hide_timer = null
+    function Show_Auth_Toast(message) {
+        const toast = document.getElementById("auth_toast")
+        if (!toast) return
+        toast.textContent = message
+        toast.classList.add("auth_toast_show")
+        clearTimeout(auth_toast_hide_timer)
+        auth_toast_hide_timer = setTimeout(function () {
+            toast.classList.remove("auth_toast_show")
+        }, 2600)
     }
 
     /* ============================================================
@@ -465,11 +472,11 @@
             return
         }
 
-        // 已登入狀態：直接顯示「登出」，不再顯示帳號名稱/email
-        // （Google 帳號如果沒有 displayName，之前會 fallback 顯示完整 email，
-        //   在 nav 上很礙眼，乾脆不顯示名稱，統一只顯示「登出」）
+        // 已登入狀態：優先顯示玩家自己在設定頁取的暱稱（localStorage "username"），
+        // 沒取過就退回註冊時的 email/Google 顯示名稱，讓玩家一眼看到目前是哪個帳號
+        const display_name = localStorage.getItem("username") || localStorage.getItem(AUTH_ACCOUNT_DISPLAY_KEY) || "已登入玩家"
         item.className = "" // 不再需要 .nav_dropdown 的 hover 展開樣式
-        item.innerHTML = `<span id="auth_nav_logout_btn" onclick="TCTC_Logout_Account()">登出</span>`
+        item.innerHTML = `<span class="auth_nav_logout" id="auth_nav_logout_btn" onclick="TCTC_Logout_Account()">登出</span>`
     }
 
     // 掛在 window 上，讓 innerHTML 裡的 onclick（字串形式）能呼叫得到
@@ -478,7 +485,8 @@
     window.TCTC_Open_Auth_Modal = function (view_id) { Open_Auth_Modal(view_id) }
     window.TCTC_Logout_Account = function () {
         Logout_Account(function () {
-            window.location.reload()
+            sessionStorage.setItem(AUTH_TOAST_PENDING_KEY, "已登出，你現在是訪客身份")
+            window.location.href = "index.html"
         })
     }
 
@@ -516,6 +524,13 @@
     document.addEventListener("DOMContentLoaded", function () {
         Build_Modal_Html()
         Bind_Modal_Events()
+        Build_Auth_Toast_Html()
+
+        const pending_toast = sessionStorage.getItem(AUTH_TOAST_PENDING_KEY)
+        if (pending_toast) {
+            sessionStorage.removeItem(AUTH_TOAST_PENDING_KEY)
+            setTimeout(function () { Show_Auth_Toast(pending_toast) }, 300)
+        }
 
         // 把帳號按鈕插進每一個 .nav_css 容器的「最前面」（跟現有的「常見問題／模式／更多」
         // 排在一起）。用 querySelectorAll 而不是 getElementById，是因為理論上一個頁面
