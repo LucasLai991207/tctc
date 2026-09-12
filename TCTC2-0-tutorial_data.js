@@ -61,8 +61,8 @@ const TUTORIAL_DATA = {
             },
             {
                 html: `
-                    <p style="margin-bottom: 1.2rem; line-height: 1.8rem;">
-                        💡 <b>摸到了嗎？</b> <br>
+                    <p style="margin-bottom: 1.2rem; line-height: 1.8rem;font-weight: 500;">
+                        💡 <b font-size: large;margin-bottom: 1rem>摸到了嗎？</b> <br>
                         這兩個按鍵上有一個<b style="font-weight: 500;color: var(--champagne-gold)">凸起的小橫線</b>。這條橫線就是盲打的基礎。不論你的手指移到多遠去按別的字，按完後，兩隻食指都必須立刻<b>「彈回」</b>這兩個定位點。
                     </p>
                 `
@@ -316,7 +316,7 @@ const TUTORIAL_DATA = {
             },
             {
                 html: `
-                    <div style="background-color: var(--light-blue); padding: 1.2rem; border-radius: 8px; border-left: 4px solid var(--champagne-gold); margin-bottom: 1.5rem; line-height: 1.9rem;">
+                    <div style="background-color: var(--light-blue); padding: 1.2rem; border-radius: 8px; border-left: 4px solid var(--champagne-gold); margin-bottom: 1.5rem; line-height: 1.9rem;font-weight: 500;">
                         <span style="color: var(--champagne-gold); font-size: 1rem;font-weight: 400;">引號「」</span> <br>
                                 • Windows ：Ctrl + [ + ↓選擇 ，就會直接彈出選字清單。(持續按住ctrl 點一下 [ 之後使用方向鍵調整至需要的符號)<br>
                                 • Mac ：直接按下鍵盤右上角的符號即可打出<br><br>
@@ -329,7 +329,7 @@ const TUTORIAL_DATA = {
             },
             {
                 html: `
-                    <div style="background-color: var(--light-blue); padding: 1.2rem; border-radius: 8px; border-left: 4px solid var(--champagne-gold); margin-bottom: 1.5rem; line-height: 1.9rem;">
+                    <div style="background-color: var(--light-blue); padding: 1.2rem; border-radius: 8px; border-left: 4px solid var(--champagne-gold); margin-bottom: 1.5rem; line-height: 1.9rem;font-weight: 500;">
                         <span style="color: var(--champagne-gold); font-size: 1rem;font-weight: 400;">冒號：</span> <br>
                                 •  Windows ：Ctrl + shift + ; （;為注音ㄤ的按鍵）<br>
                                 •  Mac ：shift + ;<br><br>
@@ -342,7 +342,7 @@ const TUTORIAL_DATA = {
             },
             {
                 html: `
-                    <div style="background-color: var(--light-blue); padding: 1.2rem; border-radius: 8px; border-left: 4px solid var(--champagne-gold); margin-bottom: 1.5rem; line-height: 1.9rem;">
+                    <div style="background-color: var(--light-blue); padding: 1.2rem; border-radius: 8px; border-left: 4px solid var(--champagne-gold); margin-bottom: 1.5rem; line-height: 1.9rem;font-weight: 500;">
                         <span style="color: var(--champagne-gold); font-size: 1rem;font-weight: 400;">驚嘆號！</span> <br>
                                 •  Windows ：Ctrl + shift + 1 （1為注音ㄅ的按鍵）<br>
                                 •  Mac ：shift + 1<br><br>
@@ -357,7 +357,7 @@ const TUTORIAL_DATA = {
             },
             {
                 html: `
-                    <div style="background-color: var(--light-blue); padding: 1.2rem; border-radius: 8px; border-left: 4px solid var(--champagne-gold); margin-bottom: 1.5rem;">
+                    <div style="background-color: var(--light-blue); padding: 1.2rem; border-radius: 8px; border-left: 4px solid var(--champagne-gold); margin-bottom: 1.5rem;font-weight: 500;">
                         <b style="color: var(--champagne-gold);">⌨️ 實際打打看：標點符號互動練習</b><br>
                         <p style="margin:0.5rem 0; color:#ccc; font-size:0.85rem;">依序出現「」、、：？！，。這幾個標點，跟著鍵盤上的金框提示，實際按一次組合鍵。</p>
                         <div id="tut210_practice"></div>
