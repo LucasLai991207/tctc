@@ -5,13 +5,14 @@
 //
 // 每個 stage 的資料格式：
 // TUTORIAL_DATA["1-0-1"] = {
-//     next_stage_id: "1-0-2",       // 最後一個畫面按下去要去哪一關（跟原本 window.location.href 一樣）
 //     count_stage_completion: false, // 是否要呼叫 increase_stage_count()（跟原本每個 stage.id 的行為保持一致，不要自作主張改掉）
 //     screens: [
 //         { html: "..." },                                   // 純文字/圖片畫面，不卡關
 //         { html: "...", interactive: {...} }                 // 有互動練習的畫面，練習完成才會出現下一頁按鈕
 //     ]
 // }
+// 【修改】教學關結束（最後一頁）不再自動接到下一關的教學內容——最後一頁固定只顯示「返回大廳」，
+// 所以這裡不再需要 next_stage_id / final_label 這兩個欄位，全部拿掉。
 //
 // interactive 欄位格式：
 //   { type: "inline_key_practice", container_id: "xxx", keys: [...], title: "..." }
@@ -24,7 +25,6 @@ const TUTORIAL_DATA = {
     // 1-0-1：認識鍵盤佈局（基準鍵 Home Row）
     // ============================================================
     "1-0-1": {
-        next_stage_id: "1-0-2",
         count_stage_completion: false,   // 【沿用舊行為】1-0-1 原本就沒有呼叫 increase_stage_count，只同步 Firebase 完成紀錄
         screens: [
             {
@@ -65,8 +65,7 @@ const TUTORIAL_DATA = {
                         💡 <b>摸到了嗎？</b> <br>
                         這兩個按鍵上有一個<b style="font-weight: 500;color: var(--champagne-gold)">凸起的小橫線</b>。這條橫線就是盲打的基礎。不論你的手指移到多遠去按別的字，按完後，兩隻食指都必須立刻<b>「彈回」</b>這兩個定位點。
                     </p>
-                `,
-                final_label: "下一頁 →"
+                `
             }
         ]
     },
@@ -75,7 +74,6 @@ const TUTORIAL_DATA = {
     // 1-0-2：認識繁體中文鍵盤（大千式排列）
     // ============================================================
     "1-0-2": {
-        next_stage_id: "1-0-3",
         count_stage_completion: false,   // 【沿用舊行為】1-0-2 原本也沒有呼叫 increase_stage_count
         screens: [
             {
@@ -125,9 +123,7 @@ const TUTORIAL_DATA = {
                         初步理解大千式鍵盤後，我們要準備正式敲下第一個字了！
                     </p>
                     <br>
-                `,
-
-                final_label: "下一頁 →"
+                `
             }
         ]
     },
@@ -136,7 +132,6 @@ const TUTORIAL_DATA = {
     // 1-0-3：打字指法（十指守備範圍）
     // ============================================================
     "1-0-3": {
-        next_stage_id: "1-2-1",
         count_stage_completion: true,   // 【沿用舊行為】1-0-3 原本就有呼叫 increase_stage_count（整個 1-0 系列基本介紹只在這關累計一次）
         screens: [
             {
@@ -210,8 +205,7 @@ const TUTORIAL_DATA = {
                     type: "finger_quiz",
                     container_id: "tut103_quiz",
                     num_rounds: 5
-                },
-                final_label: "進入實戰練習 →"
+                }
             }
         ]
     },
@@ -220,8 +214,8 @@ const TUTORIAL_DATA = {
     // 1-8-1：注音輸入選字教學
     // ============================================================
     "1-8-1": {
-        next_stage_id: "1-8-2",   // 【修正】原本這顆按鈕誤連到 1-9-2（跟 2-1-0 那顆共用同一段複製貼上的程式碼），
-                                    // 但 1-8-1 屬於「基礎輸入」章節，緊接著的下一關其實是 1-8-2，不是 1-9 系列
+        // 【曾經修正過】這裡原本有個 next_stage_id 欄位，且誤連到 1-9-2（跟 2-1-0 那顆共用同一段複製貼上的程式碼）；
+        // 現在最後一頁固定只顯示「返回大廳」，不再需要導去下一關，欄位已整個拿掉。
         count_stage_completion: true,   // 【沿用舊行為】1-8-1 原本就有呼叫 increase_stage_count
         screens: [
             {
@@ -275,7 +269,7 @@ const TUTORIAL_DATA = {
                         <span style="color: var(--champagne-gold); font-size: 1rem;">4.一定要照注音順序打嗎(重要！！)：</span> <br>
                         <b> 傳統打「強」字（ㄑㄧㄤˊ），手指必須強制順序：左手按 ㄑ ➔ 右手按 ㄧ ➔ 右手按 ㄤˊ</b><br>
                         <p>偷吃步做法：<br>
-                            • 你可以兩隻手同時一起按下去。即使你先按了 ㄤ，再按 ㄧ，最後才按 ㄑ（鍵盤顯示 ㄤㄧㄑ），只要你在這三個符號後面直接按空白鍵或接著打下一個字，輸入法會自動在後台「重新排列組合」，100% 精準自動選出「強」這個字。
+                            • 你可以兩隻手同時一起按下去。即使你先按了 ㄤ，再按 ㄧ，最後才按 ㄑ（鍵盤仍會顯示ㄑㄧㄤ），只要你在這三個符號後面直接按二聲，輸入法會自動在後台「重新排列組合」，自動選出「強」這個字。
                         </p>
                     </div>
                 `
@@ -287,8 +281,7 @@ const TUTORIAL_DATA = {
                 // 這次拆頁順便把容器補上，讓模擬練習真的能跑起來。
                 html: `
                     <div style="background-color: var(--light-blue); padding: 1.2rem; border-radius: 8px; border-left: 4px solid var(--champagne-gold); margin-bottom: 1.5rem;">
-                        <b style="color: var(--champagne-gold);">⌨️ 實際模擬：選字流程練習</b><br>
-                        <p style="margin:0.5rem 0; color:#ccc; font-size:0.85rem;">跟著提示，實際按過一次「叫出選字視窗、按數字選字、修正錯字」的完整流程。</p>
+                        <b style="color: var(--champagne-gold);"></b><br>
                         <div id="tut191_sim"></div>
                     </div>
                 `,
@@ -296,8 +289,7 @@ const TUTORIAL_DATA = {
                     type: "ime_sim",
                     container_id: "tut191_sim",
                     done_text: "熟悉整套流程了嗎？以後手不用離開鍵盤，選字改字都能一氣呵成 🎉"
-                },
-                final_label: "進入輸入練習 →"
+                }
             }
         ]
     },
@@ -306,8 +298,8 @@ const TUTORIAL_DATA = {
     // 2-1-0：鍵位教學－標點符號
     // ============================================================
     "2-1-0": {
-        next_stage_id: "2-1-1",   // 【修正】原本這顆按鈕也誤連到 1-9-2（跟 1-8-1 那顆共用同一段複製貼上的程式碼），
-                                    // 2-1-0 是中級難度的鍵位教學，下一關應該是同一章節的 2-1-1
+        // 【曾經修正過】這裡原本有個 next_stage_id 欄位，且誤連到 1-9-2（跟 1-8-1 那顆共用同一段複製貼上的程式碼）；
+        // 現在最後一頁固定只顯示「返回大廳」，不再需要導去下一關，欄位已整個拿掉。
         count_stage_completion: true,   // 【沿用舊行為】2-1-0 原本就有呼叫 increase_stage_count
         screens: [
             {
@@ -366,6 +358,7 @@ const TUTORIAL_DATA = {
             {
                 html: `
                     <div style="background-color: var(--light-blue); padding: 1.2rem; border-radius: 8px; border-left: 4px solid var(--champagne-gold); margin-bottom: 1.5rem;">
+                        <b style="color: var(--champagne-gold);">⌨️ 實際打打看：標點符號互動練習</b><br>
                         <p style="margin:0.5rem 0; color:#ccc; font-size:0.85rem;">依序出現「」、、：？！，。這幾個標點，跟著鍵盤上的金框提示，實際按一次組合鍵。</p>
                         <div id="tut210_practice"></div>
                     </div>
@@ -376,8 +369,7 @@ const TUTORIAL_DATA = {
                     keys: ["「", "」", "、", "：", "？", "！", "，", "。"],
                     title: "標點符號練習",
                     done_text: "太棒了！這些標點符號的組合鍵你都打過一次了 🎉"
-                },
-                final_label: "進入輸入練習 →"
+                }
             }
         ]
     }
