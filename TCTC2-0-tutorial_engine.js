@@ -11,7 +11,7 @@ let TUT_screens = []              // 目前這一關的畫面陣列
 let TUT_idx = 0                   // 目前畫面索引
 let TUT_completed = []            // 每個畫面的互動練習是否已完成（沒有互動練習的畫面一律視為 true）
 let TUT_container = null          // 畫面要畫在哪個容器（game_char_container）
-let TUT_next_stage_id = null      // 最後一個畫面按下去要導向哪一關
+const TUT_LOBBY_URL = "TCTC2-0-main.html"   // 【新增】回大廳連結，跟 .game_back_btn 用的是同一個網址
 
 // 進入一個教學關卡：判斷「第一次完成」要不要記分、清空狀態、畫出第一個畫面
 function Render_Tutorial_Stage(stage, stageId, container){
@@ -50,7 +50,6 @@ function Render_Tutorial_Stage(stage, stageId, container){
     TUT_idx = 0
     TUT_completed = TUT_screens.map(function(screen){ return !screen.interactive })
     TUT_container = container
-    TUT_next_stage_id = data.next_stage_id
 
     Render_Tutorial_Screen()
 }
@@ -82,8 +81,18 @@ function Render_Tutorial_Screen(){
     const can_prev = TUT_idx > 0
     const unlocked = TUT_completed[TUT_idx]
 
-    const next_label = is_last ? (screen.final_label || "下一頁 →") : "下一頁 →"
-    const next_action = is_last ? "Tutorial_Go_To_Next_Stage()" : "Tutorial_Next_Screen()"
+    // 【修改】教學關結束時（最後一頁）不再直接接到下一關的教學內容，
+    // 底下的按鈕只留「返回大廳」，讓玩家自己回大廳選下一關——
+    // 不是每頁都能翻到下一頁的「上一頁/下一頁」，到了最後一頁就只剩這一個選項。
+    const nav_buttons_html = is_last
+        ? `<button onclick="window.location.href='${TUT_LOBBY_URL}'" style="width:10rem; height:3rem; background-color:var(--champagne-gold); display:flex; justify-content:center; align-items:center; color:var(--dark-blue); font-family:'Noto Serif TC',serif; font-size:1rem; letter-spacing:2px; border:none; border-radius:4px; cursor:pointer; transition:all 200ms ease;">返回大廳</button>`
+        : `
+            <button onclick="window.location.href='${TUT_LOBBY_URL}'" style="width:8rem; height:3rem; background-color:transparent; display:flex; justify-content:center; align-items:center; color:rgba(255,255,255,0.55); font-family:'Noto Serif TC',serif; font-size:0.95rem; letter-spacing:2px; border:1px solid rgba(255,255,255,0.3); border-radius:4px; cursor:pointer; transition:all 200ms ease;">返回大廳</button>
+            ${can_prev ? `<button onclick="Tutorial_Prev_Screen()" style="width:8rem; height:3rem; background-color:transparent; display:flex; justify-content:center; align-items:center; color:var(--champagne-gold); font-family:'Noto Serif TC',serif; font-size:1rem; letter-spacing:2px; border:1px solid var(--champagne-gold); border-radius:4px; cursor:pointer; transition:all 200ms ease;">← 上一頁</button>` : ``}
+            <button id="tut_next_btn" onclick="Tutorial_Next_Screen()" style="${unlocked ? '' : 'display:none;'} width:10rem; height:3rem; background-color:var(--champagne-gold); justify-content:center; align-items:center; color:var(--dark-blue); font-family:'Noto Serif TC',serif; font-size:1rem; letter-spacing:2px; border:none; border-radius:4px; cursor:pointer; transition:all 200ms ease;">
+                下一頁 →
+            </button>
+        `
 
     TUT_container.innerHTML = `
         <div style="text-align: left; max-width: 900px; margin: 0 auto; font-family: 'Noto Serif TC', serif; color: white; font-weight: 150; position: relative; font-size: 0.9rem;">
@@ -95,11 +104,8 @@ function Render_Tutorial_Screen(){
 
             ${(screen.interactive && !unlocked) ? `<p id="tut_gate_hint" style="color: gray; font-size: 0.9rem; text-align: center; margin-top: 1.5rem;">完成上面的練習後，就可以繼續囉！</p>` : ``}
 
-            <div style="display:flex; justify-content:center; align-items:center; gap:0.8rem; margin-top: 1.5rem;">
-                ${can_prev ? `<button onclick="Tutorial_Prev_Screen()" style="width:8rem; height:3rem; background-color:transparent; display:flex; justify-content:center; align-items:center; color:var(--champagne-gold); font-family:'Noto Serif TC',serif; font-size:1rem; letter-spacing:2px; border:1px solid var(--champagne-gold); border-radius:4px; cursor:pointer; transition:all 200ms ease;">← 上一頁</button>` : ``}
-                <button id="tut_next_btn" onclick="${next_action}" style="${unlocked ? '' : 'display:none;'} width:10rem; height:3rem; background-color:var(--champagne-gold); justify-content:center; align-items:center; color:var(--dark-blue); font-family:'Noto Serif TC',serif; font-size:1rem; letter-spacing:2px; border:none; border-radius:4px; cursor:pointer; transition:all 200ms ease;">
-                    ${next_label}
-                </button>
+            <div style="display:flex; justify-content:center; align-items:center; gap:0.8rem; margin-top: 1.5rem; flex-wrap: wrap;">
+                ${nav_buttons_html}
             </div>
         </div>
     `
@@ -149,11 +155,5 @@ function Tutorial_Prev_Screen(){
     if(TUT_idx > 0){
         TUT_idx--
         Render_Tutorial_Screen()
-    }
-}
-
-function Tutorial_Go_To_Next_Stage(){
-    if(TUT_next_stage_id){
-        window.location.href = "game.html?stage=" + TUT_next_stage_id
     }
 }

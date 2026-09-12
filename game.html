@@ -1121,7 +1121,7 @@
             align-items: center;
             justify-content: center;
             gap: 0.8rem;
-            padding: 2rem 1rem;
+            padding: 1.5rem 1rem;
             font-family: 'Noto Serif TC', serif;
         }
         .key_intro_progress {
@@ -2086,13 +2086,14 @@
                 ime_sim_container.innerHTML = Ime_Sim_Wrap(
                     "1 / 5",
                     "請按 <b style='color:var(--champagne-gold);'>↓（方向鍵下）</b>，叫出選字視窗",
-                    '<div style="text-align:center; font-size:1.3rem; color:#eee;">你要打 <b style="color:var(--champagne-gold);">「舞」</b>，系統自動選成了「<span style="text-decoration:underline wavy var(--error-red);">五</span>」</div>'
+                    '<div style="text-align:center; font-size:1.3rem; color:#eee;font-weight:500;">你想要打出「舞」這個字</div>',
+                    '<div style="text-align:center; font-size:1.3rem; color:#eee;font-weight:500;">你打了 <b style="color:var(--champagne-gold);">ㄨˇ</b>，系統自動選成了「<span style="text-decoration:underline wavy var(--error-red);">五</span>」</div>'
                 )
             } else if(ime_sim_state === 1){
                 ime_sim_container.innerHTML = Ime_Sim_Wrap(
                     "2 / 5",
                     "選字視窗跳出來了！請按數字鍵 <b style='color:var(--champagne-gold);'>2</b>，選出正確的字",
-                    Ime_Sim_Candidate_Html(["五","舞","武","午","伍"], 2)
+                    Ime_Sim_Candidate_Html(["五","舞","伍","午","午"], 2)
                 )
             } else if(ime_sim_state === 2){
                 ime_sim_container.innerHTML = Ime_Sim_Wrap(
@@ -2110,13 +2111,13 @@
                 ime_sim_container.innerHTML = Ime_Sim_Wrap(
                     "5 / 5",
                     "請按數字鍵 <b style='color:var(--champagne-gold);'>3</b>，選出正確的字「們」",
-                    Ime_Sim_Candidate_Html(["門","捫","們","悶"], 3)
+                    Ime_Sim_Candidate_Html(["門","悶","們","捫"], 3)
                 )
             } else {
                 ime_sim_active = false
                 ime_sim_container.innerHTML =
                     '<div style="text-align:center; padding:0.8rem 0;">' +
-                        '<div style="color:var(--champagne-gold); font-size:1.2rem; margin-bottom:0.3rem;font-weight: 500">✓ 太棒了，修正完成！</div>' +
+                        '<div style="color:var(--champagne-gold); font-size:1.2rem; margin-bottom:0.3rem;font-weight:500;">✓ 太棒了，修正完成！</div>' +
                         '<div style="font-size:1.2rem; color:#eee;"></div>' +
                     '</div>'
                 if(typeof ime_sim_on_done === "function") ime_sim_on_done()
