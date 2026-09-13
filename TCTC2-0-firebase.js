@@ -1633,39 +1633,67 @@ function Set_Own_Intro(intro_text, callback) {
      stages_completed_xxx / best_challenge_wpm 等等，哪些欄位存在，
      取決於這個玩家之前實際觸發過哪些同步）
    ============================================================ */
-function Get_Public_Player_Profile(anon_id, callback) {
-    if (!anon_id) {
+// 【修改】這是導致「點進個人資料全部顯示找不到這位玩家」的地方——
+// 排行榜/總排行榜的連結現在傳過來的 id 是 Get_Public_Id() 算出來的假名，
+// 不是 player_stats 底下真正的 key，直接 `player_stats/${id}` 這樣查一定
+// 查不到任何東西。改成：先用 public_id 這個索引欄位反查，找不到的話
+// （例如教室名單裡點學生名字時，傳的其實還是真正的 anon_id——那個情境
+// 本來就已經在別的地方公開這個 anon_id 了，這裡沿用不會多洩漏什麼）
+// 才退回原本「把 id 當成直接的 key」查一次，兩種連結來源都能正常運作。
+function Get_Public_Player_Profile(id, callback) {
+    if (!id) {
         callback({ exists: false })
         return
     }
 
-    tctc_db.ref(`player_stats/${anon_id}`)
+    function _finish_with(val) {
+        if (!val) {
+            callback({ exists: false })
+            return
+        }
+        if (val.hide_profile_view === true) {
+            // ===== 【修改】簡介不受這個開關影響，永遠公開 =====
+            // 理由見 view_profile.js 的 VP_Show_Blocked() 內部說明：這個
+            // 開關擋的是「榮譽牆/統計數字」，簡介比較接近自我介紹，公開
+            // 出來對其他玩家比較有用，所以就算 hidden，還是把 name/intro
+            // 一起帶出去，讓呼叫端能單獨顯示這兩個欄位，其餘欄位一律不給
+            // （不能只給 hidden:true 就什麼都不帶，不然呼叫端沒東西可顯示）
+            callback({
+                hidden: true,
+                exists: true,
+                name: val.name || "訪客",
+                intro: val.intro || ""
+            })
+            return
+        }
+
+        val.hidden = false
+        val.exists = true
+        callback(val)
+    }
+
+    tctc_db.ref("player_stats")
+        .orderByChild("public_id")
+        .equalTo(id)
+        .limitToFirst(1)
         .once("value")
         .then(function (snapshot) {
-            const val = snapshot.val()
-            if (!val) {
-                callback({ exists: false })
-                return
-            }
-            if (val.hide_profile_view === true) {
-                // ===== 【修改】簡介不受這個開關影響，永遠公開 =====
-                // 理由見 view_profile.js 的 VP_Show_Blocked() 內部說明：這個
-                // 開關擋的是「榮譽牆/統計數字」，簡介比較接近自我介紹，公開
-                // 出來對其他玩家比較有用，所以就算 hidden，還是把 name/intro
-                // 一起帶出去，讓呼叫端能單獨顯示這兩個欄位，其餘欄位一律不給
-                // （不能只給 hidden:true 就什麼都不帶，不然呼叫端沒東西可顯示）
-                callback({
-                    hidden: true,
-                    exists: true,
-                    name: val.name || "訪客",
-                    intro: val.intro || ""
-                })
+            let val = null
+            snapshot.forEach(function (child) { val = child.val() })
+
+            if (val) {
+                _finish_with(val)
                 return
             }
 
-            val.hidden = false
-            val.exists = true
-            callback(val)
+            // public_id 反查沒找到：退回舊路徑，把 id 當成真正的 anon_id 直接查一次
+            tctc_db.ref(`player_stats/${id}`)
+                .once("value")
+                .then(function (fallbackSnapshot) { _finish_with(fallbackSnapshot.val()) })
+                .catch(function (error) {
+                    console.log("[profile] 讀取玩家公開資料失敗（fallback）：", error)
+                    callback(null)
+                })
         })
         .catch(function (error) {
             console.log("[profile] 讀取玩家公開資料失敗：", error)
