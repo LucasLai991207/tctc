@@ -66,6 +66,52 @@ function Get_Anon_Id() {
 }
 
 /* ------------------------------------------------------------
+   【新增】公開排行榜用的假名 ID（Public_Id）
+   ------------------------------------------------------------
+   background：leaderboard / challenge_leaderboard 這兩個節點是 .read: true，
+   任何人都能整包讀走。過去直接拿 anon_id 當 key，等於把「能拿去改
+   player_stats/{anon_id} 任何欄位」的那把鑰匙，原封不動印在公開排行榜上——
+   只要打開排行榜抄一串 key，就能改任何一個玩家的雲端資料（包括別人的個人
+   簡介、名字、隱藏排行榜開關……等等）。
+
+   這裡改成：leaderboard 只認一組「從 anon_id 算出來的假名」，不是 anon_id
+   本人。這組假名滿足兩個條件：
+   1. 同一個 anon_id 每次算出來都一樣（同一個人在排行榜上永遠對應同一列，
+      「這是不是我自己」還是能正常比對，不用額外存任何本機記錄）。
+   2. 沒辦法從假名反推回 anon_id——anon_id 本身是 crypto.randomUUID()
+      （122 bits 隨機亂數），就算知道下面這個雜湊怎麼算，要從雜湊值反推
+      回是「哪一個 UUID」在計算量上不可行。安全性是靠 anon_id 本身的亂數
+      亂猜不到，不是靠雜湊演算法多強，所以這裡故意用簡單、同步、不需要
+      crypto.subtle（那個是非同步的，會打亂全站現有的同步呼叫習慣）的
+      字串雜湊就夠了。
+
+   注意這只解決「反推回 anon_id」的問題，不是幫排行榜本身加上防塗改機制——
+   leaderboard/{id}/{public_id} 這個路徑本身還是任何人都能寫、能刪掉某一列
+   （這點跟過去一樣，本來就不是高風險的資料），差別只在於不會再牽連到
+   同一個人的 player_stats、classroom_students 這些其他資料。
+   ------------------------------------------------------------ */
+function _Hash_Anon_Id_To_Public_Id(anon_id) {
+    function _hash32(str, seed) {
+        let h1 = 0xdeadbeef ^ seed
+        let h2 = 0x41c6ce57 ^ seed
+        for (let i = 0; i < str.length; i++) {
+            const ch = str.charCodeAt(i)
+            h1 = Math.imul(h1 ^ ch, 2654435761)
+            h2 = Math.imul(h2 ^ ch, 1597334677)
+        }
+        h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909)
+        h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909)
+        return (h1 >>> 0).toString(16).padStart(8, "0") + (h2 >>> 0).toString(16).padStart(8, "0")
+    }
+
+    return _hash32(anon_id, 0x9e3779b9) + _hash32(anon_id, 0x85ebca6b)
+}
+
+function Get_Public_Id() {
+    return _Hash_Anon_Id_To_Public_Id(Get_Anon_Id())
+}
+
+/* ------------------------------------------------------------
    訪客編號系統（不會重複取名）
    ------------------------------------------------------------
 */
@@ -180,47 +226,72 @@ function _Username_To_Key(name) {
 /* ------------------------------------------------------------
    佔用一個名字（全站不能重複）
    ------------------------------------------------------------
-   用 usernames/{key}: anon_id 這個反查索引，靠 Firebase transaction
-   保證「就算兩個人同時搶同一個名字，也只有一個人搶得到」。
+   用 usernames/{key}: { anon_id, owner_uid } 這個反查索引，靠 Firebase
+   transaction 保證「就算兩個人同時搶同一個名字，也只有一個人搶得到」。
+
+   【修改】value 從單純一個字串（anon_id）改成物件 { anon_id, owner_uid }。
+   owner_uid 是這次呼叫當下、Firebase Auth 給的 auth.uid（連訪客都有，
+   因為全站訪客一律會自動匿名登入，見 firebase.js 最上面 signInAnonymously()
+   那段）。過去 Rules 只檢查「有沒有登入」，沒檢查「這個名字現在是不是真的
+   歸我」，導致任何登入的人都能直接把別人已經佔用的名字改指向自己的
+   anon_id——因為 anon_id 只是寫進去的一個字串欄位，Rules 沒辦法驗證
+   「這個字串真的是你自己的」。owner_uid 不一樣：它是 Firebase Auth
+   在請求層級驗證過的身分，沒辦法在 payload 裡偽造成別人的 auth.uid，
+   Rules 那邊只要求「要改/要刪一筆已存在的紀錄，auth.uid 必須等於
+   當初存進去的 owner_uid」，就能真正擋掉這個漏洞。
 
    呼叫前請先自己用 Validate_Username_Format() 檢查過格式，
    這個函式只負責「有沒有人在用」，不重複做格式檢查。
 
    callback(success, reason)：
    - success = true：佔用成功（包含「本來就是自己的名字，沒改」這種情況）
-   - success = false：名字被別人佔用，或發生錯誤，reason 是要顯示給玩家看的訊息
+   - success = false：名字被別人佔用、還沒登入完成，或發生錯誤，
+     reason 是要顯示給玩家看的訊息
    ------------------------------------------------------------ */
 function Claim_Username(name, callback) {
-    const anon_id = Get_Anon_Id()
-    const key = _Username_To_Key(name)
-    const claim_ref = tctc_db.ref(`usernames/${key}`)
+    if (typeof Wait_For_Auth_Ready !== "function") {
+        callback(false, "系統尚未準備好，請稍後再試")
+        return
+    }
 
-    claim_ref.transaction(function (current) {
-        if (current === null) return anon_id      // 沒人用，佔用成功
-        if (current === anon_id) return anon_id   // 本來就是自己的名字（例如只是重新送出一次），維持原樣
-        return undefined                          // 已經有別人佔用，中止交易，不搶
-    }, function (error, committed) {
-        if (error) {
-            console.log("[username] 檢查名字時發生錯誤：", error)
-            callback(false, "檢查名字時發生錯誤，請稍後再試")
-            return
-        }
-        if (!committed) {
-            callback(false, "這個名字已經有人使用了，換一個試試看吧")
+    Wait_For_Auth_Ready(function (user) {
+        if (!user) {
+            callback(false, "登入尚未完成，請稍後再試")
             return
         }
 
-        // 佔用成功：如果玩家之前用過別的名字，把舊名字釋放掉，不然會一直卡著沒人能用
-        const old_name = (localStorage.getItem("username") || "").trim()
-        const old_key = old_name ? _Username_To_Key(old_name) : null
-        if (old_key && old_key !== key) {
-            tctc_db.ref(`usernames/${old_key}`).transaction(function (current) {
-                // 只釋放「確定是自己當初佔的」那一筆，避免不小心動到別人的資料
-                return (current === anon_id) ? null : current
-            })
-        }
+        const anon_id = Get_Anon_Id()
+        const owner_uid = user.uid
+        const key = _Username_To_Key(name)
+        const claim_ref = tctc_db.ref(`usernames/${key}`)
 
-        callback(true)
+        claim_ref.transaction(function (current) {
+            if (current === null) return { anon_id: anon_id, owner_uid: owner_uid }              // 沒人用，佔用成功
+            if (current.owner_uid === owner_uid) return { anon_id: anon_id, owner_uid: owner_uid } // 本來就是自己的名字（例如只是重新送出一次），維持原樣
+            return undefined                                                                       // 已經有別人佔用，中止交易，不搶
+        }, function (error, committed) {
+            if (error) {
+                console.log("[username] 檢查名字時發生錯誤：", error)
+                callback(false, "檢查名字時發生錯誤，請稍後再試")
+                return
+            }
+            if (!committed) {
+                callback(false, "這個名字已經有人使用了，換一個試試看吧")
+                return
+            }
+
+            // 佔用成功：如果玩家之前用過別的名字，把舊名字釋放掉，不然會一直卡著沒人能用
+            const old_name = (localStorage.getItem("username") || "").trim()
+            const old_key = old_name ? _Username_To_Key(old_name) : null
+            if (old_key && old_key !== key) {
+                tctc_db.ref(`usernames/${old_key}`).transaction(function (current) {
+                    // 只釋放「確定是自己當初佔的」那一筆，避免不小心動到別人的資料
+                    return (current && current.owner_uid === owner_uid) ? null : current
+                })
+            }
+
+            callback(true)
+        })
     })
 }
 
@@ -242,8 +313,8 @@ function _Submit_Best_Score(node_path, id, wpm, acc, raw_stats) {
 
     return new Promise(function (resolve) {
         Get_Player_Display_Name(function (player_name) {
-            const anon_id = Get_Anon_Id()
-            const entry_ref = tctc_db.ref(`${node_path}/${id}/${anon_id}`)
+            const public_id = Get_Public_Id()   // 【修改】leaderboard 的 key 改用假名，不再是 anon_id 本人
+            const entry_ref = tctc_db.ref(`${node_path}/${id}/${public_id}`)
 
             entry_ref.transaction(function (current) {
                 if (!current) {
@@ -323,13 +394,20 @@ function _Filter_Out_Hidden_Players(list, callback) {
     }
 
     const checks = list.map(function (entry) {
-        // 【改動】原本只查 hide_from_leaderboard 這一個欄位，
-        // 改成查整個 player_stats/{anon_id} 節點，
-        // 這樣可以「順便」拿到最新的 name，不用額外多發一次請求
-        return tctc_db.ref(`player_stats/${entry._anon_id}`)
+        // 【修改】entry 現在只帶 _public_id（假名），不再是真正的 anon_id，
+        // 所以這裡不能直接組路徑查 player_stats/{anon_id}，改成用 public_id
+        // 這個索引欄位反查對應的 player_stats 節點（見 Get_Public_Id() 的說明：
+        // 這是唯一合法需要「從公開假名找回內部資料」的地方，查完之後一樣只
+        // 取用 hide_from_leaderboard / name 這兩個欄位，不會把查到的 anon_id
+        // 往外傳）。
+        return tctc_db.ref("player_stats")
+            .orderByChild("public_id")
+            .equalTo(entry._public_id)
+            .limitToFirst(1)
             .once("value")
             .then(function (snapshot) {
-                const stats = snapshot.val() || {}
+                let stats = {}
+                snapshot.forEach(function (child) { stats = child.val() || {} })
                 return { entry: entry, hidden: stats.hide_from_leaderboard === true, live_name: stats.name }
             })
             .catch(function () {
@@ -378,7 +456,7 @@ function _Get_Leaderboard(node_path, id, callback, limit) {
                 // 藉此判斷「這一列是不是我自己」，加上特別標記。
                 // 前面加底線是提醒這是內部輔助欄位，不是真正的排行榜資料本身。
                 const val = child.val()
-                val._anon_id = child.key
+                val._public_id = _Hash_Anon_Id_To_Public_Id(child.key)   // 【修改】不再外流真正的 anon_id
                 list.push(val)
             })
             // 【修改】先比 wpm，wpm 相同時再比 acc（正確率）當作第二排序依據，
@@ -613,7 +691,13 @@ function Sync_Player_Stats(wpm, acc) {
         })
     })
 
-    return Promise.all([wpm_chain_promise, acc_chain_promise, name_promise])
+    // 【新增】同步寫入 public_id——這是給「玩家總排行榜」「個人頁連結」這些
+    // 公開讀取的地方用的假名，不是 anon_id 本人（見 Get_Public_Id() 上面的說明）。
+    // 每次都重算重寫也沒關係：同一個 anon_id 永遠算出同一個值，重複寫入是
+    // 完全等冪（idempotent）的操作，不會有副作用。
+    const public_id_promise = base_ref.child("public_id").set(Get_Public_Id())
+
+    return Promise.all([wpm_chain_promise, acc_chain_promise, name_promise, public_id_promise])
 }
 
 // ===== 【新增】把「這關第一次過關」同步進雲端的難度別完成計數 =====
@@ -1121,7 +1205,7 @@ function _Get_Top_Players(order_by_field, min_count_field, min_count, callback, 
                 const val = child.val()
                 // 【新增】跟 _Get_Leaderboard 一樣，把這筆是誰（anon_id）帶出來，
                 // 讓畫面端可以標記「這是我自己」
-                val._anon_id = child.key
+                val._public_id = _Hash_Anon_Id_To_Public_Id(child.key)   // 【修改】不再外流真正的 anon_id
 
                 // 【新增】跳過「選擇不顯示在排行榜」的玩家。
                 // 這裡「不需要」像 _Get_Leaderboard 那樣額外發查詢——
@@ -1226,7 +1310,7 @@ function Get_All_Player_Stats_For_Achievement_Level(callback) {
             const list = []
             snapshot.forEach(function (child) {
                 const val = child.val()
-                val._anon_id = child.key
+                val._public_id = _Hash_Anon_Id_To_Public_Id(child.key)   // 【修改】不再外流真正的 anon_id
                 if (val.hide_from_leaderboard === true) return
                 list.push(val)
             })
@@ -1271,7 +1355,7 @@ function _Get_Own_Rank_In_Node(node_path, id, callback) {
             const list = []
             snapshot.forEach(function (child) {
                 const val = child.val()
-                val._anon_id = child.key
+                val._public_id = _Hash_Anon_Id_To_Public_Id(child.key)   // 【修改】不再外流真正的 anon_id
                 list.push(val)
             })
             // 跟 _Get_Leaderboard 一樣，Firebase 排序後還要自己再排一次確保順序正確：
@@ -1281,7 +1365,7 @@ function _Get_Own_Rank_In_Node(node_path, id, callback) {
                 return (b.acc || 0) - (a.acc || 0)
             })
 
-            const own_index = list.findIndex(function (entry) { return entry._anon_id === anon_id })
+            const own_index = list.findIndex(function (entry) { return entry._public_id === Get_Public_Id() })
             if (own_index === -1) {
                 callback(null)
                 return
@@ -1347,14 +1431,14 @@ function Get_Own_Player_Rank(order_by_field, min_count_field, min_count, callbac
             const list = []
             snapshot.forEach(function (child) {
                 const val = child.val()
-                val._anon_id = child.key
+                val._public_id = _Hash_Anon_Id_To_Public_Id(child.key)   // 【修改】不再外流真正的 anon_id
                 if (!min_count_field || (val[min_count_field] || 0) >= min_count) {
                     list.push(val)
                 }
             })
             list.sort(function (a, b) { return (b[order_by_field] || 0) - (a[order_by_field] || 0) })
 
-            const own_index = list.findIndex(function (entry) { return entry._anon_id === anon_id })
+            const own_index = list.findIndex(function (entry) { return entry._public_id === Get_Public_Id() })
             callback({
                 rank: own_index + 1,
                 total: list.length,
@@ -1740,6 +1824,7 @@ function Report_Player(target_anon_id, target_name, categories, reason, callback
    ============================================================ */
 function Delete_All_Player_Data(callback) {
     const anon_id = Get_Anon_Id()
+    const public_id = Get_Public_Id()   // 【修改】leaderboard/challenge_leaderboard 現在用 public_id 當 key
     const updates = {}
 
     // ----- player_stats：除了 page_views，其餘全部清成 null（等同刪除該欄位）-----
@@ -1760,7 +1845,10 @@ function Delete_All_Player_Data(callback) {
         "longest_gap_days",
         // 【新增】個人資料頁公開設定 + 雲端簡介，同樣屬於「這個玩家的個人資料」，
         // 刪除所有資料時要一併清空，不然換一台裝置/新身份的人會意外繼承到舊簡介
-        "hide_profile_view", "intro"
+        "hide_profile_view", "intro",
+        // 【新增】公開假名索引也要一起清掉，不然下次重新產生 anon_id 後，
+        // 舊的 public_id 還留著指向已經被清空的資料
+        "public_id"
     ].forEach(function (field) {
         updates[`player_stats/${anon_id}/${field}`] = null
     })
@@ -1776,7 +1864,7 @@ function Delete_All_Player_Data(callback) {
     CHALLENGE_DIFFICULTIES.forEach(function (diff) {
         CHALLENGE_STAGES.forEach(function (stage) {
             CHALLENGE_SECONDS.forEach(function (seconds) {
-                updates[`challenge_leaderboard/${diff}-${stage}-${seconds}/${anon_id}`] = null
+                updates[`challenge_leaderboard/${diff}-${stage}-${seconds}/${public_id}`] = null
             })
         })
     })
@@ -1793,7 +1881,7 @@ function Delete_All_Player_Data(callback) {
                 const stages = chapter.stage || []
                 stages.forEach(function (stage) {
                     if (stage && stage.id) {
-                        updates[`leaderboard/${stage.id}/${anon_id}`] = null
+                        updates[`leaderboard/${stage.id}/${public_id}`] = null
                     }
                 })
             })
@@ -1818,10 +1906,16 @@ function Delete_All_Player_Data(callback) {
     }
 
     if (username_key) {
+        // 【修改】跟 Claim_Username 一樣改成看 owner_uid，不是看 anon_id 字串。
+        // firebase.auth().currentUser 這裡用同步讀取就好，不用整個函式簽名
+        // 都改成 Wait_For_Auth_Ready 包一層——執行到這裡的時間點，一定是玩家
+        // 已經在個人設定頁面待了一陣子才按下「刪除所有資料」，匿名登入
+        // 早就完成了，不會是 null。
+        const owner_uid = (firebase.auth().currentUser && firebase.auth().currentUser.uid) || null
         tctc_db.ref(`usernames/${username_key}`).transaction(function (current) {
-            // 只有現在存的值確實是自己的 anon_id，才清掉；
+            // 只有現在存的值確實是自己的 owner_uid，才清掉；
             // 如果不是（例如中途被別人搶走、或本機記錄跟雲端不一致），保留原樣不動
-            return (current === anon_id) ? null : current
+            return (current && owner_uid && current.owner_uid === owner_uid) ? null : current
         }, function () {
             // 不管這步 transaction 結果如何（成功、被拒絕、甚至出錯），
             // 都繼續往下做其餘資料的刪除，不要讓使用者名稱這一小步卡住整個流程
