@@ -136,7 +136,7 @@ function CLS_Dissolve_Classroom(classroom_id, teacher_uid, join_code, callback){
    （班級總XP、班級總打字數、班級之星）加總用——老師端本來就會整包
    下載這份摘要，直接在瀏覽器加總，不需要再多打一次 Firebase。
    ------------------------------------------------------------ */
-function CLS_Build_Student_Summary(stats){
+function CLS_Build_Student_Summary(stats, owner_uid){
     const xp = stats.xp || 0
     const level = (typeof XP_Get_Level === "function") ? XP_Get_Level(xp) : 0
 
@@ -157,7 +157,16 @@ function CLS_Build_Student_Summary(stats){
         // Sync_Zhuyin_Keys_Typed
         total_zhuyin_keys_typed: stats.total_zhuyin_keys_typed || 0,
         achievements_unlocked: stats.achievements_unlocked || 0,
-        joined_at: firebase.database.ServerValue.TIMESTAMP
+        joined_at: firebase.database.ServerValue.TIMESTAMP,
+        // 【新增】classroom_students 這個節點過去任何人都能直接覆蓋/刪除
+        // 任何一筆學生資料，因為 Rules 完全沒辦法驗證「這筆真的是這個學生
+        // 自己寫的」。owner_uid 存這次寫入當下 Firebase Auth 給的 auth.uid
+        // （加入教室這條路徑本來就強制要求真的登入，不是訪客的匿名登入，
+        // 見 CLS_Join_Classroom 上面的說明），之後 Rules 會要求「要改自己
+        // 這筆資料，auth.uid 必須等於當初存進去的 owner_uid」，老師要踢人
+        // 則另外用「auth.uid 等於這間教室的 teacher_uid」放行——兩條路徑
+        // 都不再是任何人都能寫。
+        owner_uid: owner_uid
     }
 }
 
@@ -217,7 +226,7 @@ function _CLS_Join_Classroom_After_Auth_Ready(user, raw_code, callback){
 
         tctc_db.ref(`player_stats/${anon_id}`).once("value").then(function(statsSnap){
             const stats = statsSnap.val() || {}
-            const summary = CLS_Build_Student_Summary(stats)
+            const summary = CLS_Build_Student_Summary(stats, user.uid)   // 【修改】帶上 owner_uid
 
             const updates = {}
             updates[`classroom_students/${classroom_id}/${anon_id}`] = summary
@@ -244,10 +253,15 @@ function _CLS_Join_Classroom_After_Auth_Ready(user, raw_code, callback){
 // 再另外對 player_stats 發一次 Firebase 請求。
 function CLS_Refresh_My_Summary(classroom_id, callback){
     const anon_id = Get_Anon_Id()
+    // 【修改】跟 CLS_Build_Student_Summary 的 owner_uid 一樣，這裡同步讀
+    // firebase.auth().currentUser 就好——會呼叫這支函式的頁面，執行到這裡
+    // 之前一定已經確認過登入狀態（教室相關頁面本來就要求真的登入），
+    // 不會是 null。
+    const owner_uid = (firebase.auth().currentUser && firebase.auth().currentUser.uid) || null
 
     tctc_db.ref(`player_stats/${anon_id}`).once("value").then(function(statsSnap){
         const stats = statsSnap.val() || {}
-        const summary = CLS_Build_Student_Summary(stats)
+        const summary = CLS_Build_Student_Summary(stats, owner_uid)
 
         tctc_db.ref(`classroom_students/${classroom_id}/${anon_id}`).set(summary)
             .then(function(){ if(callback) callback({ summary: summary }) })

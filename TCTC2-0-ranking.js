@@ -76,11 +76,11 @@ function Escape_Html(text) {
 }
 
 function Get_Player_Name_Link_HTML(entry, display_name_html){
-    if(!entry || !entry._anon_id){
+    if(!entry || !entry._public_id){
         return display_name_html
     }
 
-    const target_url = `TCTC2-0-view_profile.html?id=${encodeURIComponent(entry._anon_id)}`
+    const target_url = `TCTC2-0-view_profile.html?id=${encodeURIComponent(entry._public_id)}`
 
     // onclick 直接跳轉，不用 <a href>：整個 rank_col_name 裡面還包著 LV 標籤
     // 跟「你」標籤，用 <a> 包住這些子元素在既有樣式下比較容易跑版，
@@ -164,7 +164,7 @@ function Render_Leaderboard(list) {
         // 這樣如果第 2 名同分有兩個人，兩個人都還是會被標成前三名（因為他們的名次真的是 2）
         if (rank <= 3) row.classList.add("ranking_row_top3")
         // 【新增】比對這筆資料是不是「我自己」上傳的（用 anon_id 判斷），是的話特別標記出來
-        const is_self = typeof Get_Anon_Id === "function" && entry._anon_id === Get_Anon_Id()
+        const is_self = typeof Get_Public_Id === "function" && entry._public_id === Get_Public_Id()
         if (is_self) {
             row.classList.add("ranking_row_self")
             self_found_in_list = true
@@ -564,7 +564,7 @@ function Render_Player_Leaderboard(list) {
         row.className = "ranking_row"
         if (rank <= 3) row.classList.add("ranking_row_top3")
         // 【新增】比對這筆資料是不是「我自己」（用 anon_id 判斷），是的話特別標記出來
-        const is_self = typeof Get_Anon_Id === "function" && entry._anon_id === Get_Anon_Id()
+        const is_self = typeof Get_Public_Id === "function" && entry._public_id === Get_Public_Id()
         if (is_self) {
             row.classList.add("ranking_row_self")
             self_found_in_list = true
@@ -718,9 +718,9 @@ function Load_Player_Leaderboard() {
 function Load_Own_Achievement_Level_Rank() {
     if (typeof Get_All_Player_Stats_For_Achievement_Level !== "function") return
     if (typeof ACHV_Compute_Total_From_Raw_Player_Stats !== "function") return
-    if (typeof Get_Anon_Id !== "function") return
+    if (typeof Get_Public_Id !== "function") return
 
-    const anon_id = Get_Anon_Id()
+    const public_id = Get_Public_Id()
 
     Get_All_Player_Stats_For_Achievement_Level(function (list) {
         const with_level = list.map(function (entry) {
@@ -728,11 +728,11 @@ function Load_Own_Achievement_Level_Rank() {
             return entry
         })
 
-        const own_entry = with_level.find(function (e) { return e._anon_id === anon_id })
+        const own_entry = with_level.find(function (e) { return e._public_id === public_id })
         if (!own_entry || own_entry._achv_level < 1) return // 還沒達標（0 級不上榜），不顯示浮窗
 
         with_level.sort(function (a, b) { return b._achv_level - a._achv_level })
-        const own_index = with_level.findIndex(function (e) { return e._anon_id === anon_id })
+        const own_index = with_level.findIndex(function (e) { return e._public_id === public_id })
 
         Show_Self_Rank_Bar(own_index + 1, own_entry.name, `${own_entry._achv_level} 等`)
     })
