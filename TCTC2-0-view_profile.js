@@ -424,7 +424,14 @@ document.addEventListener("DOMContentLoaded", function(){
         return
     }
 
-    const is_self = target_id === Get_Anon_Id()
+    // 【修正】target_id 是排行榜連結帶過來的 public_id（假名，見 firebase.js
+    // 的 Get_Public_Id() 說明），不是真正的 anon_id，要跟 Get_Public_Id() 比對
+    // 才對。原本拿去跟 Get_Anon_Id()（真正的 anon_id）比較，格式完全對不上，
+    // 導致「點進自己的公開頁」永遠不會被判定成 is_self——自己看自己的頁面時，
+    // 提示條不會出現、讚的按鈕也不會正確鎖住。
+    // 保留 Get_Anon_Id() 的舊比對當備援，相容教室名單那類直接傳真正 anon_id 的連結。
+    const is_self = (typeof Get_Public_Id === "function" && target_id === Get_Public_Id())
+        || target_id === Get_Anon_Id()
 
     if(is_self){
         // 看自己：直接用 Get_Own_Player_Stats()，不受 hide_profile_view 影響，
