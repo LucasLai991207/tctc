@@ -402,39 +402,17 @@
         // 「確定」：跟 TCTC2-0-profile.js 的 Update_profile() 用同一套規則——
         // 先用 Validate_Username_Format() 檢查格式，再用 Claim_Username() 去 Firebase
         // 確認這個名字全站沒有人用過，兩關都過才算成功、才寫進 localStorage
-        // ===== 【新增】等匿名登入完成，再去搶名字 =====
-        // Firebase Rules 對 /usernames 的寫入要求 auth != null，但 firebase.js 裡的
-        // firebase.auth().signInAnonymously() 是非同步的，網路狀況不好、或玩家手速快，
-        // 都可能在「匿名登入還沒完成」的當下就按下確定，導致 transaction 被 Rules 擋下來，
-        // 在 console 看到 permission_denied（跟玩家實際輸入的名字無關，是登入時機的問題）。
-        // 這裡先確認 firebase.auth().currentUser 是否已經存在，沒有的話用
-        // onAuthStateChanged 等它完成，最多等 3 秒，避免萬一登入一直失敗導致玩家卡住按鈕。
-        function Wait_For_Auth_Ready(callback){
-            if(typeof firebase === "undefined" || !firebase.auth){
-                callback()
-                return
-            }
-            if(firebase.auth().currentUser){
-                callback()
-                return
-            }
-
-            let done = false
-            const unsubscribe = firebase.auth().onAuthStateChanged(function(user){
-                if(done) return
-                if(!user) return
-                done = true
-                unsubscribe()
-                callback()
-            })
-            setTimeout(function(){
-                if(done) return
-                done = true
-                unsubscribe()
-                callback()
-            }, 3000)
-        }
-
+        //
+        // ===== 【修正】重大 bug：這裡原本自己又定義了一個同名的 Wait_For_Auth_Ready() =====
+        // 因為這段 <script> 在 TCTC2-0-firebase.js 載入「之後」才執行，
+        // 同名的 function 宣告後面蓋前面，會把 firebase.js 裡那個正確、真的會
+        // 把目前登入的使用者傳出來的 Wait_For_Auth_Ready 整個蓋掉。
+        // 更糟的是，這裡舊版蓋掉之後的版本呼叫 callback() 時完全沒有帶 user 參數，
+        // 導致 Claim_Username 內部判斷「有沒有登入」永遠拿到 undefined，
+        // 不管 Firebase 實際上有沒有登入成功，都會跳出「登入尚未完成，請稍後再試」。
+        // Claim_Username() 本身在 firebase.js 裡就已經會呼叫（正確版的）
+        // Wait_For_Auth_Ready 等登入完成才去搶名字，這裡不需要重複再等一次，
+        // 直接刪掉這段本地版本、改成直接呼叫 Claim_Username。
         function Confirm_Nickname_Setup(){
             const inputEl = document.getElementById("nickname_setup_input")
             const warningEl = document.getElementById("nickname_setup_warning")
@@ -459,35 +437,31 @@
 
             if(confirmBtn){
                 confirmBtn.disabled = true
-                confirmBtn.textContent = "連線中..."
+                confirmBtn.textContent = "設定中..."
             }
 
-            Wait_For_Auth_Ready(function(){
-                if(confirmBtn) confirmBtn.textContent = "設定中..."
-
-                Claim_Username(trimmed_value, function(success, reason){
-                    if(!success){
-                        if(warningEl) warningEl.textContent = reason
-                        if(confirmBtn){
-                            confirmBtn.disabled = false
-                            confirmBtn.textContent = "確定"
-                        }
-                        return
-                    }
-
-                    localStorage.setItem("username", trimmed_value)
-
-                    // 主大廳頭像旁邊顯示的名字，順手一起更新，不用整頁重新整理
-                    const nameEl = document.querySelector(".main_lobby_main_frame_player_profile_left_div_username")
-                    if(nameEl) nameEl.textContent = trimmed_value
-
+            Claim_Username(trimmed_value, function(success, reason){
+                if(!success){
+                    if(warningEl) warningEl.textContent = reason
                     if(confirmBtn){
                         confirmBtn.disabled = false
                         confirmBtn.textContent = "確定"
                     }
+                    return
+                }
 
-                    Close_Nickname_Setup()
-                })
+                localStorage.setItem("username", trimmed_value)
+
+                // 主大廳頭像旁邊顯示的名字，順手一起更新，不用整頁重新整理
+                const nameEl = document.querySelector(".main_lobby_main_frame_player_profile_left_div_username")
+                if(nameEl) nameEl.textContent = trimmed_value
+
+                if(confirmBtn){
+                    confirmBtn.disabled = false
+                    confirmBtn.textContent = "確定"
+                }
+
+                Close_Nickname_Setup()
             })
         }
 

@@ -71,18 +71,27 @@
                     </button>
                     <div class="auth_divider"><span>或</span></div>
 
-                    <label class="auth_field_label">Email</label>
-                    <input type="email" class="auth_input" id="auth_register_email" placeholder="you@example.com" autocomplete="email">
+                    <!-- 【修正】瀏覽器 console 警告：password 欄位沒有被包在 <form> 裡
+                         （[DOM] Password field is not contained in a form）。這裡純粹是
+                         補一個 <form> 容器讓瀏覽器的密碼管理員能正確辨識欄位，
+                         onsubmit="return false" 確保就算哪天不小心觸發原生送出
+                         （例如在輸入框按 Enter），也不會真的重新整理頁面——
+                         實際的送出邏輯仍然是 auth_register_submit_btn 的 click 事件
+                         跟下面 Handle_Modal_Keydown 的 Enter 處理，這裡沒有改變任何行為。 -->
+                    <form id="auth_register_form" onsubmit="return false;" autocomplete="on">
+                        <label class="auth_field_label">Email</label>
+                        <input type="email" class="auth_input" id="auth_register_email" placeholder="you@example.com" autocomplete="email">
 
-                    <label class="auth_field_label">密碼</label>
-                    <input type="password" class="auth_input" id="auth_register_password" placeholder="至少 6 個字元" autocomplete="new-password">
+                        <label class="auth_field_label">密碼</label>
+                        <input type="password" class="auth_input" id="auth_register_password" placeholder="至少 6 個字元" autocomplete="new-password">
 
-                    <label class="auth_field_label">確認密碼</label>
-                    <input type="password" class="auth_input" id="auth_register_password2" placeholder="再輸入一次" autocomplete="new-password">
+                        <label class="auth_field_label">確認密碼</label>
+                        <input type="password" class="auth_input" id="auth_register_password2" placeholder="再輸入一次" autocomplete="new-password">
 
-                    <p class="auth_error_text" id="auth_register_error"></p>
+                        <p class="auth_error_text" id="auth_register_error"></p>
 
-                    <button type="button" class="auth_submit_btn" id="auth_register_submit_btn">註冊</button>
+                        <button type="button" class="auth_submit_btn" id="auth_register_submit_btn">註冊</button>
+                    </form>
 
                     <p class="auth_switch_text">已經有帳號了？<span class="auth_switch_link" id="auth_switch_to_login">登入</span></p>
                 </div>
@@ -100,15 +109,19 @@
                     </button>
                     <div class="auth_divider"><span>或</span></div>
 
-                    <label class="auth_field_label">Email</label>
-                    <input type="email" class="auth_input" id="auth_login_email" placeholder="you@example.com" autocomplete="email">
+                    <!-- 【修正】同註冊表單：補 <form> 容器消除 password 欄位的 DOM 警告，
+                         onsubmit="return false" 不影響原本的 click/Enter 送出邏輯 -->
+                    <form id="auth_login_form" onsubmit="return false;" autocomplete="on">
+                        <label class="auth_field_label">Email</label>
+                        <input type="email" class="auth_input" id="auth_login_email" placeholder="you@example.com" autocomplete="email">
 
-                    <label class="auth_field_label">密碼</label>
-                    <input type="password" class="auth_input" id="auth_login_password" placeholder="密碼" autocomplete="current-password">
+                        <label class="auth_field_label">密碼</label>
+                        <input type="password" class="auth_input" id="auth_login_password" placeholder="密碼" autocomplete="current-password">
 
-                    <p class="auth_error_text" id="auth_login_error"></p>
+                        <p class="auth_error_text" id="auth_login_error"></p>
 
-                    <button type="button" class="auth_submit_btn" id="auth_login_submit_btn">登入</button>
+                        <button type="button" class="auth_submit_btn" id="auth_login_submit_btn">登入</button>
+                    </form>
 
                     <p class="auth_switch_text">還沒有帳號？<span class="auth_switch_link" id="auth_switch_to_register">註冊</span></p>
                 </div>

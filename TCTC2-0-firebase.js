@@ -15,37 +15,126 @@ if (!firebase.apps.length) {
 const tctc_db = firebase.database()
 
 
-let _tctc_auth_ready_resolve
-const _tctc_auth_ready_promise = new Promise(function (resolve) {
-    _tctc_auth_ready_resolve = resolve
-})
-if (typeof firebase.auth === "function") {
-    firebase.auth().onAuthStateChanged(function (user) {
-        if (user) {
-            if (_tctc_auth_ready_resolve) {
-                _tctc_auth_ready_resolve(user)
-                _tctc_auth_ready_resolve = null
-            }
+/* ============================================================
+   【修正】Wait_For_Auth_Ready
+   ------------------------------------------------------------
+   舊版問題：用一個「只會 resolve 一次」的 Promise 記住 auth 狀態。
+   這代表只要它 resolve 過一次（不管是拿到使用者、還是失敗後 resolve(null)），
+   之後整個頁面存活期間，不管 firebase.auth() 的登入狀態再怎麼變化
+   （例如玩家在同一頁面裡註冊/登入成功、從匿名升級成正式帳號），
+   Wait_For_Auth_Ready 永遠只會回傳「當初第一次」拿到的那個（可能已經過期
+   或根本是 null 的）使用者——這就是玩家取暱稱時偶爾會卡在
+   「登入尚未完成，請稍後再試」的根本原因：不是真的沒登入完成，
+   而是這支函式已經被鎖死在舊的狀態上，永遠不會再更新。
+
+   新版做法：改成持續追蹤「目前最新」的 auth 使用者（每次 onAuthStateChanged
+   觸發都更新），呼叫 Wait_For_Auth_Ready 時：
+   1. 如果已經知道目前的使用者，直接同步回呼，不用等。
+   2. 否則加進等待佇列，等下一次 onAuthStateChanged 觸發時通知；
+      同時掛一個逾時保險（預設 8 秒），逾時只會讓「這一次呼叫」回傳 null，
+      不會影響其他還在等待或之後才呼叫的人，也不會把整個系統鎖死。
+   匿名登入失敗時也不再提前 resolve(null) 卡住後面所有人，
+   而是讓等待中的呼叫繼續等下一次 onAuthStateChanged（例如網路恢復後
+   firebase SDK 自動重試成功的那一次）。
+   ============================================================ */
+let _tctc_current_auth_user = null
+let _tctc_auth_ready_waiters = []
+
+function _Tctc_Notify_Auth_Waiters(user) {
+    _tctc_current_auth_user = user
+    if (_tctc_auth_ready_waiters.length === 0) return
+    const waiters = _tctc_auth_ready_waiters
+    _tctc_auth_ready_waiters = []
+    waiters.forEach(function (fn) { fn(user) })
+}
+
+let _tctc_anon_signin_retry_count = 0
+function _Tctc_Try_Anonymous_Signin() {
+    firebase.auth().signInAnonymously().then(function () {
+        _tctc_anon_signin_retry_count = 0 // 成功了，重置重試次數，下次真的斷線時可以重新算過
+    }).catch(function (error) {
+        // 【新增】把實際的 Firebase 錯誤代碼印出來，方便診斷——
+        // 最常見在「本機測試」會踩到的兩種：
+        //   auth/unauthorized-domain：目前這個網域沒有被加進 Firebase Console
+        //   → Authentication → Settings → Authorized domains 清單。
+        //   Firebase 預設只會自動放行 "localhost"，如果是用 VS Code 的
+        //   Live Server 之類的工具、網址列顯示的是 "127.0.0.1:xxxx"
+        //   （不是 "localhost:xxxx"），就會被擋下來，要嘛改用 localhost
+        //   開啟，要嘛去 Firebase Console 手動把 127.0.0.1 加進白名單。
+        //   auth/operation-not-supported-in-this-environment：直接用
+        //   file:// 雙擊打開 html（網址列開頭是 file:///...），沒有經過
+        //   任何本機伺服器——Firebase Auth 不支援這種環境，一定要透過
+        //   http://localhost:xxxx 這種有真正 origin 的方式開啟才行。
+        console.log("[auth] 匿名登入失敗，錯誤代碼：", error && error.code, "訊息：", error && error.message)
+
+        // 不是上面那兩種「環境本身不支援」的錯誤，才值得重試
+        // （網路瞬斷、Firebase 服務短暫異常等等，重試有機會自己好）
+        const is_environment_error = error && (
+            error.code === "auth/unauthorized-domain" ||
+            error.code === "auth/operation-not-supported-in-this-environment"
+        )
+        if (is_environment_error) {
+            console.log("[auth] 這是本機測試環境設定問題，不是網路問題，重試也不會好——請確認是用 http://localhost:port 開啟，且該網域已加進 Firebase Console 的 Authorized domains")
             return
         }
 
-        // 現在真的沒有人登入，補一次匿名登入，讓訪客也有 auth.uid 可用
-        if (_tctc_auth_ready_resolve) {
-            firebase.auth().signInAnonymously().catch(function (error) {
-                console.log("[auth] 匿名登入失敗：", error)
-                // 失敗也要 resolve（用 null），避免 Wait_For_Auth_Ready 卡死等不到結果
-                if (_tctc_auth_ready_resolve) {
-                    _tctc_auth_ready_resolve(null)
-                    _tctc_auth_ready_resolve = null
-                }
-            })
+        _tctc_anon_signin_retry_count++
+        if (_tctc_anon_signin_retry_count > 5) {
+            console.log("[auth] 匿名登入已重試多次仍失敗，暫停自動重試")
+            return
         }
+        // 指數退避：1s, 2s, 4s, 8s, 16s，避免失敗時瘋狂重打 Firebase
+        const delay_ms = Math.min(1000 * Math.pow(2, _tctc_anon_signin_retry_count - 1), 16000)
+        setTimeout(_Tctc_Try_Anonymous_Signin, delay_ms)
+    })
+}
+
+if (typeof firebase.auth === "function") {
+    firebase.auth().onAuthStateChanged(function (user) {
+        if (user) {
+            _Tctc_Notify_Auth_Waiters(user)
+            return
+        }
+
+        // 現在真的沒有人登入（可能剛登出，或這台裝置從沒登入過），
+        // 補一次匿名登入，讓訪客也有 auth.uid 可用
+        _tctc_current_auth_user = null
+        _Tctc_Try_Anonymous_Signin()
     })
 } else {
     console.log("[auth] 尚未載入 firebase-auth-compat.js，這個頁面沒辦法匿名登入")
 }
-function Wait_For_Auth_Ready(callback) {
-    _tctc_auth_ready_promise.then(function (user) { callback(user) })
+
+function Wait_For_Auth_Ready(callback, timeout_ms) {
+    // 已經知道目前的使用者，不用等，直接同步回呼
+    if (_tctc_current_auth_user) {
+        callback(_tctc_current_auth_user)
+        return
+    }
+    // 保險再看一次 firebase 手上當下的 currentUser
+    // （理論上跟 _tctc_current_auth_user 應該同步，這裡多一層防呆）
+    if (typeof firebase.auth === "function" && firebase.auth().currentUser) {
+        callback(firebase.auth().currentUser)
+        return
+    }
+
+    let already_finished = false
+    function finish(user) {
+        if (already_finished) return
+        already_finished = true
+        callback(user)
+    }
+
+    _tctc_auth_ready_waiters.push(finish)
+
+    // 逾時保險：只讓「這一次」呼叫回傳 null，不影響其他等待者，
+    // 也不會把 _tctc_current_auth_user 寫死成 null
+    setTimeout(function () {
+        if (already_finished) return
+        const idx = _tctc_auth_ready_waiters.indexOf(finish)
+        if (idx !== -1) _tctc_auth_ready_waiters.splice(idx, 1)
+        finish(null)
+    }, timeout_ms || 8000)
 }
 
 /* ------------------------------------------------------------
@@ -256,6 +345,14 @@ function Claim_Username(name, callback) {
 
     Wait_For_Auth_Ready(function (user) {
         if (!user) {
+            // 【新增】診斷用 log：印出當下 firebase.auth().currentUser 的真實狀態，
+            // 方便判斷到底是「auth 真的還沒 ready」還是其他原因
+            console.log(
+                "[username] Claim_Username 失敗：Wait_For_Auth_Ready 回傳 null。診斷資訊：",
+                "firebase.auth().currentUser =", (typeof firebase.auth === "function" ? firebase.auth().currentUser : "firebase.auth 不是函式"),
+                "; _tctc_current_auth_user =", _tctc_current_auth_user,
+                "; 時間戳 =", new Date().toISOString()
+            )
             callback(false, "登入尚未完成，請稍後再試")
             return
         }
@@ -1722,47 +1819,101 @@ function Get_Public_Player_Profile(id, callback) {
    保護的意義在於擋掉「不小心」的重複點擊跟最基本的重放，不是防止蓄意
    繞過的作弊者，這點跟本站其他 Sync_* 函式的信任層級是一致的。
    ============================================================ */
+/* ------------------------------------------------------------
+   【修正】重大 bug：按讚沒有真的生效
+   --------------------------------------------------------------
+   view_profile.html 是靠排行榜點進來的，網址帶的 id 一律是
+   entry._public_id（Get_Public_Id() 算出來的假名，見上面 Get_Public_Id()
+   的說明），不是 player_stats 底下真正的 key（anon_id）。
+
+   但這裡的 player_likes/{target}/{liker} 跟 player_stats/{target}/like_count
+   兩個節點，都是用「真正的 anon_id」當 key 存的——如果直接拿 public_id
+   當 target_anon_id 用，會：
+   1. 把讚寫進 player_likes/{public_id 假名}/... 這個誰也不會再讀的節點，
+   2. 把 player_stats/{public_id 假名}/like_count 這個全新、遊離的節點
+      加 1——不是玩家真正的那筆 player_stats/{anon_id} 資料，
+   導致玩家點了讚、畫面短暫顯示 +1，但目標玩家真正的讚數永遠不會變，
+   重新整理後也看不到任何變化。
+
+   解法：跟 Get_Public_Player_Profile() 一樣，先用 public_id 這個索引欄位
+   反查出真正的 anon_id，找不到的話就當作傳進來的本來就已經是真正的
+   anon_id（保留舊連結來源的相容性），再用那個「真正的 key」去操作
+   player_likes / player_stats。
+   ------------------------------------------------------------ */
+function _Resolve_Real_Anon_Id(id, callback) {
+    if (!id) { callback(id); return }
+
+    tctc_db.ref("player_stats")
+        .orderByChild("public_id")
+        .equalTo(id)
+        .limitToFirst(1)
+        .once("value")
+        .then(function (snapshot) {
+            let real_id = null
+            snapshot.forEach(function (child) { real_id = child.key })
+            callback(real_id || id)
+        })
+        .catch(function (error) {
+            console.warn("[like] 反查真正的 anon_id 失敗：", error.message)
+            callback(id)
+        })
+}
+
 function Get_Own_Like_Status(target_anon_id, callback) {
     const anon_id = Get_Anon_Id()
-    if (!target_anon_id || target_anon_id === anon_id) {
+    if (!target_anon_id) {
         callback(false)
         return
     }
 
-    tctc_db.ref(`player_likes/${target_anon_id}/${anon_id}`)
-        .once("value")
-        .then(function (snapshot) {
-            callback(snapshot.val() === true)
-        })
-        .catch(function (error) {
-            console.warn("[like] 讀取按讚狀態失敗：", error.message)
+    _Resolve_Real_Anon_Id(target_anon_id, function (real_target_id) {
+        if (!real_target_id || real_target_id === anon_id) {
             callback(false)
-        })
+            return
+        }
+
+        tctc_db.ref(`player_likes/${real_target_id}/${anon_id}`)
+            .once("value")
+            .then(function (snapshot) {
+                callback(snapshot.val() === true)
+            })
+            .catch(function (error) {
+                console.warn("[like] 讀取按讚狀態失敗：", error.message)
+                callback(false)
+            })
+    })
 }
 
 function Like_Player(target_anon_id, callback) {
     const anon_id = Get_Anon_Id()
-    if (!target_anon_id || target_anon_id === anon_id) {
-        callback(false)   // 不能讚自己
+    if (!target_anon_id) {
+        callback(false)
         return
     }
 
-    tctc_db.ref(`player_likes/${target_anon_id}/${anon_id}`)
-        .set(true)
-        .then(function () {
-            tctc_db.ref(`player_stats/${target_anon_id}/like_count`).transaction(function (current) {
-                return (current || 0) + 1
-            }).catch(function (error) {
-                console.warn("[like] 更新讚數計數器失敗：", error.message)
+    _Resolve_Real_Anon_Id(target_anon_id, function (real_target_id) {
+        if (!real_target_id || real_target_id === anon_id) {
+            callback(false)   // 不能讚自己
+            return
+        }
+
+        tctc_db.ref(`player_likes/${real_target_id}/${anon_id}`)
+            .set(true)
+            .then(function () {
+                tctc_db.ref(`player_stats/${real_target_id}/like_count`).transaction(function (current) {
+                    return (current || 0) + 1
+                }).catch(function (error) {
+                    console.warn("[like] 更新讚數計數器失敗：", error.message)
+                })
+                callback(true)
             })
-            callback(true)
-        })
-        .catch(function (error) {
-            // 最常見的失敗原因：已經對這個人按過讚了（規則擋下重複寫入），
-            // 不當成例外處理，呼叫端會依 callback(false) 顯示「已經讚過了」
-            console.warn("[like] 按讚失敗（可能是已經讚過了）：", error.message)
-            callback(false)
-        })
+            .catch(function (error) {
+                // 最常見的失敗原因：已經對這個人按過讚了（規則擋下重複寫入），
+                // 不當成例外處理，呼叫端會依 callback(false) 顯示「已經讚過了」
+                console.warn("[like] 按讚失敗（可能是已經讚過了）：", error.message)
+                callback(false)
+            })
+    })
 }
 
 /* ============================================================
@@ -1793,8 +1944,8 @@ function Like_Player(target_anon_id, callback) {
    ============================================================ */
 function Report_Player(target_anon_id, target_name, categories, reason, callback) {
     const anon_id = Get_Anon_Id()
-    if (!target_anon_id || target_anon_id === anon_id) {
-        callback(false)   // 不能檢舉自己
+    if (!target_anon_id) {
+        callback(false)
         return
     }
 
@@ -1804,25 +1955,35 @@ function Report_Player(target_anon_id, target_name, categories, reason, callback
         return
     }
 
-    tctc_db.ref(`player_reports/${target_anon_id}`).push({
-        reporter_anon_id: anon_id,
-        // 【新增】把「被檢舉當下」的暱稱一起存起來，省得每次處理檢舉都要
-        // 手動跳去 player_stats/{target_anon_id}/name 對照。這裡刻意存
-        // 「檢舉當下」的暱稱快照，不是即時查詢——玩家之後改名了，這筆
-        // 舊檢舉紀錄上的名字不會跟著變，這樣反而更準確地反映「當初被
-        // 檢舉的那個暱稱」，跟改名前後的行為對得起來
-        target_name: (target_name || "訪客").slice(0, 20),
-        categories: Array.isArray(categories) ? categories : [],
-        reason: trimmed_reason.slice(0, 500),   // 限制長度，避免有人塞超長文字
-        timestamp: firebase.database.ServerValue.TIMESTAMP
+    // 【修正】跟 Like_Player 同一個問題：view_profile.html 傳進來的
+    // target_anon_id 其實是 public_id 假名，要先反查成真正的 anon_id，
+    // player_reports 才會歸檔在對的玩家底下，管理員之後才查得到。
+    _Resolve_Real_Anon_Id(target_anon_id, function (real_target_id) {
+        if (!real_target_id || real_target_id === anon_id) {
+            callback(false)   // 不能檢舉自己
+            return
+        }
+
+        tctc_db.ref(`player_reports/${real_target_id}`).push({
+            reporter_anon_id: anon_id,
+            // 【新增】把「被檢舉當下」的暱稱一起存起來，省得每次處理檢舉都要
+            // 手動跳去 player_stats/{target_anon_id}/name 對照。這裡刻意存
+            // 「檢舉當下」的暱稱快照，不是即時查詢——玩家之後改名了，這筆
+            // 舊檢舉紀錄上的名字不會跟著變，這樣反而更準確地反映「當初被
+            // 檢舉的那個暱稱」，跟改名前後的行為對得起來
+            target_name: (target_name || "訪客").slice(0, 20),
+            categories: Array.isArray(categories) ? categories : [],
+            reason: trimmed_reason.slice(0, 500),   // 限制長度，避免有人塞超長文字
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+        })
+            .then(function () {
+                callback(true)
+            })
+            .catch(function (error) {
+                console.warn("[report] 送出檢舉失敗：", error.message)
+                callback(false)
+            })
     })
-        .then(function () {
-            callback(true)
-        })
-        .catch(function (error) {
-            console.warn("[report] 送出檢舉失敗：", error.message)
-            callback(false)
-        })
 }
 
 /* ============================================================
