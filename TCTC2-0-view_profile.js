@@ -26,7 +26,6 @@ function VP_Show_Blocked(title, text, bioData){
     if(titleEl && title) titleEl.textContent = title
     if(textEl && text) textEl.textContent = text
 
-
     const bioWrapEl = document.getElementById("vp_blocked_bio")
     const bioNameEl = document.getElementById("vp_blocked_bio_name")
     const bioIntroEl = document.getElementById("vp_blocked_bio_intro")
@@ -34,9 +33,7 @@ function VP_Show_Blocked(title, text, bioData){
     if(bioWrapEl){
         if(bioData){
             bioWrapEl.classList.remove("is_hidden")
-            // 用 textContent，理由跟 VP_Render_Profile 裡名字/簡介的寫法一致：
-            // 玩家自訂輸入不可信，textContent 天生不會被當 HTML 解析，
-            // 不需要另外呼叫 Escape_Html
+
             if(bioNameEl) bioNameEl.textContent = bioData.name || "訪客"
             if(bioIntroEl) bioIntroEl.textContent = bioData.intro || "這位玩家還沒有寫簡介。"
         } else {
@@ -45,7 +42,6 @@ function VP_Show_Blocked(title, text, bioData){
     }
 }
 
-// ===== 秒數轉人類可讀時長（跟 profile.js 的 Format_Online_Seconds_For_Profile 邏輯一致）=====
 function VP_Format_Online_Seconds(total_seconds){
     const seconds_int = Math.floor(total_seconds || 0)
     if(seconds_int < 60) return `${seconds_int} 秒`
@@ -58,9 +54,6 @@ function VP_Format_Online_Seconds(total_seconds){
     return `${minutes} 分 ${seconds} 秒`
 }
 
-
-// 單一已解鎖成就的清單項目。tierIndex 由呼叫端算好傳進來（1~4，
-// 對應銅/銀/金/白金），這支函式本身不做任何門檻判斷，只負責排版。
 function VP_Build_Unlocked_List_Item(achv, tierIndex){
     const tierClass = ACHV_TIER_CLASSES[tierIndex]
     const tierTitle = ACHV_TIER_TITLES_DEFAULT[tierIndex]
@@ -74,18 +67,16 @@ function VP_Build_Unlocked_List_Item(achv, tierIndex){
     `
 }
 
-// 掃過全部分類、算出總覽數字，同時把「已解鎖」的項目蒐集成一份扁平陣列
-// （不分類、不保留分類標題），最後依位階高到低排序後畫成清單。
 function VP_Render_Achievements(streakData, statsData){
     let overallUnlocked = 0
     let overallTotal = 0
-    const unlockedItems = []   // 每一項：{ tierIndex, html }，html 先算好存著，排序後直接 join
+    const unlockedItems = []
 
     ACHV_CATEGORIES.forEach(function(category){
         category.achievements.forEach(function(achv){
-            overallTotal += 4   // 每個成就固定 4 階，跟 achievements.js 算總數的邏輯一致，不能改
+            overallTotal += 4
 
-            if(achv.pending) return   // 功能還沒開發的成就：不計入解鎖數，清單裡也不會出現
+            if(achv.pending) return
 
             const data = achv.dataSource === "streak" ? streakData : statsData
             const value = achv.getValue ? achv.getValue(data) : (data ? (data[achv.metric] || 0) : 0)
@@ -93,16 +84,12 @@ function VP_Render_Achievements(streakData, statsData){
 
             overallUnlocked += tierIndex
 
-            // tierIndex === 0 代表連銅牌門檻都還沒到，這項成就不進「已解鎖」清單
             if(tierIndex > 0){
                 unlockedItems.push({ tierIndex: tierIndex, html: VP_Build_Unlocked_List_Item(achv, tierIndex) })
             }
         })
     })
 
-    // 位階高的排前面（白金 4 > 金 3 > 銀 2 > 銅 1），讓訪客一眼先看到最厲害的成就。
-    // Array.prototype.sort 從 ES2019 起在所有主流瀏覽器都保證是穩定排序，
-    // 所以同一個 tierIndex 的項目彼此之間，順序會維持 ACHV_CATEGORIES 資料表裡原本的排列，不會被打亂
     unlockedItems.sort(function(a, b){ return b.tierIndex - a.tierIndex })
 
     const listEl = document.getElementById("vp_achv_list")
@@ -349,7 +336,6 @@ function VP_Render_Profile(raw, is_self){
         }
     }
 
-
     VP_Init_Like_Button(raw, is_self)
 
     VP_Init_Report_Button(is_self, raw.name)
@@ -370,13 +356,11 @@ function VP_Render_Profile(raw, is_self){
                     : `${progress.current} / ${progress.needed} XP`
             }
         } else {
-            // 找不到 XP_Get_Level_Progress（代表 xp_data.js 忘記載入）：
-            // 直接把整個進度條區塊藏起來，比顯示一條卡在 0% 的假進度條更誠實
+
             xpWrapEl.classList.add("is_hidden")
         }
     }
 
-    // ----- 統計資料 -----
     const set_text = function(id, text){
         const el = document.getElementById(id)
         if(el) el.textContent = text
@@ -386,24 +370,18 @@ function VP_Render_Profile(raw, is_self){
     set_text("vp_stat_online_time", VP_Format_Online_Seconds(raw.online_seconds ?? 0))
     set_text("vp_stat_points", `${raw.total_points ?? 0} 積分`)
     set_text("vp_stat_streak", `${raw.streak_current ?? 0} 天`)
-    // 【新增】以下三列直接沿用 Get_Public_Player_Profile() 已經回傳的原始欄位，
-    // 沒有多發任何一次 Firebase 請求
+
     set_text("vp_stat_views", `${raw.page_views ?? 0} 次`)
     set_text("vp_stat_longest_streak", `${raw.streak_longest ?? 0} 天`)
     set_text("vp_stat_total_days", `${raw.streak_total_days ?? 0} 天`)
 
-    // ----- 成就（改版：只列已解鎖，扁平條列式，見 VP_Render_Achievements） -----
-    // ACHV_CATEGORIES 裡「堅持」分類的成就用的是 streakData 這個獨立形狀
-    // （current_streak / longest_streak / total_login_days / longest_gap_days），
-    // 跟 player_stats 原始欄位名稱（streak_current / streak_longest / ...）不一樣，
-    // 這裡要手動轉換，寫法跟 TCTC2-0-achievements.js 的 ACHV_Render_All 一致。
     const streakData = {
         current_streak: raw.streak_current || 0,
         longest_streak: raw.streak_longest || 0,
         total_login_days: raw.streak_total_days || 0,
         longest_gap_days: raw.longest_gap_days || 0
     }
-    const statsData = raw // 其餘分類的成就都直接用 metric 名稱查 raw 本身的欄位
+    const statsData = raw
 
     if(typeof ACHV_CATEGORIES !== "undefined"){
         VP_Render_Achievements(streakData, statsData)
@@ -424,18 +402,11 @@ document.addEventListener("DOMContentLoaded", function(){
         return
     }
 
-    // 【修正】target_id 是排行榜連結帶過來的 public_id（假名，見 firebase.js
-    // 的 Get_Public_Id() 說明），不是真正的 anon_id，要跟 Get_Public_Id() 比對
-    // 才對。原本拿去跟 Get_Anon_Id()（真正的 anon_id）比較，格式完全對不上，
-    // 導致「點進自己的公開頁」永遠不會被判定成 is_self——自己看自己的頁面時，
-    // 提示條不會出現、讚的按鈕也不會正確鎖住。
-    // 保留 Get_Anon_Id() 的舊比對當備援，相容教室名單那類直接傳真正 anon_id 的連結。
     const is_self = (typeof Get_Public_Id === "function" && target_id === Get_Public_Id())
         || target_id === Get_Anon_Id()
 
     if(is_self){
-        // 看自己：直接用 Get_Own_Player_Stats()，不受 hide_profile_view 影響，
-        // 讓玩家不管開關是什麼狀態，都能親自確認自己的公開頁長怎樣
+
         if(typeof Get_Own_Player_Stats !== "function"){
             VP_Show_Blocked("暫時無法載入", "系統暫時無法連線，請重新整理頁面再試一次。")
             return
@@ -450,8 +421,6 @@ document.addEventListener("DOMContentLoaded", function(){
         return
     }
 
-    // 看別人：一定要透過 Get_Public_Player_Profile()，讓它先檢查對方的
-    // hide_profile_view 開關，這裡不能繞過去直接查 player_stats
     if(typeof Get_Public_Player_Profile !== "function"){
         VP_Show_Blocked("暫時無法載入", "系統暫時無法連線，請重新整理頁面再試一次。")
         return
@@ -467,11 +436,7 @@ document.addEventListener("DOMContentLoaded", function(){
             return
         }
         if(result.hidden){
-            // 【修改】第三個參數帶入 name/intro，讓 VP_Show_Blocked() 就算在
-            // 「個人資料不公開」這條路徑，也能把簡介露出來——見 VP_Show_Blocked
-            // 內部那段【新增】的完整說明。result.name / result.intro 由
-            // firebase.js 的 Get_Public_Player_Profile() 在 hidden 分支裡
-            // 額外帶出來，不需要在這裡多發一次請求。
+
             VP_Show_Blocked(
                 "此玩家沒有公開個人資料",
                 "這位玩家已將個人資料設為不公開，無法查看成就與統計數字。",

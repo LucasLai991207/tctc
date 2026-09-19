@@ -1,5 +1,3 @@
-// ===== 成就徽章圖示（SVG 字串）=====
-// 原封不動從 achievements.js 搬過來，內容完全沒改
 const ACHV_ICON_FLAME = `<svg viewBox="0 0 24 24" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M12 2c2 3 5 6 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 1.4 0 2-1.1 1-2.4C11 7 10 5 12 2Z"/></svg>`
 const ACHV_ICON_CALENDAR_CHECK = `<svg viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"><rect x="3" y="5" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><polyline points="8,15 10.5,17.5 16,12.5"/></svg>`
 const ACHV_ICON_COMPASS = `<svg viewBox="0 0 24 24" stroke-width="1.6" stroke-linejoin="round" fill="none"><circle cx="12" cy="12" r="9"/><polygon points="15,8 12,12 9,16 12,12 15,8"/></svg>`
@@ -19,7 +17,6 @@ const ACHV_ICON_HEART = `<svg viewBox="0 0 24 24" stroke-width="1.7" stroke-line
 
 const ACHV_TIER_CLASSES = ["pach_tier_locked", "pach_tier_bronze", "pach_tier_silver", "pach_tier_gold", "pach_tier_platinum"]
 const ACHV_TIER_TITLES_DEFAULT = ["未達標", "銅牌", "銀牌", "金牌", "白金"]
-
 
 const ACHV_CATEGORIES = [
     {
@@ -114,7 +111,7 @@ const ACHV_CATEGORIES = [
             {
                 key: "easy_completion", name: "初級完成度 - 主線模式初級關卡的完成百分比", icon: ACHV_ICON_BOOK,
                 dataSource: "stats", requiresLevelData: true,
-                certificateLevel: "easy",   // 【新增】滿級（100%）時，榮譽牆會多顯示一個列印證書的連結
+                certificateLevel: "easy",
                 getValue: (data) => {
                     const total = ACHV_Get_Total_Stage_Count("easy")
                     const completed = data ? (data.stages_completed_easy || 0) : 0
@@ -127,7 +124,7 @@ const ACHV_CATEGORIES = [
             {
                 key: "medium_completion", name: "中級完成度 - 主線模式中級關卡的完成百分比", icon: ACHV_ICON_KEYBOARD,
                 dataSource: "stats", requiresLevelData: true,
-                certificateLevel: "medium",   // 【新增】同上，中級也有證書；高級刻意不加──能打完的人太少，做了也沒什麼人用得到
+                certificateLevel: "medium",
                 getValue: (data) => {
                     const total = ACHV_Get_Total_Stage_Count("medium")
                     const completed = data ? (data.stages_completed_medium || 0) : 0
@@ -224,7 +221,6 @@ function ACHV_Format_Duration(totalSeconds){
     return `${Number.isInteger(hours) ? hours : hours.toFixed(1)} 小時`
 }
 
-// ===== 動態算出某難度在 Level_Data 裡「實際定義」的總關卡數 =====
 function ACHV_Get_Total_Stage_Count(difficulty){
     if(typeof Level_Data === "undefined" || !Level_Data[difficulty]) return 0
     return Level_Data[difficulty].chapter.reduce(function(sum, chapter){
@@ -232,7 +228,6 @@ function ACHV_Get_Total_Stage_Count(difficulty){
     }, 0)
 }
 
-// ===== 依數值算出等級（0 = 未達標，1~4 = 銅/銀/金/白金）=====
 function ACHV_Get_Tier_Index(value, thresholds){
     let tierIndex = 0
     for(let i = 0; i < thresholds.length; i++){
@@ -241,7 +236,6 @@ function ACHV_Get_Tier_Index(value, thresholds){
     return tierIndex
 }
 
-// ===== 目前這一階區間內的百分比（畫單項成就自己的進度條用）=====
 function ACHV_Get_Tier_Progress_Percent(value, thresholds, tierIndex){
     if(tierIndex === thresholds.length) return 100
     const lowerBound = tierIndex === 0 ? 0 : thresholds[tierIndex - 1]
@@ -250,13 +244,11 @@ function ACHV_Get_Tier_Progress_Percent(value, thresholds, tierIndex){
     return Math.max(0, Math.min(100, Math.round(percent)))
 }
 
-// ===== 算單一成就目前解鎖到第幾階，pending 成就固定回傳 0 =====
 function ACHV_Get_Unlocked_Tiers(achv, data){
     if(achv.pending) return 0
     const value = achv.getValue ? achv.getValue(data) : (data ? (data[achv.metric] || 0) : 0)
     return ACHV_Get_Tier_Index(value, achv.thresholds)
 }
-
 
 function ACHV_Compute_Total_From_Raw_Player_Stats(player_stats_record){
     if(!player_stats_record) return 0

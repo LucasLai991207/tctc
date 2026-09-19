@@ -1,29 +1,10 @@
-/* ============================================================
-   TCTC2-0-auth_ui.js
-   ------------------------------------------------------------
-   帳號系統的「畫面」那一半——nav 上的按鈕、登入/註冊彈窗，
-   全部用 JS 動態注入，不需要在每個 HTML 檔案裡手動加 nav 按鈕或
-   modal 的 HTML（跟 avatar_display.js 用同一種「自我執行 + DOMContentLoaded
-   注入」的做法），每個頁面只要多引入這一個 <script> 跟對應的 CSS 就好。
-
-   依賴：這個檔案假設 TCTC2-0-firebase.js 已經在它「之前」被載入
-   （用到裡面的 Register_With_Email_Inherit／Login_With_Google／
-   Get_Current_Account_Uid 等函式），所以引入順序一定要是：
-     firebase SDK (app/database/auth) → TCTC2-0-firebase.js → TCTC2-0-auth_ui.js
-   ============================================================ */
 (function () {
 
-    // 如果這個頁面沒有載入 Firebase Auth（理論上不該發生，因為現在每個
-    // 有 nav 的頁面都會引入），就不注入任何東西，避免點下去直接報錯
     if (typeof firebase === "undefined" || typeof firebase.auth !== "function") {
         console.log("[auth_ui] Firebase Auth 尚未載入，略過帳號 UI 注入")
         return
     }
 
-    // ===== 模組內部共用的狀態 =====
-    // pending_register：使用者在註冊表單按下送出的當下，把「要用哪個方式註冊」
-    // 先存起來，如果需要跳出「要不要繼承」的確認框，等玩家選完才會真的執行。
-    // { method: "email" | "google", email, password }
     let pending_register = null
 
     const AUTH_TOAST_PENDING_KEY = "tctc2.0-auth_toast_pending"
@@ -34,20 +15,12 @@
         return div.innerHTML
     }
 
-    // guest_preview：進到註冊分頁時就先預讀一次目前訪客資料（見下方
-    // Preload_Guest_Preview 的說明，包含「為什麼要提前讀，不能等按下註冊
-    // 才讀」的技術原因——跟 Google 登入彈窗的瀏覽器安全限制有關）
     let guest_preview_stats = null
     let guest_preview_should_prompt = false
 
-    // 【新增】記住開窗前使用者焦點在哪個元素，關窗時要還原回去，
-    // 是鍵盤操作/無障礙的基本禮貌，不然關窗後焦點會憑空消失
     let last_focused_element = null
 
-    /* ============================================================
-       建立 Modal 的 DOM 結構，一次建好、預設隱藏，之後只切換 class
-       ============================================================ */
-    function Build_Modal_Html() {
+        function Build_Modal_Html() {
         const wrap = document.createElement("div")
         wrap.id = "auth_modal_overlay"
         wrap.className = "auth_modal_overlay is_hidden"
@@ -152,9 +125,6 @@
         document.body.appendChild(wrap)
     }
 
-    // 切換 modal 裡目前顯示哪一個畫面（註冊/登入/繼承確認/處理中），
-    // 每次切換都先把全部畫面藏起來，再把目標畫面的 is_hidden 拿掉，
-    // 這樣永遠只會有一個畫面顯示，不用一個個判斷「上一個是誰、要不要藏」
     function Show_Auth_View(view_id) {
         document.querySelectorAll(".auth_view").forEach(function (el) {
             el.classList.add("is_hidden")
@@ -162,8 +132,7 @@
         const target = document.getElementById(view_id)
         if (target) {
             target.classList.remove("is_hidden")
-            // 【新增】切換到的畫面如果有輸入框，自動把焦點放上去，
-            // 這樣切過去馬上就能打字，Enter 送出也才找得到「現在是哪個畫面」
+
             const first_input = target.querySelector("input")
             if (first_input) first_input.focus()
         }
@@ -176,12 +145,9 @@
         Show_Auth_View(default_view || "auth_view_register")
         Clear_Auth_Errors()
 
-        // 【新增】視窗開著的時候鎖住背景捲動，避免滾輪/方向鍵讓視窗後面的頁面偷偷動，
-        // 同時記住現在的焦點在哪，關窗後要還原回去
         last_focused_element = document.activeElement
         document.body.style.overflow = "hidden"
 
-        // 一打開就先預讀訪客資料，理由見 Preload_Guest_Preview() 的註解
         Preload_Guest_Preview()
     }
     function Close_Auth_Modal() {
@@ -189,7 +155,6 @@
         if (overlay) overlay.classList.add("is_hidden")
         pending_register = null
 
-        // 【新增】還原背景捲動 + 焦點還給開窗前使用者原本在操作的元素
         document.body.style.overflow = ""
         if (last_focused_element && typeof last_focused_element.focus === "function") {
             last_focused_element.focus()
@@ -197,17 +162,9 @@
         last_focused_element = null
     }
 
-    /* ============================================================
-       【新增】視窗開著時的鍵盤行為：
-       - Esc：直接關閉視窗
-       - Enter：如果焦點正在輸入框裡，等同按下當下畫面的送出按鈕
-       - Tab：把焦點鎖在視窗裡循環，不會跳到背景頁面的按鈕/連結
-       全部包在同一支函式裡，靠「視窗有沒有被 is_hidden」來判斷要不要處理，
-       所以不用在開窗/關窗時額外 add/removeEventListener，少一種要同步的狀態。
-       ============================================================ */
-    function Handle_Modal_Keydown(event) {
+        function Handle_Modal_Keydown(event) {
         const overlay = document.getElementById("auth_modal_overlay")
-        if (!overlay || overlay.classList.contains("is_hidden")) return // 視窗沒開，不處理
+        if (!overlay || overlay.classList.contains("is_hidden")) return
 
         if (event.key === "Escape") {
             event.preventDefault()
@@ -216,8 +173,7 @@
         }
 
         if (event.key === "Enter") {
-            // 只有「正在輸入框裡」按 Enter 才觸發送出，避免焦點在關閉按鈕或
-            // 切換連結上時被誤觸（那些元素該用 Enter 觸發自己原本的 click 行為）
+
             if (!event.target.classList || !event.target.classList.contains("auth_input")) return
             event.preventDefault()
 
@@ -239,8 +195,7 @@
         if (!box) return
 
         const candidates = box.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')
-        // offsetParent 為 null 代表元素本身或祖先被 display:none 藏起來（例如另一個
-        // is_hidden 的 .auth_view），Tab 不該跳到看不見的欄位上
+
         const visible = Array.prototype.filter.call(candidates, function (el) {
             return el.offsetParent !== null
         })
@@ -339,14 +294,6 @@
         Route_After_Register_Choice()
     }
 
-    // Google 註冊按鈕：因為要保留「直接同步呼叫 signInWithPopup」這個特性
-    // （見 Preload_Guest_Preview 的說明），這裡分兩種情況處理：
-    // - 不需要問繼承（guest_preview_should_prompt 是 false）：
-    //   直接在這個 click handler 裡同步呼叫 Register_With_Google_Fresh
-    // - 需要問繼承：【不能】在這裡就開 Google 彈窗（還不知道要不要繼承），
-    //   先跳轉去「繼承確認」畫面；玩家在那個畫面按下「要」或「不要」時，
-    //   那兩顆按鈕各自的 click handler 才會呼叫 Google 登入——因為那也是
-    //   一個全新的、使用者剛點擊的手勢，一樣能同步開窗，不會被攔截。
     function Handle_Register_Google_Click() {
         Clear_Auth_Errors()
         pending_register = { method: "google" }
@@ -359,12 +306,9 @@
         Show_Auth_View("auth_view_inherit_confirm")
     }
 
-    // Email 路徑決定要不要跳出繼承確認畫面
     function Route_After_Register_Choice() {
         if (!guest_preview_should_prompt) {
-            // 沒有值得繼承的資料，兩種結果反正一樣，直接走「不繼承」路徑
-            // （沿用現有 anon_id 或換新的，對一個全新訪客來說沒有差別，
-            // 這裡選擇跟「不繼承」共用同一條程式路徑，邏輯比較單純）
+
             Execute_Register(false)
             return
         }
@@ -376,7 +320,7 @@
         Show_Auth_View("auth_view_loading")
         document.getElementById("auth_loading_text").textContent = "註冊中..."
 
-        if (!pending_register) return // 理論上不會發生，保險判斷
+        if (!pending_register) return
 
         if (pending_register.method === "google") {
             const fn = should_inherit ? Register_With_Google_Inherit : Register_With_Google_Fresh
@@ -390,7 +334,7 @@
 
     function Handle_Register_Result(success, error_message) {
         if (!success) {
-            // 註冊失敗，退回原本填寫的畫面（Google 沒有表單可退，退回註冊首頁）
+
             Show_Auth_View(pending_register && pending_register.method === "email" ? "auth_view_register" : "auth_view_register")
             Show_Auth_Error("auth_register_error", error_message || "註冊失敗，請稍後再試")
             return
@@ -400,10 +344,7 @@
         Close_Auth_Modal()
     }
 
-    /* ============================================================
-       登入表單送出
-       ============================================================ */
-    function Handle_Login_Submit() {
+        function Handle_Login_Submit() {
         Clear_Auth_Errors()
         const email = (document.getElementById("auth_login_email").value || "").trim()
         const password = document.getElementById("auth_login_password").value || ""
@@ -419,7 +360,7 @@
     }
     function Handle_Login_Google_Click() {
         Clear_Auth_Errors()
-        // 登入不用問繼承，直接呼叫（點擊當下同步開窗，不受彈窗攔截影響）
+
         Login_With_Google(Handle_Login_Result)
     }
     function Handle_Login_Result(success, error_message) {
@@ -434,17 +375,10 @@
         const display_name = localStorage.getItem("username") || localStorage.getItem(AUTH_ACCOUNT_DISPLAY_KEY) || "已登入玩家"
         sessionStorage.setItem(AUTH_TOAST_PENDING_KEY, "已登入：" + display_name)
 
-        // 登入後畫面上很多統計數字（profile.js 的雲端統計、nav 上的暱稱……）
-        // 是頁面載入當下就讀好塞進 DOM 的，不是即時反應 localStorage 變化，
-        // 直接重新整理頁面最單純，能確保所有地方都換成新身份的資料，
-        // 不用一個個手動找出哪些 UI 需要重新渲染
         window.location.reload()
     }
 
-    /* ============================================================
-       登入/登出提示 toast
-       ============================================================ */
-    function Build_Auth_Toast_Html() {
+        function Build_Auth_Toast_Html() {
         if (document.getElementById("auth_toast")) return
         const toast = document.createElement("div")
         toast.id = "auth_toast"
@@ -464,13 +398,10 @@
         }, 2600)
     }
 
-    /* ============================================================
-       Nav 上的帳號按鈕：未登入顯示「註冊」，已登入顯示帳號名稱 + 登出
-       ============================================================ */
-    function Build_Nav_Account_Item() {
+        function Build_Nav_Account_Item() {
         const item = document.createElement("div")
         item.id = "auth_nav_item"
-        item.className = "nav_dropdown" // 沿用既有的 .nav_dropdown 樣式（hover 展開子選單）
+        item.className = "nav_dropdown"
         return item
     }
 
@@ -486,15 +417,12 @@
         }
 
         // 已登入狀態：優先顯示玩家自己在設定頁取的暱稱（localStorage "username"），
-        // 沒取過就退回註冊時的 email/Google 顯示名稱，讓玩家一眼看到目前是哪個帳號
+
         const display_name = localStorage.getItem("username") || localStorage.getItem(AUTH_ACCOUNT_DISPLAY_KEY) || "已登入玩家"
         item.className = "" // 不再需要 .nav_dropdown 的 hover 展開樣式
         item.innerHTML = `<span class="auth_nav_logout" id="auth_nav_logout_btn" onclick="TCTC_Logout_Account()">登出</span>`
     }
 
-    // 掛在 window 上，讓 innerHTML 裡的 onclick（字串形式）能呼叫得到
-    // ——這幾個函式本身是這個 IIFE 內部的私有函式，外部沒有這個橋接的話
-    // onclick="..." 在全域作用域下會直接找不到函式、報錯
     window.TCTC_Open_Auth_Modal = function (view_id) { Open_Auth_Modal(view_id) }
     window.TCTC_Logout_Account = function () {
         Logout_Account(function () {
@@ -503,13 +431,10 @@
         })
     }
 
-    /* ============================================================
-       綁定所有事件、把 nav 按鈕跟 modal 一起插入頁面
-       ============================================================ */
-    function Bind_Modal_Events() {
+        function Bind_Modal_Events() {
         document.getElementById("auth_modal_close").addEventListener("click", Close_Auth_Modal)
         document.getElementById("auth_modal_overlay").addEventListener("click", function (event) {
-            // 點在半透明背景上（不是點在卡片本身）才關閉，避免點卡片內容誤觸關閉
+
             if (event.target.id === "auth_modal_overlay") Close_Auth_Modal()
         })
 
@@ -530,7 +455,6 @@
         document.getElementById("auth_inherit_yes_btn").addEventListener("click", function () { Execute_Register(true) })
         document.getElementById("auth_inherit_no_btn").addEventListener("click", function () { Execute_Register(false) })
 
-        // 【新增】Esc關閉／Enter送出／Tab焦點鎖定，見 Handle_Modal_Keydown 說明
         document.addEventListener("keydown", Handle_Modal_Keydown)
     }
 
@@ -545,10 +469,6 @@
             setTimeout(function () { Show_Auth_Toast(pending_toast) }, 300)
         }
 
-        // 把帳號按鈕插進每一個 .nav_css 容器的「最前面」（跟現有的「常見問題／模式／更多」
-        // 排在一起）。用 querySelectorAll 而不是 getElementById，是因為理論上一個頁面
-        // 只會有一個 .nav_css，但用 forEach 寫法比較保險，不會因為未來版面調整、
-        // 不小心變成兩個 .nav_css 就漏掉某一個。
         document.querySelectorAll(".nav_css").forEach(function (nav_css_el) {
             const item = Build_Nav_Account_Item()
             nav_css_el.insertBefore(item, nav_css_el.firstChild)
@@ -556,7 +476,6 @@
         Refresh_Nav_Account_State()
     })
 
-   
     window.addEventListener("pageshow", function (event) {
         if (event.persisted) {
             Refresh_Nav_Account_State()

@@ -11,13 +11,10 @@
     --text-rgb : 255, 255, 255;
 }
 
-/* ===== 半透明背景遮罩，蓋住整個畫面 =====
-   加上 backdrop-filter 讓背後的頁面呈現輕微毛玻璃感，
-   彈窗會感覺是「浮在畫面上的一層」，不是單純蓋一塊死黑 */
 .auth_modal_overlay{
     position: fixed;
     inset: 0;
-    z-index: 10000; /* 比 nav 的 z-index:9999 高一階，確保彈窗永遠蓋在 nav 上面 */
+    z-index: 10000;
 
     background-color: rgba(4, 9, 20, 0.6);
     backdrop-filter: blur(6px) saturate(1.1);
@@ -36,8 +33,6 @@
     display: none;
 }
 
-/* ===== 開啟動畫：輕輕從稍小、稍低的位置浮現定位，
-   不是單純的淡入，多一點「被放上桌」的儀式感 ===== */
 @keyframes authModalRise{
     from{
         opacity: 0;
@@ -52,10 +47,6 @@
     .auth_modal_box{ animation: none !important; }
 }
 
-/* ===== 彈窗卡片本體 =====
-   拿掉制式的滿版陰影卡片感：邊框改用細金線 + 雙層陰影
-   （近黑的貼合陰影 + 極淡的金色暈光），角落加裝飾角框，
-   呼應全站「證書 / 會員卡」式的金線美學（跟難度卡片、CTA glow 同一套語彙） */
 .auth_modal_box{
     position: relative;
     width: 100%;
@@ -71,8 +62,6 @@
 
     animation: authModalRise 380ms cubic-bezier(0.16, 1, 0.3, 1);
 }
-
-
 
 .auth_modal_close{
     position: absolute;
@@ -101,10 +90,6 @@
     display: none;
 }
 
-/* ===== 標頭：小標籤（eyebrow）＋ serif 大標題 ＋ 短金線 =====
-   套用跟首頁「網站介紹」「選擇你的程度」同一套語彙
-   （小金字 eyebrow + Noto Serif TC 大標題），
-   讓彈窗跟全站是同一個品牌，不是隨便套一個系統彈窗樣式 */
 .auth_modal_eyebrow{
     color: var(--champagne-gold);
     font-size: 0.72rem;
@@ -141,9 +126,6 @@
     margin: 0 0 0.5rem;
 }
 
-/* ===== Google 登入/註冊按鈕 =====
-   拿掉純白系統按鈕的廉價感：改成低調的深色描邊卡片，
-   保留 Google 官方四色圖示（辨識度需要），但整體融進深色彈窗 */
 .auth_google_btn{
     width: 100%;
     box-sizing: border-box;
@@ -200,9 +182,6 @@
     padding: 0 0.9rem;
 }
 
-/* ===== 表單欄位 =====
-   從「整個框都是外框線」改成「底線＋淡底色」的低調樣式，
-   聚焦時底線變金色並輕輕發光，質感比通用的方框 input 更精緻 */
 .auth_field_label{
     display: block;
 
@@ -248,9 +227,6 @@
     letter-spacing: 0.5px;
 }
 
-/* ===== 主要提交按鈕 =====
-   保留全站慣用的「金底深字，hover 反轉成金字空心」，
-   但加一點呼吸感陰影，讓它看起來更像實體的按壓元件 */
 .auth_submit_btn{
     width: 100%;
     box-sizing: border-box;
@@ -273,7 +249,6 @@
     box-shadow: 0 6px 18px rgba(var(--accent-rgb), 0.18);
     transition: all 200ms ease;
 }
-
 
 .auth_secondary_btn{
     width: 100%;
@@ -317,8 +292,6 @@
     transition: border-color 150ms ease;
 }
 
-
-/* ===== 繼承確認畫面的統計數字列表 ===== */
 .auth_inherit_stats{
     background-color: rgba(var(--text-rgb), 0.02);
     border: 1px solid var(--gold-line);
@@ -356,7 +329,6 @@
     padding: 2.4rem 0;
 }
 
-/* ===== Nav 上的帳號項目（未登入顯示「註冊」／已登入顯示帳號名稱＋登出） ===== */
 #auth_nav_item{
     white-space: nowrap;
     color: black;
@@ -372,7 +344,6 @@
     opacity: 1;
 }
 
-/* ===== 登入/登出提示 toast ===== */
 .auth_toast{
     position: fixed;
     left: 50%;

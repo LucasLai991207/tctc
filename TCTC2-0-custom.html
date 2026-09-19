@@ -9,11 +9,8 @@
     <meta name="description" content="貼上你自己想練的文字，不進排行榜、純粹練習。">
     <meta name="robots" content="noindex, nofollow">
 
-    <!--瀏覽器分頁小圖-->
     <link rel="icon" href="favicon-32x32.png" type="image/png" sizes="32x32">
-    
 
-    <!-- 社群分享預覽圖-->
     <meta property="og:image" content="https://lucaslai991207.github.io/tctc/os_image.png">
     <meta property="og:title" content="TCTC 繁體中文打字中心">
 
@@ -23,7 +20,6 @@
     <link rel="stylesheet" href="TCTC2-0-achv_notify.css">
     <link rel="stylesheet" href="TCTC2-0-mobile.css">
 
-    <!-- 全站配色主題系統：務必放在 CSS 之後、其他 script 之前，同步載入避免換色閃爍 -->
     <script src="TCTC2-0-theme.js"></script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -57,7 +53,7 @@
             display: block;
             filter: brightness(0) invert(1) drop-shadow(0 1px 3px rgba(0,0,0,0.5));
         }
-        /* ===== 打字音效開關：位置比照挑戰模式，排在返回鍵右邊 ===== */
+
         .game_sound_toggle_btn {
             position: fixed;
             top: 70px;
@@ -89,9 +85,6 @@
             padding: 3rem 1.5rem 5rem;
         }
 
-        /* ============================================================
-           【設定畫面】貼文字 + 常用文本清單
-           ============================================================ */
         .cus_setup_box{
             width: 100%;
             max-width: 900px;
@@ -229,7 +222,6 @@
         }
         .cus_save_title_input.is_hidden{ display: none; }
 
-        /* ===== 常用文本清單 ===== */
         .cus_saved_section{
             margin-top: 2.4rem;
         }
@@ -292,9 +284,6 @@
             letter-spacing: 0.5px;
         }
 
-        /* ============================================================
-           【練習畫面】跟挑戰模式的文章模式同一套視覺語言
-           ============================================================ */
         .cus_practice_wrap{
             width: 100%;
             display: flex;
@@ -541,7 +530,7 @@
                     <div class="nav_dropdown_panel">
                         <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-main.html'">主線模式</div>
                         <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-challenge_lobby.html'">挑戰模式</div>
-                        <!-- 【新增】自訂模式入口 -->
+
                         <div class="nav_dropdown_item nav_dropdown_item_active" onclick="window.location.href='TCTC2-0-custom.html'">自訂模式</div>
                     </div>
                 </div>
@@ -554,6 +543,7 @@
                         <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-profile.html'">設定</div>
                         <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-achievements.html'">個人榮譽牆</div>
                         <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-classroom.html'">我的教室</div>
+                        <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-feedback.html'">回報問題</div>
                     </div>
                 </div>
             </div>
@@ -565,7 +555,6 @@
 
     <main class="cus_wrap">
 
-        <!-- ===== 設定畫面：貼文字 + 常用文本 ===== -->
         <div class="cus_setup_box" id="cus_setup_section">
             <div class="cus_setup_header">
                 <h1 class="cus_setup_title">自訂練習模式</h1>
@@ -603,7 +592,6 @@
             </div>
         </div>
 
-        <!-- ===== 練習畫面 ===== -->
         <div class="cus_practice_wrap is_hidden" id="cus_practice_section">
             <div class="cus_topbar">
                 <div></div>
@@ -633,7 +621,6 @@
         </div>
     </main>
 
-    <!-- ===== 結算視窗 ===== -->
     <div class="cm_window is_hidden" id="cus_result_window">
         <div class="cm_panel cus_result_panel">
             <div class="cm_header_sub">練習總覽</div>
@@ -665,7 +652,6 @@
         </div>
     </div>
 
-    <!-- ===== 標點符號輸入指法說明視窗 ===== -->
     <div class="cm_window is_hidden" id="cus_punct_modal_overlay">
         <div class="cm_panel">
             <div class="cm_header_sub">輸入小技巧</div>
@@ -713,15 +699,14 @@
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
     <script src="TCTC2-0-firebase.js?v=3"></script>
-    <!-- 帳號系統：nav 上的帳號按鈕跟登入/註冊彈窗（純粹是全站共用的 nav 功能，
-         自訂模式本身完全不會呼叫任何寫入 Firebase 的函式） -->
+
     <script src="TCTC2-0-auth_ui.js"></script>
-    <!-- 全站共用：在線時長追蹤 -->
+
     <script src="TCTC2-0-online_time.js"></script>
-    <!-- 成就系統：只是讓這一頁也能跳「其他模式賺到的成就」通知，自訂模式本身不會產生任何成就進度 -->
+
     <script src="TCTC2-0-achv_data.js"></script>
     <script src="TCTC2-0-achv_notify.js"></script>
-    <!-- 打字音效／分享成績卡：共用模組 -->
+
     <script src="TCTC2-0-typing_sound.js"></script>
     <script src="TCTC2-0-share_card.js"></script>
     <script src="TCTC2-0-mobile_nav.js"></script>

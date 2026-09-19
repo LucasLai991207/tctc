@@ -18,7 +18,6 @@
     padding: 0 1.2rem;
 }
 
-/* ===== 載入中 / 找不到 / 未公開 —— 共用同一張置中卡片 ===== */
 .vp_status_card{
     margin-top: 4rem;
 
@@ -67,11 +66,10 @@
     margin: 0 auto;
     max-width: 28rem;
 
-    white-space: pre-wrap;   /* 簡介可能有換行，保留玩家原本輸入的排版，跟 .vp_player_intro 一致 */
+    white-space: pre-wrap;
     word-break: break-word;
 }
 
-/* ===== 自己預覽自己公開頁時的提示條 ===== */
 .vp_self_banner{
     background-color: rgba(var(--accent-rgb), 0.08);
     border: 1px solid rgba(var(--accent-rgb), 0.3);
@@ -91,7 +89,6 @@
     text-decoration: underline;
 }
 
-/* ===== 頁首：玩家名字 + LV 標籤 + 簡介 ===== */
 .vp_header{
     text-align: center;
     margin: 1.4rem 0 2rem;
@@ -126,11 +123,6 @@
     vertical-align: middle;
 }
 
-/* ============================================================
-   【新增】按讚按鈕：放在玩家名稱旁邊（LV 標籤右邊）
-   未讚過：空心愛心 + 金色描邊，可以點；已經讚過：實心愛心 + 金底，
-   disabled 不能再點——用「填滿與否」直接表達狀態，不用額外的文字說明。
-   ============================================================ */
 .vp_like_btn{
     display: inline-flex;
     align-items: center;
@@ -180,16 +172,10 @@
     max-width: 32rem;
     margin: 0.8rem auto 0;
 
-    white-space: pre-wrap;   /* 簡介可能有換行，保留玩家原本輸入的排版 */
+    white-space: pre-wrap;
     word-break: break-word;
 }
 
-/* ============================================================
-   【新增】頁首下方的 XP 等級進度條
-   刻意跟主大廳 xp_display.js 用的 .xp_progress_wrap 分開一組 class
-   （那組定義在 main_lobby.css，是給主大廳「玩家資訊卡」特定版位用的），
-   這裡樣式跟主大廳長得像，但走自己獨立的一份，不互相牽動。
-   ============================================================ */
 .vp_xp_wrap{
     max-width: 18rem;
     margin: 1rem auto 0;
@@ -204,8 +190,7 @@
 .vp_xp_fill{
     height: 100%;
     border-radius: 999px;
-    /* 跟 achievements.css 的 .achv_progress_fill 用同一組漸層色，
-       全站「進度條」的視覺語言統一 */
+
     background: linear-gradient(90deg, #b08d57, var(--champagne-gold));
     transition: width 400ms ease;
 }
@@ -217,13 +202,6 @@
     text-align: center;
 }
 
-/* ============================================================
-   【新增】已解鎖成就 —— 條列式清單
-   跟 achievements.html／achievements.css 那種「不論解鎖與否都整排列出、
-   每項都帶一條進度條＋caption」的完整版呈現方式不同：這裡只顯示
-   「已經解鎖」的成就，一項一行，只留圖示／名稱／位階三個欄位，
-   給快速瀏覽「這個人解鎖過什麼」用。
-   ============================================================ */
 .vp_achv_list{
     display: flex;
     flex-direction: column;
@@ -241,10 +219,6 @@
     border-bottom: none;
 }
 
-/* 圖示圓框：概念上跟 achievements.css 的 .pach_medal（圓框＋位階配色）一樣，
-   但刻意不共用那個 class——.pach_medal 的尺寸（4.6rem／3.4rem）是給
-   「一個成就佔一整條」的榮譽牆版面設計的，在這種一行一項的緊湊清單裡
-   會太搶版面，所以另外開一組更小尺寸、獨立維護的位階配色。 */
 .vp_achv_icon{
     flex-shrink: 0;
     display: flex;
@@ -263,8 +237,7 @@
     height: 1.05rem;
     stroke: var(--champagne-gold);
 }
-/* 位階配色跟 achievements.css 的 .pach_tier_xxx 用同一組色碼，
-   確保「別人公開頁看到的金牌」跟「榮譽牆本人頁面的金牌」是同一套顏色語言 */
+
 .vp_achv_icon.pach_tier_bronze{ border-color: #b08d57; }
 .vp_achv_icon.pach_tier_bronze svg{ stroke: #cd9b6a; }
 .vp_achv_icon.pach_tier_silver{ border-color: #c7ced6; }
@@ -276,7 +249,7 @@
 
 .vp_achv_name{
     flex: 1;
-    min-width: 0;   /* 名稱太長時能正常被截斷，不撐爆這一行 */
+    min-width: 0;
     color: rgba(var(--text-rgb), 0.9);
     font-size: 0.9rem;
     letter-spacing: 0.5px;
@@ -306,7 +279,6 @@
     margin: 0;
 }
 
-
 .vp_stat_card_head{
     display: flex;
     align-items: center;
@@ -318,14 +290,12 @@
     border-bottom: 1px solid rgba(var(--accent-rgb), 0.2);
 }
 .vp_stat_card_head_title{
-    /* 蓋掉 .profile_card_title 原本自帶的底線/間距，避免跟外層容器的
-       底線疊成兩條線；標題文字本身的顏色/字級/字距等其餘樣式繼續沿用 */
+
     flex: 1;
     margin: 0;
     padding-bottom: 0;
     border-bottom: none;
 }
-
 
 .vp_report_btn{
     display: inline-flex;
@@ -356,14 +326,6 @@
     line-height: 1;
 }
 
-/* ============================================================
-   【新增】檢舉表單彈窗
-   ------------------------------------------------------------
-   背景：fixed 蓋滿全螢幕的半透明黑，把底下內容壓暗，把焦點集中在
-   表單本身，是彈窗類 UI 最常見的做法。
-   本體：沿用全站卡片語言（深底、金框、圓角），跟 .profile_card 是
-   同一套視覺語彙，只是這裡是浮動置中而不是嵌在版面裡。
-   ============================================================ */
 .vp_report_backdrop{
     position: fixed;
     inset: 0;
@@ -400,8 +362,6 @@
     margin: 0 0 0.6rem;
 }
 
-/* 分類勾選：橫向自動換行的標籤群組，每個選項自己一個淡框，
-   跟 .vp_report_btn 一樣用「邊框描邊」語言，維持頁面內一致感 */
 .vp_report_category_list{
     display: flex;
     flex-wrap: wrap;

@@ -1987,6 +1987,57 @@ function Report_Player(target_anon_id, target_name, categories, reason, callback
 }
 
 /* ============================================================
+   【新增】意見回報（TCTC2-0-feedback.html 用）
+   ------------------------------------------------------------
+   跟上面的 Report_Player() 不一樣：那個是「檢舉某個玩家」，
+   這個是「玩家對網站本身」的錯誤回報／功能建議／其他意見，
+   存在獨立的 site_feedback/{push_id} 節點下，不跟 player_reports
+   混在一起（未來管理員後台要分別列出「玩家檢舉」跟「網站意見」，
+   資料分開存會比較好處理）。
+
+   status 欄位先固定寫死 "new"，是為了配合之後的管理員後台：
+   後台可以把某筆回報標記成 "read" / "resolved" 之類的處理狀態，
+   但玩家這邊送出的當下，狀態永遠只會是 "new"（規則也只允許
+   新建時寫 "new"，不能一開始就假造成別的狀態）。
+   ============================================================ */
+function Submit_Site_Feedback(category, title, content, contact, callback) {
+    const anon_id = Get_Anon_Id()
+    const trimmed_content = (content || "").trim()
+    if (!trimmed_content) {
+        callback(false, "詳細內容不能空白")
+        return
+    }
+
+    const valid_categories = ["bug", "suggestion", "other"]
+    const safe_category = valid_categories.indexOf(category) !== -1 ? category : "other"
+
+    // 跟其他地方一樣，暱稱用「送出當下」localStorage 存的那份快照，
+    // 不是即時查詢 player_stats——沒設過暱稱的訪客就留空，
+    // 後台看到空白名字就知道這是還沒取名的訪客
+    const saved_name = (localStorage.getItem("username") || "").trim()
+
+    tctc_db.ref("site_feedback").push({
+        category: safe_category,
+        title: (title || "").trim().slice(0, 50),
+        content: trimmed_content.slice(0, 1000),
+        contact: (contact || "").trim().slice(0, 100),
+        anon_id: anon_id,
+        name: saved_name.slice(0, 20),
+        page_url: (typeof location !== "undefined" ? location.href : "").slice(0, 200),
+        status: "new",
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+    })
+        .then(function () {
+            callback(true)
+        })
+        .catch(function (error) {
+            console.warn("[feedback] 送出意見回報失敗：", error.message)
+            callback(false, "送出失敗，請稍後再試一次")
+        })
+}
+
+
+/* ============================================================
    【新增】刪除這個瀏覽器（anon_id）在雲端留下的所有資料
    ------------------------------------------------------------
    刻意「不」刪除的東西：
@@ -2557,6 +2608,129 @@ function TCTC_Migrate_Existing_Stage_Progress(){
             localStorage.setItem(MIGRATION_FLAG_KEY, "1")
         }
     })
+}
+
+/* ============================================================
+   【新增】管理員後台（TCTC2-0-admin.html）用的函式
+   ------------------------------------------------------------
+   「誰是管理員」完全交給 database.rules.json 的 admins/{uid} 節點判斷，
+   這裡的 JS 端檢查只是為了「畫面要不要顯示管理員介面」，不是安全機制本身
+   ——真正擋住非管理員的是 Rules（site_feedback/.read、player_reports/.read
+   都是 root.child('admins').child(auth.uid).exists()），就算有人繞過
+   前端畫面直接呼叫這些函式，Rules 那關還是會擋下來，读不到/写不进。
+   ============================================================ */
+
+// 檢查「目前登入的帳號」是不是管理員。一定要先等 Wait_For_Auth_Ready，
+// 不然 firebase.auth().currentUser 可能還是 null（例如剛登入完、
+// onAuthStateChanged 還沒觸發），會誤判成「還沒登入」
+// 【注意】這裡的 UID 要跟 database.rules.json 裡寫死的那組一致。
+// Rules 那邊的寫法是「auth.uid === 這組 UID，或者 admins/{uid} 節點存在」，
+// 所以這裡也用同一套判斷：預設管理員直接認這組 UID（不用先去資料庫建
+// admins 節點就能用），之後若要加第二個管理員，再去 Firebase Console
+// 手動建 admins/{對方的uid}: true 即可，兩邊都不用再改程式碼。
+const TCTC_DEFAULT_ADMIN_UID = "itDBv0nzERgayUVmFQvGpLtdFnw2"
+
+function Check_Is_Admin(callback) {
+    Wait_For_Auth_Ready(function (user) {
+        if (!user) {
+            callback(false)
+            return
+        }
+        if (user.uid === TCTC_DEFAULT_ADMIN_UID) {
+            callback(true)
+            return
+        }
+        tctc_db.ref(`admins/${user.uid}`).once("value")
+            .then(function (snapshot) {
+                callback(snapshot.val() === true)
+            })
+            .catch(function () {
+                // 讀不到（例如根本不是 admin，Rules 直接拒絕）一律當作「不是管理員」，
+                // 不要把 permission_denied 這種預期內的拒絕當成系統錯誤處理
+                callback(false)
+            })
+    })
+}
+
+// 把某筆意見回報標記成處理狀態。status 只接受這三種值，跟 Rules 的
+// .validate 對應（Rules 那邊也要記得放寬成允許這三種值，不是只有 'new'）
+function Admin_Set_Feedback_Status(feedback_id, status, callback) {
+    const valid_status = ["new", "read", "resolved"]
+    if (valid_status.indexOf(status) === -1) {
+        callback(false)
+        return
+    }
+    tctc_db.ref(`site_feedback/${feedback_id}/status`).set(status)
+        .then(function () { callback(true) })
+        .catch(function (error) {
+            console.warn("[admin] 更新意見回報狀態失敗：", error.message)
+            callback(false)
+        })
+}
+
+/* ============================================================
+   【新增】管理員刪除「某個被檢舉玩家」的雲端資料
+   ------------------------------------------------------------
+   跟玩家自己在設定頁按「刪除所有資料」（Delete_All_Player_Data）
+   邏輯上是同一件事，差別只在於：這裡的 target_anon_id 是管理員
+   指定的「別人」，不是 Get_Anon_Id() 讀到的「自己」。
+
+   注意：這裡「不會」連帶清除主線／挑戰模式排行榜的分數
+   （leaderboard / challenge_leaderboard），因為那兩個節點是用
+   public_id 當 key，這裡拿到的是玩家的真正 anon_id，兩者對不起來，
+   要清的話得先反查 public_id——先不做這塊，管理員通常在意的是
+   「這個人的暱稱、統計數字、帳號名稱不要再出現」，分數留著頂多
+   排行榜多一筆看起來奇怪的紀錄，不是急迫的安全問題。
+   ============================================================ */
+function Admin_Delete_Player_Data(target_anon_id, callback) {
+    if (!target_anon_id) {
+        callback(false)
+        return
+    }
+
+    const updates = {}
+    ;[
+        "name", "wpm_sum", "wpm_count", "avg_wpm",
+        "acc_sum", "acc_count", "avg_acc",
+        "cg_wpm_sum", "cg_wpm_count", "avg_challenge_wpm",
+        "cg_acc_sum", "cg_acc_count", "avg_challenge_acc",
+        "online_seconds", "total_points", "hide_from_leaderboard",
+        "streak_current", "streak_longest", "streak_last_ts", "streak_total_days",
+        "longest_gap_days", "hide_profile_view", "intro", "public_id"
+    ].forEach(function (field) {
+        updates[`player_stats/${target_anon_id}/${field}`] = null
+    })
+    updates[`guest_numbers/${target_anon_id}`] = null
+
+    tctc_db.ref().update(updates)
+        .then(function () {
+            // usernames 節點要另外處理：不知道這個玩家的暱稱對應到哪一把
+            // usernames/{key}，所以用 orderByChild('anon_id') 反查出來再刪，
+            // 這步找不到也不算失敗（代表這個玩家從來沒佔用過暱稱）
+            tctc_db.ref("usernames").orderByChild("anon_id").equalTo(target_anon_id)
+                .once("value")
+                .then(function (snapshot) {
+                    const key_updates = {}
+                    snapshot.forEach(function (child) { key_updates[child.key] = null })
+                    if (Object.keys(key_updates).length === 0) {
+                        callback(true)
+                        return
+                    }
+                    tctc_db.ref("usernames").update(key_updates)
+                        .then(function () { callback(true) })
+                        .catch(function (error) {
+                            console.warn("[admin] 釋放暱稱失敗（其餘資料已刪除）：", error.message)
+                            callback(true) // 主要資料已經刪了，這步失敗不算整體失敗
+                        })
+                })
+                .catch(function () {
+                    callback(true) // 反查失敗也不算整體失敗，主要資料已經刪了
+                })
+        })
+        .catch(function (error) {
+            console.warn("[admin] 刪除玩家資料失敗：", error.message)
+            callback(false)
+        })
 }
 
 document.addEventListener("DOMContentLoaded", function(){

@@ -5,32 +5,28 @@
     <script src="TCTC2-0-domain_redirect.js"></script>
     <title>開始打字測驗 - TCTC 繁體中文打字練習中心</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="立即開始 TCTC 繁體中文打字測驗！挑戰你的每分鐘字數（WPM），精準記錄錯字與速度，快來重新整理挑戰你的極限紀錄！"> 
+    <meta name="description" content="立即開始 TCTC 繁體中文打字測驗！挑戰你的每分鐘字數（WPM），精準記錄錯字與速度，快來重新整理挑戰你的極限紀錄！">
     <meta name="robots" content="index, follow">
     <meta name="keywords" content="打字練習, 中文打字, 繁體中文打字, 練打字, WPM, TCTC, 打字測試, 打字, 打字網站, 練習打字, 初學者打字, tctc, 中文, 繁體中文, 繁中打字, 繁體中文打字網站">
 
-    <meta name="google-site-verification" content="fHfTpW9ouqdLEFGEQhLvwelT1xdZ7Sxmi-iKBHY7S_8" /> <!--google驗證-->
+    <meta name="google-site-verification" content="fHfTpW9ouqdLEFGEQhLvwelT1xdZ7Sxmi-iKBHY7S_8" />
 
-    <!--瀏覽器分頁小圖-->
     <link rel="icon" href="favicon-32x32.png" type="image/png" sizes="32x32">
-    
-    <!-- 社群分享預覽圖-->
+
     <meta property="og:image" content="https://lucaslai991207.github.io/tctc/os_image.png">
 
-    <!--分享時顯示的title-->
     <meta property="og:title" content="TCTC 中文打字速度測試">
-
 
     <link rel="stylesheet" href="TCTC2-0-intro_lobby.css">
     <link rel="stylesheet" href="TCTC2-0-main_lobby.css">
     <link rel="stylesheet" href="TCTC2-0-mobile.css">
-    <!-- 【新增】帳號系統彈窗樣式 -->
+
     <link rel="stylesheet" href="TCTC2-0-auth_ui.css">
-    <!--成就彈窗-->
+
     <link rel="stylesheet" href="TCTC2-0-achv_notify.css">
-    <!-- 【新增】XP 增加/升級提示卡樣式 -->
+
     <link rel="stylesheet" href="TCTC2-0-xp_notify.css">
-    <!-- 【新增】全站配色主題系統：務必放在 CSS 之後、其他 script 之前，同步載入避免換色閃爍 -->
+
     <script src="TCTC2-0-theme.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -76,8 +72,7 @@
             cursor: pointer;
         }
         .logo_style { margin-left: 10px; cursor: pointer; }
-        /* ===== 【修改】左上角四顆按鈕（返回／排行榜／鍵盤開關／再試一次）統一包在一個 flex 容器裡，
-           這樣任何一顆用 display:none 隱藏時，其他顆會自動往左靠攏、不會留空格 ===== */
+
         .game_top_left_controls {
             position: fixed;
             top: 70px;
@@ -87,9 +82,7 @@
             gap: 1rem;
             z-index: 100;
         }
-        /* ===== 【修改】返回按鈕：拿掉方框（底色+邊框），改成透明容器只當作
-           <img> 圖示的可點擊熱區。height/width 仍維持舊版的 2.3rem，
-           是為了保留原本的可點擊/觸控範圍，不會因為拿掉方框而縮水 ===== */
+
         .game_back_btn {
             height: 2.3rem;
             width: 2.3rem;
@@ -101,19 +94,15 @@
             cursor: pointer;
             flex-shrink: 0;
         }
-        /* 圖示本體：固定高度、寬度 auto 依原始比例縮放，避免圖片被拉伸變形。
-           【修改】不需要 hover 動畫，所以拿掉 transition 屬性——反正沒有變化要「過渡」*/
+
         .game_back_btn img {
             height: 1.6rem;
             width: auto;
             display: block;
-            /* 原本圖片本身是金色，這裡改用 filter 把它「洗成白色」：
-               brightness(0) 先把圖片所有不透明的像素壓成純黑，invert(1) 再把黑白反轉成白，
-               這個技巧的好處是不用重新輸出圖片檔案，同一張 PNG 就能透過 CSS 換色。
-               drop-shadow 疊在色彩轉換之後，維持原本的陰影層次感 */
+
             filter: brightness(0) invert(1) drop-shadow(0 1px 3px rgba(0,0,0,0.5));
         }
-        /* ===== 【新增】不用打完這關也能看排名的浮動按鈕（同樣拿掉方框） ===== */
+
         .game_rank_floating_btn {
             height: 2.3rem;
             width: 2.3rem;
@@ -129,10 +118,10 @@
             height: 1.4rem;
             width: auto;
             display: block;
-            /* 跟返回鍵同樣的白色轉換技巧，見上方 .game_back_btn img 的註解 */
+
             filter: brightness(0) invert(1) drop-shadow(0 1px 3px rgba(0,0,0,0.5));
         }
-        /* ===== 【新增】鍵盤顯示/隱藏切換（同樣拿掉方框） ===== */
+
         .kb_toggle_btn {
             height: 2.3rem;
             width: 2.3rem;
@@ -148,17 +137,14 @@
             height: 1.6rem;
             width: auto;
             display: block;
-            /* 跟返回鍵同樣的白色轉換技巧，見上方 .game_back_btn img 的註解 */
+
             filter: brightness(0) invert(1) drop-shadow(0 1px 3px rgba(0,0,0,0.5));
         }
-        /* 關閉狀態的半透明提示：套在按鈕本身，img 是子元素會一起被影響，
-           不需要另外針對 img 寫規則。這是「開關狀態」不是 hover，所以保留 */
+
         .kb_toggle_btn.kb_off {
             opacity: 0.45;
         }
-        /* ===== 【新增】打字音效開關：外觀比照上面幾顆浮動圖示按鈕，
-           但狀態表現方式跟鍵盤開關不一樣——鍵盤開關是「同一張圖 + opacity 變淡」，
-           這顆是「直接換成另一張圖」（有聲/靜音兩張圖示），所以不需要額外的 .xxx_off 樣式 ===== */
+
         .sound_toggle_btn {
             height: 2.3rem;
             width: 2.3rem;
@@ -174,11 +160,10 @@
             height: 1.6rem;
             width: auto;
             display: block;
-            /* 跟返回鍵同樣的白色轉換技巧，見上方 .game_back_btn img 的註解 */
+
             filter: brightness(0) invert(1) drop-shadow(0 1px 3px rgba(0,0,0,0.5));
         }
-        /* ===== 【修改】再試一次：現在有圖片素材了，比照上面三顆的做法，
-           改成透明容器 + <img>，一樣用 brightness(0) invert(1) 轉成白色 ===== */
+
         .game_retry_fixed_btn {
             height: 2.3rem;
             width: 2.3rem;
@@ -196,21 +181,19 @@
             display: block;
             filter: brightness(0) invert(1) drop-shadow(0 1px 3px rgba(0,0,0,0.5));
         }
-        /* ===== 【新增】外層容器：讓按鈕跟計時器水平並排、固定在畫面右上角 ===== */
-        /* 位置跟原本 .game_timer 單獨使用 position:fixed 時完全一樣，只是現在多包一層 */
+
         .game_timer_wrap {
             position: fixed;
             top: 5rem;
             right: 2rem;
             display: flex;
-            align-items: center;   /* 兩個圓形物體垂直置中，就會自然同高對齊 */
+            align-items: center;
             gap: 0.6rem;
             z-index: 100;
         }
-        /* ===== 【新增】直接輸入模式的即時 WPM / 正確率，樣式比照 .game_timer 圓角膠囊，
-           但寬度會隨內容變化，所以不用固定 width，讓兩個數字自己撐開 ===== */
+
         .game_live_stats {
-            display: none;   /* 預設隱藏，只有直接輸入模式才由 JS 切成 flex，見 Init() 裡的切換邏輯 */
+            display: none;
             align-items: center;
             gap: 0.9rem;
 
@@ -253,7 +236,7 @@
             letter-spacing: 2px;
             color: var(--champagne-gold);
         }
-        /* 剩最後 5 秒的警示樣式：文字變紅、微微放大提醒（幅度縮小，避免太搶眼）*/
+
         .game_timer.countdown_warning {
             color: var(--error-red);
             animation: countdown_pulse 700ms ease-in-out infinite;
@@ -262,11 +245,11 @@
             0%, 100% { transform: scale(1); }
             50%      { transform: scale(1.03); }
         }
-        /* ===== 【新增】倒數設定按鈕：跟計時器同高、並排在左邊 ===== */
+
         .countdown_settings_btn {
-            display: none; /* 只有中級關卡才由 JS 切成 flex 顯示 */
+            display: none;
             width: 2.3rem;
-            height: 2.3rem;   /* 跟 .game_timer 的 height 一致，兩個圓形物體才會同高 */
+            height: 2.3rem;
             flex-shrink: 0;
             align-items: center;
             justify-content: center;
@@ -275,31 +258,26 @@
             border: 1px solid rgba(var(--accent-rgb),0.6);
             border-radius: 50%;
             cursor: pointer;
-            /* 【修改】拿掉 hover 動畫，只留下 is_active 開關切換時的邊框過渡——
-               這個不是「滑鼠移過去」才出現的效果，是「倒數模式有沒有開啟」的
-               狀態指示，屬於功能性提示，不是裝飾性的 hover 動畫，所以保留 */
+
             transition: border-color 200ms ease, box-shadow 200ms ease;
         }
-        /* 【新增】圖示本體：跟其他四顆一樣，用 brightness(0) invert(1) 把
-           alarm.png 轉成白色，維持整組圖示風格一致 */
+
         .countdown_settings_btn img {
             height: 1.3rem;
             width: auto;
             display: block;
             filter: brightness(0) invert(1) drop-shadow(0 1px 3px rgba(0,0,0,0.5));
         }
-        /* 開關開啟時，按鈕邊框亮一點，讓玩家一眼看出目前有沒有套用倒數。
-           這是「狀態」不是「hover」，滑鼠移開之後只要倒數模式還開著，紅框就會繼續顯示 */
+
         .countdown_settings_btn.is_active {
             border-color: red;
             box-shadow: 0 0 8px red;
         }
 
-        /* ===== 【新增】倒數設定彈出視窗 ===== */
         .countdown_modal_overlay {
-            display: none;               /* 由 JS 加上 .show 才會出現 */
+            display: none;
             position: fixed;
-            inset: 0;                    /* 等同 top:0; right:0; bottom:0; left:0; */
+            inset: 0;
             background-color: rgba(0,0,0,0.55);
             align-items: center;
             justify-content: center;
@@ -354,7 +332,7 @@
         .countdown_modal_hint {
             margin: 1rem 0 0 0;
             padding-top: 0.8rem;
-            border-top: 1px solid rgba(var(--accent-rgb),0.2); /* 跟上面的設定列做出區隔，不會擠在一起 */
+            border-top: 1px solid rgba(var(--accent-rgb),0.2);
             font-size: 0.78rem;
             line-height: 1.6;
             color: gray;
@@ -386,7 +364,6 @@
             letter-spacing: 1px;
         }
 
-        /* ===== 【新增】「打不出標點符號？」提示按鈕（比照挑戰模式 cg_punct_hint_btn）===== */
         .cg_punct_hint_btn{
             color: var(--champagne-gold);
             margin-left: 0.6rem;
@@ -398,7 +375,7 @@
         .cg_punct_hint_btn:hover{
             color: #fff;
         }
-        /* 標點符號說明視窗內容比較多，沿用倒數設定視窗的外框樣式，但寬度加大一點 */
+
         .game_punct_modal{
             width: min(40rem, 90vw);
         }
@@ -432,10 +409,10 @@
             align-items: center;
             gap: 2rem;
         }
-        .game_stage_info { 
+        .game_stage_info {
             display: flex;
             flex-direction: column;
-            text-align: center; 
+            text-align: center;
             align-self: stretch;
             width: 100%;
             box-sizing: border-box;
@@ -488,7 +465,6 @@
 
             overflow: var(--box-overflow, hidden);
             max-height: var(--container-max-height, none);
-            
 
         }
         .game_char_box {
@@ -509,7 +485,7 @@
             color: #fff;
 
             transition: all 150ms ease;
-            
+
             padding-left: 0.2rem;
             padding-bottom: 0.2rem;
         }
@@ -531,14 +507,14 @@
             padding-top: 0.2rem;
         }
         }
-        /* 目前要打的那格：金框發光 */
+
         .game_char_box.current {
             outline: 2px solid var(--champagne-gold);
             box-shadow: 0 0 6px rgba(var(--accent-rgb),0.5);
 
             background-color: var(--darker-blue)
         }
-        /* 打對的格子：綠色 */
+
         .game_char_box.correct {
             background-color: rgba(80,180,100,0.2);
 
@@ -546,25 +522,18 @@
 
             color: rgb(140,220,140);
         }
-        /* 打錯的格子：紅色 */
+
         .game_char_box.wrong {
             background-color: rgba(200,60,60,0.5);
             outline: 2px solid rgba(200,60,60,0.7);
         }
-        /* ===== 【新增】卡住提示動畫：格子只有「金框 current」、沒有「紅框 wrong」的狀態下
-           打錯了，上下震動一下，提醒玩家「你是被跳過來卡在這裡的，要先打對才能繼續」。
-           跟一般打錯的紅框 .wrong 不同，這裡刻意「不」加紅框，維持金框樣式，
-           只是加一個震動效果，所以底色/外框完全交給 .current 處理，這裡只負責動畫本身。
-           【修正】原本只有 .game_char_box 有這條規則，中級「逐字注音」模式的格子用的是
-           .bopomofo_char（不是 .game_char_box），所以這裡把 .bopomofo_char 也一起加進來。 ===== */
+
         .game_char_box.box_shake,
         .bopomofo_char.box_shake {
             animation: box_shake_vertical 300ms ease;
         }
         @keyframes box_shake_vertical {
-            /* 0% / 100% 都回到原位，這樣動畫播完格子不會「定格」在偏移的位置，
-               中間用「上→下→上→下，幅度遞減」營造出真實震動的手感（跟單純左右滑動的 shake 不同，
-               這裡刻意都用 translateY 做垂直位移，符合「上下震動」的需求） */
+
             0%   { transform: translateY(0); }
             20%  { transform: translateY(-6px); }
             40%  { transform: translateY(4px); }
@@ -572,13 +541,7 @@
             80%  { transform: translateY(2px); }
             100% { transform: translateY(0); }
         }
-        /* ===== 【新增】打錯的那個字：從格子上方「跳出來」淡入淡出 =====
-           玩家打錯的當下（包含卡住之後還繼續狂按），把「他實際按出來的注音符號」用一個
-           小字浮出來，往上飄一小段再淡出，讓玩家清楚看到「你剛剛打的是這個字，不對」。
-           .game_char_box / .bopomofo_char 需要 position: relative 當定位基準，
-           每次打錯都會「新增一個」這種 span（不是重複用同一個），
-           這樣狂按的時候會一顆一顆往上冒出來，跟 box_shake 用同一格 class 重播動畫不同，
-           視覺上比較像「連續彈出」而不是「疊在一起沒有變化」。 */
+
         .game_char_box,
         .bopomofo_char {
             position: relative;
@@ -597,7 +560,7 @@
             animation: wrong_char_popup_fade 550ms ease forwards;
         }
         @keyframes wrong_char_popup_fade {
-            /* 淡入（微微放大）→ 停留一下 → 邊往上飄邊淡出 */
+
             0%   { opacity: 0; transform: translate(-50%, 4px) scale(0.8); }
             18%  { opacity: 1; transform: translate(-50%, -14px) scale(1.05); }
             70%  { opacity: 1; transform: translate(-50%, -24px) scale(1); }
@@ -610,10 +573,10 @@
 
             margin-bottom: 3rem;
         }
-        /* 結果畫面預設隱藏，加上 .show 才顯示 */
+
         .game_result {
             display: none;
-            
+
             flex-direction: column;
             align-items: center;
             gap: 1.5rem;
@@ -634,9 +597,7 @@
             font-size: 1rem;
             letter-spacing: 4px;
         }
-        /* 【新增】過關／未過關狀態徽章：放在 RESULT 標題正下方、WPM 數字正上方，
-           是玩家結算後第一眼會看到的資訊，比起只靠邊框變紅色，這裡直接用文字
-           講清楚「有沒有過關」，未過關再額外加一個提示句，說明這關還不算數。 */
+
         .game_result_status {
             display: none;
 
@@ -668,7 +629,7 @@
             0%, 100% { box-shadow: 0 0 0 rgba(var(--error-rgb), 0); }
             50% { box-shadow: 0 0 12px rgba(var(--error-rgb), 0.55); }
         }
-        /* 未過關時的提示句，放在狀態徽章下面，用比較小、比較不搶眼的字說明原因 */
+
         .game_result_fail_hint {
             display: none;
 
@@ -711,7 +672,7 @@
             margin-top: 0.3rem;
         }
         .game_retry_btn {
-            display: none !important;  /* 【修改】改用左上角固定圖示按鈕，這個保留在 DOM 只是避免既有程式碼報錯 */
+            display: none !important;
             box-sizing: border-box;
 
             background-color: var(--champagne-gold);
@@ -754,8 +715,7 @@
             color: var(--champagne-gold);
             border: 1px solid var(--champagne-gold);
         }
-        /* 【新增】未過關時「再來一次」按鈕：跟「下一關/回到大廳」的金色做出區隔，
-           改用紅色系，讓玩家一眼就知道這顆按鈕現在的意義不一樣（不是往前進，是重打） */
+
         .next_game_btn.next_game_btn_retry {
             background-color: var(--error-red);
             color: rgba(255, 255, 255, 0.95);
@@ -786,10 +746,6 @@
             transition: all 300ms ease;
         }
 
-        /* 【新增】「查看排名」+「分享成績卡」的並排容器：
-           display:flex 讓兩顆按鈕水平排在一起（父層 .game_result 是 column 方向，
-           這一個 div 本身只算一個 flex 子項，裡面才是真正橫向排列的地方）；
-           flex-wrap 讓手機窄螢幕擠不下兩顆時可以自動換行，不會把版面撐爆。 */
         .game_result_share_rank_row {
             display: flex;
             gap: 1rem;
@@ -803,7 +759,7 @@
             font-size: 0.8rem;
             margin-left: 8px;
         }
-        /* ===== 中級專用：輸入模式切換 ===== */
+
         .mode_toggle_wrap {
             display: none;
             align-items: center;
@@ -863,56 +819,43 @@
         }
         .game_stage_target1{
             margin-top: 3rem;
-            padding: 1rem 2rem;              /* 原本 0.2rem 1rem，改成跟挑戰模式的目標框（.cg_article_box）一致 */
+            padding: 1rem 2rem;
 
-            font-size: 1.35rem;              /* 原本 1.2rem */
-            line-height: 2;                  /* 原本 2rem。改成跟挑戰模式一樣用「倍數」寫法，
-                                                 這樣下面的 max-height calc() 才能直接沿用同一套算法 */
+            font-size: 1.35rem;
+            line-height: 2;
 
             width: 100%;
             box-sizing: border-box;
             min-height: 10vh;
 
-            background-color: var(--dark-blue); /* 原本 var(--light-blue)，改成挑戰模式那種深藍卡片底色 */
-            color: rgb(170,170,170);            /* 原本 #ffffff，改成挑戰模式「還沒打到的字」那種灰色 */
+            background-color: var(--dark-blue);
+            color: rgb(170,170,170);
 
-            border: 1px solid rgba(var(--accent-rgb),0.25); /* 原本是 2px 邊框 + 額外的金色 border-top 裝飾線，
-                                                          改成挑戰模式那種細邊框、四邊一致，不特別強調頂部 */
-            border-radius: 12px;                      /* 原本 5px */
+            border: 1px solid rgba(var(--accent-rgb),0.25);
+            border-radius: 12px;
 
             display: flex;
             justify-content: flex-start;
             align-items: center;
             text-align: left;
 
-            letter-spacing: 1px;             /* 原本 4px，改成挑戰模式的字距 */
-
+            letter-spacing: 1px;
 
             flex-wrap: wrap;
 
-            cursor: text;                     /* 挑戰模式有這個，滑鼠移過去會變成「這是文字」的游標提示 */
+            cursor: text;
 
-            /* ===== 跟 .game_char_container 同一套「CSS 變數控制」寫法 =====
-               預設值 none / visible，維持原本逐字注音模式的外觀完全不變；
-               只有直接輸入模式（Render_Text_Input_Stage）才會去 setProperty 這兩個變數，
-               讓長篇文章（挑戰模式那種）用固定高度＋捲動呈現，不會把整頁撐開。
-               【修正】現在中級「逐字注音」模式（normal）也會套用同一組變數，
-               讓兩種輸入模式的目標框高度一致，切換模式時版面不會跳動、也不會爆版。 */
             max-height: var(--target1-max-height, none);
             overflow-y: var(--target1-overflow, visible);
         }
-        /* ===== 【新增】直接輸入模式：目標句子逐字即時比對顯示 ===== */
-        /* 一般可打的字（不含括號注音提示） */
+
         .target1_char {
             transition: color 150ms ease, background-color 150ms ease, outline 150ms ease;
             border-radius: 3px;
             padding: 0 1px;
             padding-left: 4px;
         }
-        /* ===== 【新增】直接輸入模式的輸入框（#game_container_input_id 是 Render_Text_Input_Stage 動態建立的 <textarea>）=====
-           因為這個 textarea 是 JS 用 .style.xxx 動態產生的，pseudo-element（::-webkit-scrollbar）
-           沒辦法用 inline style 設定，所以額外拉一段用 id 選到它，跟 nav / ime_warning_popup 等其他
-           id-based 樣式維持一致的寫法習慣。 */
+
         #game_container_input_id{
             scrollbar-width: thin;
             scrollbar-color: rgba(var(--accent-rgb),0.5) transparent;
@@ -928,37 +871,33 @@
         #game_container_input_id::placeholder{
             color: rgba(255,255,255,0.35);
         }
-        /* 已經打過、而且打對的字：綠色 */
+
         .target1_char.correct {
             color: rgb(140,220,140);
             background-color: rgba(80,180,100,0.25);
         }
-        /* 已經打過、但是打錯的字：紅色（讓玩家馬上發現打錯在哪） */
+
         .target1_char.wrong {
             color: #fff;
             background-color: rgba(200,60,60,0.65);
         }
-        /* 玩家目前該打的下一個字：金框提示位置 */
+
         .target1_char.current {
             outline: 2px solid var(--champagne-gold);
             background-color: rgba(var(--accent-rgb),0.15);
         }
-        /* 括號注音提示（例如：他摒（ㄅㄧㄥˋ）棄了...）：不用打，維持灰色不參與比對 */
+
         .target1_annotation {
             color: gray;
             font-size: 0.8em;
         }
 
-        /* ===== 【新增】中級「逐字注音」模式：輸入框樣式化 ===== */
-        /* 外層容器：長得跟「直接輸入」模式的 <input> 一模一樣（同樣的背景色、字級、留白），
-           讓玩家不管選哪種輸入模式，畫面上的「輸入框」看起來都是同一種東西 */
         #bopomofo_input_bar {
             display: flex;
             flex-wrap: wrap;
             box-sizing: border-box;
         }
-        /* 逐字打的注音符號：沿用跟 target1_char 一樣的配色邏輯（正確綠、錯誤紅、當前金框），
-           但用 inline 文字呈現，不再是一格一格分開的方框，視覺上更像輸入框裡的文字 */
+
         .bopomofo_char {
             transition: color 150ms ease, background-color 150ms ease, outline 150ms ease;
             border-radius: 3px;
@@ -977,7 +916,7 @@
             outline: 2px solid var(--champagne-gold);
             background-color: rgba(var(--accent-rgb),0.15);
         }
-        /* ===== 【新增】即時反饋鍵盤（印在輸入框底下，非浮動）===== */
+
         .live_keyboard {
             width: 100%;
             max-width: 900px;
@@ -1017,8 +956,7 @@
         .kb_key.kb_wide_1 { flex: 1.6 1 0; }
         .kb_key.kb_wide_2 { flex: 2 1 0; }
         .kb_key.kb_space { flex: 6 1 0; }
-        /* 【新增】空白鍵縮窄版本：把原本 flex:6 讓給右邊的方向鍵組騰出空間，
-           讓方向鍵可以跟空白鍵擠在「同一排」，不用另外多開一排撐高整個鍵盤高度。 */
+
         .kb_key.kb_space_narrow { flex: 3 1 0; }
         .kb_key.kb_inactive {
             color: rgba(255,255,255,0.25);
@@ -1046,22 +984,14 @@
             color: var(--champagne-gold);
         }
         .kb_key.kb_current .kb_letter { color: var(--champagne-gold); opacity: 0.75; }
-        /* ===== 【新增】組合鍵的「輔助鍵」提示（例如打全形逗號需要 Ctrl + ,）=====
-           故意跟 .kb_current「實線外框 + 上浮」的樣式不同：
-           虛線外框、不上浮，代表「這顆是按住不放的輔助鍵」，
-           跟主鍵（真正要按下去的那顆、有實線金框並會上浮）在視覺上明確分開。
-           兩顆會「同時」被加上各自的 class（在 Sync_Live_Keyboard 裡一次做完），
-           不是先亮輔助鍵、打完才換主鍵亮，玩家不用分兩次按鍵才看得懂提示。
-           寫在 .kb_current 後面：兩者 class 數量相同（都是兩個 class 疊加），
-           CSS 特異度打平時由「原始碼順序」決定勝負，寫在後面才能確保
-           .kb_inactive 那組「變暗」的樣式不會蓋掉這裡要的金色提示。 */
+
         .kb_key.kb_current_modifier {
             background-color: rgba(var(--accent-rgb), 0.08);
             border: 1px dashed var(--champagne-gold);
             color: var(--champagne-gold);
         }
         .kb_key.kb_current_modifier .kb_zhuyin { color: var(--champagne-gold); opacity: 0.85; }
-        
+
         .kb_key.kb_flash_wrong {
             background-color: rgba(var(--error-rgb), 0.4);
             border-color: var(--error-red);
@@ -1071,11 +1001,7 @@
             background-color: rgba(255,255,255,0.18);
             border-color: rgba(255,255,255,0.4);
         }
-        /* ===== 【修改】上下左右方向鍵：不再另外多開兩排（那樣會把整個鍵盤撐高，
-           頁面可能被撐到需要捲動），改成塞進「跟空白鍵同一排」的右下角，
-           在 CtrlRight 後面接一個獨立的小容器 .kb_arrow_cluster，
-           內部自己用兩個矮扁的小排（上排只有 ↑、下排 ← ↓ →）拼成方向鍵的形狀，
-           整體高度控制在跟其他按鍵同一排（44px）差不多，不會多佔一整排的垂直空間。 */
+
         .kb_arrow_cluster {
             display: flex;
             flex-direction: column;
@@ -1100,7 +1026,7 @@
             .live_keyboard { display: none !important; }
             .kb_toggle_btn { display: none !important; }
         }
-        /* 【新增】手機寬度不夠放「計時器 + 即時數據」整排，把即時數據的字級/間距縮小 */
+
         @media (max-width: 480px) {
             .game_live_stats{
                 gap: 0.55rem;
@@ -1114,7 +1040,6 @@
             }
         }
 
-        /* ===== 【新增】新按鍵互動教學畫面 ===== */
         .key_intro_wrap {
             display: flex;
             flex-direction: column;
@@ -1163,7 +1088,7 @@
         .key_intro_feedback_bad {
             color: rgb(240,120,120);
         }
-        /* 【新增】教學說明頁裡的「示範／示範按鈕」共用 hover 效果 */
+
         .tut_demo_btn:hover {
             background-color: rgba(var(--accent-rgb), 0.18) !important;
         }
@@ -1173,7 +1098,7 @@
     <nav id="nav">
         <img src="TCTC2.0 logo.png" class="logo_style" onclick="window.location.href='TCTC2-0-main.html'">
         <div class="nav_css">
-            <!-- <div>登入</div> -->
+
             <div onclick="window.location.href='index.html'">關於我們</div>
             <div class="nav_dropdown">
                 模式 <span class="nav_dropdown_arrow">≡</span>
@@ -1192,6 +1117,7 @@
                         <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-profile.html'">設定</div>
                         <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-achievements.html'">個人榮譽牆</div>
                         <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-classroom.html'">我的教室</div>
+                        <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-feedback.html'">回報問題</div>
 
                     </div>
                 </div>
@@ -1199,38 +1125,29 @@
         </div>
     </nav>
 
-
     <div class="game_top_left_controls">
         <div class="game_back_btn" onclick="window.location.href='TCTC2-0-main.html'"><img src="back_pointer_gold.png" alt="返回"></div>
         <div class="game_rank_floating_btn" id="game_rank_floating_btn" title="查看這關排名（不用打完也能看）" onclick="window.location.href='TCTC2-0-ranking.html?stage=' + encodeURIComponent(stageId) + '&return_to=' + encodeURIComponent(window.location.href)"><img src="trophy_gold.png" alt="排行榜"></div>
-        <!-- 【新增】即時反饋鍵盤開關、再試一次：跟返回鍵、排行榜鍵同一排 -->
+
         <button type="button" class="kb_toggle_btn" id="kb_toggle_btn" title="顯示/隱藏鍵盤"><img src="keyboard_gold.png" alt="鍵盤開關"></button>
-        <!-- 【新增】打字音效開關：同一排最後一顆，圖示會依照目前開/關狀態換成
-             medium-volume.png（有聲）或 mute.png（靜音），初始圖示由 JS 在頁面載入時決定 -->
+
         <button type="button" class="sound_toggle_btn" id="sound_toggle_btn" title="開啟/關閉打字音效"><img id="sound_toggle_icon" src="mute.png" alt="音效開關"></button>
-        <!-- 【修改】改成整頁重新整理（而不是呼叫 Init() 軟重設），
-             這樣每次「再試一次」都會被 TCTC2-0-firebase.js 的 Sync_Pending_Page_Views() 記成一次新的瀏覽次數，
-             跟「刷新頁面或換頁都要算一次」的既有設計一致 -->
+
         <div class="game_retry_fixed_btn" id="game_retry_fixed_btn" title="再試一次" onclick="window.location.reload()"><img src="refresh-arrow.png" alt="再試一次"></div>
     </div>
 
-    <!--外層容器：讓「倒數設定按鈕」跟「計時器」水平並排、同高對齊，整組固定在原本計時器的位置-->
     <div class="game_timer_wrap">
-        <!--中級專用：倒數設定小按鈕，點開才會跳出設定視窗，平常不佔畫面空間-->
+
         <button type="button" class="countdown_settings_btn" id="countdown_settings_btn" title="倒數模式設定"><img src="alarm.png" alt="倒數模式設定"></button>
 
         <div class="game_timer" id="game_timer">00：00</div>
 
-        <!--【新增】直接輸入模式（基礎輸入／中級「直接輸入」／高級速度挑戰）專用的即時數據，
-             跟挑戰模式頂欄的 WPM / 正確率是同一套樣式；逐字注音模式不需要這組數字
-             （因為每打一個字就已經即時上色反饋了），預設隱藏，由 JS 依關卡類型切換-->
         <div class="game_live_stats" id="game_live_stats">
             <div class="game_live_stat">WPM<span id="game_live_wpm">0</span></div>
             <div class="game_live_stat">正確率<span id="game_live_acc">100%</span></div>
         </div>
     </div>
 
-    <!--倒數設定彈出視窗，預設隱藏（display:none 由 CSS 的 .show 控制）-->
     <div class="countdown_modal_overlay" id="countdown_modal_overlay">
         <div class="countdown_modal">
             <div class="countdown_modal_header">
@@ -1261,7 +1178,6 @@
         </div>
     </div>
 
-    <!-- ===== 【新增】標點符號輸入指法說明視窗（比照挑戰模式的 cg_punct_modal_overlay）===== -->
     <div class="countdown_modal_overlay" id="game_punct_modal_overlay">
         <div class="countdown_modal game_punct_modal">
             <div class="countdown_modal_header">
@@ -1296,13 +1212,13 @@
                     • Mac：shift + /<br><br>
                 </div>
 
-                <div class="cg_punct_content_min_text">    
+                <div class="cg_punct_content_min_text">
                     <span class="cg_punct_item_name">驚嘆號！</span> <br>
                     • Windows：Ctrl + shift + 1（1 為注音ㄅ的按鍵）<br>
                     • Mac：shift + 1<br><br>
                 </div>
 
-                <div class="cg_punct_content_min_text">    
+                <div class="cg_punct_content_min_text">
                     <span class="cg_punct_item_name">逗號，</span> <br>
                     • Windows：Ctrl + ,（, 為注音ㄝ的按鍵）<br>
                     • Mac：shift + ,<br><br>
@@ -1323,54 +1239,47 @@
             <div class="game_stage_name" id="game_stage_name">載入中...</div>
             <div class="gmae_stage_name3" id="game_stage_name3">無提示詞</div>
 
-            <!--中級專用：輸入模式切換（逐字注音 / 直接輸入）-->
             <div class="mode_toggle_wrap" id="input_mode_toggle"></div>
 
-            <!--中級圖片-->
             <img src="keyboard-computer-keys-white.avif" id="typing_img_2" style="
             display: none;
 
             width: 600px;
             height: 200px;
 
-            object-fit: cover; 
+            object-fit: cover;
             object-position: center;
-            margin: 1rem auto 0 auto; 
+            margin: 1rem auto 0 auto;
             opacity: 0.8;
             border-radius: 14px;
             box-shadow: 0px 3px 10px rgba(0, 0, 0, 0.3);
             ">
-            
-            <!--中級圖片-->
+
             <img src="tctc-typing_mec_img.png" id="typing_img_1" style="
             display: none;
             max-width: 70vw;
-            margin: 1rem auto 0 auto; 
+            margin: 1rem auto 0 auto;
             border-radius: 14px;
             box-shadow: 0px 3px 3px rgba(0, 0, 0, 0.3);
             opacity: 0.8;
             ">
 
-
             <div class="game_stage_target1" id="game_stage_target1" style="display: none;">
                 目標文字
             </div>
 
-            
-            
         </div>
 
         <div class="game_char_container" id="game_char_container"></div>
 
-        <!-- 【新增】即時反饋鍵盤：印在輸入框正下方，非浮動 -->
         <div class="live_keyboard" id="live_keyboard"></div>
 
         <div class="game_input_hint">--真正的高手打字從不看鍵盤--<span class="cg_punct_hint_btn" id="game_punct_hint_btn">打不出標點符號？</span></div>
-        <!-- 【修改】同上，改成整頁重新整理 -->
+
         <button class="game_retry_btn" onclick="window.location.reload()">再試一次</button>
         <div class="game_result" id="game_result" style="z-index: 9999;">
             <div class="game_result_title">RESULT</div>
-            <!-- 【新增】過關／未過關狀態徽章 + 未過關提示句，內容由 ShowResult() 動態填入 -->
+
             <div class="game_result_status" id="game_result_status"></div>
             <p class="game_result_fail_hint" id="game_result_fail_hint"></p>
             <div class="game_result_wpm" id="result_wpm">0<span>WPM</span></div>
@@ -1389,18 +1298,13 @@
                 </div>
             </div>
             <button class="next_game_btn" onclick="Find_next_game(stageId)">下一關</button>
-            <!-- 【修正】原本這兩顆各自是 .game_result 底下獨立的 flex 子項，
-                 而 .game_result 是 flex-direction: column，導致兩顆還是各占一行、直的疊在一起，
-                 沒有真的並排。包一層 .game_result_share_rank_row（display:flex）進去，
-                 讓這兩顆變成同一個 flex 子項裡的東西，才會真正水平並排。 -->
+
             <div class="game_result_share_rank_row">
                 <button class="rank_view_btn" id="rank_view_btn" onclick="window.location.href='TCTC2-0-ranking.html?stage=' + encodeURIComponent(stageId) + '&return_to=' + encodeURIComponent(window.location.href)">🏆 查看這關排名</button>
-                <!-- 【新增】分享成績卡：點下去呼叫 Share_Current_Result()，
-                     這個函式會拿 ShowResult() 裡剛算好的 wpm/acc/關卡名稱，交給 share_card.js 畫圖 -->
+
                 <button class="rank_view_btn" id="share_result_btn" onclick="Share_Current_Result()">📤 分享成績卡</button>
             </div>
         </div>
-        <!-- tuturial overlay-->
 
         <div id="black_overlay" style="
             width: 100vw;
@@ -1411,8 +1315,6 @@
             display: none;">
         </div>
 
-
-        <!--1-2-1打字前輸入法提示-->
         <div id="ime_warning_popup" style="
             display: none;
 
@@ -1472,7 +1374,6 @@
                 padding: 0.6rem 2rem;
                 border-radius: 4px;
 
-
                 font-family: 'Noto Serif TC', serif;
                 font-size: 0.95rem;
 
@@ -1488,7 +1389,7 @@
                 我知道了，開始練習
             </button>
         </div>
-        <div id="tutorial_popup" 
+        <div id="tutorial_popup"
             style="
             display:none;
             position:fixed;
@@ -1530,65 +1431,47 @@
     </main>
 
     <script src="TCTC2-0-level_data.js"></script>
-    <!--成就系統共用資料表-->
+
     <script src="TCTC2-0-achv_data.js"></script>
-    <!--全站成就解鎖彈窗通知模組 -->
+
     <script src="TCTC2-0-achv_notify.js"></script>
-    <!-- 【新增】只為了用裡面的 CLS_Check_Task_Notify / CLS_Schedule_Task_Notify_Check，
-         讓打完關卡時如果有加入教室，班級任務進度也能當場跳彈窗，不用先跳去教室頁。
-         這支檔案內建守衛（找不到 #cls_loading 就跳過頁面初始化），可以放心跟
-         achv_notify.js 一樣全站共用，不會誤觸教室頁自己的登入/面板邏輯。
-         務必放在 firebase.js 之後、achv_notify.js 之後（CLS_Notify_Show_Toast
-         沿用 achv_notify.js 建立的通知容器）。 -->
+
     <script src="TCTC2-0-classroom.js"></script>
-    <!-- 【新增】XP／等級系統設定檔：務必放在 firebase.js 之前，
-         firebase.js 裡的 Sync_XP / Sync_Stage_Completion / Sync_Chars_Typed
-         都會讀 XP_CONFIG 裡的數值 -->
+
     <script src="TCTC2-0-xp_data.js"></script>
-    <!-- 【新增】XP 增加/升級提示卡：Sync_XP() 內部會用 typeof 檢查這支檔案
-         有沒有載入，放在 firebase.js 之前之後都可以（實際呼叫發生在破關結算
-         的當下，不是頁面載入當下），這裡跟 xp_data.js 放一起方便維護 -->
+
     <script src="TCTC2-0-xp_notify.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
     <script src="TCTC2-0-firebase.js?v=3"></script>
-    <!-- 【新增】常見錯字統計的本機暫存佇列，Check_Text_Input_Match / Time_Up
-         裡的 Queue_Char_Mistakes()、ShowResult() 裡的 Sync_Char_Mistakes()
-         都需要這支檔案 -->
+
     <script src="TCTC2-0-mistake_track.js"></script>
-    <!-- 【新增】帳號系統：nav 上的帳號按鈕跟登入/註冊彈窗 -->
+
     <script src="TCTC2-0-auth_ui.js"></script>
-    <!-- 【新增】在線時長追蹤（全站共用，每個頁面都要載入） -->
+
     <script src="TCTC2-0-online_time.js"></script>
-    <!-- 【新增】反作弊鑑識資料蒐集，純前端計數，不主動發送任何請求，
-         詳見檔案內的說明。務必放在遊戲邏輯之前載入，這樣後面的
-         keydown handler 觸發時，這支檔案的 capture 監聽器一定已經掛上。 -->
+
     <script src="TCTC2-0-integrity.js"></script>
-    <!-- 【新增】打字音效（共用模組，哪頁要用哪頁自己載入） -->
+
     <script src="TCTC2-0-typing_sound.js"></script>
-    <!-- 【新增】成績分享卡片（共用模組，哪頁要用哪頁自己載入） -->
+
     <script src="TCTC2-0-share_card.js"></script>
-    <script src="TCTC2-0-mobile_nav.js"></script>    
-    <!-- 【新增】教學關卡拆頁系統：tutorial_data 放內容資料，tutorial_engine 負責畫面切換/上一頁下一頁/互動卡關，
-         必須放在下面這支主要的 inline script 之前載入，因為 Init() 裡會直接呼叫 Render_Tutorial_Stage() -->
+    <script src="TCTC2-0-mobile_nav.js"></script>
+
     <script src="TCTC2-0-tutorial_data.js"></script>
     <script src="TCTC2-0-tutorial_engine.js"></script>
     <script>
 
-        // 【新增】頁面一載入就準備好打字音效（建立 AudioContext + 非同步載入音效檔）
         Init_Typing_Sound()
-        // 【新增】左上角打字音效開關，跟設定頁的開關共用同一份 localStorage 狀態
-        Init_Sound_Toggle_Btn()
 
+        Init_Sound_Toggle_Btn()
 
         function Init_Sound_Toggle_Btn(){
             const btn = document.getElementById("sound_toggle_btn")
             const icon = document.getElementById("sound_toggle_icon")
             if(!btn || !icon) return
 
-            // 打字音效模組要是還沒載入（例如載入順序出問題），按鈕先保持原樣不掛行為，
-            // 避免呼叫不存在的函式直接報錯
             if(typeof Get_Typing_Sound_Enabled !== "function"){
                 console.log("[typing_sound] 打字音效模組尚未載入，音效開關維持預設圖示")
                 return
@@ -1598,7 +1481,7 @@
                 icon.src = Get_Typing_Sound_Enabled() ? "medium-volume.png" : "mute.png"
             }
 
-            Update_Sound_Icon()   // 頁面載入時先依照目前設定顯示正確的圖示
+            Update_Sound_Icon()
 
             btn.addEventListener("click", function(){
                 Set_Typing_Sound_Enabled(!Get_Typing_Sound_Enabled())
@@ -1606,21 +1489,16 @@
             })
         }
 
-
         const params = new URLSearchParams(window.location.search)
 
-        const stageId = params.get("stage")  //***********************
-
+        const stageId = params.get("stage")
 
         if (stageId) {
             localStorage.setItem("tctc_last_stage", stageId)
         }
 
-        //檢查是否存在下一關卡得flag
         let next_stage_is_exists = true
 
-        // ===== 注音對照表 =====
-        // key 是鍵盤按鍵，value 是對應的注音符號
         const bopomofo = {
             "1":"ㄅ","q":"ㄆ","a":"ㄇ","z":"ㄈ",
             "2":"ㄉ","w":"ㄊ","s":"ㄋ","x":"ㄌ",
@@ -1633,11 +1511,8 @@
             "9":"ㄞ","o":"ㄟ","l":"ㄠ",".":"ㄡ",
             "0":"ㄢ","p":"ㄣ",";":"ㄤ","/":"ㄥ",
             "-":"ㄦ","3":"ˇ","4":"ˋ","7":"˙","6":"ˊ", " ":" ", "Enter":"↵","(":"（", ")":"）",
-            "[":"「", "]":"」","'":"、", ":":"：","!":"！","，":"，","。":"。","?":"？"   
+            "[":"「", "]":"」","'":"、", ":":"：","!":"！","，":"，","。":"。","?":"？"
         }
-
-
-        // ===== 【新增】即時反饋虛擬鍵盤 =====
 
         const kb_layout = [
             [
@@ -1677,10 +1552,8 @@
             ]
         ]
 
-        // 有些注音符號／標點是「按了會變成另一個字元」才出現在 bopomofo 表裡（例如 Shift+9 產生 "("），
-        // 這裡把那些「產生出來的字元」對應回它實際所在的物理按鍵，鍵盤上才會亮對位置。
         const kb_physical_alias = {
-            "，": ",", "。": ".",              // 逗號/句號鍵：打標點題目時，物理鍵不變，只是輸出全形符號
+            "，": ",", "。": ".",
             "(": "9", ")": "0",
             ":": ";", "!": "1", "?": "/"
         }
@@ -1688,23 +1561,22 @@
             return kb_physical_alias[dict_key] || dict_key
         }
 
-
         const kb_punct_modifier_keys = {
-            "，": ["CtrlLeft"],                 // 逗號，：Ctrl + ,
-            "。": ["CtrlLeft"],                 // 句號。：Ctrl + .
-            ":": ["CtrlLeft", "ShiftLeft"],     // 冒號：：Ctrl + Shift + ;
-            "!": ["CtrlLeft", "ShiftLeft"],     // 驚嘆號！：Ctrl + Shift + 1
-            "?": ["CtrlLeft", "ShiftLeft"],     // 問號？：Ctrl + Shift + /
-            "'": ["CtrlLeft"],                 // 【新增】頓號、：Ctrl + '
-            "[": ["CtrlLeft", "ArrowDown"],     // 【新增】左引號「：Ctrl + [ + ↓
-            "]": ["CtrlLeft", "ArrowDown"],      // 【新增】右引號」：Ctrl + ] + ↓
-            "(": ["ShiftLeft"],                 // 【新增】左括號（：Shift + 9
-            ")": ["ShiftLeft"]                  // 【新增】右括號）：Shift + 0
+            "，": ["CtrlLeft"],
+            "。": ["CtrlLeft"],
+            ":": ["CtrlLeft", "ShiftLeft"],
+            "!": ["CtrlLeft", "ShiftLeft"],
+            "?": ["CtrlLeft", "ShiftLeft"],
+            "'": ["CtrlLeft"],
+            "[": ["CtrlLeft", "ArrowDown"],
+            "]": ["CtrlLeft", "ArrowDown"],
+            "(": ["ShiftLeft"],
+            ")": ["ShiftLeft"]
         }
 
-        let kb_key_elements = {}   // 物理鍵位字串 -> DOM element
-        let kb_current_el = null   // 目前標成金框（下一個要打）的鍵
-        let kb_current_modifier_els = []   // 【新增】目前一起亮起來的輔助鍵（可能不只一顆，例如 Ctrl+Shift）
+        let kb_key_elements = {}
+        let kb_current_el = null
+        let kb_current_modifier_els = []
         let kb_visible = localStorage.getItem("tctc_kb_hidden") !== "1"
 
         function Build_Live_Keyboard(){
@@ -1715,10 +1587,7 @@
                 const row_el = document.createElement("div")
                 row_el.className = "kb_row"
                 row.forEach(function(item){
-                    // ===== 【新增】方向鍵組：不是一顆單獨的按鍵，是一個「容器」，
-                    // 裡面自己再排成兩小排（上排 ↑、下排 ← ↓ →），跟其他一般按鍵的
-                    // 渲染方式不一樣，這裡獨立處理完就直接 appendChild + return，
-                    // 不會往下走到後面「假設 item 是一顆單一按鍵」的那段邏輯。
+
                     if(item.type === "arrow_cluster"){
                         const cluster_el = document.createElement("div")
                         cluster_el.className = "kb_arrow_cluster"
@@ -1749,12 +1618,12 @@
                         key_el.classList.add("kb_inactive")
                         key_el.innerHTML = '<span class="kb_zhuyin">' + item.label + '</span>'
                     } else if(item.label_top){
-                        // 空白鍵：獨立指定顯示文字，不查表
+
                         key_el.innerHTML = '<span class="kb_zhuyin">' + item.label_top + '</span><span class="kb_letter">' + item.label_bottom + '</span>'
                     } else {
                         const zhuyin = bopomofo[item.key]
                         if(zhuyin === undefined) return
-                        // 有沒有「Shift 之後會變成另一個符號」的版本（例如 9 鍵：ㄞ / （）
+
                         const shift_char = Object.keys(kb_physical_alias).find(function(k){ return kb_physical_alias[k] === item.key })
                         const shift_html = shift_char ? '<span class="kb_shift_label">' + shift_char + '</span>' : ''
                         key_el.innerHTML = shift_html + '<span class="kb_zhuyin">' + zhuyin + '</span><span class="kb_letter">' + item.key.toUpperCase() + '</span>'
@@ -1779,7 +1648,6 @@
                 })
             }
         }
-
 
         function Find_Key_For_Zhuyin(expected_char){
             for(const key in bopomofo){
@@ -2168,7 +2036,6 @@
             }
         })
 
-
         const finger_quiz_map = [
             {key:"1",finger:"左手小指"},{key:"q",finger:"左手小指"},{key:"a",finger:"左手小指"},{key:"z",finger:"左手小指"},
             {key:"2",finger:"左手無名指"},{key:"w",finger:"左手無名指"},{key:"s",finger:"左手無名指"},
@@ -2472,7 +2339,6 @@
             return Math.floor(target_get / 3)
         }
 
-
         function Calculate_Countdown_Seconds(total_units, wpm, is_box_input){
             // 直接輸入模式：units_per_minute 就是 wpm 本身（字數/分鐘）
             // 逐字注音模式：units_per_minute 要乘以 3（按鍵次數/分鐘）
@@ -2635,8 +2501,6 @@
             }
         }
 
-
-
         // ===== FindStage：在 Level_Data 裡找到對應的關卡資料 =====
         function FindStage(id) {
             // 第一層：跑 Level_Data 的每個 key（easy / medium / hard）
@@ -2652,7 +2516,7 @@
                     }
                 }
             }
-            return null  
+            return null
         }
 
         // ===== 【新增】判斷這一關「有沒有可能上榜」=====
@@ -2770,7 +2634,6 @@
                 }
             })
         }
-
 
         function Split_Bopomofo_Into_Char_Groups(target_str){
             const ZHUYIN = /[\u3105-\u312F]/
@@ -3075,7 +2938,6 @@
             }
         }
 
-        // ===== 【新增】開啟/關閉彈出視窗 =====
         function Open_Countdown_Modal(){
             document.getElementById("countdown_modal_overlay").classList.add("show")
         }
@@ -3083,7 +2945,6 @@
             document.getElementById("countdown_modal_overlay").classList.remove("show")
         }
 
-        // ===== 【新增】開啟/關閉「標點符號怎麼打？」說明視窗 =====
         function Open_Punct_Modal(){
             document.getElementById("game_punct_modal_overlay").classList.add("show")
         }
@@ -3104,26 +2965,21 @@
             }
         }
 
-        // ===== 【新增】切換倒數模式的全域開關（只在這次 session 有效，不寫入 localStorage）=====
         function Set_Countdown_Mode(on){
             countdown_mode_on = on
-            Init()   // Init() 內部會重新呼叫 Sync_Countdown_Modal_Fields()，視窗保持開啟不受影響
+            Init()
         }
 
-        // ===== 【新增】綁定彈出視窗相關的事件 =====
-        // 這些元素是寫死在 HTML 裡的固定節點（不像 mode_toggle 是用 innerHTML 動態重建），
-        // 所以事件監聽器只需要在頁面載入時綁定「一次」就好，不用每次 Init() 都重綁
         function Bind_Countdown_Modal_Events(){
             document.getElementById("countdown_settings_btn").addEventListener("click", Open_Countdown_Modal)
             document.getElementById("countdown_modal_close").addEventListener("click", Close_Countdown_Modal)
 
-            // 點擊半透明背景（而不是視窗本體）時，也讓使用者可以關閉視窗
             document.getElementById("countdown_modal_overlay").addEventListener("click", function(event){
                 if(event.target.id === "countdown_modal_overlay") Close_Countdown_Modal()
             })
 
             document.getElementById("countdown_off_btn").addEventListener("click", function(){
-                if(countdown_forced) return   // 高級關卡強制倒數，忽略關閉的點擊
+                if(countdown_forced) return
                 if(countdown_mode_on) Set_Countdown_Mode(false)
             })
             document.getElementById("countdown_on_btn").addEventListener("click", function(){
@@ -3131,20 +2987,17 @@
             })
             document.getElementById("countdown_wpm_input").addEventListener("change", function(event){
                 const stage = FindStage(stageId)
-                const min_wpm = Get_Stage_Default_Wpm(stage)   // 這一關的最低 wpm 門檻（level data 的 wpm_min，沒設定就是 40）
+                const min_wpm = Get_Stage_Default_Wpm(stage)
 
                 let val = parseInt(event.target.value) || min_wpm
-                if(val < min_wpm) val = min_wpm   // 防呆：不能設定得比這一關的最低速度要求還低
+                if(val < min_wpm) val = min_wpm
 
                 countdown_wpm = val
-                event.target.value = countdown_wpm   // 把被拉回的數字同步顯示回輸入框，避免畫面跟實際值不一致
-                Init()   // 重新整理這一關，讓新的 wpm 立刻套用（視窗維持開啟）
+                event.target.value = countdown_wpm
+                Init()
             })
         }
 
-        // ===== 【新增】把「輸入框模式」的畫面建出來 =====
-        // 原本只有「基礎輸入」關卡會用到這段畫面，
-        // 現在中級關卡選了「直接輸入」模式時，也會共用同一套邏輯
         function Render_Text_Input_Stage(stage){
             const game_container = document.querySelector(".game_char_container")
 
@@ -3162,179 +3015,115 @@
             if(target_box){
                 target_box.style.display = "flex";
 
-                // ===== 比照挑戰模式的目標文字框：固定高度＋捲動，長文章不會把整頁撐開 =====
-                // 4 行 * (字體大小 1.35rem × 行高 2)，跟 .game_stage_target1 本身的
-                // font-size / line-height 對齊，這樣以後調字級，這裡不用跟著手動改。
                 target_box.style.setProperty("--target1-max-height", "calc(1.35rem * 2 * 4)")
                 target_box.style.setProperty("--target1-overflow", "hidden")
-                target_box.scrollTop = 0   // 每次進到新的一關，捲動位置歸零，避免延續上一關的捲動高度
+                target_box.scrollTop = 0
             }
-            text_input_prev_typed_length = 0   // 【新增】同上，重置捲動追蹤用的索引
+            text_input_prev_typed_length = 0
 
             const game_container_input = document.createElement("textarea")
             game_container_input.id = "game_container_input_id"
-            // rows = 1：一開始只顯示一行的高度，視覺上跟原本的 <input> 一樣，
-            // 之後高度完全交給下面的 Auto_Grow_Textarea() 動態計算，這裡只是給個起始值。
+
             game_container_input.rows = 1
 
             const game_stage_target1 = document.getElementById("game_stage_target1");
 
-
             game_stage_target1.innerHTML = Build_Target1_Spans_Html(stage.target1)
-            // 一開始就把第一個要打的字標成金框，跟其他關卡的「current」提示邏輯一致
+
             Update_Target1_Highlight("", Clean_Target1_For_Typing(stage.target1).trim())
             game_container_input.placeholder = "請輸入目標文字"
             game_container_input.setAttribute("autocomplete", "off")
-            // 【新增】textarea 預設右下角會有一個可以讓玩家手動拖曳縮放的三角形把手，
-            // spellcheck 則是瀏覽器內建的紅色波浪底線拼字檢查（中文用不到，關掉比較乾淨）。
+
             game_container_input.setAttribute("spellcheck", "false")
 
             game_container.appendChild(game_container_input)
 
-
             target_box.style.justifyContent = "flex-start";
             target_box.style.alignItems = "center";
 
-            // ===== 比照挑戰模式的 .cg_input_textarea：透明背景（底色交給外層 game_container）、
-            // 1.35rem 字級、2.3 倍行高、1px 字距，跟目標框的排版節奏對齊 =====
             game_container_input.style.width = "100%"
             game_container_input.style.backgroundColor = "transparent"
             game_container_input.style.border = "none"
 
-            game_container_input.style.fontSize = "1.35rem"   // 原本 1.5rem
+            game_container_input.style.fontSize = "1.35rem"
             game_container_input.style.color = "#fff"
-            game_container_input.style.letterSpacing = "1px"  // 【新增】跟目標框的字距對齊
+            game_container_input.style.letterSpacing = "1px"
 
-            game_container_input.style.padding = "0.3rem 0.2rem"  // 原本 "0 1rem 0.3rem 1rem"，
-                                                                     // 外層留白已經交給 game_container 的 padding，這裡改小
+            game_container_input.style.padding = "0.3rem 0.2rem"
 
-            // ===== 讓 textarea 長得像原本的單行 input，並且關掉手動拖曳縮放 =====
-            game_container_input.style.resize = "none"          // 拿掉右下角可拖曳縮放的把手，高度只能由 JS 控制
-            game_container_input.style.lineHeight = "2.3"       // 原本 "2rem"，改成跟挑戰模式一樣用「倍數」寫法，
-                                                                  // 這樣下面 max-height 的 calc() 才能沿用同一套算法
-            game_container_input.style.fontFamily = "inherit"    // textarea 預設字體跟頁面不同，讓它繼承外層字體
-            game_container_input.style.boxSizing = "border-box"  // 讓 padding 算進寬高，避免長高時寬度跑版
+            game_container_input.style.resize = "none"
+            game_container_input.style.lineHeight = "2.3"
 
-            // ===== 比照挑戰模式：撐到 3 行之後改成固定高度＋內部捲動，而不是繼續 overflow:hidden 硬藏 =====
-            // maxHeight 用（字體大小 1.35rem × 行高 2.3）× 3 行算出來，
-            // 跟挑戰模式的 .cg_input_textarea 是同一條算式，overflowY 改成 auto：
-            // 內容真的超出 3 行時才出現捲軸，同時保留玩家自己手動捲回去看之前打過內容的能力。
+            game_container_input.style.fontFamily = "inherit"
+            game_container_input.style.boxSizing = "border-box"
+
             game_container_input.style.maxHeight = "calc(1.35rem * 2.3 * 3)"
             game_container_input.style.overflowY = "auto"
 
-            // ===== 【新增】核心邏輯：自動長高 function =====
-            // 原理：textarea 的 scrollHeight 代表「把 height 設成 auto 時，
-            // 為了完整顯示所有內容（含換行後的多行文字）所需要的真實高度」。
-            // 所以每次內容變動，就先把 height 歸零重算，再把 height 設成 scrollHeight，
-            // 這樣「沒換行」就維持一行高度，「換行了」就自動變成兩行、三行高度，
-            // 撐到 max-height（3 行）之後，多出來的高度交給 overflow-y 處理。
             function Auto_Grow_Textarea(){
-                game_container_input.style.height = "auto"                          // 先歸零，讓 scrollHeight 重新量測
-                game_container_input.style.height = game_container_input.scrollHeight + "px"  // 再設成量出來的真實高度
+                game_container_input.style.height = "auto"
+                game_container_input.style.height = game_container_input.scrollHeight + "px"
 
-                // ===== 【修正核心 bug】強制把捲軸拉到最底部 =====
-                // 上面兩行為了「量測」正確高度，會先把 height 設回 auto，這個動作在大多數瀏覽器裡
-                // 會順便把 scrollTop 重設成 0，等於每打一個字就把瀏覽器原本想做的「捲到游標處」抵銷掉。
-                // 這一關的輸入是「只能往後打、游標永遠在最後面」，所以捲到最底部永遠等於捲到目前打字的位置。
                 game_container_input.scrollTop = game_container_input.scrollHeight
             }
 
             game_container_input.addEventListener("input", Check_Text_Input_Match)
-            game_container_input.addEventListener("input", Auto_Grow_Textarea)          // 【新增】每次打字都重新量高度
-            // 【新增】IME 選字結束（compositionend）時也重新檢查一次，
-            // 確保「還在組字中」被跳過的完成判斷，能在選字結束後補上
-            game_container_input.addEventListener("compositionend", Check_Text_Input_Match)
-            game_container_input.addEventListener("compositionend", Auto_Grow_Textarea) // 【新增】中文選字結束後也要重新量一次
-                                                                                          // （選字完成瞬間文字量可能大幅變動，例如注音選字選出一整串詞）
+            game_container_input.addEventListener("input", Auto_Grow_Textarea)
 
-            // 【新增】textarea 預設按 Enter 會直接換行（插入 \n），
-            // 但這一關的目標句子（stage.target1）本來就不包含換行符號，
-            // 如果讓玩家真的打出換行，Check_Text_Input_Match 拿去跟 target_text 逐字比對時一定會對不上、卡關。
-            // 所以攔截 Enter，阻止預設的換行行為，行為維持跟原本 <input> 一樣（按 Enter 不會輸入任何字元）。
+            game_container_input.addEventListener("compositionend", Check_Text_Input_Match)
+            game_container_input.addEventListener("compositionend", Auto_Grow_Textarea)
+
             game_container_input.addEventListener("keydown", function(event){
                 if(event.key === "Enter"){
                     event.preventDefault()
                 }
             })
 
-            // 【新增】打字音效改成完全跟著「玩家有沒有按鍵」走，不再管這個鍵有沒有讓輸入框
-            // 的內容變成正確答案（原因見上面 Check_Text_Input_Match 裡拿掉那段邏輯的註解）。
             game_container_input.addEventListener("keydown", Play_Typing_Feedback_Sound)
 
-            // 【新增】禁止在輸入框內貼上文字，防止玩家直接複製題目貼上作弊
-            // paste 事件：不管玩家是按 Ctrl+V、用滑鼠右鍵選單「貼上」，
-            // 還是用觸控裝置長按選「貼上」，只要是「貼上」動作都會觸發這個事件。
-            // event.preventDefault() 會阻止這個動作真的執行，
-            // 所以輸入框的內容完全不會被貼上的文字改變，玩家只能一個字一個字自己打。
             game_container_input.addEventListener("paste", function(event){
                 event.preventDefault()
                 alert("作弊得來的成績真的有意義嗎?")
             })
 
-            // 【新增，可選】同樣道理，防止玩家用「拖曳文字」的方式把題目拖進輸入框
-            // 例如選取題目文字後直接拖到輸入框放開
             game_container_input.addEventListener("drop", function(event){
                 event.preventDefault()
                 alert("看來你想得很周全 但可惜我想的更甚於你")
             })
 
-            // 每次按下退格鍵（Backspace）視為一次「修正錯誤」，用來計算這關的正確率
-            // 【說明】選字階段（IME composition）本來就只能「換字」不能「刪字」，
-            // 所以只要玩家按了 Backspace，不管是不是還在組字階段，
-            // 都代表他真的打錯注音符號、要刪掉重打，是真正的錯誤，
-            // 因此不需要用 event.isComposing 排除任何情況，每次 Backspace 都算數。
             game_container_input.addEventListener("keydown", function(event){
                 if(event.key === "Backspace"){
-                    if(game_over) return   // 【新增】結果畫面已經出現，不再累計錯誤次數
+                    if(game_over) return
                     wrong_key_times++
-                    Play_Wrong_Sound()   // 【新增】打錯時的音效，跟逐字模式的打錯音效一致
+                    Play_Wrong_Sound()
                 }
             })
 
-            // 頁面一載入就把游標放進輸入框，玩家不用自己點一下就能直接開始打字
-            // 【修正】但如果倒數設定視窗正開著（玩家正在視窗裡調整WPM），
-            // 就不要搶走焦點，不然玩家打字打到一半的數字會被強制跳走、輸入框又立刻失焦
             const countdown_modal_is_open = document
                 .getElementById("countdown_modal_overlay")
                 .classList.contains("show")
             if(!countdown_modal_is_open){
                 game_container_input.focus()
-                Auto_Grow_Textarea()   // 【新增】頁面剛渲染、輸入框還是空的時候，也要先執行一次，
-                                        // 確保高度從一開始就是正確的一行高，不用等玩家打第一個字才校正。
+                Auto_Grow_Textarea()
+
             }
         }
 
-        //初始化畫面 每次「再試一次」也會呼叫
-
         function Init() {
-            // 【新增】每次開始這一關（含「再試一次」重打），重置一次鑑識計數器起點，
-            // 這樣送出成績時 TCTC_Integrity.getAttemptSnapshot() 算出來的
-            // keydown_count / untrusted_key_events 才是「這次作答」的數字，
-            // 不是從頁面一開始載入就累加到現在的總數
+
             if(typeof TCTC_Integrity !== "undefined") TCTC_Integrity.markAttemptStart()
 
-            // if(next_stage_is_exists){
-            //     document.querySelector(".next_game_btn").style.display = "block";
-
-            // }
-            // else{
-            //     document.querySelector(".next_game_btn").style.display = "none";
-
-            // }
-            // 用 FindStage 找到這關的資料
             const stage = FindStage(stageId)
 
             const game_retry_btn = document.querySelector(".game_retry_btn");
             game_retry_btn.display = "block";
 
-            const game_retry_fixed_btn = document.getElementById("game_retry_fixed_btn")   // 【新增】左上角再試一次
+            const game_retry_fixed_btn = document.getElementById("game_retry_fixed_btn")
             if(game_retry_fixed_btn) game_retry_fixed_btn.style.display = "flex"
 
             const container_init = document.getElementById("game_char_container")
             container_init.scrollBy({ top: -10000, behavior: "smooth" })
 
-
-            //找不到就顯示錯誤訊息，停止執行
             if (!stage) {
                 document.getElementById("game_stage_name").textContent = "找不到關卡：" + stageId
                 return
@@ -3348,7 +3137,6 @@
 
             }
 
-            //關卡id和名稱顯示在畫面上
             document.getElementById("game_stage_id").textContent = stage.id
             document.getElementById("game_stage_name").textContent = stage.name + (stage.name2 ? " " + stage.name2 : "")
 
@@ -3370,11 +3158,8 @@
                 rank_floating_btn.style.display = Is_Leaderboard_Stage(stage) ? "flex" : "none"
             }
 
-            // 【新增】中級專用：渲染輸入模式切換按鈕（非中級關卡會自動隱藏）
             Render_Input_Mode_Toggle(stage)
 
-            // 把 target 設成這關的練習字串
-            // 如果 stage.target 是空的，就用空字串
             target = stage.target || ""
 
             //重置狀態
@@ -3387,7 +3172,6 @@
             time_up = false   // 【新增】每次重打/換關都要重置，不然時間到鎖住的狀態會延續到下一關
             game_over = false   // 【新增】重打/換關，結果畫面的鎖也要解除
 
-
             // 【新增】判斷這一關是不是「教學關」（基本介紹 / 1-9-1 選字教學 / 2-1-0 標點符號教學）
             // 教學關只有文字說明，不需要計時，右上角的計時器 / 倒數設定按鈕在這種關卡很礙眼，所以整組隱藏
             const is_tutorial_stage = (stage.type === "基本介紹" || stage.id === "1-8-1" || stage.id === "2-1-0")
@@ -3397,8 +3181,6 @@
                 timer_wrap_el.style.display = is_tutorial_stage ? "none" : "flex"
             }
 
-            // 【新增】鍵盤只在「逐鍵比對注音」的模式才有意義（初級、中級的逐字注音模式）；
-            // 高級（速度挑戰）、基礎輸入、中級選了「直接輸入」時都是 IME 選字比對，鍵盤沒辦法給即時反饋，直接不出現。
             const kb_supported = !is_tutorial_stage && !Is_Box_Input_Stage(stage)
             const kb_toggle_el = document.getElementById("kb_toggle_btn")
             const kb_wrap_el = document.getElementById("live_keyboard")
@@ -3408,13 +3190,10 @@
                     kb_wrap_el.style.display = ""   // 清掉行內樣式，交回給 CSS 類別（.kb_hidden）控制顯示/隱藏
                     kb_wrap_el.classList.toggle("kb_hidden", !kb_visible)
                 } else {
-                    kb_wrap_el.style.display = "none"   // 這關鍵盤沒用，強制隱藏，不受開關偏好影響
+                    kb_wrap_el.style.display = "none"
                 }
             }
 
-            // 【新增】直接輸入模式（基礎輸入／中級「直接輸入」／高級速度挑戰）才顯示即時 WPM/正確率，
-            // 跟挑戰模式頂欄的即時數據同一套邏輯；逐字注音模式每打一個字就即時上色了，不需要這組數字。
-            // 每次進新的一關（或按「再試一次」）都要歸零，不然會殘留上一次的數字閃一下才被蓋掉。
             const live_stats_el = document.getElementById("game_live_stats")
             if(live_stats_el){
                 live_stats_el.style.display = (!is_tutorial_stage && Is_Box_Input_Stage(stage)) ? "flex" : "none"
@@ -3424,20 +3203,14 @@
             if(live_wpm_el) live_wpm_el.textContent = "0"
             if(live_acc_el) live_acc_el.textContent = "100%"
 
-            // ===== 【新增】判斷這一關是否要套用倒數模式 =====
-            // 中級、高級關卡都支援倒數模式；初級跟基礎輸入關卡不支援
             const stage_difficulty = get_difficulty_by_stageid(stage.id)
             const supports_countdown = !is_tutorial_stage && (stage_difficulty === "medium" || stage_difficulty === "hard")
 
-            // 【新增】高級關卡強制開啟倒數，玩家不能關掉；中級維持原本可自由開關的行為
             countdown_forced = stage_difficulty === "hard"
             if(countdown_forced){
                 countdown_mode_on = true
             }
 
-            // 【修正】只有「切換到不同關卡」時，才用這關 level data 的 wpm_min 覆蓋 countdown_wpm。
-            // 如果只是同一關內「調整WPM設定」或「按再試一次」而重跑 Init()，
-            // 就不能再覆蓋，不然玩家剛调好的自訂數值會立刻被蓋回預設值 40（這是上一版的 bug）。
             if(supports_countdown && stage.id !== countdown_wpm_stage_id){
                 countdown_wpm = Get_Stage_Default_Wpm(stage)
                 countdown_wpm_stage_id = stage.id
@@ -3447,28 +3220,21 @@
 
             if(countdown_enabled){
                 const total_units = Get_Stage_Total_Units(stage)
-                // 【修改】多傳一個 Is_Box_Input_Stage(stage)，讓 Calculate_Countdown_Seconds
-                // 知道現在該用哪一種換算比例（直接輸入 vs 逐字注音），詳見該函式內的註解
+
                 countdown_target_seconds = Calculate_Countdown_Seconds(total_units, countdown_wpm, Is_Box_Input_Stage(stage))
             }
 
-            // 倒數設定按鈕：中級、高級才顯示；開著倒數時邊框會亮起來提示玩家
             const countdown_btn = document.getElementById("countdown_settings_btn")
             countdown_btn.style.display = supports_countdown ? "flex" : "none"
             countdown_btn.classList.toggle("is_active", countdown_enabled)
 
-            // 把目前狀態同步進彈出視窗的欄位（視窗本身開著或關著都不受影響）
             Sync_Countdown_Modal_Fields(stage)
 
-            // 【修改】倒數模式開啟時，一進關卡（或剛調整完 wpm）就直接顯示這一關要倒數的秒數，
-            // 不用等玩家打下第一個字，計時器才不會從 00：00 跳到正確數字
             Reset_Timer_Display()
 
-            //隱藏結果畫面（移除 show class）
             document.getElementById("game_result").classList.remove("show")
             document.querySelector(".next_game_btn").style.display = "none"
 
-            // 清空方框區，準備重建
             const container = document.getElementById("game_char_container")
             container.innerHTML = ""
             // 【新增】連同 inline style 一起清掉：直接輸入模式會覆蓋一整組樣式
@@ -3479,44 +3245,26 @@
             box_to_char_idx = []
             target1_highlight_valid = false
 
-
             const reset_target_box = document.getElementById("game_stage_target1")
             if(reset_target_box){
                 reset_target_box.style.display = "none"
 
-                // 【新增】把直接輸入模式加上的捲動用 CSS 變數清掉，
-                // 避免離開這一關之後，下一關（例如逐字注音模式）還殘留「固定高度＋隱藏溢出」的設定。
-                // 【修正】註記：目標框的 --target1-max-height / --target1-overflow 現在
-                // 由「基礎輸入 / 速度挑戰 / 中級直接輸入 / 中級逐字注音」四種分支各自在下面
-                // 重新設定同一組固定高度，這裡先清掉是為了避免殘留舊關卡的設定值。
                 reset_target_box.style.removeProperty("--target1-max-height")
                 reset_target_box.style.removeProperty("--target1-overflow")
                 reset_target_box.scrollTop = 0
             }
-            text_input_prev_typed_length = 0   // 【新增】同上，換關卡時歸零，避免沿用上一關的捲動追蹤進度
+            text_input_prev_typed_length = 0
 
-
-
-            // 把target字串拆成每個字 每個字建一個方框 div
-            // split("") 把字串拆成陣列，例如 "ㄑㄨ" → ["ㄑ","ㄨ"]
-
-
-            //教學關
-        
             if(stage.type === "基本介紹" || stage.id === "1-8-1" || stage.id === "2-1-0"){
                 const hint = document.querySelector(".game_input_hint")
                 hint.style.display = "none";
-                
-                game_retry_btn.style.display = "none";
-                if(game_retry_fixed_btn) game_retry_fixed_btn.style.display = "none"   // 【新增】教學關同樣隱藏左上角再試一次
 
-                // 【重構】教學關內容全部搬進 TCTC2-0-tutorial_data.js（每一關拆成好幾個「畫面」，
-                // 一次只顯示一小段，看完按下一頁再換下一段，互動練習可以直接插在任何一個畫面中間），
-                // 畫面切換、上一頁/下一頁、互動練習卡關全部交給 TCTC2-0-tutorial_engine.js 統一處理。
-                // 這裡不再對每個 stage.id 各寫一大段 innerHTML，只要呼叫 Render_Tutorial_Stage 就好。
+                game_retry_btn.style.display = "none";
+                if(game_retry_fixed_btn) game_retry_fixed_btn.style.display = "none"
+
                 Render_Tutorial_Stage(stage, stageId, game_char_container)
             }
-            
+
             else if(stage.name === "章節驗收" && stage.type === "注音練習"){
                 target.split("").forEach(function(char, i) {
 
@@ -3527,19 +3275,18 @@
 
                     }
 
-                    const box = document.createElement("div")   // 建一個 div
-                    box.classList.add("game_char_box");           // 加上方框樣式
+                    const box = document.createElement("div")
+                    box.classList.add("game_char_box");
                     box.style.width = "3rem";
                     box.style.height = "3rem";
                     box.style.fontSize = "2rem";
                     box.style.paddingLeft = "2px";
 
-                    box.textContent = char;                       // 把注音字放進去
-                    if (i === 0) box.classList.add("current")   // 第一個格子加上金框（當前位置）
-                    container.appendChild(box);                // 把 div 放進畫面
-                    boxes.push(box);                              // 同時存進 boxes 陣列
+                    box.textContent = char;
+                    if (i === 0) box.classList.add("current")
+                    container.appendChild(box);
+                    boxes.push(box);
 
-                    
                 })
             }
             else if(stage.name === "階段驗收" && stage.type === "注音練習" || stage.name === "基礎符號"){
@@ -3548,7 +3295,6 @@
                 game_container.style.setProperty('--box-overflow', 'auto')
                 game_container.style.setProperty('--container-max-height', '25vh')
 
-
                 target.split("").forEach(function(char, i) {
 
                     const container = document.getElementById("game_char_container")
@@ -3556,53 +3302,48 @@
                         container.style.gap = "0.3rem";
                     }
 
-                    const box = document.createElement("div")   // 建一個 div
-                    box.classList.add("game_char_box");           // 加上方框樣式
+                    const box = document.createElement("div")
+                    box.classList.add("game_char_box");
                     box.style.width = "3.5rem";
                     box.style.height = "3.5rem";
                     box.style.fontSize = "2rem";
                     box.style.paddingLeft = "2px";
 
-                    box.textContent = char;                       // 把注音字放進去
-                    if (i === 0) box.classList.add("current")   // 第一個格子加上金框（當前位置）
-                    container.appendChild(box);                // 把 div 放進畫面
-                    boxes.push(box);                              // 同時存進 boxes 陣列
+                    box.textContent = char;
+                    if (i === 0) box.classList.add("current")
+                    container.appendChild(box);
+                    boxes.push(box);
 
-                    
                 })
             }
             else if(stage.type === "注音練習"){
                 target.split("").forEach(function(char, i) {
-                    const box = document.createElement("div")   // 建一個 div
-                    box.classList.add("game_char_box")           // 加上方框樣式
-                    box.textContent = char                        // 把注音字放進去
-                    if (i === 0) box.classList.add("current")   // 第一個格子加上金框（當前位置）
-                    container.appendChild(box)                   // 把 div 放進畫面
-                    boxes.push(box)                              // 同時存進 boxes 陣列
+                    const box = document.createElement("div")
+                    box.classList.add("game_char_box")
+                    box.textContent = char
+                    if (i === 0) box.classList.add("current")
+                    container.appendChild(box)
+                    boxes.push(box)
                 })
                 if(stage.id === "1-2-1" || stage.id === "1-1-1"){
                     document.getElementById("ime_warning_popup").style.display = "block"
                     document.getElementById("black_overlay").style.display = "block"
                 }
-                    
 
             }
-            else if(stage.type === "基礎輸入" || stage.type === "速度挑戰"){            // 高級：一律直接輸入模式，沒有逐字注音選項
+            else if(stage.type === "基礎輸入" || stage.type === "速度挑戰"){
 
                 Render_Text_Input_Stage(stage)
             }
-            else if(stage.type === "綜合練習"){                                         // 中級
+            else if(stage.type === "綜合練習"){
                 const typing_img_1 = document.getElementById("typing_img_1")
                 const typing_img_2 = document.getElementById("typing_img_2")
                 const game_stage_target1 = document.getElementById("game_stage_target1");
-
 
                 const game_container = document.querySelector(".game_char_container")
                 game_container.style.setProperty('--box-overflow', 'auto')
                 game_container.style.setProperty('--container-max-height', '13vh')
 
-                
-                //圖片單獨處理
                 if(stage.id === "2-2-5"){
                     game_stage_target1.style.display = "block";
                     typing_img_1.style.display = "block"
@@ -3619,9 +3360,6 @@
                     typing_img_2.style.display = "none"
                 }
 
-                // 【新增】中級輸入模式分岔：
-                // "box"    → 直接輸入模式：跟基礎輸入一樣，用輸入法直接打出整句中文字
-                // "normal"（預設）→ 逐字注音模式：維持原本一個按鍵對應一個注音符號的玩法
                 if(medium_input_mode === "box"){
                     Render_Text_Input_Stage(stage)
                 }
@@ -3630,8 +3368,7 @@
                     const container = document.getElementById("game_char_container")
                     if(container){
                         container.style.gap = "0";
-                        // 【修正】跟「直接輸入」模式（Render_Text_Input_Stage）用同一組寬度設定，
-                        // 避免切換輸入模式時，外層容器寬度跟著改變，造成整個框跑位、文字跳動。
+
                         container.style.width = "100%";
                         container.style.maxWidth = "900px";
                         container.style.margin = "1.2rem auto 0";
@@ -3641,31 +3378,19 @@
                         container.style.padding = "0.2rem 1rem";
                     }
 
-                    //target1：目標句子也比照「直接輸入」模式，拆成一格一格的 span，
-                    //這樣打注音符號的同時，上面的句子也能逐字即時上色
                     const target_box = document.getElementById("game_stage_target1")
                     if(target_box){
                         target_box.style.display = "flex";
                         target_box.innerHTML = Build_Target1_Spans_Html(stage.target1)
-                        // 【修正】跟「直接輸入」模式維持同一個 justify-content（flex-start），
-                        // 避免切換模式時文字對齊方式跟著變，看起來像文字整個跳位置。
+
                         target_box.style.justifyContent = "flex-start";
                         target_box.style.alignItems = "center";
 
-                        // 【新增】核心修正：套用跟「直接輸入」模式完全相同的固定高度設定
-                        // （calc(1.35rem * 2 * 4)，也就是 4 行高），
-                        // 這樣切換「逐字注音 / 直接輸入」時，目標框的高度、外框大小都不會改變，
-                        // 版面不會跳動；overflow 用 "auto"（而非直接輸入模式的 "hidden"），
-                        // 是因為逐字注音模式沒有像 textarea 那樣的捲動追蹤邏輯，
-                        // 用 auto 讓超出 4 行的長句子可以透過 scrollIntoView 自動捲動，
-                        // 才不會被固定高度卡住、看不到後面的字（見 Update_Normal_Mode_Target1_Highlight）。
                         target_box.style.setProperty("--target1-max-height", "calc(1.35rem * 2 * 4)")
                         target_box.style.setProperty("--target1-overflow", "auto")
                         target_box.scrollTop = 0
                     }
 
-                    // 建立「注音鍵位 → 目標句子第幾個字」的對照表（見 Split_Bopomofo_Into_Char_Groups），
-                    // 這樣玩家打注音符號時，才能同步知道現在打到目標句子的哪一個字
                     box_to_char_idx = []
                     const char_groups = Split_Bopomofo_Into_Char_Groups(target)
                     char_groups.forEach(function(group, group_idx){
@@ -3673,14 +3398,10 @@
                             box_to_char_idx[pos] = group_idx
                         })
                     })
-                    // 【防呆】少數關卡的 target（注音鍵位）跟 target1（句子）字數對不上
-                    // （關卡資料本身的既有問題），這種情況下不要硬套即時上色，
-                    // 避免上色跑版誤導玩家，退回成單純顯示句子（不影響逐字注音本身的玩法）
+
                     const expected_char_count = Clean_Target1_For_Typing(stage.target1).trim().length
                     target1_highlight_valid = (char_groups.length === expected_char_count)
 
-                    // 建立一個外觀完全比照「直接輸入」<input> 的容器，
-                    // 讓兩種輸入模式的「輸入框」視覺上一模一樣
                     const input_style_bar = document.createElement("div")
                     input_style_bar.id = "bopomofo_input_bar"
                     input_style_bar.style.width = "100%"
@@ -3696,88 +3417,49 @@
                     container.appendChild(input_style_bar)
 
                     target.split("").forEach(function(char, i) {
-                        const box = document.createElement("span")  // 【修改】不用方框 div，改用文字 span
-                        box.classList.add("bopomofo_char");           // 輸入框文字樣式（跟 target1_char 同一套配色邏輯）
-                        box.textContent = char                        // 把注音字放進去
-                        if (i === 0) box.classList.add("current")   // 第一個字加上金框（當前位置）
-                        input_style_bar.appendChild(box);           // 把 span 放進輸入框樣式的容器
-                        boxes.push(box);                              // 同時存進 boxes 陣列，鍵盤事件邏輯完全不用改
+                        const box = document.createElement("span")
+                        box.classList.add("bopomofo_char");
+                        box.textContent = char
+                        if (i === 0) box.classList.add("current")
+                        input_style_bar.appendChild(box);
+                        boxes.push(box);
                     })
 
-                    // 一開始就把目標句子第一個字標成金框，邏輯跟直接輸入模式一致
                     Update_Normal_Mode_Target1_Highlight()
                 }
             }
 
-            // 【修正】bug：虛擬鍵盤只有在玩家按下「第一個」按鍵、觸發
-            // Update_Normal_Mode_Target1_Highlight() 之後才會亮框，
-            // 導致關卡剛載入、玩家還沒打字時，鍵盤上完全沒有提示。
-            // 原因是上面 if/else 那一長串分支裡，只有「中級逐字注音」
-            // 這個分支會呼叫 Update_Normal_Mode_Target1_Highlight()
-            // （裡面才有包 Sync_Live_Keyboard()），其他關卡類型
-            // （基礎輸入、注音練習、章節/階段驗收…）建完 boxes 之後
-            // 完全沒有呼叫到它，鍵盤自然不會動。
-            // Sync_Live_Keyboard() 只依賴全域變數 target / current
-            // （不吃 boxes、不吃 target1），所以不管是哪種關卡類型，
-            // 在 Init() 最後統一呼叫一次就能涵蓋所有分支，讓鍵盤在
-            // 畫面剛出現時就先亮出「target[0]」對應的那顆鍵。
-            // 呼叫時機沒問題：Build_Live_Keyboard() 已經在頁面載入時
-            // 執行過一次（見檔案最下方），kb_key_elements 一定已經備妥。
             Sync_Live_Keyboard()
         }
 
-        //wpm counter
         let wpm_sum = Number(localStorage.getItem("wpm_sum")) || 0;
         let wpm_times = Number(localStorage.getItem("wpm_times")) || 0;
 
-        //ShowResult
         function ShowResult() {
 
-            game_over = true   // 【新增】結果畫面出現後，之後所有按鍵一律忽略，不再影響任何統計數字
-            const kb_wrap_end = document.getElementById("live_keyboard")   // 【新增】結束後自動隱藏鍵盤
+            game_over = true
+            const kb_wrap_end = document.getElementById("live_keyboard")
             if(kb_wrap_end) kb_wrap_end.classList.add("kb_hidden")
 
-            Stop_Timer() // 關卡結束，停止右上角計時器
+            Stop_Timer()
 
-            // 【新增】常見錯字統計：不管這次有沒有過關都同步，因為打錯的字
-            // 才是這個功能真正想蒐集的資料，不應該只採計「過關」的測驗
             if(typeof Sync_Char_Mistakes === "function") Sync_Char_Mistakes()
 
             const stage = FindStage(stageId)
             console.log(stage)
 
-            //計算花了幾秒
             const timeUsed = (Date.now() - startTime) / 1000
 
-            //WPM
             let wpm = Math.ceil((target_get / 3) / (timeUsed / 60))
 
-            //如果是輸入的（基礎輸入 或 中級「直接輸入」模式）就乘以三
             if(Is_Box_Input_Stage(stage)){
                 wpm = Math.ceil(wpm * 3);
             }
 
-            //準確率
-            //總按鍵次數 對+錯
             let acc = target_get > 0
                 ? Math.round((1 - wrong_key_times / (target_get + wrong_key_times)) * 100)
                 : 0
 
-            // 【修改】輸入框模式（基礎輸入 / 中級「直接輸入」）原本直接把 acc 設成 100%，
-            // 因為以前一定要「一字不差」才會跳出結果畫面。
-            // 現在 Check_Text_Input_Match() 改成「字數打滿就結束」，就算整句都打錯也會進到這裡，
-            // 所以這裡要換成「真正的逐字正確率」：打對字數 ÷ 總嘗試次數。
-            // target_get 在 Check_Text_Input_Match() 裡已經被設成「真正打對的字數」了。
-            //
-            // 【修正】原本分母只有 target_text_for_acc.length（目標句子總字數），
-            // 代表只要「最後打出來的結果對」，中間不管打錯幾次、按了幾次 Backspace 改回來，
-            // 正確率都不會受影響——這跟挑戰模式（TCTC2-0-challenge.js 的 cg_update_live_stats /
-            // Finish_Challenge）的算法不一致，那邊的分母會加上 cg_correction_count
-            // （玩家按過幾次 Backspace / Delete），因為「打錯需要修正」本身就是一次錯誤的嘗試。
-            // 這裡改成同一套邏輯：分母 = 目標字數 + wrong_key_times。
-            // wrong_key_times 在直接輸入模式底下，本來就是「每按一次 Backspace 就 +1」
-            // （見 Render_Text_Input_Stage() 裡掛的 keydown 監聽器），意義完全對應
-            // 挑戰模式的 cg_correction_count，這裡直接沿用，不用另外開一個變數。
             if(Is_Box_Input_Stage(stage)){
                 const target_text_for_acc = Clean_Target1_For_Typing(stage.target1).trim()
                 const acc_attempts = target_text_for_acc.length + wrong_key_times
@@ -3786,40 +3468,30 @@
                     : 0
             }
 
-
-            // 【新增】高級關卡（超級/超極/究極...速度挑戰）不是單看正確率過關，
-            // 而是要同時達到這一關設定的最低速度（wpm_min）跟最低正確率（acc_min）才算過關，
-            // 對應 level data 裡每一關卡的 wpm_min / acc_min 設定。
             const stage_is_passed = get_difficulty_by_stageid(stage.id) === "hard"
                 ? (wpm >= Get_Stage_Default_Wpm(stage) && acc >= (typeof stage.acc_min === "number" && stage.acc_min > 0 ? stage.acc_min : 90))
                 : acc > 89
 
-            // 【新增】過關才播放 complete 音效，acc < 90 就不播（即使 stage_is_passed 因為
-            // 高級關卡門檻比較低而判定過關，這裡還是額外用 acc >= 90 卡一次，維持一致的音效門檻）
             if(stage_is_passed && acc >= 90){
                 Play_Complete_Sound()
             }
 
-            //如果是 章節訓練 或 中級（綜合練習，全數採計）或 基礎輸入 或 高級 就採計到 平均wpm
             if((stage.name === "章節驗收" || stage.name === "精熟度測試" || stage.type === "基礎輸入" || stage.type === "速度挑戰" || stage.type === "綜合練習") && (!Is_Box_Input_Stage(stage) || stage_is_passed)){
                 wpm_sum += wpm;
                 wpm_times += 1;
                 localStorage.setItem("wpm_sum", wpm_sum)
                 localStorage.setItem("wpm_times", wpm_times)
-                
+
                 let average_wpm = wpm_times > 0 ? Math.round(wpm_sum / wpm_times) : 0;
                 console.log(average_wpm, "平均wpm")
                 localStorage.setItem("average_wpm", average_wpm)
                 console.log("成功將average wpm存到localstorage")
             }
 
-            //wpm counter
             let acc_sum = Number(localStorage.getItem("acc_sum")) || 0;
             let acc_times = Number(localStorage.getItem("acc_times")) || 0;
 
             if(stage.name === "章節驗收" || stage.name === "精熟度測試" || stage.type === "基礎輸入" || stage.type === "速度挑戰" || stage.type === "綜合練習"){
-                //===記到平均區===
-
 
                 if(!Is_Box_Input_Stage(stage) || stage_is_passed){
                     acc_sum += acc;
@@ -3834,46 +3506,18 @@
                     console.log("成功將average acc存到localstorage")
                 }
             }
-            // 【新增】把這次成績同步到雲端排行榜（訪客模式，不需要登入）
-            // 只上傳「有實際計入平均值」的關卡類型，跟上面採計平均wpm的條件一致，
-            // 避免隨便重打、還沒過關的嘗試也塞進排行榜。
+
             const counts_for_leaderboard = (stage.name === "章節驗收" || stage.name === "精熟度測試" || stage.type === "基礎輸入" || stage.type === "速度挑戰" || stage.type === "綜合練習") && (!Is_Box_Input_Stage(stage) || stage_is_passed)
 
-            /* ============================================================
-               【新增】累積字數／累積注音數的獨立採計門檻（counts_for_accumulation）
-               ------------------------------------------------------------
-               為什麼不直接沿用 counts_for_leaderboard：
-               那個門檻只認「章節驗收／精熟度測試」這兩個名稱、或「基礎輸入／
-               速度挑戰／綜合練習」這三種 type，主線初級模式裡佔絕大多數的
-               一般「注音練習」型個別關卡完全不在這份白名單裡。結果是老師在
-               班級任務出「累積 3000 字」，學生打再多初級模式的練習關卡，
-               數字永遠不會動——因為連字數同步都沒被觸發過，不是任務系統
-               本身算錯，是上游根本沒把這些關卡的字數送上雲端。
-
-               新門檻改成：只要「不是純教學說明關卡」且「這次真的打出東西」
-               （target_get > 0）就採計，直接輸入模式（IME）維持原本
-               「要過關才算」的保護（避免半途放棄的輸入也被計入），跟
-               counts_for_leaderboard 原本對 IME 類型的處理邏輯一致，
-               只是拿掉了「一定要是驗收/基礎輸入/速度挑戰/綜合練習」這條
-               名稱／type 白名單限制。
-               ============================================================ */
-            const is_pure_tutorial_stage = (stage.type === "基本介紹" || stage.id === "1-8-1" || stage.id === "2-1-0")
+                        const is_pure_tutorial_stage = (stage.type === "基本介紹" || stage.id === "1-8-1" || stage.id === "2-1-0")
             const counts_for_accumulation = !is_pure_tutorial_stage && target_get > 0 && (!Is_Box_Input_Stage(stage) || stage_is_passed)
 
             if(counts_for_leaderboard){
-                // ===== 【新增】把算出 wpm/acc 的原始數字一起存起來，跟挑戰模式那邊做法一致，
-                // 方便之後把整包排行榜資料匯出做異常分析（不是即時擋作弊，是事後稽核用）。
-                // 注意：直接輸入模式（IME）底下 wrong_key_times 代表的是「修正次數」，
-                // 不是逐字打錯次數，跟一般輸入模式的意義不一樣，所以額外拆成
-                // correction_count / wrong 兩個欄位分開存，不要混在一起誤導稽核。
+
                 const raw_stats = Is_Box_Input_Stage(stage)
                     ? { correct: target_get, correction_count: wrong_key_times, duration_seconds: Math.round(timeUsed) }
                     : { correct: target_get, wrong: wrong_key_times, duration_seconds: Math.round(timeUsed) }
 
-                // 【新增】把 TCTC_Integrity 蒐集到的這次作答鑑識資料（session_id／
-                // keydown_count／untrusted_key_events）一起展開進 raw_stats，
-                // 跟 correct/wrong/duration_seconds 存在同一筆分數紀錄底下，
-                // 之後匯出 json 時不用另外對照兩個地方的資料
                 if(typeof TCTC_Integrity !== "undefined"){
                     Object.assign(raw_stats, TCTC_Integrity.getAttemptSnapshot())
                 }
@@ -3881,62 +3525,37 @@
                 if(typeof Submit_Score_To_Leaderboard === "function"){
                     Submit_Score_To_Leaderboard(stageId, wpm, acc, raw_stats)
                 }
-                // 【新增】同一次「算數」的測驗，同時累加進「玩家總排行榜」
-                // （平均WPM／平均正確率／在線時長）的統計資料，
-                // 跟上面 Submit_Score_To_Leaderboard 共用同一個門檻判斷，
-                // 確保「單一關卡排行榜」跟「玩家總排行榜」的採計標準永遠一致。
+
                 if(typeof Sync_Player_Stats === "function"){
                     Sync_Player_Stats(wpm, acc)
                 }
-                // 【新增】主線模式每完成一次算數的測驗，給固定的 XP_CONFIG.actions.stage_clear。
-                // 首次破關的額外獎勵已經在 firebase.js 的 Sync_Stage_Completion() 裡發過了，
-                // 這裡發的是「每次都給」的那一份，兩者互不重複、互不取代。
+
                 if(typeof Sync_XP === "function" && typeof XP_CONFIG !== "undefined"){
                     Sync_XP(XP_CONFIG.actions.stage_clear)
                 }
             }
 
-            // 【修改】累積字數／累積注音數：改成獨立於 counts_for_leaderboard 之外，
-            // 用上面新增的 counts_for_accumulation 判斷，讓主線初級模式的個別練習
-            // 關卡也能被算進去，詳細原因見 counts_for_accumulation 那段註解。
             if(counts_for_accumulation){
-                // ===== 累積中文字數：直接輸入模式（IME）的 target_get 本來就是真正字數；
-                // 逐字注音模式用 Compute_Real_Char_Count() 換算成真正字數（按鍵次數 / 3），
-                // 避免把按鍵次數直接當字數，灌水成實際的 2～4 倍。=====
+
                 if(typeof Sync_Chars_Typed === "function"){
                     Sync_Chars_Typed(Compute_Real_Char_Count(target_get, stage))
                 }
-                // ===== 【新增】累積注音數（含空白、符號）：只有逐字注音模式才有意義——
-                // target_get 在這個模式下本來就是「每個注音符號／聲調／空白鍵／
-                // 標點符號鍵按對一次 +1」的原始按鍵次數（見前面 target_get++ 的比對
-                // 邏輯），不需要另外換算，直接把原始值傳給 Sync_Zhuyin_Keys_Typed。
-                // 直接輸入模式（IME）沒有「按注音鍵」這件事，故意不同步這個欄位，
-                // 讓「累積中文字數」跟「累積注音數」兩個班級任務指標各自獨立、
-                // 互不干擾：中文字數不管哪種輸入模式都會累積，注音數只有逐字
-                // 注音模式才會累積。 =====
+
                 if(!Is_Box_Input_Stage(stage) && typeof Sync_Zhuyin_Keys_Typed === "function"){
                     Sync_Zhuyin_Keys_Typed(target_get)
                 }
             }
 
-            // 這關本來就不計分/這次沒過關門檻，排行榜也不會有這次的資料，按鈕就不顯示，
-            // 避免玩家點進去看到空的以為壞掉了
             const rank_view_btn = document.getElementById("rank_view_btn")
             if(rank_view_btn){
                 rank_view_btn.style.display = counts_for_leaderboard ? "inline-block" : "none"
             }
 
-            //把數字填進對應元素
             document.getElementById("result_wpm").innerHTML = wpm + '<span>WPM</span>'
             document.getElementById("result_acc").textContent = acc + "%"
             document.getElementById("result_chars").textContent = target_get
             document.getElementById("result_errors").textContent = wrong_key_times
 
-            // 【新增】把這次算好的 wpm/acc/關卡名稱存起來，分享卡按鈕點下去的時候直接讀這裡，
-            // 不用重新計算一次（wrong_key_times 之後可能會被 Init() 重設，這裡要在被改掉之前存好）
-            // 【新增】details：把這次結算算出來的所有細項數字一起塞進分享卡，
-            // 錯誤/修正次數的標籤要跟畫面上的 errors_label 用同一套判斷（直接輸入模式是「修正次數」，
-            // 其他模式是「錯誤次數」），避免分享卡跟畫面上顯示的文字對不起來。
             last_result_summary = {
                 wpm: wpm,
                 acc: acc,
@@ -3954,14 +3573,6 @@
                 ]
             }
 
-            // 【新增】直接輸入模式（輸入法選字）的 backspace 次數，
-            // 不等於「真正打錯」，可能只是選字選錯又修正而已，
-            // 所以這裡不算進準確率，但畫面上的文字標籤也要跟著換，
-            // 避免玩家看到「準確率100% / 錯誤次數5」覺得互相矛盾。
-            // querySelector 用 CSS 選擇器語法：
-            // "#result_errors ~ .game_result_stat_label" 意思是
-            // 「找到 id 為 result_errors 的元素，再找它後面（同層級）第一個 class 為
-            // game_result_stat_label 的元素」，也就是它旁邊那個文字標籤。
             const errors_label = document.querySelector("#result_errors ~ .game_result_stat_label")
             if(errors_label){
                 errors_label.textContent = Is_Box_Input_Stage(stage) ? "修正次數" : "錯誤次數"
@@ -3969,10 +3580,8 @@
             document.getElementById("game_result").style.boxShadow = "0px 0px 15px var(--champagne-gold)"
             document.getElementById("game_result").style.border = "2px solid var(--champagne-gold)"
 
-            //顯示結果畫面
             document.getElementById("game_result").classList.add("show")
 
-            // 【新增】狀態徽章 + 未過關提示句，兩種狀態共用的元素先抓出來
             const resultStatusEl = document.getElementById("game_result_status")
             const resultFailHintEl = document.getElementById("game_result_fail_hint")
 
@@ -3989,12 +3598,8 @@
                     resultFailHintEl.classList.remove("show")
                 }
 
-                //過關標記 沒拿到就給空字串
-                let progress = JSON.parse(localStorage.getItem("stage_progress")) || {} 
+                let progress = JSON.parse(localStorage.getItem("stage_progress")) || {}
 
-                // 【新增】只有「這關是第一次通過」才同步進 Firebase 難度完成計數，
-                // 必須在 progress[stageId] = true 覆蓋掉舊值「之前」先讀出來判斷，
-                // 不然每次重打都會讀到剛寫入的 true，變成永遠都是「第一次」
                 const is_first_time_clear_main = progress[stageId] !== true
                 if(is_first_time_clear_main && typeof Sync_Stage_Completion === "function"){
                     Sync_Stage_Completion(stageId)
@@ -4011,9 +3616,7 @@
                     resultStatusEl.textContent = "未通過"
                     resultStatusEl.className = "game_result_status show game_result_status_fail"
                 }
-                // 【新增】高級關卡的過關門檻是速度+正確率雙門檻，未過關的原因可能是其中一項沒達標，
-                // 這裡把「這關實際要求的標準」直接講清楚，玩家才知道下次要往哪個方向加強，
-                // 不是只看到一個叉叉卻不知道差在哪
+
                 if(resultFailHintEl){
                     resultFailHintEl.textContent = get_difficulty_by_stageid(stage.id) === "hard"
                         ? `這關需要達到 ${Get_Stage_Default_Wpm(stage)} WPM 以上、正確率 ${(typeof stage.acc_min === "number" && stage.acc_min > 0 ? stage.acc_min : 90)}% 以上才算過關，再挑戰一次吧！`
@@ -4022,8 +3625,6 @@
                 }
             }
 
-
-            //隱藏next btn
             const nextBtn = document.querySelector(".next_game_btn")
             let hasNext = false
 
@@ -4032,24 +3633,18 @@
                     if (!chapter.stage) continue
                     for (let i = 0; i < chapter.stage.length; i++) {
                         if (chapter.stage[i].id === stageId) {
-                            // 同章節還有下一關
+
                             if (i + 1 < chapter.stage.length) hasNext = true
                         }
                     }
                 }
             }
 
-            // 【修改】原本不管有沒有過關，只要「同章節還有下一關」就顯示「下一關」，
-            // 玩家沒過關也能直接跳過去，跟遊戲本來「要過關才能繼續」的設計互相矛盾。
-            // 現在改成：
-            // 沒過關 → 不管有沒有下一關，按鈕一律變成「再來一次」，點下去重打同一關（Init()）；
-            // 過關 + 還有下一關 → 維持原本「下一關」文字與行為；
-            // 過關 + 沒有下一關 → 維持原本「回到大廳」文字與行為。
             nextBtn.style.display = "block"
             nextBtn.classList.remove("next_game_btn_retry")
             if(!stage_is_passed){
                 nextBtn.textContent = "再來一次"
-                nextBtn.onclick = function(){ window.location.reload() }   // 【修改】同上，改成整頁重新整理
+                nextBtn.onclick = function(){ window.location.reload() }
                 nextBtn.classList.add("next_game_btn_retry")
             }
             else if(hasNext){
@@ -4061,18 +3656,13 @@
                 nextBtn.onclick = function(){ window.location.href = "TCTC2-0-main.html" }
             }
 
-            
-            
-            if(stage.id === "1-2-1" || stage.id === "2-1-1"){   //顯示結果說明
+            if(stage.id === "1-2-1" || stage.id === "2-1-1"){
                 console.log("1-2-1")
                 intro_overlay = document.getElementById("tutorial_popup")
                 intro_overlay.style.display = "block"
                 document.getElementById("black_overlay").style.display = "block"
             }
 
-
-
-            //滾到最底
             window.scrollBy({
                 top: 100000,
                 behavior: "smooth"
@@ -4080,28 +3670,20 @@
 
         }
 
-        // ===== 【新增】分享成績卡按鈕的進入點 =====
-        // 純粹是個轉接函式：檢查 last_result_summary 有沒有資料（防呆用，
-        // 理論上這個按鈕只會在結果畫面顯示之後才點得到，一定會有資料），
-        // 有的話就交給 share_card.js 的 Open_Share_Card_Modal() 處理接下來所有事情
-        // （畫 Canvas、跳出預覽彈窗、下載按鈕），這裡不用管任何細節。
         function Share_Current_Result(){
             if(!last_result_summary) return
             Open_Share_Card_Modal(last_result_summary)
         }
 
-
-        //按下enter自動跳關
         document.addEventListener("keydown", function(event){
-            if(key_intro_active) return   // 【新增】新按鍵教學進行中，Enter 交給教學專用的監聽器處理
+            if(key_intro_active) return
             if(event.key === "Enter"){
                 const next_btn = document.querySelector(".next_game_btn")
                 const result_showing = document.getElementById("game_result").classList.contains("show")
 
                 if(result_showing && next_btn && next_btn.style.display === "block"){
                     event.preventDefault()
-                    // 【修改】原本固定呼叫 Find_next_game，但按鈕現在可能是「回到大廳」，
-                    // 改成直接觸發按鈕當下的 onclick，不管是跳下一關還是回大廳都能正確執行
+
                     if(typeof next_btn.onclick === "function"){
                         next_btn.onclick()
                     }
@@ -4111,15 +3693,13 @@
 
                 }
             }
-            
+
         })
 
         function Find_next_game(currentId){
 
-            
             const current_stage = FindStage(stageId)
             console.log("目前stage: ", current_stage)
-
 
             for( const difficulty in Level_Data){
                 for (const chapter of Level_Data[difficulty].chapter){
@@ -4127,7 +3707,7 @@
                     if(!chapter.stage) continue;
 
                     for(let i = 0 ; i < chapter.stage.length ; i++){
-                        
+
                         if (chapter.stage[i].id === currentId){
                             console.log("找到currentid :", currentId)
 
@@ -4145,41 +3725,22 @@
                     }
                 }
             }
-            
 
         }
 
-
-
-        // ===== 【新增】讓「卡住的那一格（金框 current）」播放一次上下震動動畫 =====
-        // 用途：玩家上一格已經打錯（紅框），跳到這一格之後又打錯，這格就會卡住，
-        // 必須打對才能繼續。這個函式讓玩家直覺知道「這格卡住了，要打對它」，
-        // 但刻意不加紅框，維持金框樣式（跟「已經跳過去、變成紀錄」的紅框做出區隔）。
         function Shake_Wrong_Box(){
             const box = boxes[current]
             if(!box) return
 
-            // 【重點】CSS animation 有個特性：同一個 class 如果「已經在身上」，
-            // 再呼叫一次 classList.add() 瀏覽器會視為沒有變化，動畫不會重新播放。
-            // 玩家如果連續按錯（卡住後又亂按兩三下），我們希望「每一下」都震一次，
-            // 所以要先移除 class，強制觸發一次 reflow（讀取 offsetWidth 會逼瀏覽器重新計算版面），
-            // 讓瀏覽器徹底「忘記」剛剛播過這個動畫，接下來重新加上 class 才能讓動畫重新從頭播放。
             box.classList.remove("box_shake")
-            void box.offsetWidth   // 強制 reflow
+            void box.offsetWidth
             box.classList.add("box_shake")
 
-            // 動畫播完（300ms 後）就把 class 移掉，避免留在身上導致下次觸發不了。
             box.addEventListener("animationend", function(){
                 box.classList.remove("box_shake")
             }, { once: true })
         }
 
-        // ===== 【新增】讓「打錯的那個字」從格子上方跳出來、淡入淡出 =====
-        // 這裡「每次呼叫」都會新增一個獨立的 span，
-        // 不是重複用同一個 class 觸發動畫。這樣如果玩家卡住之後還一直亂按，
-        // 每一下都會各自彈出一個字、各自淡出，而不是後面的按鍵把前一個動畫打斷、
-        // 看起來像沒反應。動畫結束（或保底的 setTimeout）就把這個 span 移除，
-        // 避免玩家狂按時 DOM 裡越疊越多殘留節點。
         function Show_Wrong_Char_Popup(box, wrong_char){
             if(!box || !wrong_char) return
 
@@ -4191,16 +3752,15 @@
             popup.addEventListener("animationend", function(){
                 popup.remove()
             }, { once: true })
-            // 保底：極少數情況（例如切分頁到背景）animationend 不會觸發，
-            // 用 setTimeout 確保這個 span 一定會被清掉。
+
             setTimeout(function(){ popup.remove() }, 700)
         }
 
         document.addEventListener("keydown", function(event) {
 
-            if(key_intro_active) return   // 【新增】新按鍵教學進行中，這個監聽器完全不處理，交給教學專用的監聽器
-            if(time_up) return   // 【新增】時間到了，忽略所有按鍵輸入
-            if(game_over) return   // 【新增】結果畫面已經出現，忽略所有按鍵輸入，統計數字不再變動
+            if(key_intro_active) return
+            if(time_up) return
+            if(game_over) return
 
             if (target === "" || boxes.length === 0) return
 
@@ -4208,7 +3768,6 @@
             if (current >= target.length) return
 
             let key = event.key  // 取得按下的按鍵名稱
-
 
             //例外處理 重複字元
             if(event.code === "Comma"){
@@ -4228,27 +3787,18 @@
                 }
             }
 
-
-            // 空白鍵預設會讓頁面捲動，這裡阻止這個預設行為
             if (key === " ") event.preventDefault()
 
-            // ---- 處理 Backspace（退格）----
-            // 【修改】新邏輯下，打錯字不會再卡住、游標會直接往前跳，
-            // 所以「打錯之後按 Backspace 清除紅框」這個分支已經不需要了。
-            // Backspace 現在單純只做一件事：往回退一格，讓玩家可以回頭重打
-            // 剛剛跳過的那一格（不管那格原本是綠框 correct 還是紅框 wrong）。
             if (key === "Backspace"){
-                if (current <= 0) return  // 已經在第一格，不能再退
+                if (current <= 0) return
 
-                Flash_Keyboard_Key("Backspace", null)  // 【新增】鍵盤閃灰色（中性提示）
+                Flash_Keyboard_Key("Backspace", null)
 
                 boxes[current].classList.remove("current")
 
                 current--
-                stuck_mistake_counted = false  // 【新增】current 改變了，卡住旗標重設
+                stuck_mistake_counted = false
 
-                // 只有「退回去的那格」原本是打對（correct）時，才需要把 target_get 扣回來；
-                // 如果那格是打錯被跳過的（wrong），本來就沒有算進 target_get，不能重複扣。
                 const was_correct = boxes[current].classList.contains("correct")
                 if (was_correct) target_get--
 
@@ -4264,20 +3814,18 @@
                 if (bopomofo[key] === undefined) return
             }
 
-            // 按的鍵不在注音對照表裡，忽略（例如 Shift、Ctrl 等）
             if (bopomofo[key] === undefined) return
 
             if (!isRunning) {
                 isRunning = true
-                startTime = Date.now()  //記錄開始
+                startTime = Date.now()
                 Start_Timer()
             }
-            // 判斷對錯 
+
             if (target[current] === bopomofo[key]) {
 
-                Flash_Keyboard_Key(key, true)  // 【新增】鍵盤閃綠色
+                Flash_Keyboard_Key(key, true)
 
-                // 【新增】打對音效：空白鍵/Enter 各自有專屬音效，其他一般字用兩種音效隨機混音
                 if(key === " "){
                     Play_Space_Sound()
                 } else if(key === "Enter"){
@@ -4288,45 +3836,40 @@
 
                 const current_top = boxes[current].offsetTop
 
-                //對了
-                boxes[current].classList.remove("current", "wrong")  //移除金框紅框
-                boxes[current].classList.add("correct")               //加上綠框
-                target_get++   //打對數量 +1
-                current++      //移到下一格
-                stuck_mistake_counted = false  // 【新增】current 改變了，卡住旗標重設
+                boxes[current].classList.remove("current", "wrong")
+                boxes[current].classList.add("correct")
+                target_get++
+                current++
+                stuck_mistake_counted = false
 
                 if (current < boxes.length) {
-                    // 還有下一格，把金框移過去
+
                     boxes[current].classList.add("current")
 
-                    const next_top = boxes[current].offsetTop //下個的高度
+                    const next_top = boxes[current].offsetTop
 
                     if (next_top !== current_top) {
                         const container = document.getElementById("game_char_container")
                         const scrool_distance = Math.abs(current_top - next_top)
 
-
                         container.scrollBy({ top: scrool_distance, behavior: "smooth" })
-                        
-                                            
+
                     }
 
                 } else {
-                    // 已經是最後一格，顯示結果
+
                     Update_Normal_Mode_Target1_Highlight()
                     ShowResult()
                     return
                 }
                 Update_Normal_Mode_Target1_Highlight()
             } else {
-                //打錯
 
                 if (current === boxes.length - 1) {
-                    // 【維持】最後一格沒有下一格可以跳、也不會有「卡住」的問題：
-                    // 打錯就直接結束遊戲，不用管這格要標紅還是留金框。
-                    Flash_Keyboard_Key(key, false)  // 【新增】鍵盤閃紅色
-                    wrong_key_times++   //錯誤次數 +1
-                    Play_Wrong_Sound()   // 打錯時的音效
+
+                    Flash_Keyboard_Key(key, false)
+                    wrong_key_times++
+                    Play_Wrong_Sound()
                     Show_Wrong_Char_Popup(boxes[current], bopomofo[key])
                     boxes[current].classList.remove("current")
                     boxes[current].classList.add("wrong")
@@ -4335,37 +3878,32 @@
                     return
                 }
 
-                // 【新增】判斷這格是不是「卡住格」：如果上一格已經是紅框（wrong），
-                // 代表這格是「因為上一格打錯才被跳過來的目標格」，這裡再打錯就要卡住，
-                // 不會前進、不會變紅，維持金框，直到打對為止。
                 const is_stuck_box = current > 0 && boxes[current - 1].classList.contains("wrong")
 
                 if (is_stuck_box) {
-                    Flash_Keyboard_Key(key, false)  // 【新增】鍵盤閃紅色
-                    // 卡住：只有「這次卡住之後的第一次」才計入錯誤次數，
-                    // 之後狂按同一格只播動畫、不會一直累加，避免正確率被灌爆。
+                    Flash_Keyboard_Key(key, false)
+
                     if (!stuck_mistake_counted) {
                         wrong_key_times++
                         stuck_mistake_counted = true
                     }
-                    Play_Wrong_Sound()   // 打錯時的音效
-                    Show_Wrong_Char_Popup(boxes[current], bopomofo[key])  //跳出打錯的字
-                    Shake_Wrong_Box()  //金框震動（不會變紅）
+                    Play_Wrong_Sound()
+                    Show_Wrong_Char_Popup(boxes[current], bopomofo[key])
+                    Shake_Wrong_Box()
                     return
                 }
 
-      
-                Flash_Keyboard_Key(key, false)  // 【新增】鍵盤閃紅色
-                wrong_key_times++   //錯誤次數 +1
-                Play_Wrong_Sound()   // 打錯時的音效
-                Show_Wrong_Char_Popup(boxes[current], bopomofo[key])  //跳出打錯的字
+                Flash_Keyboard_Key(key, false)
+                wrong_key_times++
+                Play_Wrong_Sound()
+                Show_Wrong_Char_Popup(boxes[current], bopomofo[key])
 
                 const current_top = boxes[current].offsetTop
 
                 boxes[current].classList.remove("current")
                 boxes[current].classList.add("wrong")
                 current++
-                stuck_mistake_counted = false  // 【新增】current 改變了，卡住旗標重設
+                stuck_mistake_counted = false
                 boxes[current].classList.add("current")
 
                 const next_top = boxes[current].offsetTop
@@ -4381,15 +3919,14 @@
             }
         })
 
-
         Bind_Countdown_Modal_Events()
 
         Bind_Punct_Modal_Events()
 
-        Build_Live_Keyboard()  
+        Build_Live_Keyboard()
 
         Init()
-    
+
     </script>
     <script defer src="https://cloud.umami.is/script.js" data-website-id="070df494-4361-4dce-ad65-a25b404811e9"></script>
 </body>
