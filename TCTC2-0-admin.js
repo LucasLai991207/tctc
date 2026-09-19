@@ -70,6 +70,7 @@ function Adm_Load_Feedback() {
                         ${is_resolved
                             ? `<button class="adm_btn" onclick="Adm_Mark_Feedback('${item.id}','new')">標記為未處理</button>`
                             : `<button class="adm_btn" onclick="Adm_Mark_Feedback('${item.id}','resolved')">標記為已處理</button>`}
+                        <button class="adm_btn adm_btn_danger" onclick="Adm_Delete_Feedback_Item('${item.id}')">刪除</button>
                     </div>
                 </div>`
             }).join("")
@@ -83,6 +84,15 @@ function Adm_Mark_Feedback(id, status) {
     Admin_Set_Feedback_Status(id, status, function (ok) {
         if (!ok) { Adm_Toast("更新失敗", true); return }
         Adm_Toast("已更新")
+        Adm_Load_Feedback()
+    })
+}
+
+function Adm_Delete_Feedback_Item(id) {
+    if (!confirm("確定要刪除這筆意見回報嗎？")) return
+    Admin_Delete_Feedback(id, function (ok) {
+        if (!ok) { Adm_Toast("刪除失敗", true); return }
+        Adm_Toast("已刪除")
         Adm_Load_Feedback()
     })
 }
@@ -126,6 +136,7 @@ function Adm_Load_Reports() {
                     </div>
                     <div class="adm_item_actions" style="margin-top:0.8rem;">
                         <button class="adm_btn" onclick="Adm_Lookup_From_Report('${Adm_Esc(item.target_anon_id)}')">查看這個玩家</button>
+                        <button class="adm_btn" onclick="Adm_Delete_Report_Item('${Adm_Esc(item.target_anon_id)}','${Adm_Esc(item.id)}')">刪除此檢舉</button>
                         <button class="adm_btn adm_btn_danger" onclick="Adm_Delete_Player('${Adm_Esc(item.target_anon_id)}')">刪除此玩家資料</button>
                     </div>
                 </div>`
@@ -141,6 +152,15 @@ function Adm_Lookup_From_Report(anon_id) {
     const input = document.getElementById("adm_player_search")
     if (input) input.value = anon_id
     Adm_Search_Player()
+}
+
+function Adm_Delete_Report_Item(target_anon_id, report_id) {
+    if (!confirm("確定要刪除這筆檢舉紀錄嗎？（只刪檢舉紀錄本身，不會動到被檢舉玩家的資料）")) return
+    Admin_Delete_Report(target_anon_id, report_id, function (ok) {
+        if (!ok) { Adm_Toast("刪除失敗", true); return }
+        Adm_Toast("已刪除")
+        Adm_Load_Reports()
+    })
 }
 
 /* ===== 查詢玩家 =====
