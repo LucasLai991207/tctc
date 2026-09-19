@@ -291,12 +291,12 @@ function VP_Init_Report_Button(is_self, target_name){
             submitBtnEl.disabled = true   // 送出前先鎖住，避免手滑連點兩次同時發出兩個請求
             submitBtnEl.textContent = "送出中..."
 
-            Report_Player(target_id, target_name, categories, reason, function(success){
+            Report_Player(target_id, target_name, categories, reason, function(success, reason_msg){
                 Close_Modal()
                 if(success){
                     VP_Show_Toast("已送出檢舉，感謝你的回報")
                 } else {
-                    VP_Show_Toast("檢舉送出失敗，請稍後再試一次", true)
+                    VP_Show_Toast(reason_msg || "檢舉送出失敗，請稍後再試一次", true)
                 }
             })
         })

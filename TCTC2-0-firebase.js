@@ -8,35 +8,11 @@ const firebaseConfig = {
     appId: "1:1098169583658:web:dfdeae095ccefecc459b53"
 }
 
-// 避免同一頁不小心載入這個檔案兩次時重複 initializeApp 報錯
 if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig)
 }
 const tctc_db = firebase.database()
 
-
-/* ============================================================
-   【修正】Wait_For_Auth_Ready
-   ------------------------------------------------------------
-   舊版問題：用一個「只會 resolve 一次」的 Promise 記住 auth 狀態。
-   這代表只要它 resolve 過一次（不管是拿到使用者、還是失敗後 resolve(null)），
-   之後整個頁面存活期間，不管 firebase.auth() 的登入狀態再怎麼變化
-   （例如玩家在同一頁面裡註冊/登入成功、從匿名升級成正式帳號），
-   Wait_For_Auth_Ready 永遠只會回傳「當初第一次」拿到的那個（可能已經過期
-   或根本是 null 的）使用者——這就是玩家取暱稱時偶爾會卡在
-   「登入尚未完成，請稍後再試」的根本原因：不是真的沒登入完成，
-   而是這支函式已經被鎖死在舊的狀態上，永遠不會再更新。
-
-   新版做法：改成持續追蹤「目前最新」的 auth 使用者（每次 onAuthStateChanged
-   觸發都更新），呼叫 Wait_For_Auth_Ready 時：
-   1. 如果已經知道目前的使用者，直接同步回呼，不用等。
-   2. 否則加進等待佇列，等下一次 onAuthStateChanged 觸發時通知；
-      同時掛一個逾時保險（預設 8 秒），逾時只會讓「這一次呼叫」回傳 null，
-      不會影響其他還在等待或之後才呼叫的人，也不會把整個系統鎖死。
-   匿名登入失敗時也不再提前 resolve(null) 卡住後面所有人，
-   而是讓等待中的呼叫繼續等下一次 onAuthStateChanged（例如網路恢復後
-   firebase SDK 自動重試成功的那一次）。
-   ============================================================ */
 let _tctc_current_auth_user = null
 let _tctc_auth_ready_waiters = []
 
@@ -51,24 +27,11 @@ function _Tctc_Notify_Auth_Waiters(user) {
 let _tctc_anon_signin_retry_count = 0
 function _Tctc_Try_Anonymous_Signin() {
     firebase.auth().signInAnonymously().then(function () {
-        _tctc_anon_signin_retry_count = 0 // 成功了，重置重試次數，下次真的斷線時可以重新算過
+        _tctc_anon_signin_retry_count = 0
     }).catch(function (error) {
-        // 【新增】把實際的 Firebase 錯誤代碼印出來，方便診斷——
-        // 最常見在「本機測試」會踩到的兩種：
-        //   auth/unauthorized-domain：目前這個網域沒有被加進 Firebase Console
-        //   → Authentication → Settings → Authorized domains 清單。
-        //   Firebase 預設只會自動放行 "localhost"，如果是用 VS Code 的
-        //   Live Server 之類的工具、網址列顯示的是 "127.0.0.1:xxxx"
-        //   （不是 "localhost:xxxx"），就會被擋下來，要嘛改用 localhost
-        //   開啟，要嘛去 Firebase Console 手動把 127.0.0.1 加進白名單。
-        //   auth/operation-not-supported-in-this-environment：直接用
-        //   file:// 雙擊打開 html（網址列開頭是 file:///...），沒有經過
-        //   任何本機伺服器——Firebase Auth 不支援這種環境，一定要透過
-        //   http://localhost:xxxx 這種有真正 origin 的方式開啟才行。
+
         console.log("[auth] 匿名登入失敗，錯誤代碼：", error && error.code, "訊息：", error && error.message)
 
-        // 不是上面那兩種「環境本身不支援」的錯誤，才值得重試
-        // （網路瞬斷、Firebase 服務短暫異常等等，重試有機會自己好）
         const is_environment_error = error && (
             error.code === "auth/unauthorized-domain" ||
             error.code === "auth/operation-not-supported-in-this-environment"
@@ -83,7 +46,7 @@ function _Tctc_Try_Anonymous_Signin() {
             console.log("[auth] 匿名登入已重試多次仍失敗，暫停自動重試")
             return
         }
-        // 指數退避：1s, 2s, 4s, 8s, 16s，避免失敗時瘋狂重打 Firebase
+
         const delay_ms = Math.min(1000 * Math.pow(2, _tctc_anon_signin_retry_count - 1), 16000)
         setTimeout(_Tctc_Try_Anonymous_Signin, delay_ms)
     })
@@ -96,8 +59,6 @@ if (typeof firebase.auth === "function") {
             return
         }
 
-        // 現在真的沒有人登入（可能剛登出，或這台裝置從沒登入過），
-        // 補一次匿名登入，讓訪客也有 auth.uid 可用
         _tctc_current_auth_user = null
         _Tctc_Try_Anonymous_Signin()
     })
@@ -106,13 +67,12 @@ if (typeof firebase.auth === "function") {
 }
 
 function Wait_For_Auth_Ready(callback, timeout_ms) {
-    // 已經知道目前的使用者，不用等，直接同步回呼
+
     if (_tctc_current_auth_user) {
         callback(_tctc_current_auth_user)
         return
     }
-    // 保險再看一次 firebase 手上當下的 currentUser
-    // （理論上跟 _tctc_current_auth_user 應該同步，這裡多一層防呆）
+
     if (typeof firebase.auth === "function" && firebase.auth().currentUser) {
         callback(firebase.auth().currentUser)
         return
@@ -127,8 +87,6 @@ function Wait_For_Auth_Ready(callback, timeout_ms) {
 
     _tctc_auth_ready_waiters.push(finish)
 
-    // 逾時保險：只讓「這一次」呼叫回傳 null，不影響其他等待者，
-    // 也不會把 _tctc_current_auth_user 寫死成 null
     setTimeout(function () {
         if (already_finished) return
         const idx = _tctc_auth_ready_waiters.indexOf(finish)
@@ -137,14 +95,6 @@ function Wait_For_Auth_Ready(callback, timeout_ms) {
     }, timeout_ms || 8000)
 }
 
-/* ------------------------------------------------------------
-   訪客身分
-   ------------------------------------------------------------
-   不強制登入，所以用「瀏覽器本機產生一組不重複的匿名ID」來代表一個玩家。
-   這組 ID 存在 localStorage，只要同一台裝置、同一個瀏覽器，
-   之後不管重打幾次同一關，都會用同一個 ID 去更新自己在該關卡的最佳成績，
-   而不是每打一次就多新增一筆資料洗版排行榜。
-   ------------------------------------------------------------ */
 function Get_Anon_Id() {
     let anon_id = localStorage.getItem("tctc_anon_id")
     if (!anon_id) {
@@ -154,31 +104,6 @@ function Get_Anon_Id() {
     return anon_id
 }
 
-/* ------------------------------------------------------------
-   【新增】公開排行榜用的假名 ID（Public_Id）
-   ------------------------------------------------------------
-   background：leaderboard / challenge_leaderboard 這兩個節點是 .read: true，
-   任何人都能整包讀走。過去直接拿 anon_id 當 key，等於把「能拿去改
-   player_stats/{anon_id} 任何欄位」的那把鑰匙，原封不動印在公開排行榜上——
-   只要打開排行榜抄一串 key，就能改任何一個玩家的雲端資料（包括別人的個人
-   簡介、名字、隱藏排行榜開關……等等）。
-
-   這裡改成：leaderboard 只認一組「從 anon_id 算出來的假名」，不是 anon_id
-   本人。這組假名滿足兩個條件：
-   1. 同一個 anon_id 每次算出來都一樣（同一個人在排行榜上永遠對應同一列，
-      「這是不是我自己」還是能正常比對，不用額外存任何本機記錄）。
-   2. 沒辦法從假名反推回 anon_id——anon_id 本身是 crypto.randomUUID()
-      （122 bits 隨機亂數），就算知道下面這個雜湊怎麼算，要從雜湊值反推
-      回是「哪一個 UUID」在計算量上不可行。安全性是靠 anon_id 本身的亂數
-      亂猜不到，不是靠雜湊演算法多強，所以這裡故意用簡單、同步、不需要
-      crypto.subtle（那個是非同步的，會打亂全站現有的同步呼叫習慣）的
-      字串雜湊就夠了。
-
-   注意這只解決「反推回 anon_id」的問題，不是幫排行榜本身加上防塗改機制——
-   leaderboard/{id}/{public_id} 這個路徑本身還是任何人都能寫、能刪掉某一列
-   （這點跟過去一樣，本來就不是高風險的資料），差別只在於不會再牽連到
-   同一個人的 player_stats、classroom_students 這些其他資料。
-   ------------------------------------------------------------ */
 function _Hash_Anon_Id_To_Public_Id(anon_id) {
     function _hash32(str, seed) {
         let h1 = 0xdeadbeef ^ seed
@@ -200,14 +125,9 @@ function Get_Public_Id() {
     return _Hash_Anon_Id_To_Public_Id(Get_Anon_Id())
 }
 
-/* ------------------------------------------------------------
-   訪客編號系統（不會重複取名）
-   ------------------------------------------------------------
-*/
 function Get_Guest_Number(callback) {
     const anon_id = Get_Anon_Id()
 
-    // 先看本機快取，同一台裝置不用每次都問雲端要號碼
     const cached = localStorage.getItem("tctc_guest_number")
     if (cached) {
         callback(Number(cached))
@@ -223,9 +143,6 @@ function Get_Guest_Number(callback) {
             return
         }
 
-        // 還沒分配過號碼：跟全域計數器要一個新號碼。
-        // 用 transaction 對 guest_counter 做 +1，Firebase 保證就算很多人
-        // 同時在搶，每個人拿到的回傳值也一定是獨一無二的，不會撞號。
         tctc_db.ref("guest_counter").transaction(function (current) {
             return (current || 0) + 1
         }, function (error, committed, snap) {
@@ -235,7 +152,7 @@ function Get_Guest_Number(callback) {
                 return
             }
             const n = snap.val()
-            assign_ref.set(n) // 把這個號碼永久綁定在這個 anon_id 上
+            assign_ref.set(n)
             localStorage.setItem("tctc_guest_number", n)
             callback(n)
         })
@@ -245,10 +162,6 @@ function Get_Guest_Number(callback) {
     })
 }
 
-/* ------------------------------------------------------------
-   決定這次要用什麼名字上傳成績：
-   有設定 username 就用 username；沒有的話用「訪客#N」。
-   ------------------------------------------------------------ */
 function Get_Player_Display_Name(callback) {
     const saved_name = (localStorage.getItem("username") || "").trim()
     if (saved_name) {
@@ -261,7 +174,7 @@ function Get_Player_Display_Name(callback) {
             // 補零成固定 4 位數，例如 1 → "0001"，23 → "0023"
             callback("訪客#" + String(n).padStart(4, "0"))
         } else {
-            // 萬一分配編號那步失敗（例如網路問題），退回舊版隨機後綴，至少不會擋住整次上傳
+
             callback("訪客" + Get_Anon_Id().slice(0, 4))
         }
     })
@@ -269,8 +182,8 @@ function Get_Player_Display_Name(callback) {
 
 const FORBIDDEN_WORDS = [
   "fuck", "shit", "bitch", "asshole", "bastard", "pussy", "cunt", "fk",
-  "幹你娘", "操你媽", "機掰", "靠北", "靠腰", "三小", "我操", "去死", "死一死", 
-  "他媽的", "你媽的", "渣男", "雜碎", "垃圾", "白痴", "智障", "腦殘", 
+  "幹你娘", "操你媽", "機掰", "靠北", "靠腰", "三小", "我操", "去死", "死一死",
+  "他媽的", "你媽的", "渣男", "雜碎", "垃圾", "白痴", "智障", "腦殘",
   "賤人", "婊子", "死全家", "草泥馬", "我是gay"
 ];
 
@@ -312,31 +225,6 @@ function _Username_To_Key(name) {
     return name.trim().toLowerCase().replace(/[.#$\[\]\/]/g, "_")
 }
 
-/* ------------------------------------------------------------
-   佔用一個名字（全站不能重複）
-   ------------------------------------------------------------
-   用 usernames/{key}: { anon_id, owner_uid } 這個反查索引，靠 Firebase
-   transaction 保證「就算兩個人同時搶同一個名字，也只有一個人搶得到」。
-
-   【修改】value 從單純一個字串（anon_id）改成物件 { anon_id, owner_uid }。
-   owner_uid 是這次呼叫當下、Firebase Auth 給的 auth.uid（連訪客都有，
-   因為全站訪客一律會自動匿名登入，見 firebase.js 最上面 signInAnonymously()
-   那段）。過去 Rules 只檢查「有沒有登入」，沒檢查「這個名字現在是不是真的
-   歸我」，導致任何登入的人都能直接把別人已經佔用的名字改指向自己的
-   anon_id——因為 anon_id 只是寫進去的一個字串欄位，Rules 沒辦法驗證
-   「這個字串真的是你自己的」。owner_uid 不一樣：它是 Firebase Auth
-   在請求層級驗證過的身分，沒辦法在 payload 裡偽造成別人的 auth.uid，
-   Rules 那邊只要求「要改/要刪一筆已存在的紀錄，auth.uid 必須等於
-   當初存進去的 owner_uid」，就能真正擋掉這個漏洞。
-
-   呼叫前請先自己用 Validate_Username_Format() 檢查過格式，
-   這個函式只負責「有沒有人在用」，不重複做格式檢查。
-
-   callback(success, reason)：
-   - success = true：佔用成功（包含「本來就是自己的名字，沒改」這種情況）
-   - success = false：名字被別人佔用、還沒登入完成，或發生錯誤，
-     reason 是要顯示給玩家看的訊息
-   ------------------------------------------------------------ */
 function Claim_Username(name, callback) {
     if (typeof Wait_For_Auth_Ready !== "function") {
         callback(false, "系統尚未準備好，請稍後再試")
@@ -345,8 +233,7 @@ function Claim_Username(name, callback) {
 
     Wait_For_Auth_Ready(function (user) {
         if (!user) {
-            // 【新增】診斷用 log：印出當下 firebase.auth().currentUser 的真實狀態，
-            // 方便判斷到底是「auth 真的還沒 ready」還是其他原因
+
             console.log(
                 "[username] Claim_Username 失敗：Wait_For_Auth_Ready 回傳 null。診斷資訊：",
                 "firebase.auth().currentUser =", (typeof firebase.auth === "function" ? firebase.auth().currentUser : "firebase.auth 不是函式"),
@@ -363,9 +250,9 @@ function Claim_Username(name, callback) {
         const claim_ref = tctc_db.ref(`usernames/${key}`)
 
         claim_ref.transaction(function (current) {
-            if (current === null) return { anon_id: anon_id, owner_uid: owner_uid }              // 沒人用，佔用成功
-            if (current.owner_uid === owner_uid) return { anon_id: anon_id, owner_uid: owner_uid } // 本來就是自己的名字（例如只是重新送出一次），維持原樣
-            return undefined                                                                       // 已經有別人佔用，中止交易，不搶
+            if (current === null) return { anon_id: anon_id, owner_uid: owner_uid }
+            if (current.owner_uid === owner_uid) return { anon_id: anon_id, owner_uid: owner_uid }
+            return undefined
         }, function (error, committed) {
             if (error) {
                 console.log("[username] 檢查名字時發生錯誤：", error)
@@ -377,7 +264,6 @@ function Claim_Username(name, callback) {
                 return
             }
 
-            // 佔用成功：如果玩家之前用過別的名字，把舊名字釋放掉，不然會一直卡著沒人能用
             const old_name = (localStorage.getItem("username") || "").trim()
             const old_key = old_name ? _Username_To_Key(old_name) : null
             if (old_key && old_key !== key) {
@@ -410,7 +296,7 @@ function _Submit_Best_Score(node_path, id, wpm, acc, raw_stats) {
 
     return new Promise(function (resolve) {
         Get_Player_Display_Name(function (player_name) {
-            const public_id = Get_Public_Id()   // 【修改】leaderboard 的 key 改用假名，不再是 anon_id 本人
+            const public_id = Get_Public_Id()
             const entry_ref = tctc_db.ref(`${node_path}/${id}/${public_id}`)
 
             entry_ref.transaction(function (current) {
@@ -427,11 +313,6 @@ function _Submit_Best_Score(node_path, id, wpm, acc, raw_stats) {
 
                 const is_new_best = wpm > current.wpm
 
-                // 名字每次都同步成最新值（就算這次沒破紀錄），
-                // 這樣不管是後來才設定名字、還是分配到訪客編號，都會跟上最新狀態，
-                // 不會卡在第一次上傳時的舊名字。
-                // WPM / 正確率 / 時間戳記 / 原始數字則維持「只有破紀錄才更新」，
-                // 分數才不會被亂打的一次蓋掉，原始數字也才會跟當初那筆破紀錄的成績對得上。
                 const entry = {
                     name: player_name,
                     wpm: is_new_best ? wpm : current.wpm,
@@ -441,7 +322,7 @@ function _Submit_Best_Score(node_path, id, wpm, acc, raw_stats) {
                 if (is_new_best && raw_stats) {
                     Object.assign(entry, raw_stats)
                 } else if (!is_new_best) {
-                    // 沒破紀錄：把舊的原始數字欄位原封不動保留下來，不然這次 transaction 寫回去會把它們清掉
+
                     ;["correct", "wrong", "duration_seconds", "correction_count", "skip_count"].forEach(function (k) {
                         if (current[k] !== undefined) entry[k] = current[k]
                     })
@@ -453,37 +334,13 @@ function _Submit_Best_Score(node_path, id, wpm, acc, raw_stats) {
                 } else if (committed) {
                     console.log(`[leaderboard] 已同步（${node_path}，暱稱：${player_name}）：${id} - ${wpm} WPM`)
                 }
-                // 不管成功或失敗都要 resolve——呼叫端只是想知道「這次嘗試結束了沒」，
-                // 才能決定要不要放行跳頁，不是在乎有沒有真的寫入成功。
+
                 resolve()
             })
         })
     })
 }
 
-/* ============================================================
-   【新增】排行榜「隱藏我的成績」開關 —— 共用過濾邏輯
-   ------------------------------------------------------------
-   單一關卡榜（leaderboard）跟挑戰組合榜（challenge_leaderboard）的每一筆
-   資料，本身並沒有「這個人要不要被看到」這個欄位——這個開關統一只存在
-   player_stats/{anon_id}/hide_from_leaderboard 這一個地方（single source
-   of truth），不會在每一筆分數紀錄裡各自存一份容易過期的複製值。
-
-   所以要濾掉「選擇隱藏」的人，就得對榜單裡的每一筆資料，各自去
-   player_stats 查一次「這個人現在的開關狀態」，再把設成隱藏的人踢除。
-
-   【已知取捨，誠實記錄】：這代表每次讀取「單一關卡/挑戰組合」榜單，
-   都會多發出最多 fetch_limit 筆（通常是幾十筆）的小型雲端查詢，
-   不是完全沒有成本的操作，會讓榜單多花一點時間才顯示出來。
-   以這個網站目前的規模來說可以接受；如果之後玩家數量暴增、
-   覺得這裡拖慢了排行榜載入速度，可以考慮改成「在 _Submit_Best_Score
-   寫入分數的當下，順便把 hidden 狀態快取一份到那筆分數紀錄裡」，
-   犧牲「切換開關後立即對所有舊紀錄生效」這個特性，換取讀取效能——
-   但那是之後才需要考慮的優化，不是現在就要做的事。
-
-   查詢失敗時的處理原則：寧可「多顯示一個人」，也不要「因為查詢失敗
-   就誤刪別人的合法上榜資格」，所以任何一筆查詢失敗都當作「沒有隱藏」。
-   ------------------------------------------------------------ */
 function _Filter_Out_Hidden_Players(list, callback) {
     if (list.length === 0) {
         callback(list)
@@ -491,12 +348,7 @@ function _Filter_Out_Hidden_Players(list, callback) {
     }
 
     const checks = list.map(function (entry) {
-        // 【修改】entry 現在只帶 _public_id（假名），不再是真正的 anon_id，
-        // 所以這裡不能直接組路徑查 player_stats/{anon_id}，改成用 public_id
-        // 這個索引欄位反查對應的 player_stats 節點（見 Get_Public_Id() 的說明：
-        // 這是唯一合法需要「從公開假名找回內部資料」的地方，查完之後一樣只
-        // 取用 hide_from_leaderboard / name 這兩個欄位，不會把查到的 anon_id
-        // 往外傳）。
+
         return tctc_db.ref("player_stats")
             .orderByChild("public_id")
             .equalTo(entry._public_id)
@@ -516,9 +368,7 @@ function _Filter_Out_Hidden_Players(list, callback) {
         const visible_list = results
             .filter(function (r) { return !r.hidden })
             .map(function (r) {
-                // 【新增】用 player_stats 裡「現在」的名字蓋掉這筆分數記錄裡的舊快照，
-                // 這樣不管這筆成績是多久以前上傳的，畫面上永遠顯示玩家目前的名字。
-                // 如果 player_stats 裡剛好沒有 name（理論上不該發生），就保留原本的舊名字當備援。
+
                 if (r.live_name) r.entry.name = r.live_name
                 return r.entry
             })
@@ -526,19 +376,9 @@ function _Filter_Out_Hidden_Players(list, callback) {
     })
 }
 
-/* ------------------------------------------------------------
-   內部共用函式：讀取某個節點底下、某個 id 的排行榜（依 wpm 由高到低）
-   ------------------------------------------------------------ */
 function _Get_Leaderboard(node_path, id, callback, limit) {
     limit = limit || 50
 
-    // 【新增】刻意多抓一些候選名單當緩衝（fetch_limit = limit + 50），
-    // 原因跟 _Get_Top_Players 裡 fetch_limit 的取捨完全一樣：
-    // 如果只抓剛好 limit 筆就拿去濾掉隱藏的人，當隱藏的人數變多時，
-    // 畫面上顯示的筆數就會比 limit 少（例如抓 50 筆、10 筆被隱藏，
-    // 畫面只剩 40 筆，即便實際上第 51~60 名可能是沒隱藏、夠資格上榜的人）。
-    // 多抓一些當緩衝可以大幅降低這個情況發生的機率，但無法保證絕對不會發生——
-    // 這是這個做法在架構上真實存在的取捨，要誠實跟 Lucas 講清楚。
     const fetch_limit = limit + 50
 
     tctc_db.ref(`${node_path}/${id}`)
@@ -548,24 +388,17 @@ function _Get_Leaderboard(node_path, id, callback, limit) {
         .then(function (snapshot) {
             const list = []
             snapshot.forEach(function (child) {
-                // 【新增】把這筆資料的 anon_id（也就是 Firebase 裡的 key）一起帶出來，
-                // 存進 _anon_id 這個欄位，讓畫面端可以拿它跟 Get_Anon_Id() 比對，
-                // 藉此判斷「這一列是不是我自己」，加上特別標記。
-                // 前面加底線是提醒這是內部輔助欄位，不是真正的排行榜資料本身。
+
                 const val = child.val()
-                val._public_id = _Hash_Anon_Id_To_Public_Id(child.key)   // 【修改】不再外流真正的 anon_id
+                val._public_id = _Hash_Anon_Id_To_Public_Id(child.key)
                 list.push(val)
             })
-            // 【修改】先比 wpm，wpm 相同時再比 acc（正確率）當作第二排序依據，
-            // 這樣「wpm 和 acc 都一樣」的人才會被視為真正同分（交給 ranking.js 的
-            // Compute_Competition_Ranks 判定同名次），單純 wpm 一樣但 acc 不同的人
-            // 不會被誤判成並列。
+
             list.sort(function (a, b) {
                 if (b.wpm !== a.wpm) return b.wpm - a.wpm
                 return (b.acc || 0) - (a.acc || 0)
             })
 
-            // 【新增】濾掉選擇隱藏的玩家，濾完之後才裁切成畫面實際要顯示的筆數
             _Filter_Out_Hidden_Players(list, function (visible_list) {
                 callback(visible_list.slice(0, limit))
             })
@@ -576,11 +409,6 @@ function _Get_Leaderboard(node_path, id, callback, limit) {
         })
 }
 
-/* ------------------------------------------------------------
-   主線關卡排行榜
-   ------------------------------------------------------------
-   stageId：關卡 id，例如 "1-5-2"
-   ------------------------------------------------------------ */
 function Submit_Score_To_Leaderboard(stageId, wpm, acc, raw_stats) {
     return _Submit_Best_Score("leaderboard", stageId, wpm, acc, raw_stats)
 }
@@ -588,20 +416,8 @@ function Get_Stage_Leaderboard(stageId, callback, limit) {
     _Get_Leaderboard("leaderboard", stageId, callback, limit)
 }
 
-/* ------------------------------------------------------------
-   挑戰模式排行榜（跟主線關卡分開存放，避免關卡 id 混在一起）
-   ------------------------------------------------------------
-   comboId：難度-模式-秒數 組合，例如 "easy-article-30"
-   ------------------------------------------------------------ */
 function Submit_Challenge_Score_To_Leaderboard(comboId, wpm, acc, raw_stats) {
-    // 【新增】同步更新這個玩家「所有挑戰組合裡」單次最高 WPM，
-    // 寫進 player_stats/{anon_id}/best_challenge_wpm，給榮譽牆的
-    // 「挑戰 WPM 達標」成就用（不是累計平均，是單次最佳紀錄）。
-    // 用 transaction() 只在破紀錄時才真的寫入（Math.max 保留較大值），
-    // 理由跟 _Submit_Best_Score 內部「只有破紀錄才更新」一致：
-    // 避免每次挑戰結束都無條件覆寫，也讓多分頁同時遊玩時不會互相蓋掉
-    // 對方剛寫入的紀錄。這裡不等它完成、不影響原本的排行榜上傳流程，
-    // 兩個寫入互相獨立，其中一個失敗不會拖累另一個。
+
     const anon_id = Get_Anon_Id()
     if (anon_id && typeof wpm === "number" && !isNaN(wpm)) {
         tctc_db.ref(`player_stats/${anon_id}/best_challenge_wpm`).transaction(function (current) {
@@ -610,17 +426,7 @@ function Submit_Challenge_Score_To_Leaderboard(comboId, wpm, acc, raw_stats) {
             console.log("[player_stats] best_challenge_wpm 同步失敗：", error)
         })
 
-        // ===== 【修改】榮譽牆「速度」分類的「連續維持高速」成就 =====
-        // 固定視窗長度 7：只保留「最近 7 次挑戰模式」的 WPM，存進
-        // recent_challenge_wpm_window（陣列，超過 7 筆就把最舊的擠掉）。
-        // 每次挑戰結束後，如果視窗已經滿 7 筆，就算出這 7 筆裡「最低」的
-        // 那個 WPM（代表這連續 7 次裡最弱的一次），拿去跟歷史紀錄
-        // Math.max 一次，寫進 high_wpm_streak——要拿到高階牌，
-        // 必須連續 7 次「每一次」都不能低於門檻，不是任何一次達標就算數，
-        // 也不是平均，這樣「連續維持」才有意義。門檻本身（35/70/100/150）
-        // 交給 achievements.js 的 thresholds 陣列比對，這裡只負責算出
-        // 「歷史上連續 7 次裡最低那次曾經有過的最高紀錄」這個數值。
-        const CHALLENGE_WPM_STREAK_LENGTH = 7 // 要跟 achievements.js 裡 wpm_streak 成就文案的「連續 7 場」保持一致
+        const CHALLENGE_WPM_STREAK_LENGTH = 7
 
         tctc_db.ref(`player_stats/${anon_id}/recent_challenge_wpm_window`).transaction(function (current) {
             const window = Array.isArray(current) ? current.slice() : []
@@ -630,7 +436,7 @@ function Submit_Challenge_Score_To_Leaderboard(comboId, wpm, acc, raw_stats) {
         }).then(function (result) {
             if (!result.committed) return
             const window = result.snapshot.val() || []
-            if (window.length < CHALLENGE_WPM_STREAK_LENGTH) return   // 還沒累積滿 7 次，先不更新紀錄
+            if (window.length < CHALLENGE_WPM_STREAK_LENGTH) return
 
             const windowMin = Math.min.apply(null, window)
             return tctc_db.ref(`player_stats/${anon_id}/high_wpm_streak`).transaction(function (current) {
@@ -641,20 +447,16 @@ function Submit_Challenge_Score_To_Leaderboard(comboId, wpm, acc, raw_stats) {
         })
     }
 
-    // ===== 【新增】榮譽牆「精準」分類三項挑戰模式單次正確率成就 =====
-    // 跟上面 best_challenge_wpm 一樣，這三個都不等它完成、不影響原本排行榜上傳流程，
-    // 各自獨立，其中一個失敗不會拖累另一個或拖累主要的 _Submit_Best_Score。
-    const CHALLENGE_ACC_STREAK_THRESHOLD = 90 // 要跟 achievements.js 裡 acc_streak 成就文案的「90% 以上」保持一致
+    const CHALLENGE_ACC_STREAK_THRESHOLD = 90
 
     if (anon_id && typeof acc === "number" && !isNaN(acc)) {
-        // 1) 單次最高正確率（只增不減，跟 best_challenge_wpm 同一套 transaction+Math.max 寫法）
+
         tctc_db.ref(`player_stats/${anon_id}/best_challenge_acc`).transaction(function (current) {
             return Math.max(current || 0, acc)
         }).catch(function (error) {
             console.log("[player_stats] best_challenge_acc 同步失敗：", error)
         })
 
-        // 2) 正確率剛好 100% 的次數，累加型計數器
         if (acc >= 100) {
             tctc_db.ref(`player_stats/${anon_id}/perfect_challenge_count`).transaction(function (current) {
                 return (current || 0) + 1
@@ -663,10 +465,6 @@ function Submit_Challenge_Score_To_Leaderboard(comboId, wpm, acc, raw_stats) {
             })
         }
 
-        // 3) 連續正確率達標（≥90%）次數：先更新「目前這一段連續」的暫存欄位，
-        // 再拿這次 transaction 真正結算出來的值（result.snapshot.val()）去更新「歷史最長」，
-        // 兩個欄位分開存的理由跟 login_streak.js 的 streak_current / streak_longest 一致——
-        // 「目前連續」會因為某次沒達標而歸零，但「歷史最長」只增不減，成就用後者才不會被收回。
         tctc_db.ref(`player_stats/${anon_id}/challenge_acc_streak_current`).transaction(function (current) {
             return acc >= CHALLENGE_ACC_STREAK_THRESHOLD ? (current || 0) + 1 : 0
         }).then(function (result) {
@@ -680,14 +478,6 @@ function Submit_Challenge_Score_To_Leaderboard(comboId, wpm, acc, raw_stats) {
         })
     }
 
-    // 【新增】上面這些 best_challenge_wpm / high_wpm_streak / best_challenge_acc /
-    // perfect_challenge_count / high_acc_challenge_streak 全部都是各自獨立、
-    // 互不等待的 fire-and-forget transaction，沒有一個統一的「全部都寫完了」
-    // 的時間點可以掛勾子。改用 debounce（見 achv_notify.js 的
-    // ACHV_Schedule_Notify_Check 說明）：不管這幾個 transaction 各自什麼時候
-    // 完成，都在這裡先排一次「1.2 秒後檢查」，重複呼叫只會延後、不會疊加，
-    // 等所有寫入安定下來後才真正讀一次 Firebase 做比對，觸發「速度」「精準」
-    // 兩個分類的彈窗通知。
     if(typeof ACHV_Schedule_Notify_Check === "function"){
         ACHV_Schedule_Notify_Check()
     }
@@ -698,25 +488,6 @@ function Get_Challenge_Leaderboard(comboId, callback, limit) {
     _Get_Leaderboard("challenge_leaderboard", comboId, callback, limit)
 }
 
-/* ============================================================
-   玩家總排行榜（平均WPM最高／平均正確率最高／在線時長最長）
-   ------------------------------------------------------------
-   跟上面「主線關卡排行榜」「挑戰模式排行榜」不一樣的地方：
-   上面兩種是「同一關卡/組合裡，誰打得最好」，資料節點是用 stageId／comboId 分類。
-   這裡是「這個玩家整體表現」，資料節點只用 anon_id 分類（player_stats/{anon_id}），
-   每個玩家不管打了多少關、多少次挑戰，統計數字都會累加到同一筆資料上。
-   ------------------------------------------------------------ */
-
-// ===== 【新增】把「這次測驗的 WPM / 正確率」累加進這個玩家的整體統計 =====
-// 呼叫時機：跟 Submit_Score_To_Leaderboard() / Submit_Challenge_Score_To_Leaderboard()
-// 完全一樣的時間點、一樣的門檻條件（也就是說「這次測驗算不算數」的判斷只寫一次，
-// 不會有「單一關卡榜上有這筆、玩家總榜卻沒有」這種資料不一致的情況）。
-//
-// 為什麼分成 4 個獨立的 transaction，而不是對 player_stats/{anon_id} 整個節點做一次 transaction：
-// Firebase 的 transaction 回傳值會「整個取代」該節點當下的內容，如果在這個函式裡
-// 對整個節點做 transaction，回傳的物件必須手動把 name 欄位也一起帶上，
-// 不然舊資料裡的 name 會被蓋成 undefined 而消失。分成獨立欄位各自 transaction，
-// 就完全不會動到彼此，寫起來也更清楚每個欄位各自在算什麼。
 function Sync_Player_Stats(wpm, acc) {
     if (typeof wpm !== "number" || isNaN(wpm)) return Promise.resolve()
 
@@ -724,9 +495,6 @@ function Sync_Player_Stats(wpm, acc) {
     const base_ref = tctc_db.ref(`player_stats/${anon_id}`)
     const acc_value = (typeof acc === "number" && !isNaN(acc)) ? acc : 0
 
-    // ----- WPM 平均值：wpm_sum 跟 wpm_count 各自累加，兩個都確定成功後，
-    // 才用最新的 sum / count 算出 avg_wpm 並直接寫入。
-    // avg_wpm 是純粹算出來的衍生值、只有這個函式會寫它，所以用 set() 而不是 transaction()。 -----
     const wpm_chain_promise = new Promise(function (resolve) {
         base_ref.child("wpm_sum").transaction(function (current) {
             return (current || 0) + wpm
@@ -748,13 +516,12 @@ function Sync_Player_Stats(wpm, acc) {
                 }
                 if (!committed2) { resolve(); return }
                 const new_count = snapshot2.val()
-                // 四捨五入到小數點後一位，排行榜排序/顯示都夠用，不需要更多位數
+
                 base_ref.child("avg_wpm").set(Math.round((new_sum / new_count) * 10) / 10).finally(resolve)
             })
         })
     })
 
-    // ----- 正確率平均值：邏輯跟上面 WPM 完全對稱 -----
     const acc_chain_promise = new Promise(function (resolve) {
         base_ref.child("acc_sum").transaction(function (current) {
             return (current || 0) + acc_value
@@ -781,35 +548,24 @@ function Sync_Player_Stats(wpm, acc) {
         })
     })
 
-    // 名字每次都同步成最新值，邏輯跟 _Submit_Best_Score 裡的做法一致
     const name_promise = new Promise(function (resolve) {
         Get_Player_Display_Name(function (name) {
             base_ref.child("name").set(name).finally(resolve)
         })
     })
 
-    // 【新增】同步寫入 public_id——這是給「玩家總排行榜」「個人頁連結」這些
-    // 公開讀取的地方用的假名，不是 anon_id 本人（見 Get_Public_Id() 上面的說明）。
-    // 每次都重算重寫也沒關係：同一個 anon_id 永遠算出同一個值，重複寫入是
-    // 完全等冪（idempotent）的操作，不會有副作用。
     const public_id_promise = base_ref.child("public_id").set(Get_Public_Id())
 
     return Promise.all([wpm_chain_promise, acc_chain_promise, name_promise, public_id_promise])
 }
 
-// ===== 【新增】把「這關第一次過關」同步進雲端的難度別完成計數 =====
-// 給榮譽牆「關卡完成度」成就分類用。只在「第一次通過」時呼叫（由呼叫端
-// game.html 先判斷 is_first_time_clear 之後才呼叫這裡，這支函式本身不重複判斷），
-// 避免玩家反覆重打同一關把數字洗高。
-// 用 transaction() 而不是 set()，是為了避免多分頁同時完成時互相蓋掉
-// 對方剛寫入的 +1 結果（跟 best_challenge_wpm 用 transaction 的理由一致）。
 function Sync_Stage_Completion(stageId){
     if(typeof get_difficulty_by_stageid !== "function"){
         console.warn("[player_stats] 找不到 get_difficulty_by_stageid，請確認有先載入 TCTC2-0-level_data.js")
         return Promise.resolve()
     }
 
-    const difficulty = get_difficulty_by_stageid(stageId)   // "easy" / "medium" / "hard"
+    const difficulty = get_difficulty_by_stageid(stageId)
     const anon_id = Get_Anon_Id()
     if(!anon_id || !difficulty) return Promise.resolve()
 
@@ -818,29 +574,15 @@ function Sync_Stage_Completion(stageId){
     return tctc_db.ref(`player_stats/${anon_id}/${field}`).transaction(function(current){
         return (current || 0) + 1
     }).then(function(result){
-        // 【新增】關卡完成度寫入成功後，觸發一次成就通知檢查（debounce），
-        // 讓「關卡完成度」分類能在破關當下跳出彈窗，不用等玩家自己點進榮譽牆。
-        // result.committed 是 Firebase transaction 的標準回傳欄位，true 代表
-        // 這次真的寫入成功（不是被 Rules 擋下或客戶端中途放棄），只有這種
-        // 情況才有意義觸發檢查。ACHV_Schedule_Notify_Check 定義在
-        // TCTC2-0-achv_notify.js，用 typeof 保護，避免頁面忘記載入該檔案時
-        // 直接噴錯、拖累原本的關卡完成寫入流程。
+
         if(result && result.committed && typeof ACHV_Schedule_Notify_Check === "function"){
             ACHV_Schedule_Notify_Check()
         }
-        // 【新增】關卡完成度寫入成功後，順便觸發一次班級任務通知檢查（debounce），
-        // 讓玩家在教室裡設定的「完成關卡數」任務也能在打完關卡的當下跳彈窗，
-        // 不用先跳去教室頁才看到進度推進。CLS_Schedule_Task_Notify_Check
-        // 定義在 TCTC2-0-classroom.js，用 typeof 保護，頁面沒載入該檔案
-        // （例如還沒改到的舊頁面）就單純跳過，不影響原本的關卡完成寫入流程。
+
         if(result && result.committed && typeof CLS_Schedule_Task_Notify_Check === "function"){
             CLS_Schedule_Task_Notify_Check()
         }
-        // 【新增】首次破關成功寫入後，順便發「首次破關獎勵」的 XP。
-        // 只在這裡發（不在 game.html 裡另外呼叫），因為「這關是不是第一次破」
-        // 這個判斷本來就已經在這支函式的呼叫端做過一次、又在這支函式的
-        // transaction 裡再次確保只有真的寫入成功才算數，兩層防護疊在一起，
-        // 比在 6 個呼叫端各自重複判斷、各自呼叫 Sync_XP 更不容易漏掉或算重複。
+
         if(result && result.committed && typeof Sync_XP === "function" && typeof XP_CONFIG !== "undefined"){
             Sync_XP(XP_CONFIG.actions.stage_first_clear)
         }
@@ -849,27 +591,6 @@ function Sync_Stage_Completion(stageId){
     })
 }
 
-// ===== 【新增】累積中文字數（榮譽牆「累積字數」成就＋班級任務「累積中文字數」用）=====
-// 算的是「這次真正打出來的中文字數」——不是每個模式都跟結果畫面上顯示的
-// 「正確字數」同一個數字：直接輸入模式（IME）兩者相同；逐字注音模式的
-// 「正確字數」其實是按鍵次數（一個字要按 2～4 次鍵），呼叫端
-// （game.html 的 Compute_Real_Char_Count()）已經先換算成真正字數才傳進來，
-// 這裡收到的一律當作「真正字數」處理，不用再另外判斷模式。
-// 只算打對的字，不算錯字，避免玩家亂打灌數字。
-// 【修改】呼叫時機原本比照 Sync_Player_Stats（只有 counts_for_leaderboard /
-// cg_meets_points_threshold 為 true 才呼叫），但這個門檻是「排行榜/平均值只
-// 採計正式測驗關卡」的標準，會連帶把主線初級模式裡大量「注音練習」類型的
-// 個別關卡排除在外，導致玩家實際打了很多字，累積字數卻完全不動、班級任務
-// 也追蹤不到。現在改成呼叫端（game.html）用獨立的 counts_for_accumulation
-// 門檻判斷，只要是「真的完成一次有內容的關卡」就採計，不再跟排行榜資格
-// 綁在一起，詳見 game.html 內 counts_for_accumulation 那段註解。
-// 用 transaction() 累加。Rules 沒辦法驗證「這次加的量剛好等於玩家真的打對
-// 幾個字」（那需要額外一個欄位把這次的量也公開寫出來給 Rules 讀，等於給
-// 玩家看到怎麼繞過），所以退而求其次：Rules 只擋「新值必須比舊值大，且
-// 單次漲幅不能超過一個合理上限（見 database.rules.json）」，防的是「一次
-// 把數字改成天文數字」這種明顯作弊，擋不住「每次多打幾個字之類」的小額
-// 灌水——這個成就本來就偏「累積量」而非「精準防作弊」的性質，跟 Rules
-// 現有其他欄位的防護強度是一致的取捨。
 function Sync_Chars_Typed(charCount){
     if(typeof charCount !== "number" || isNaN(charCount) || charCount <= 0) return Promise.resolve()
 
@@ -881,17 +602,15 @@ function Sync_Chars_Typed(charCount){
     return tctc_db.ref(`player_stats/${anon_id}/total_chars_typed`).transaction(function(current){
         return (current || 0) + rounded
     }).then(function(result){
-        // 【新增】累積字數同步成功後，觸發一次成就通知檢查（打字分類）
+
         if(result && result.committed && typeof ACHV_Schedule_Notify_Check === "function"){
             ACHV_Schedule_Notify_Check()
         }
-        // 【新增】同步觸發一次班級任務通知檢查（例如老師設的「累積字數」任務）
+
         if(result && result.committed && typeof CLS_Schedule_Task_Notify_Check === "function"){
             CLS_Schedule_Task_Notify_Check()
         }
-        // 【新增】依「這次打對的字數」換算 XP（主線／挑戰模式都會呼叫這支函式，
-        // 所以兩邊的「打字量 XP」自動統一套用同一套換算比例，不用各自另外算一次）。
-        // 用 Math.floor 無條件捨去，避免「打 1 個字就進位成 1 XP」這種灌水漏洞。
+
         if(result && result.committed && typeof Sync_XP === "function" && typeof XP_CONFIG !== "undefined"){
             const chars_xp = Math.floor(rounded / XP_CONFIG.actions.chars_per_xp)
             if(chars_xp > 0) Sync_XP(chars_xp)
@@ -901,24 +620,6 @@ function Sync_Chars_Typed(charCount){
     })
 }
 
-// ===== 【新增】累積注音數，含空白鍵、標點符號鍵（班級任務「累積注音數」專用）=====
-// 跟上面 Sync_Chars_Typed 是「同一次結算、兩個完全獨立的欄位」，故意不共用
-// player_stats 底下同一個數字，理由是兩者的「單位」本質不同：
-//   - total_chars_typed：真正的中文字數（逐字注音模式已經 /3 換算過）
-//   - total_zhuyin_keys_typed：注音鍵盤上「按對」的原始按鍵次數，
-//     聲母／韻母／聲調／空白鍵（輕聲、詞語間隔）／標點符號鍵全部算，
-//     沒有做任何換算——這正是逐字注音模式底下 target_get 這個變數
-//     本來的意義（見 game.html Init 附近 target_get++ 的比對邏輯），
-//     直接原封不動傳進來就是這個指標要的值。
-// 只有「逐字注音」模式才有意義：直接輸入模式（IME）打字時完全不會
-// 按注音鍵，呼叫端（game.html）本來就只在 !Is_Box_Input_Stage(stage)
-// 時才呼叫這支函式，這裡不用再重複判斷模式，只做基本的參數保護。
-// 【重要】呼叫這支函式時，故意不像 Sync_Chars_Typed 那樣額外發 XP——
-// 同一次結算已經靠 Sync_Chars_Typed 依真正字數發過一次「打字量 XP」了，
-// 如果這裡又依按鍵次數（同一份真實打字量的另一種度量）再發一次，
-// 等於同一次的辛苦被算成兩份 XP，會讓逐字注音模式的玩家不成比例地
-// 領先——這個函式的職責純粹是「給老師的班級任務一個獨立可追蹤的數字」，
-// 不是另一個 XP 來源。
 function Sync_Zhuyin_Keys_Typed(keyCount){
     if(typeof keyCount !== "number" || isNaN(keyCount) || keyCount <= 0) return Promise.resolve()
 
@@ -930,11 +631,7 @@ function Sync_Zhuyin_Keys_Typed(keyCount){
     return tctc_db.ref(`player_stats/${anon_id}/total_zhuyin_keys_typed`).transaction(function(current){
         return (current || 0) + rounded
     }).then(function(result){
-        // 【新增】這個欄位本來就是「班級任務『累積注音數』專用」，寫入成功後
-        // 觸發一次班級任務通知檢查最合理——理由跟 Sync_Stage_Completion /
-        // Sync_Chars_Typed 裡加的那兩處一致，用同一顆 result.committed 訊號。
-        // 這裡故意不順便呼叫 ACHV_Schedule_Notify_Check：目前榮譽牆沒有任何
-        // 成就是用 total_zhuyin_keys_typed 這個指標算的，加了也不會有效果。
+
         if(result && result.committed && typeof CLS_Schedule_Task_Notify_Check === "function"){
             CLS_Schedule_Task_Notify_Check()
         }
@@ -943,23 +640,6 @@ function Sync_Zhuyin_Keys_Typed(keyCount){
     })
 }
 
-// ===== 【新增】把「榮譽牆目前解鎖的成就總數」同步進雲端 =====
-// 給玩家總榜「解鎖成就數量」這個新指標用。呼叫端是 TCTC2-0-achievements.js
-// 的 ACHV_Render_All()，在每次渲染榮譽牆頁面、算完總覽進度條之後呼叫一次。
-//
-// 【為什麼用 set() 而不是 transaction()】
-// 上面 Sync_Stage_Completion() / Sync_Chars_Typed() 用 transaction()，是因為
-// 它們寫入的是「這次事件要 +N」的累加值，需要先讀到目前的舊值才能算出
-// 新值，多分頁同時觸發時也要避免互相蓋掉對方剛寫入的結果。
-// 這裡不一樣：achievements_unlocked 是「現場重新算一次的完整結果」
-// （呼叫端已經把所有分類的 unlocked 加總完了），不是「+1」這種相對量，
-// 邏輯跟 avg_wpm 用 wpm_sum/wpm_count 算出平均值後直接 set() 寫入完全對稱，
-// 用 transaction() 反而沒有意義（沒有「舊值」可以參照著累加）。
-//
-// 【信任模型限制，見 firebase.js 開頭 Rules 範例裡 achievements_unlocked
-// 那一段的完整說明】這裡的 Rules 只驗證「新值不超過上限」跟「只增不減」，
-// 沒辦法在伺服器端重新驗證這個數字是否真的由玩家目前的統計資料算出來，
-// 屬於這個網站排行榜系統一貫的取捨，不是這個函式的疏漏。
 function Sync_Achievements_Unlocked(count){
     if(typeof count !== "number" || isNaN(count) || count < 0) return Promise.resolve()
 
@@ -968,26 +648,11 @@ function Sync_Achievements_Unlocked(count){
 
     return tctc_db.ref(`player_stats/${anon_id}/achievements_unlocked`).set(Math.round(count))
         .catch(function(error){
-            // 最常見的失敗原因會是 Rules 的「只增不減」驗證擋下來——例如玩家
-            // 剛好開兩個分頁，一個分頁先同步了比較新的數字，另一個分頁比較晚
-            // 算完、算出來的反而比較舊（理論上不該發生，但多分頁本來就有
-            // 這種競態可能），這種情況安靜記在 console 就好，不用跳錯誤通知
-            // 給玩家——反正下次造訪榮譽牆頁面就會用最新資料重算一次。
+
             console.warn("[player_stats] achievements_unlocked 同步失敗（很可能是 Firebase Rules 還沒加上這個欄位的規則）：", error.message)
         })
 }
 
-// ===== 【新增】把「這次挑戰模式測驗的 WPM / 正確率」另外累加進「挑戰模式專屬」的平均值 =====
-// 跟上面 Sync_Player_Stats 寫的 wpm_sum / wpm_count / avg_wpm 不是同一組欄位——
-// 那組是「主線 + 挑戰模式全部混在一起」的整體表現，給玩家總榜（平均WPM最高／
-// 平均正確率最高）用，這是刻意設計，這裡不能動它。
-// 挑戰大廳卡片顯示的「挑戰模式累計平均」，原本只靠本機 cg_wpm_sum / cg_wpm_times /
-// average_challenge_wpm 這幾個 localStorage key 計算，雲端完全沒有備份，
-// 導致切換身份（登入/登出/繼承）之後這組數字永遠救不回來。
-// 這裡另外開一組 cg_wpm_sum / cg_wpm_count / avg_challenge_wpm（正確率同理）
-// 專門存在雲端，兩邊的用途完全分開，互不影響。
-// 呼叫時機：TCTC2-0-challenge.js 結算成績時，要跟 Sync_Player_Stats 一起呼叫
-// （兩個都要打，一個負責玩家總榜的整體平均，一個負責挑戰模式自己的平均）。
 function Sync_Challenge_Player_Stats(wpm, acc) {
     if (typeof wpm !== "number" || isNaN(wpm)) return Promise.resolve()
 
@@ -1050,10 +715,6 @@ function Sync_Challenge_Player_Stats(wpm, acc) {
     return Promise.all([wpm_chain_promise, acc_chain_promise])
 }
 
-// ===== 【新增】把「這次挑戰賺到的積分」累加進玩家總積分 =====
-// 呼叫時機：TCTC2-0-challenge.js 結算積分之後，只要 pointsEarned > 0 就會呼叫。
-// 邏輯很單純，就是把 pointsEarned 加進 total_points，沒有平均值的概念，
-// 所以只需要一個 transaction，不像 wpm/acc 需要 sum + count 兩個欄位配合算平均。
 function Sync_Player_Points(points) {
     if (typeof points !== "number" || isNaN(points) || points <= 0) return Promise.resolve()
 
@@ -1067,7 +728,7 @@ function Sync_Player_Points(points) {
             if (error) {
                 console.log("[player_stats] total_points 同步失敗（很可能是 Firebase Rules 還沒加上 total_points 欄位的規則）：", error)
             }
-            // 【新增】積分累積成功後，觸發一次成就通知檢查（活躍度分類）
+
             if (committed && typeof ACHV_Schedule_Notify_Check === "function") {
                 ACHV_Schedule_Notify_Check()
             }
@@ -1084,26 +745,12 @@ function Sync_Player_Points(points) {
     return Promise.all([points_promise, name_promise])
 }
 
-// ===== 【新增】XP／等級系統：把賺到的 XP 累加進玩家總 XP =====
-// 呼叫端只需要算好「這次要加多少 XP」丟進來就好，這支函式只負責「累加」，
-// 完全不管 XP 是怎麼算出來的——「每個行為給多少 XP」「升級門檻」全部
-// 定義在 TCTC2-0-xp_data.js 的 XP_CONFIG，想調整數值只要改那支檔案，
-// 不用動這裡（也不用動任何呼叫這支函式的地方）。
-// 用 transaction() 累加，理由跟 total_points 一致：避免多分頁同時發生時
-// 互相蓋掉對方剛寫入的 +N 結果。
 function Sync_XP(amount){
     if(typeof amount !== "number" || isNaN(amount) || amount <= 0) return Promise.resolve()
 
     const anon_id = Get_Anon_Id()
     if(!anon_id) return Promise.resolve()
 
-    // 【新增】升級動畫需要「這次加之前」跟「加之後」的 XP 才能判斷有沒有跨過
-    // 等級門檻。所有 XP 寫入（主線破關、首次破關獎勵、打字量、挑戰模式、
-    // 成就解鎖、每日登入……）最終都只會經過這一支函式，所以只要在這裡集中
-    // 判斷一次，不管呼叫端是誰，動畫都會自動一致地觸發，不用在每個呼叫端
-    // 各自重複判斷。xp_before 用 transaction() 的 updateFunction 參數拿，
-    // 這個函式在有競爭時可能被 Firebase 重試呼叫多次，但最後一次呼叫時的
-    // current 值就是真正被寫入那次的「加之前」基準，安全可靠。
     let xp_before = 0
     return tctc_db.ref(`player_stats/${anon_id}/xp`).transaction(function(current){
         xp_before = current || 0
@@ -1119,17 +766,6 @@ function Sync_XP(amount){
     })
 }
 
-// ===== 【新增】追蹤「在線時長」目前是不是有一筆同步還在跟雲端來回中 =====
-// 用來解決一個真實存在的 race condition：Sync_Pending_Online_Time() 是用
-// transaction() 寫入 online_seconds，Firebase 的 transaction() 在還沒收到
-// 伺服器「真正確認」之前，會先用本機推測值廣播給同一個路徑的任何讀取者——
-// 如果推測當下 SDK 手上還沒有這個欄位的最新快取，這個推測值有可能只是
-// 「這次要加的 pending 秒數」本身，還沒加上原本雲端已經存好的總量。
-// 如果「玩家總排行榜」剛好在這個時間點讀到這筆還沒塵埃落定的暫時值，
-// 就會顯示成一個異常小的數字，過一下子（或重讀一次）才會變回正確的——
-// 這正是「重新整理頁面後在線時長忽然變超小」這個現象的成因。
-// 解法：讀取在線時長排行榜前，先等目前這筆同步真正結束（不管成功失敗），
-// 才真的發出查詢，避免讀跟寫互相搶。
 let _online_time_sync_in_flight = null
 
 function Wait_For_Online_Time_Sync(callback) {
@@ -1140,10 +776,6 @@ function Wait_For_Online_Time_Sync(callback) {
     }
 }
 
-// ===== 【新增】把本機暫存的「在線秒數」補交上雲端 =====
-// 由 TCTC2-0-online_time.js 在每個頁面載入時呼叫（如果這個頁面有載入 Firebase 的話）。
-// PENDING_KEY 這個字串要跟 TCTC2-0-online_time.js 裡用的完全一致，不然兩邊各自讀寫
-// 不同的 localStorage key，秒數永遠對不起來。
 function Sync_Pending_Online_Time() {
     const PENDING_KEY = "tctc2.0-pending_online_seconds"
     const pending_seconds = Math.floor(Number(localStorage.getItem(PENDING_KEY)) || 0)
@@ -1155,16 +787,12 @@ function Sync_Pending_Online_Time() {
         tctc_db.ref(`player_stats/${anon_id}/online_seconds`).transaction(function (current) {
             return (current || 0) + pending_seconds
         }, function (error, committed) {
-            // 只有「真的成功寫進雲端」才把本機暫存區扣掉這次上傳的量。
-            // 這裡刻意用「扣掉剛剛上傳的量」而不是直接歸零，
-            // 因為玩家可能在這次上傳還沒完成的同時，又累積了新的前景秒數進暫存區，
-            // 直接歸零會把這些「新產生、還沒上傳過」的秒數也一起清掉。
+
             if (!error && committed) {
                 const still_pending = Number(localStorage.getItem(PENDING_KEY)) || 0
                 localStorage.setItem(PENDING_KEY, Math.max(0, still_pending - pending_seconds))
             } else if (error) {
-                // 【新增】失敗時一定要印出來，不然像「Firebase Rules 還沒貼上導致 permission_denied」
-                // 這種問題會完全沒有任何訊息，看起來像「同步邏輯本身沒作用」，其實只是被雲端擋下來而已
+
                 console.log("[online_time] 在線時長同步失敗（很可能是 Firebase Rules 還沒加上 player_stats 節點的規則）：", error)
             }
             _online_time_sync_in_flight = null
@@ -1177,25 +805,6 @@ function Sync_Pending_Online_Time() {
     })
 }
 
-/* ============================================================
-   【新增】網站瀏覽次數統計
-   ------------------------------------------------------------
-   設計上完全比照上面「在線時長」那一套（本機暫存 → 頁面載入時補交上雲端），
-   原因：
-   - TCTC2-0-online_time.js 會被載入在「每一個頁面」，但不是每個頁面都同時
-     載入了 Firebase（例如目前的 main.html／details.html）。
-   - 如果沒有這層「本機先暫存，等到剛好逛到有載入 Firebase 的頁面才補交」，
-     玩家在那些頁面產生的瀏覽次數就會直接遺失、永遠不會被算進去，
-     跟「刷新頁面或換頁都要算一次」這個需求不符。
-   - PENDING_VIEWS_KEY 這個 localStorage key 名稱要跟
-     TCTC2-0-online_time.js 裡用的字串完全一致，否則兩邊會各自讀寫
-     不同的暫存區，次數永遠同步不到雲端。
-   ------------------------------------------------------------ */
-
-// 跟 _online_time_sync_in_flight 是同樣的用途：避免「同一個頁面剛寫入瀏覽次數
-// 上雲端，緊接著又立刻讀取排行榜」時，讀到 transaction 尚未被伺服器修正回來的
-// 暫時推測值（詳細成因見上面 Wait_For_Online_Time_Sync 的說明，這裡是同一種
-// race condition，只是換了一個欄位）。
 let _page_views_sync_in_flight = null
 
 function Wait_For_Page_Views_Sync(callback) {
@@ -1206,12 +815,6 @@ function Wait_For_Page_Views_Sync(callback) {
     }
 }
 
-// ===== 【新增】把本機暫存的「待上傳瀏覽次數」同時累加進：
-//   1) site_meta/total_page_views（全站總數，不分訪客/玩家）
-//   2) player_stats/{anon_id}/page_views（這個玩家自己的總數，訪客也算，
-//      因為 player_stats 本來就是用 anon_id 分類，訪客一樣有 anon_id）
-// 由 TCTC2-0-online_time.js 在每個頁面載入時呼叫（如果這個頁面有載入 Firebase 的話）。
-// =====
 function Sync_Pending_Page_Views() {
     const PENDING_VIEWS_KEY = "tctc2.0-pending_page_views"
     const pending_views = Math.floor(Number(localStorage.getItem(PENDING_VIEWS_KEY)) || 0)
@@ -1220,14 +823,7 @@ function Sync_Pending_Page_Views() {
     const anon_id = Get_Anon_Id()
 
     _page_views_sync_in_flight = new Promise(function (resolve) {
-        // ----- 先處理「全站總瀏覽次數」-----
-        // 這裡刻意只依「全站總數這筆 transaction 有沒有成功」來決定要不要扣掉
-        // 本機暫存的次數，而不是等兩邊都成功才扣。這是一個誠實需要承認的取捨：
-        // 如果全站總數寫入成功、但底下 player_stats 那筆剛好失敗，
-        // 這幾次瀏覽就會「算進全站總數，卻沒算進這個玩家自己的排行榜」，
-        // 因為本機暫存已經被清空、不會重試。這種情況機率很低（兩個都是
-        // 對同一個 Firebase 專案的獨立 transaction，通常會一起成功或一起因為
-        // 網路離線而一起失敗），但架構上確實可能發生，不是「絕對不會出錯」。
+
         tctc_db.ref("site_meta/total_page_views").transaction(function (current) {
             return (current || 0) + pending_views
         }, function (error, committed) {
@@ -1238,7 +834,6 @@ function Sync_Pending_Page_Views() {
                 console.log("[page_views] 全站瀏覽次數同步失敗（很可能是 Firebase Rules 還沒加上 site_meta 節點的規則）：", error)
             }
 
-            // ----- 再處理「這個玩家自己的瀏覽次數」-----
             tctc_db.ref(`player_stats/${anon_id}/page_views`).transaction(function (current) {
                 return (current || 0) + pending_views
             }, function (error2) {
@@ -1251,19 +846,11 @@ function Sync_Pending_Page_Views() {
         })
     })
 
-    // 名字同步邏輯跟 Sync_Pending_Online_Time 完全一致：不管這次同步成不成功，
-    // 都把名字更新成最新值，讓瀏覽次數榜上顯示的名字不會卡在舊資料。
     Get_Player_Display_Name(function (name) {
         tctc_db.ref(`player_stats/${anon_id}/name`).set(name)
     })
 }
 
-// ===== 【新增】讀取「網站目前總瀏覽次數」，給排行榜頁面最上方顯示用 =====
-// 讀取前先等目前這筆同步真正結束，避免讀到還沒塵埃落定的暫時推測值
-// （原因跟 Get_Top_Players_By_Online_Time 前面要先 Wait_For_Online_Time_Sync 一樣）。
-// callback 收到的值：成功是「數字」（0 也算成功，代表目前真的是 0 次）；
-// 讀取真的失敗（例如離線、規則沒設好）則是 null，畫面端應該顯示「讀取失敗」
-// 而不是誤把 null 當成 0 次顯示出來。
 function Get_Total_Page_Views(callback) {
     Wait_For_Page_Views_Sync(function () {
         tctc_db.ref("site_meta/total_page_views").once("value")
@@ -1277,18 +864,6 @@ function Get_Total_Page_Views(callback) {
     })
 }
 
-// ===== 【新增】內部共用函式：依某個欄位排序，取出「玩家總排行榜」前段名單 =====
-// min_count_field / min_count：用來實作「至少要打過 N 次才能上榜」的門檻
-// （例如平均WPM/平均正確率榜，需要 wpm_count / acc_count >= 50）。
-//
-// 【已知限制，务必誠實告知使用者】：Firebase Realtime Database 不支援
-// 「依 A 欄位排序、同時篩選 B 欄位門檻」這種複合查詢。這裡採取的做法是：
-// 先依排序欄位抓一批「數量比實際要顯示的筆數多很多」的候選名單（fetch_limit，預設 200 筆），
-// 再由瀏覽器端 JS 把未達門檻的人濾掉。
-// 這代表在「玩家總數非常龐大」的極端情況下，如果剛好有超過 fetch_limit 筆
-// 「未達門檻但數值很高」的紀錄排在真正合格者前面，就有可能漏掉少數合格的高分玩家。
-// 對這個網站目前的規模來說機率極低，但這是這個做法在架構上真實存在的取捨，
-// 不是「一定不會出錯」，要跟 Lucas 講清楚。
 function _Get_Top_Players(order_by_field, min_count_field, min_count, callback, fetch_limit) {
     fetch_limit = fetch_limit || 200
 
@@ -1300,23 +875,16 @@ function _Get_Top_Players(order_by_field, min_count_field, min_count, callback, 
             const list = []
             snapshot.forEach(function (child) {
                 const val = child.val()
-                // 【新增】跟 _Get_Leaderboard 一樣，把這筆是誰（anon_id）帶出來，
-                // 讓畫面端可以標記「這是我自己」
-                val._public_id = _Hash_Anon_Id_To_Public_Id(child.key)   // 【修改】不再外流真正的 anon_id
 
-                // 【新增】跳過「選擇不顯示在排行榜」的玩家。
-                // 這裡「不需要」像 _Get_Leaderboard 那樣額外發查詢——
-                // hide_from_leaderboard 本來就跟 avg_wpm 等其他統計數字
-                // 存在同一個節點（player_stats/{anon_id}）底下，
-                // 讀一次 player_stats 就順便一起拿到了，完全沒有額外成本。
+                val._public_id = _Hash_Anon_Id_To_Public_Id(child.key)
+
                 if (val.hide_from_leaderboard === true) return
 
                 if (!min_count_field || (val[min_count_field] || 0) >= min_count) {
                     list.push(val)
                 }
             })
-            // limitToLast 只保證「取到的這批」是由小到大排序後最大的那幾筆，
-            // 但批次內部的先後順序不保證由大到小，所以濾完門檻之後要自己再排序一次。
+
             list.sort(function (a, b) { return (b[order_by_field] || 0) - (a[order_by_field] || 0) })
             callback(list)
         })
@@ -1326,21 +894,18 @@ function _Get_Top_Players(order_by_field, min_count_field, min_count, callback, 
         })
 }
 
-// 平均WPM最高榜：需要至少測驗過 50 次（wpm_count >= 50）才會上榜
 function Get_Top_Players_By_Avg_Wpm(callback, limit) {
     _Get_Top_Players("avg_wpm", "wpm_count", 50, function (list) {
         callback(list.slice(0, limit || 50))
     })
 }
-// 平均正確率最高榜：需要至少測驗過 50 次（acc_count >= 50）才會上榜
+
 function Get_Top_Players_By_Avg_Acc(callback, limit) {
     _Get_Top_Players("avg_acc", "acc_count", 50, function (list) {
         callback(list.slice(0, limit || 50))
     })
 }
-// 在線時長最長榜：不設門檻，時長本身就是唯一的採計標準
-// 【修正】先等目前這筆在線時長的同步真正結束，才真的發出查詢，
-// 避免讀到 transaction 還沒被伺服器修正回來的暫時推測值（見上面 Wait_For_Online_Time_Sync 的說明）
+
 function Get_Top_Players_By_Online_Time(callback, limit) {
     Wait_For_Online_Time_Sync(function () {
         _Get_Top_Players("online_seconds", null, 0, function (list) {
@@ -1348,18 +913,13 @@ function Get_Top_Players_By_Online_Time(callback, limit) {
         })
     })
 }
-// 積分最高榜：要求 total_points >= 1，濾掉「從來沒打過挑戰模式、根本沒有積分紀錄」的玩家
-// （這種玩家在 player_stats 裡沒有 total_points 欄位，畫面端會用 ?? 0 補成「0 積分」顯示，
-// 如果不濾掉，會出現「零積分也上榜」這種很奇怪的狀況）
+
 function Get_Top_Players_By_Points(callback, limit) {
     _Get_Top_Players("total_points", "total_points", 1, function (list) {
         callback(list.slice(0, limit || 50))
     })
 }
-// 瀏覽次數最多榜：不設門檻，邏輯跟在線時長最長榜對稱。
-// 一樣先 Wait_For_Page_Views_Sync 等這個頁面自己的那筆同步結束，
-// 才真的發出查詢，理由跟 Get_Top_Players_By_Online_Time 前面加
-// Wait_For_Online_Time_Sync 完全一致（避免讀到暫時推測值）。
+
 function Get_Top_Players_By_Page_Views(callback, limit) {
     Wait_For_Page_Views_Sync(function () {
         _Get_Top_Players("page_views", null, 0, function (list) {
@@ -1367,47 +927,26 @@ function Get_Top_Players_By_Page_Views(callback, limit) {
         })
     })
 }
-// 【新增】連續登入最長榜：用「歷史最長連續」排序（不是「目前連續」），
-// 理由是 current_streak 每天都在變動，甚至今天沒登入就會一直卡在原地不動，
-// 拿一個「會隨時間自然衰退」的數字做排行榜很奇怪；longest_streak 是玩家
-// 曾經達到過的最佳紀錄，只增不減，跟 total_points（累積積分最高）同一種
-// 「歷史最佳」語意，排行榜比較合理。不設達標門檻——沒有 wpm_count 那種
-// 「至少測驗 N 次才準」的統計學理由，1 天也是合法的連續天數。
+
 function Get_Top_Players_By_Streak(callback, limit) {
     _Get_Top_Players("streak_longest", null, 0, function (list) {
         callback(list.slice(0, limit || 50))
     })
 }
-// 【新增】累積登入天數最多榜：不看「有沒有斷過」，單純看「總共登入過幾次」，
-// 邏輯跟 page_views（瀏覽次數最多榜）對稱，同樣不設門檻。
+
 function Get_Top_Players_By_Total_Login_Days(callback, limit) {
     _Get_Top_Players("streak_total_days", null, 0, function (list) {
         callback(list.slice(0, limit || 50))
     })
 }
-// 【修改】解鎖成就數量最多榜：原本用玩家瀏覽器自己同步的 achievements_unlocked
-// 欄位排序，只要某個玩家沒有觸發過那次同步（沒去過榮譽牆、或某次同步剛好
-// 缺依賴），這個欄位就會跟他實際的統計數字對不起來，導致「明明成就等級
-// 很高卻沒上榜」——不管加多少個同步觸發點都無法根治，因為只要有一個玩家
-// 沒碰到那些觸發點，這個 bug 就會一直存在。
-//
-// 修正做法：不再依賴任何玩家自己同步過的衍生欄位，直接把整個 player_stats
-// 節點下載下來，回傳給呼叫端（ranking.js，已載入 achv_data.js）用
-// ACHV_Compute_Total_From_Raw_Player_Stats() 對每個人的原始統計數字現場
-// 算一次真正的等級，再自己排序——這樣不管這個玩家上次何時觸發過同步，
-// 算出來的都是資料庫裡現在真正的統計數字換算出的正確等級。
-//
-// 【取捨】不能再用 orderByChild + limitToLast 只抓一小批候選名單（排序
-// 依據是現場算出來的，沒辦法交給 Firebase 排序），要整個節點下載下來——
-// 這跟 Get_Own_Player_Rank() 目前的做法是同一種取捨（見那個函式上方的
-// 說明），對這個網站目前的規模沒問題。
+
 function Get_All_Player_Stats_For_Achievement_Level(callback) {
     tctc_db.ref("player_stats").once("value")
         .then(function (snapshot) {
             const list = []
             snapshot.forEach(function (child) {
                 const val = child.val()
-                val._public_id = _Hash_Anon_Id_To_Public_Id(child.key)   // 【修改】不再外流真正的 anon_id
+                val._public_id = _Hash_Anon_Id_To_Public_Id(child.key)
                 if (val.hide_from_leaderboard === true) return
                 list.push(val)
             })
@@ -1418,30 +957,13 @@ function Get_All_Player_Stats_For_Achievement_Level(callback) {
             callback([])
         })
 }
-// 【新增】玩家等級最高榜：直接排 xp（累積經驗值），不用另外把「等級」這個
-// 由 xp 換算出來的衍生值存進 Firebase 再排一次——XP_Get_Level(xp) 是嚴格
-// 遞增函式，排 xp 的結果跟排等級的結果永遠一致。要求 xp >= 1，濾掉還沒
-// 累積過任何經驗值、等級掛零的玩家，邏輯跟 total_points／
-// achievements_unlocked 兩個榜完全對稱。
+
 function Get_Top_Players_By_XP(callback, limit) {
     _Get_Top_Players("xp", "xp", 1, function (list) {
         callback(list.slice(0, limit || 50))
     })
 }
 
-/* ============================================================
-   【新增】玩家自己的名次（沒有擠進 Top 50 榜單時，畫面底部會用這個顯示浮窗）
-   ------------------------------------------------------------
-   上面 _Get_Leaderboard / _Get_Top_Players 都只抓「前 N 名」，沒辦法回答
-   「我沒上榜，但我到底排第幾」這個問題——所以這裡要把整個節點的資料都
-   下載下來，自己排序、自己找出這個玩家排在第幾個。
-   對這個網站目前的規模來說沒問題；如果玩家數量變得非常龐大，
-   這裡會是第一個需要換成後端彙總計算的地方（先誠實記下這個取捨）。
-   ------------------------------------------------------------ */
-
-// 內部共用：在 node_path/id 這個節點底下，算出「這個玩家」目前排第幾名
-// 回傳 null 代表這個玩家在這個節點底下根本沒有任何紀錄（這關/這個組合還沒打過），
-// 這種情況畫面端不應該顯示任何名次浮窗。
 function _Get_Own_Rank_In_Node(node_path, id, callback) {
     const anon_id = Get_Anon_Id()
 
@@ -1452,11 +974,10 @@ function _Get_Own_Rank_In_Node(node_path, id, callback) {
             const list = []
             snapshot.forEach(function (child) {
                 const val = child.val()
-                val._public_id = _Hash_Anon_Id_To_Public_Id(child.key)   // 【修改】不再外流真正的 anon_id
+                val._public_id = _Hash_Anon_Id_To_Public_Id(child.key)
                 list.push(val)
             })
-            // 跟 _Get_Leaderboard 一樣，Firebase 排序後還要自己再排一次確保順序正確：
-            // 先比 wpm，wpm 相同時再比 acc，維持跟排行榜列表完全一致的排序依據。
+
             list.sort(function (a, b) {
                 if (b.wpm !== a.wpm) return b.wpm - a.wpm
                 return (b.acc || 0) - (a.acc || 0)
@@ -1468,9 +989,6 @@ function _Get_Own_Rank_In_Node(node_path, id, callback) {
                 return
             }
 
-            // 【新增】套用跟 ranking.js 的 Compute_Competition_Ranks 一樣的「標準競賽排名」規則：
-            // wpm 和 acc 都跟前一名相同才算同分、同名次，並列的名次要「佔掉」後面的位置（1224 制）。
-            // 從自己這筆往前找，只要還是同分就一直把名次往前推，直到遇到分數不同的那一筆為止。
             let rank = own_index + 1
             let i = own_index
             while (i > 0 && list[i].wpm === list[i - 1].wpm && list[i].acc === list[i - 1].acc) {
@@ -1499,13 +1017,6 @@ function Get_Own_Challenge_Rank(comboId, callback) {
     _Get_Own_Rank_In_Node("challenge_leaderboard", comboId, callback)
 }
 
-// 玩家總榜（平均WPM／平均正確率／在線時長／積分）版本的「自己排第幾名」。
-// 【修正】原本這裡只有 (order_by_field, callback) 兩個參數、完全不套用門檻，
-// 但 ranking.js 呼叫時是傳 (order_by_field, min_count_field, min_count, callback) 四個參數，
-// 多傳的參數在 JS 裡會被直接忽略、真正的 callback 反而傳不進來，導致這個功能其實是壞的
-// （呼叫到 callback 那一行會直接噴錯，因為那時候的「callback」其實是 min_count_field）。
-// 現在補上這兩個參數，並且真的套用門檻：沒達到門檻（例如平均WPM榜要求至少 50 次測驗）
-// 就回傳 null 不顯示浮窗，跟正式榜單「沒達標的人不會出現」的邏輯保持一致，不會自相矛盾。
 function Get_Own_Player_Rank(order_by_field, min_count_field, min_count, callback) {
     const anon_id = Get_Anon_Id()
 
@@ -1515,20 +1026,20 @@ function Get_Own_Player_Rank(order_by_field, min_count_field, min_count, callbac
         .then(function (snapshot) {
             const own_snapshot = snapshot.child(anon_id)
             if (!own_snapshot.exists()) {
-                callback(null) // 這個玩家完全沒有任何統計資料
+                callback(null)
                 return
             }
 
             const own_val = own_snapshot.val()
             if (min_count_field && (own_val[min_count_field] || 0) < min_count) {
-                callback(null) // 還沒達到門檻，跟正式榜單一樣不顯示
+                callback(null)
                 return
             }
 
             const list = []
             snapshot.forEach(function (child) {
                 const val = child.val()
-                val._public_id = _Hash_Anon_Id_To_Public_Id(child.key)   // 【修改】不再外流真正的 anon_id
+                val._public_id = _Hash_Anon_Id_To_Public_Id(child.key)
                 if (!min_count_field || (val[min_count_field] || 0) >= min_count) {
                     list.push(val)
                 }
@@ -1549,32 +1060,6 @@ function Get_Own_Player_Rank(order_by_field, min_count_field, min_count, callbac
         })
 }
 
-/* ============================================================
-   【新增】一次讀出「自己」完整的雲端統計資料（不是榜單，是給 profile.html
-   個人設定頁的「個人資訊」卡片顯示用）
-   ------------------------------------------------------------
-   跟上面 Get_Own_Player_Rank 不一樣的地方：
-   - Get_Own_Player_Rank 是「對某一個排序欄位查詢排名」，每次只能查一個指標，
-     而且要下載整個 player_stats 節點來排序，對「只是想顯示自己的數字、
-     根本不需要知道排第幾名」這種需求來說殺雞用牛刀。
-   - 這裡改成直接對 `player_stats/{anon_id}` 這一個節點做 .once("value")，
-     Firebase 只會回傳這一筆資料，不會下載其他玩家的資料，開銷小很多。
-   ------------------------------------------------------------
-   callback 收到的值：
-   - 一般情況：一個物件，包含 name / avg_wpm / avg_acc / online_seconds /
-     total_points / page_views 等欄位（哪些欄位存在，取決於這個玩家
-     之前實際觸發過哪些同步——例如從來沒打過挑戰模式，就不會有 total_points）
-   - 這個玩家在雲端「完全還沒有任何資料」（例如全新訪客，一次都還沒同步過）：
-     回傳一個空物件 {}，讓呼叫端可以直接用 (result.xxx ?? 0) 取預設值，
-     不需要額外判斷 null
-   - 讀取「真的失敗」（離線、Rules 沒設好）：回傳 null，呼叫端要能分辨
-     「真的沒資料（顯示 0）」跟「讀取失敗（應該顯示錯誤訊息）」的差異
-   ------------------------------------------------------------
-   讀取前先等「在線時長」跟「瀏覽次數」這兩個目前頁面自己觸發的同步
-   都真正結束——原因跟 Get_Top_Players_By_Online_Time / Get_Total_Page_Views
-   前面要先 Wait_For_XXX_Sync 完全一樣：避免讀到 transaction 還沒被伺服器
-   修正回來的暫時推測值，導致「剛整理完頁面，在線時長忽然變超小」這種現象。
-   ============================================================ */
 function Get_Own_Player_Stats(callback) {
     const anon_id = Get_Anon_Id()
 
@@ -1593,47 +1078,20 @@ function Get_Own_Player_Stats(callback) {
     })
 }
 
-/* ============================================================
-   【新增】排行榜顯示開關（隱私設定）
-   ------------------------------------------------------------
-   單一 boolean 欄位：player_stats/{anon_id}/hide_from_leaderboard
-   - 欄位不存在，或值是 false：正常顯示在所有排行榜上（預設狀態，
-     也就是「這個玩家從來沒關過這個開關」）
-   - 欄位值是 true：從「單一關卡榜」「挑戰組合榜」「玩家總榜」都會被濾掉
-     （濾掉的邏輯寫在上面的 _Filter_Out_Hidden_Players / _Get_Top_Players）
-   - 只影響「別人在排行榜上看不看得到你」，完全不影響你自己在
-     profile.html 個人設定頁看到的統計數字（那是靠 Get_Own_Player_Stats
-     直接讀自己的節點，跟排行榜的讀取邏輯是兩條獨立路徑）
-   ------------------------------------------------------------ */
-
-// 讀取「自己目前」的開關狀態，給 profile.html 初始化 checkbox 用。
-// 【注意】profile.js 目前選擇直接重複使用 Get_Own_Player_Stats() 回傳的
-// stats.hide_from_leaderboard 欄位來初始化畫面，並沒有另外呼叫這個函式——
-// 因為那次呼叫已經把整個 player_stats/{anon_id} 節點都讀回來了，
-// 這個欄位當然也包含在裡面，沒必要為了同一份資料多打一次 Firebase API。
-// 這個函式留著是給「除了 profile.js 以外，未來可能需要單獨檢查這個開關」
-// 的情境使用（例如以後想在別的頁面也顯示這個狀態）。
 function Get_Own_Leaderboard_Visibility(callback) {
     const anon_id = Get_Anon_Id()
     tctc_db.ref(`player_stats/${anon_id}/hide_from_leaderboard`)
         .once("value")
         .then(function (snapshot) {
-            // 沒設定過就是 false（預設「顯示」），不是「讀取失敗」，
-            // 這裡刻意用 === true 判斷，讓 undefined／false 都統一視為「顯示」
+
             callback(snapshot.val() === true)
         })
         .catch(function (error) {
             console.log("[leaderboard] 讀取排行榜顯示設定失敗：", error)
-            callback(null) // null 代表「真的讀取失敗」，畫面端要跟「目前設定為顯示」明確區分開來
+            callback(null)
         })
 }
 
-// 更新「自己」的開關狀態。
-// hide = true：從此刻開始，所有排行榜的讀取都會把這個玩家濾掉（立即生效，
-//              不用等下一次破紀錄或重新整理才生效，因為榜單讀取時是即時查詢這個欄位）
-// hide = false：恢復正常顯示
-// callback(success)：success 是布林值，讓呼叫端（profile.js）決定要不要
-//                     把畫面上的開關復原成操作前的狀態、要不要顯示錯誤提示
 function Set_Own_Leaderboard_Visibility(hide, callback) {
     const anon_id = Get_Anon_Id()
     tctc_db.ref(`player_stats/${anon_id}/hide_from_leaderboard`).set(!!hide)
@@ -1646,24 +1104,6 @@ function Set_Own_Leaderboard_Visibility(hide, callback) {
         })
 }
 
-/* ============================================================
-   【新增】個人資料頁公開設定
-   ------------------------------------------------------------
-   單一 boolean 欄位：player_stats/{anon_id}/hide_profile_view
-   - 這跟上面的 hide_from_leaderboard 是兩件獨立的事：那個開關只影響
-     「排行榜上看不看得到這個人」；這個開關只影響「別人能不能點進
-     這個人的個人資料頁（TCTC2-0-view_profile.html）看到成就/統計」。
-     玩家可以只關掉其中一個，兩者互不影響。
-   - 欄位不存在，或值是 false：允許別人查看（預設狀態，也就是這個玩家
-     從來沒關過這個開關）
-   - 欄位值是 true：TCTC2-0-view_profile.html 一律顯示「這位玩家沒有
-     公開個人資料」，不會回傳任何統計數字或成就資料給查看者
-   ============================================================ */
-
-// 讀取「自己目前」的開關狀態，給 profile.html 初始化 checkbox 用（跟
-// Get_Own_Leaderboard_Visibility 同一種寫法，profile.js 實際上一樣是
-// 直接沿用 Get_Own_Player_Stats() 讀回來的欄位，不會另外呼叫這個函式，
-// 留著是給以後其他頁面需要單獨檢查這個開關時使用）
 function Get_Own_Profile_Visibility(callback) {
     const anon_id = Get_Anon_Id()
     tctc_db.ref(`player_stats/${anon_id}/hide_profile_view`)
@@ -1673,11 +1113,10 @@ function Get_Own_Profile_Visibility(callback) {
         })
         .catch(function (error) {
             console.log("[profile] 讀取個人資料公開設定失敗：", error)
-            callback(null) // null 代表「真的讀取失敗」，要跟「目前設定為公開」明確區分開來
+            callback(null)
         })
 }
 
-// 更新「自己」的開關狀態，立即生效（跟 Set_Own_Leaderboard_Visibility 同一套邏輯）
 function Set_Own_Profile_Visibility(hide, callback) {
     const anon_id = Get_Anon_Id()
     tctc_db.ref(`player_stats/${anon_id}/hide_profile_view`).set(!!hide)
@@ -1690,12 +1129,6 @@ function Set_Own_Profile_Visibility(hide, callback) {
         })
 }
 
-// ===== 【新增】把「個人簡介」同步上雲端 =====
-// 原本 intro 只存在 localStorage、從來沒同步過雲端——別人的瀏覽器
-// 根本讀不到，個人資料頁若要顯示簡介，一定要有這一份雲端拷貝。
-// 跟 name 的同步邏輯一樣直接用 .set()，不用 transaction：這欄位不是
-// 累加值，而是「玩家這次輸入的最終內容」，後寫的直接蓋掉前一筆即可。
-// 由 TCTC2-0-profile.js 的 Update_profile() 在改名字成功之後呼叫。
 function Set_Own_Intro(intro_text, callback) {
     const anon_id = Get_Anon_Id()
     tctc_db.ref(`player_stats/${anon_id}/intro`).set(intro_text || "")
@@ -1783,7 +1216,6 @@ function Get_Public_Player_Profile(id, callback) {
                 return
             }
 
-            // public_id 反查沒找到：退回舊路徑，把 id 當成真正的 anon_id 直接查一次
             tctc_db.ref(`player_stats/${id}`)
                 .once("value")
                 .then(function (fallbackSnapshot) { _finish_with(fallbackSnapshot.val()) })
@@ -1798,48 +1230,6 @@ function Get_Public_Player_Profile(id, callback) {
         })
 }
 
-/* ============================================================
-   【新增】幫其他玩家按讚
-   ------------------------------------------------------------
-   player_likes/{target_anon_id}/{liker_anon_id} = true —— 誰讚過誰的紀錄，
-   同時拿來做「一人限一次」的判斷：這個節點的安全規則設計成一旦寫入就不能
-   覆寫或刪除（見 database.rules.json 的對應片段），所以按過一次之後，
-   不管是同一個分頁重複點擊、還是直接用開發者工具打 API，都無法對同一個
-   對象再按第二次讚，也沒辦法收回讚。
-
-   player_stats/{target_anon_id}/like_count 是給列表/頁面快速顯示用的
-   衍生計數器，寫法比照教室人數計數器（CLS_Adjust_Student_Count）：
-   用 transaction 累加，失敗只 console.warn、不中斷主要流程——這是
-   「盡力而為」的展示用數字，真正誰讚過誰的原始資料以 player_likes 為準，
-   就算計數器意外對不上，之後也能用同樣的自我修正邏輯重新算過。
-
-   跟這個網站其他所有 anon_id 相關的寫入一樣，這裡沒有、也沒辦法用
-   Firebase Auth 去驗證「$likerId 真的是打這支 API 的那個人」——訪客
-   身分本來就是自己存在 localStorage 的 anon_id，不是登入身分。多一層
-   保護的意義在於擋掉「不小心」的重複點擊跟最基本的重放，不是防止蓄意
-   繞過的作弊者，這點跟本站其他 Sync_* 函式的信任層級是一致的。
-   ============================================================ */
-/* ------------------------------------------------------------
-   【修正】重大 bug：按讚沒有真的生效
-   --------------------------------------------------------------
-   view_profile.html 是靠排行榜點進來的，網址帶的 id 一律是
-   entry._public_id（Get_Public_Id() 算出來的假名，見上面 Get_Public_Id()
-   的說明），不是 player_stats 底下真正的 key（anon_id）。
-
-   但這裡的 player_likes/{target}/{liker} 跟 player_stats/{target}/like_count
-   兩個節點，都是用「真正的 anon_id」當 key 存的——如果直接拿 public_id
-   當 target_anon_id 用，會：
-   1. 把讚寫進 player_likes/{public_id 假名}/... 這個誰也不會再讀的節點，
-   2. 把 player_stats/{public_id 假名}/like_count 這個全新、遊離的節點
-      加 1——不是玩家真正的那筆 player_stats/{anon_id} 資料，
-   導致玩家點了讚、畫面短暫顯示 +1，但目標玩家真正的讚數永遠不會變，
-   重新整理後也看不到任何變化。
-
-   解法：跟 Get_Public_Player_Profile() 一樣，先用 public_id 這個索引欄位
-   反查出真正的 anon_id，找不到的話就當作傳進來的本來就已經是真正的
-   anon_id（保留舊連結來源的相容性），再用那個「真正的 key」去操作
-   player_likes / player_stats。
-   ------------------------------------------------------------ */
 function _Resolve_Real_Anon_Id(id, callback) {
     if (!id) { callback(id); return }
 
@@ -1893,7 +1283,7 @@ function Like_Player(target_anon_id, callback) {
 
     _Resolve_Real_Anon_Id(target_anon_id, function (real_target_id) {
         if (!real_target_id || real_target_id === anon_id) {
-            callback(false)   // 不能讚自己
+            callback(false)
             return
         }
 
@@ -1908,40 +1298,13 @@ function Like_Player(target_anon_id, callback) {
                 callback(true)
             })
             .catch(function (error) {
-                // 最常見的失敗原因：已經對這個人按過讚了（規則擋下重複寫入），
-                // 不當成例外處理，呼叫端會依 callback(false) 顯示「已經讚過了」
+
                 console.warn("[like] 按讚失敗（可能是已經讚過了）：", error.message)
                 callback(false)
             })
     })
 }
 
-/* ============================================================
-   【新增】檢舉玩家
-   ------------------------------------------------------------
-   跟按讚（Like_Player）不同，檢舉允許同一個人對同一個目標重複送出
-   （玩家可能想換個理由重新檢舉、或同一個對象又犯了一次），所以不能
-   像 player_likes 那樣用「目標的 anon_id + 檢舉者的 anon_id」當 key
-   卡住只能寫一次，改用 push() 讓每一筆檢舉都是獨立的節點，天生
-   允許同一組（檢舉者, 被檢舉者）出現很多筆紀錄。
-
-   player_reports/{target_anon_id}/{push_id} = {
-       reporter_anon_id, categories, reason, timestamp
-   }
-
-   跟本站其他 anon_id 相關的寫入一樣，這裡沒有、也沒辦法用 Firebase
-   Auth 去驗證「$reporterId 真的是打這支 API 的那個人」——訪客身分
-   本來就是自己存在 localStorage 的 anon_id。多一層保護的意義在於
-   擋掉最基本的重放/竄改，不是防止蓄意繞過的作弊者，這點跟 Like_Player
-   的信任層級是一致的。真正要處理檢舉內容，還是得靠後台人工看過
-   player_reports 這個節點（目前還沒有後台介面，資料先落地，之後
-   要做審核頁面的話直接讀這個節點即可）。
-
-   database.rules.json 需要對應補一段規則，允許任何人對
-   player_reports/{target_anon_id} 底下 push 新節點（.write: true 或
-   限定成只能新增、不能修改/刪除既有節點），沒有加規則的話這裡的
-   .push() 會被預設規則擋下、寫入失敗。
-   ============================================================ */
 function Report_Player(target_anon_id, target_name, categories, reason, callback) {
     const anon_id = Get_Anon_Id()
     if (!target_anon_id) {
@@ -1964,7 +1327,15 @@ function Report_Player(target_anon_id, target_name, categories, reason, callback
             return
         }
 
-        tctc_db.ref(`player_reports/${real_target_id}`).push({
+        // 【新增】頻率限制：跟 rate_limits/player_reports/{anon_id} 這個節點
+        // 綁在同一次 multi-path update() 裡一起送出。Rules 那邊要求
+        // player_reports 新建時，這個節點的值必須「剛好等於這次寫入的 now」，
+        // 逼著這兩個路徑一定要同一次 update() 一起送，不能只送 player_reports
+        // 那半邊繞過限制。Rules 規定兩次送出中間至少要間隔 30 秒，
+        // 間隔不夠這次的寫入整組會被 Rules 直接拒絕（permission_denied）。
+        const report_id = tctc_db.ref(`player_reports/${real_target_id}`).push().key
+        const updates = {}
+        updates[`player_reports/${real_target_id}/${report_id}`] = {
             reporter_anon_id: anon_id,
             // 【新增】把「被檢舉當下」的暱稱一起存起來，省得每次處理檢舉都要
             // 手動跳去 player_stats/{target_anon_id}/name 對照。這裡刻意存
@@ -1975,31 +1346,23 @@ function Report_Player(target_anon_id, target_name, categories, reason, callback
             categories: Array.isArray(categories) ? categories : [],
             reason: trimmed_reason.slice(0, 500),   // 限制長度，避免有人塞超長文字
             timestamp: firebase.database.ServerValue.TIMESTAMP
-        })
+        }
+        updates[`rate_limits/player_reports/${anon_id}`] = firebase.database.ServerValue.TIMESTAMP
+
+        tctc_db.ref().update(updates)
             .then(function () {
                 callback(true)
             })
             .catch(function (error) {
                 console.warn("[report] 送出檢舉失敗：", error.message)
-                callback(false)
+                // permission_denied 在這裡九成是頻率限制卡到，不是系統壞掉，
+                // 訊息講清楚一點，不要讓玩家以為是網站壞了
+                const is_probably_rate_limited = error.code === "PERMISSION_DENIED"
+                callback(false, is_probably_rate_limited ? "檢舉太頻繁了，請稍等一下再試" : "送出失敗，請稍後再試一次")
             })
     })
 }
 
-/* ============================================================
-   【新增】意見回報（TCTC2-0-feedback.html 用）
-   ------------------------------------------------------------
-   跟上面的 Report_Player() 不一樣：那個是「檢舉某個玩家」，
-   這個是「玩家對網站本身」的錯誤回報／功能建議／其他意見，
-   存在獨立的 site_feedback/{push_id} 節點下，不跟 player_reports
-   混在一起（未來管理員後台要分別列出「玩家檢舉」跟「網站意見」，
-   資料分開存會比較好處理）。
-
-   status 欄位先固定寫死 "new"，是為了配合之後的管理員後台：
-   後台可以把某筆回報標記成 "read" / "resolved" 之類的處理狀態，
-   但玩家這邊送出的當下，狀態永遠只會是 "new"（規則也只允許
-   新建時寫 "new"，不能一開始就假造成別的狀態）。
-   ============================================================ */
 function Submit_Site_Feedback(category, title, content, contact, callback) {
     const anon_id = Get_Anon_Id()
     const trimmed_content = (content || "").trim()
@@ -2011,12 +1374,15 @@ function Submit_Site_Feedback(category, title, content, contact, callback) {
     const valid_categories = ["bug", "suggestion", "other"]
     const safe_category = valid_categories.indexOf(category) !== -1 ? category : "other"
 
-    // 跟其他地方一樣，暱稱用「送出當下」localStorage 存的那份快照，
-    // 不是即時查詢 player_stats——沒設過暱稱的訪客就留空，
-    // 後台看到空白名字就知道這是還沒取名的訪客
     const saved_name = (localStorage.getItem("username") || "").trim()
 
-    tctc_db.ref("site_feedback").push({
+    // 【新增】頻率限制，做法跟 Report_Player() 一樣：跟
+    // rate_limits/site_feedback/{anon_id} 綁在同一次 multi-path update()
+    // 一起送出，Rules 要求兩次送出中間至少間隔 60 秒，不夠的話這次
+    // 整組 update() 會直接被 Rules 拒絕。
+    const feedback_id = tctc_db.ref("site_feedback").push().key
+    const updates = {}
+    updates[`site_feedback/${feedback_id}`] = {
         category: safe_category,
         title: (title || "").trim().slice(0, 50),
         content: trimmed_content.slice(0, 1000),
@@ -2026,53 +1392,25 @@ function Submit_Site_Feedback(category, title, content, contact, callback) {
         page_url: (typeof location !== "undefined" ? location.href : "").slice(0, 200),
         status: "new",
         timestamp: firebase.database.ServerValue.TIMESTAMP
-    })
+    }
+    updates[`rate_limits/site_feedback/${anon_id}`] = firebase.database.ServerValue.TIMESTAMP
+
+    tctc_db.ref().update(updates)
         .then(function () {
             callback(true)
         })
         .catch(function (error) {
             console.warn("[feedback] 送出意見回報失敗：", error.message)
-            callback(false, "送出失敗，請稍後再試一次")
+            const is_probably_rate_limited = error.code === "PERMISSION_DENIED"
+            callback(false, is_probably_rate_limited ? "送出太頻繁了，請等一下再試" : "送出失敗，請稍後再試一次")
         })
 }
 
-
-/* ============================================================
-   【新增】刪除這個瀏覽器（anon_id）在雲端留下的所有資料
-   ------------------------------------------------------------
-   刻意「不」刪除的東西：
-   - player_stats/{anon_id}/page_views：個人瀏覽次數，跟 site_meta/total_page_views
-     （網站總瀏覽次數）是兩個獨立的東西，玩家清空自己的資料不代表要抹掉
-     「這台裝置造訪過幾次」這個統計，兩者語意上不衝突，所以保留。
-   - site_meta/total_page_views：本來就不是這個玩家專屬的資料，不會被動到。
-   - guest_counter：全站共用的流水號計數器，不能因為單一玩家刪資料就往回退，
-     不然會跟其他已經分配出去的訪客編號打架。
-
-   會刪除的東西：
-   - player_stats/{anon_id} 底下除了 page_views 以外的所有欄位
-   - guest_numbers/{anon_id}（下次需要顯示訪客編號時，會重新分配一個新的）
-   - usernames/{key}：只有在「這個名字目前真的是被自己佔用」時才釋放，
-     用 transaction 做這層確認，避免刪到別人手上的資料
-   - leaderboard/{stageId}/{anon_id}：主線每一關，路徑用 Level_Data 現場列舉
-     （所以這個頁面要記得載入 TCTC2-0-level_data.js，不然這段會直接跳過）
-   - challenge_leaderboard/{comboId}/{anon_id}：挑戰模式固定 40 種組合
-     （4 難度 × 2 模式 × 5 時間長度），直接寫死列舉，不需要額外資料
-
-   全部用同一個 multi-path update() 一次送出，Firebase 會把它當成一次
-   atomic 的寫入──要嘛全部成功、要嘛全部失敗，不會發生「刪到一半斷掉，
-   有些欄位刪了、有些沒刪」這種資料半殘的狀態。
-   ============================================================ */
 function Delete_All_Player_Data(callback) {
     const anon_id = Get_Anon_Id()
-    const public_id = Get_Public_Id()   // 【修改】leaderboard/challenge_leaderboard 現在用 public_id 當 key
+    const public_id = Get_Public_Id()
     const updates = {}
 
-    // ----- player_stats：除了 page_views，其餘全部清成 null（等同刪除該欄位）-----
-    // 【新增】streak_* 4 個欄位一併清空——玩家主動刪除所有資料時，連續登入
-    // 紀錄也要跟著歸零重來，不然會出現「資料都刪了，但 streak 卻莫名其妙
-    // 保留著」的不一致狀態。設成 null 是「刪除」不是「寫入」，Firebase Rules
-    // 的 .validate 只在寫入非 null 值時才會被檢查，刪除操作不受那些時間差
-    // 驗證邏輯限制，能正常清空。
     ;[
         "name", "wpm_sum", "wpm_count", "avg_wpm",
         "acc_sum", "acc_count", "avg_acc",
@@ -2080,24 +1418,19 @@ function Delete_All_Player_Data(callback) {
         "cg_acc_sum", "cg_acc_count", "avg_challenge_acc",
         "online_seconds", "total_points", "hide_from_leaderboard",
         "streak_current", "streak_longest", "streak_last_ts", "streak_total_days",
-        // 【新增】「斷簽後回歸」徽章用的單一欄位，理由跟其他 streak_* 欄位一樣：
-        // 玩家主動刪除所有資料時要一起歸零
+
         "longest_gap_days",
-        // 【新增】個人資料頁公開設定 + 雲端簡介，同樣屬於「這個玩家的個人資料」，
-        // 刪除所有資料時要一併清空，不然換一台裝置/新身份的人會意外繼承到舊簡介
+
         "hide_profile_view", "intro",
-        // 【新增】公開假名索引也要一起清掉，不然下次重新產生 anon_id 後，
-        // 舊的 public_id 還留著指向已經被清空的資料
+
         "public_id"
     ].forEach(function (field) {
         updates[`player_stats/${anon_id}/${field}`] = null
     })
 
-    // ----- 訪客編號：連本機快取一起清，才不會畫面顯示舊號碼、雲端卻查無此號 -----
     updates[`guest_numbers/${anon_id}`] = null
     localStorage.removeItem("tctc_guest_number")
 
-    // ----- 挑戰模式排行榜：40 種組合固定列舉 -----
     const CHALLENGE_DIFFICULTIES = ["easy", "medium", "hard", "extreme"]
     const CHALLENGE_STAGES = ["article", "word"]
     const CHALLENGE_SECONDS = [30, 60, 180, 300, 600]
@@ -2109,11 +1442,6 @@ function Delete_All_Player_Data(callback) {
         })
     })
 
-    // ----- 主線排行榜：走訪 Level_Data 拿到每一關的 id -----
-    // Level_Data 定義在 TCTC2-0-level_data.js，如果呼叫這支函式的頁面沒有載入
-    // 那支檔案（例如目前的 profile.html），typeof 會是 "undefined"，
-    // 這段就整段跳過──不會報錯中斷，只是主線榜這部分刪不到，
-    // 其餘 player_stats／guest_numbers／usernames／挑戰榜還是會正常執行。
     if (typeof Level_Data === "object" && Level_Data) {
         Object.keys(Level_Data).forEach(function (difficultyKey) {
             const chapters = (Level_Data[difficultyKey] && Level_Data[difficultyKey].chapter) || []
@@ -2130,7 +1458,6 @@ function Delete_All_Player_Data(callback) {
         console.log("[delete] 這個頁面沒有載入 Level_Data，主線關卡榜的資料這次不會被清除")
     }
 
-    // ----- 使用者名稱：只釋放「確定是自己佔的」那一筆 -----
     const saved_username = (localStorage.getItem("username") || "").trim()
     const username_key = saved_username ? _Username_To_Key(saved_username) : null
 
@@ -2199,9 +1526,9 @@ function Delete_All_Player_Data(callback) {
 
 // ===== 本機 localStorage 的帳號相關 key，統一定義在這裡，其他檔案（auth_ui.js／profile.js）
 // 直接呼叫下面的 Get_/Set_ 函式操作，不要自己在別的地方硬寫字串 key，避免打錯字 =====
-const AUTH_ACCOUNT_UID_KEY = "tctc2.0-account_uid"       // 目前登入中的帳號 uid，沒登入就不存在這個 key
-const AUTH_ACCOUNT_DISPLAY_KEY = "tctc2.0-account_display" // 顯示在 nav 上的帳號名稱（email 或 Google 顯示名稱）
-const AUTH_GUEST_BACKUP_KEY = "tctc2.0-guest_backup_anon_id" // 登入帳號「之前」，這台裝置原本的訪客 anon_id 備份
+const AUTH_ACCOUNT_UID_KEY = "tctc2.0-account_uid"
+const AUTH_ACCOUNT_DISPLAY_KEY = "tctc2.0-account_display"
+const AUTH_GUEST_BACKUP_KEY = "tctc2.0-guest_backup_anon_id"
 
 function Get_Current_Account_Uid() {
     return localStorage.getItem(AUTH_ACCOUNT_UID_KEY)
@@ -2210,32 +1537,10 @@ function Get_Current_Account_Display() {
     return localStorage.getItem(AUTH_ACCOUNT_DISPLAY_KEY)
 }
 
-// 產生一組全新的訪客 anon_id（跟 Get_Anon_Id() 內部產生新 id 的邏輯完全一致，
-// 獨立拉出來是因為「不繼承」「登出且沒有備份」這兩種情況都需要各自生一組新的，
-// 不想在兩個地方各寫一次一樣的 crypto.randomUUID() fallback 邏輯）
 function _Generate_New_Anon_Id() {
     return crypto.randomUUID ? crypto.randomUUID() : ("anon-" + Date.now() + "-" + Math.random().toString(16).slice(2))
 }
 
-/* ------------------------------------------------------------
-   切換「這台裝置現在代表誰」的核心函式
-   ------------------------------------------------------------
-   把 localStorage 的 tctc_anon_id 換成 new_anon_id，並且：
-   1. 清掉 tctc_guest_number 快取——這個快取是「數字」，沒有標明是哪個
-      anon_id 的，身份一換，舊快取跟新身份對不上，留著會顯示錯的訪客編號，
-      清掉之後下次呼叫 Get_Guest_Number() 會自動用新 anon_id 重新跟雲端要。
-   2. 把 localStorage 的 username 同步成「新身份」在雲端已經設定過的名字
-      （讀 player_stats/{new_anon_id}/name）；如果新身份還沒設定過名字，
-      就把本機這欄清空，不然畫面會顯示成「舊身份的名字」，資料對不起來。
-
-   呼叫端（Login/Register/Logout 相關函式）都要透過這支函式做切換，
-   不要自己徒手 setItem("tctc_anon_id", ...)，不然上面兩個快取清理很容易漏掉。
-   ------------------------------------------------------------ */
-// 這些 key 都是「跟身份綁定、理論上該跟著身份走」的本機統計，但原本各自
-// 用固定字串存在 localStorage，不分訪客/帳號，導致切換身份（登入/繼承/登出）
-// 之後，畫面還是顯示「上一個身份」殘留的數字。切換身份時全部清掉，
-// 讓新身份從乾淨狀態開始（雲端排行榜資料不受影響，只是本機快取被清空，
-// 之後重打就會依新身份重新累積）。
 const IDENTITY_BOUND_LOCAL_KEYS = [
     "average_wpm", "average_acc", "wpm_sum", "wpm_times", "acc_sum", "acc_times",
     "average_challenge_wpm", "average_challenge_acc", "cg_wpm_sum", "cg_wpm_times", "cg_acc_sum", "cg_acc_times",
@@ -2244,12 +1549,7 @@ const IDENTITY_BOUND_LOCAL_KEYS = [
 ]
 
 function Switch_Active_Identity(new_anon_id, callback) {
-    // 【修正 1】只有「真的換成另一組 anon_id」時，才清空這些跟身份綁定的本機快取。
-    // 「繼承」註冊路徑（Register_With_Email_Inherit / Register_With_Google_Inherit）
-    // 傳進來的 new_anon_id 就是目前這組 anon_id 本人（uid 換了，但 anon_id 沒換），
-    // 這種情況下本機快取本來就是對的，不需要清空重來——尤其
-    // tctc2.0-challenge_history / tctc2.0-profile_avatar / stage_progress / intro
-    // 這些欄位雲端根本沒有備份，一旦清空就真的救不回來了。
+
     const anon_id_unchanged = (Get_Anon_Id() === new_anon_id)
 
     localStorage.setItem("tctc_anon_id", new_anon_id)
@@ -2259,17 +1559,6 @@ function Switch_Active_Identity(new_anon_id, callback) {
         IDENTITY_BOUND_LOCAL_KEYS.forEach(function (key) { localStorage.removeItem(key) })
     }
 
-    // 【修正 2】原本這裡只抓 player_stats/{new_anon_id}/name 一個欄位，
-    // 清空快取之後卻只補回暱稱，average_wpm / average_acc / 挑戰積分這些欄位
-    // 永遠停在「清空後的空值」，直到玩家再打一關才會被覆蓋——而且那一關算出來的
-    // 「平均值」是從本機被清空的 wpm_sum/wpm_times 重新起算，並不是這個身份
-    // 真正的累積平均，等於用一次的成績覆蓋掉一直以來的紀錄。
-    // 改成抓整個 player_stats/{new_anon_id} 節點，把雲端「這個身份真正的累積數字」
-    // 完整地補回本機快取（wpm_sum / wpm_count / avg_wpm、acc_sum / acc_count / avg_acc、
-    // total_points），不管是登入別人帳號、登出換訪客，還是繼承註冊，
-    // 畫面顯示的都會是雲端當下真實的數字，不會再出現「歸零/消失」的狀況。
-    // （tctc2.0-challenge_history、profile_avatar 等雲端沒有備份的欄位，
-    // 在真的换成別的身份時仍然無法復原，這是資料本來就只存在本機的既有限制。）
     tctc_db.ref(`player_stats/${new_anon_id}`).once("value").then(function (snapshot) {
         const cloud_stats = snapshot.val() || {}
 
@@ -2287,7 +1576,6 @@ function Switch_Active_Identity(new_anon_id, callback) {
         if (typeof cloud_stats.acc_count === "number") localStorage.setItem("acc_times", cloud_stats.acc_count)
         if (typeof cloud_stats.avg_acc === "number") localStorage.setItem("average_acc", Math.round(cloud_stats.avg_acc))
 
-        // 【新增】挑戰模式專屬的平均值，對應 Sync_Challenge_Player_Stats() 寫的那組獨立欄位
         if (typeof cloud_stats.cg_wpm_sum === "number") localStorage.setItem("cg_wpm_sum", cloud_stats.cg_wpm_sum)
         if (typeof cloud_stats.cg_wpm_count === "number") localStorage.setItem("cg_wpm_times", cloud_stats.cg_wpm_count)
         if (typeof cloud_stats.avg_challenge_wpm === "number") localStorage.setItem("average_challenge_wpm", Math.round(cloud_stats.avg_challenge_wpm))
@@ -2306,14 +1594,6 @@ function Switch_Active_Identity(new_anon_id, callback) {
     })
 }
 
-/* ------------------------------------------------------------
-   把 Firebase Auth 回傳的錯誤代碼翻譯成中文訊息
-   ------------------------------------------------------------
-   完整代碼表請參考官方文件：
-   https://firebase.google.com/docs/reference/js/auth#autherrorcodes
-   這裡只列出這個網站實際會碰到的常見狀況，沒列到的一律退回顯示
-   error.message（英文原文，至少比完全沒訊息好）。
-   ------------------------------------------------------------ */
 function _Translate_Auth_Error(error) {
     const code = error && error.code
     const MESSAGE_MAP = {
@@ -2332,25 +1612,13 @@ function _Translate_Auth_Error(error) {
     return (code && MESSAGE_MAP[code]) || (error && error.message) || "發生未知錯誤，請稍後再試"
 }
 
-/* ------------------------------------------------------------
-   註冊/登入彈窗要顯示的「訪客資料繼承預覽」
-   ------------------------------------------------------------
-   回傳目前這個 anon_id 在 player_stats 裡的原始資料（局數、平均 WPM……），
-   給彈窗組出「要不要繼承」的比較文字用。
-
-   Should_Prompt_Guest_Inherit(stats)：判斷「這包資料值不值得問一次」——
-   局數（wpm_count）、正確率局數（acc_count）、挑戰積分、在線秒數
-   只要有任何一項大於 0，就代表這台裝置有實際玩過，才需要跳出詢問；
-   全部都是 0 或整包是空物件，代表這是全新訪客，直接跳過詢問即可
-   （不管選哪個結果都一樣是空的，問了也沒意義）。
-   ------------------------------------------------------------ */
 function Get_Guest_Inherit_Preview(callback) {
     const anon_id = Get_Anon_Id()
     tctc_db.ref(`player_stats/${anon_id}`).once("value").then(function (snapshot) {
         callback(snapshot.val() || {})
     }).catch(function (error) {
         console.log("[auth] 讀取訪客資料預覽失敗：", error)
-        callback(null) // null 代表讀取失敗（不是「沒有資料」），呼叫端要分開處理
+        callback(null)
     })
 }
 function Should_Prompt_Guest_Inherit(stats) {
@@ -2363,14 +1631,6 @@ function Should_Prompt_Guest_Inherit(stats) {
     )
 }
 
-/* ------------------------------------------------------------
-   註冊 —— 「要繼承」路徑
-   ------------------------------------------------------------
-   用 linkWithCredential／linkWithPopup 把目前的匿名登入升級成正式帳號，
-   uid 不變，本機 tctc_anon_id 也【不用換】——這正是「繼承」能夠成立的關鍵：
-   所有雲端資料本來就是用這組 anon_id 存的，完全不用搬移，只要把
-   「這個新帳號的 uid，對應到這組 anon_id」寫進 accounts 對照表即可。
-   ------------------------------------------------------------ */
 function Register_With_Email_Inherit(email, password, callback) {
     const user = firebase.auth().currentUser
     if (!user) {
@@ -2397,18 +1657,6 @@ function Register_With_Google_Inherit(callback) {
     })
 }
 
-/* ------------------------------------------------------------
-   註冊 —— 「不要繼承」路徑
-   ------------------------------------------------------------
-   直接用 createUserWithEmailAndPassword／signInWithPopup（不 link），
-   這兩個方法本身就會把「目前登入中的使用者」換成全新帳號，原本的匿名
-   auth session 不會被刪除、只是不再是目前登入者（變成一筆孤兒的匿名
-   使用者留在 Firebase Auth 後台，不影響任何功能，也不用特別去清）。
-
-   本機 tctc_anon_id 換成全新一組，舊的那組（連同底下所有 player_stats／
-   leaderboard 資料）就此變成孤兒資料留在雲端，不會被刪除，但也沒有任何
-   本機記錄能再指回它。
-   ------------------------------------------------------------ */
 function Register_With_Email_Fresh(email, password, callback) {
     firebase.auth().createUserWithEmailAndPassword(email, password).then(function (result) {
         _Finish_Account_Write(result.user, "email", _Generate_New_Anon_Id(), callback)
@@ -2424,11 +1672,6 @@ function Register_With_Google_Fresh(callback) {
     })
 }
 
-// 兩條註冊路徑（繼承／不繼承）最後都會走到這裡：
-// 1. 把本機 anon_id 換成 final_anon_id（繼承路徑傳進來的就是目前這組，等於沒換）
-// 2. 寫入 accounts/{uid} 對照表
-// 3. Email 註冊的話寄一封驗證信（不會擋住註冊流程本身——寄信失敗只印 console，
-//    不影響 callback(true)，避免因為信箱服務商偶發問題卡住整個註冊）
 function _Finish_Account_Write(user, provider, final_anon_id, callback) {
     Switch_Active_Identity(final_anon_id, function () {
         tctc_db.ref(`accounts/${user.uid}`).set({
@@ -2453,14 +1696,6 @@ function _Finish_Account_Write(user, provider, final_anon_id, callback) {
     })
 }
 
-/* ------------------------------------------------------------
-   登入既有帳號（Email/密碼 或 Google）
-   ------------------------------------------------------------
-   跟註冊不同，登入「不會」問要不要繼承——直接把這台裝置切換成該帳號
-   的雲端資料。如果這台裝置切換前本來就處於訪客模式（還沒登入過任何帳號）
-   且有自己的訪客進度，會先把那組 anon_id 存進 AUTH_GUEST_BACKUP_KEY 備份，
-   不會被覆蓋消失，之後登出時會自動換回來（見下面 Logout_Account）。
-   ------------------------------------------------------------ */
 function Login_With_Email(email, password, callback) {
     firebase.auth().signInWithEmailAndPassword(email, password).then(function (result) {
         _Finish_Login(result.user, callback)
@@ -2479,14 +1714,11 @@ function _Finish_Login(user, callback) {
     tctc_db.ref(`accounts/${user.uid}/anon_id`).once("value").then(function (snapshot) {
         const account_anon_id = snapshot.val()
         if (!account_anon_id) {
-            // 理論上不該發生——每個帳號一定是透過上面的註冊流程建立，
-            // 一定會有這筆對照。保險起見還是給明確錯誤訊息，而不是讓後面整段爆掉。
+
             callback(false, "找不到這個帳號對應的資料，請聯絡我們回報這個問題")
             return
         }
 
-        // 這台裝置「登入前」如果還不是已登入狀態，代表目前用的 anon_id 是某個訪客的，
-        // 先備份起來，登出後才找得回來
         if (!Get_Current_Account_Uid()) {
             localStorage.setItem(AUTH_GUEST_BACKUP_KEY, Get_Anon_Id())
         }
@@ -2502,17 +1734,6 @@ function _Finish_Login(user, callback) {
     })
 }
 
-/* ------------------------------------------------------------
-   登出（一般登出，從 nav 按的那個）
-   ------------------------------------------------------------
-   - 這台裝置登入前有備份訪客資料（AUTH_GUEST_BACKUP_KEY 存在）：
-     換回那組 anon_id，訪客進度原封不動「復活」
-   - 沒有備份（例如這台裝置一開始就直接登入，從沒當過訪客）：
-     配一組全新的 anon_id，變成一個全新訪客
-   - 不管哪一種，登出後都要重新呼叫 signInAnonymously()，
-     讓 firebase.auth().currentUser 恢復成「有登入」的匿名狀態，
-     不然任何要求 auth != null 的 Rules 寫入會全部被擋下來
-   ------------------------------------------------------------ */
 function Logout_Account(callback) {
     firebase.auth().signOut().then(function () {
         localStorage.removeItem(AUTH_ACCOUNT_UID_KEY)
@@ -2536,12 +1757,11 @@ function Logout_Account(callback) {
     })
 }
 
-
 function Logout_And_Clear_Guest_Backup(callback) {
     firebase.auth().signOut().then(function () {
         localStorage.removeItem(AUTH_ACCOUNT_UID_KEY)
         localStorage.removeItem(AUTH_ACCOUNT_DISPLAY_KEY)
-        localStorage.removeItem(AUTH_GUEST_BACKUP_KEY) // 刻意丟棄，不 restore
+        localStorage.removeItem(AUTH_GUEST_BACKUP_KEY)
 
         Switch_Active_Identity(_Generate_New_Anon_Id(), function () {
             if (typeof firebase.auth === "function") {
@@ -2557,21 +1777,12 @@ function Logout_And_Clear_Guest_Backup(callback) {
     })
 }
 
-// ===== 【新增】既有玩家的關卡完成度「一次性回填」=====
-// 這功能上線前，玩家可能本機已經累積一堆 stage_progress[stageId] = true，
-// 但 Firebase 端的 stages_completed_easy/medium/hard 全部從 0 開始。
-// 如果不做這段回填，那些「早就完成」的關卡會因為 Sync_Stage_Completion()
-// 只在「第一次通過」才呼叫，永遠不會被同步，成就會被錯誤地卡在低分。
-
 function TCTC_Migrate_Existing_Stage_Progress(){
-    // 換成 v2：v1 這把旗標曾經對一批「回填被舊版 Rules 拒絕、但程式碼誤判
-    // 成功」的玩家寫下錯誤的 "1"，讓他們的瀏覽器永遠跳過回填。換一把新
-    // key，讓所有人在這次修正部署後都會自動重跑一次，不用手動清 localStorage。
+
     const MIGRATION_FLAG_KEY = "tctc_stage_migration_v2_done"
-    // 本機旗標純粹是省一次不必要的 Firebase 讀寫，不是防作弊的關鍵，
-    // 真正擋住重複洗數字的防線是上面 Rules 的 "!data.exists()" 判斷
+
     if(localStorage.getItem(MIGRATION_FLAG_KEY) === "1") return
-    if(typeof get_difficulty_by_stageid !== "function") return   // 這頁沒載入 level_data.js，之後造訪有載入的頁面再補跑
+    if(typeof get_difficulty_by_stageid !== "function") return
 
     const progress = JSON.parse(localStorage.getItem("stage_progress")) || {}
     const counts = { easy: 0, medium: 0, hard: 0 }
@@ -2585,16 +1796,12 @@ function TCTC_Migrate_Existing_Stage_Progress(){
     const anon_id = Get_Anon_Id()
     if(!anon_id) return
 
-    // 只有全部寫入真的成功才標記完成；任何一筆失敗，旗標就不設，
-    // 下次造訪任何有載入這支檔案的頁面時會自動再試一次
     let allSucceeded = true
 
     const writes = ["easy", "medium", "hard"].map(function(difficulty){
-        if(counts[difficulty] === 0) return Promise.resolve()   // 沒有東西要回填，省一次寫入
+        if(counts[difficulty] === 0) return Promise.resolve()
         return tctc_db.ref(`player_stats/${anon_id}/stages_completed_${difficulty}`).transaction(function(current){
-            // 回傳 undefined = 中止交易，不送出任何寫入，不會被 Rules 驗證卡住；
-            // 不能回傳 current（跟原值一樣），那樣還是會真的送一次寫入給 Rules 驗證，
-            // 已存在的值的 Rules 規定只能寫「原值+1」，寫「跟原值相同」會被判定不合法
+
             if(current !== null) return undefined
             return counts[difficulty]
         }).catch(function(error){
@@ -2610,24 +1817,6 @@ function TCTC_Migrate_Existing_Stage_Progress(){
     })
 }
 
-/* ============================================================
-   【新增】管理員後台（TCTC2-0-admin.html）用的函式
-   ------------------------------------------------------------
-   「誰是管理員」完全交給 database.rules.json 的 admins/{uid} 節點判斷，
-   這裡的 JS 端檢查只是為了「畫面要不要顯示管理員介面」，不是安全機制本身
-   ——真正擋住非管理員的是 Rules（site_feedback/.read、player_reports/.read
-   都是 root.child('admins').child(auth.uid).exists()），就算有人繞過
-   前端畫面直接呼叫這些函式，Rules 那關還是會擋下來，读不到/写不进。
-   ============================================================ */
-
-// 檢查「目前登入的帳號」是不是管理員。一定要先等 Wait_For_Auth_Ready，
-// 不然 firebase.auth().currentUser 可能還是 null（例如剛登入完、
-// onAuthStateChanged 還沒觸發），會誤判成「還沒登入」
-// 【注意】這裡的 UID 要跟 database.rules.json 裡寫死的那組一致。
-// Rules 那邊的寫法是「auth.uid === 這組 UID，或者 admins/{uid} 節點存在」，
-// 所以這裡也用同一套判斷：預設管理員直接認這組 UID（不用先去資料庫建
-// admins 節點就能用），之後若要加第二個管理員，再去 Firebase Console
-// 手動建 admins/{對方的uid}: true 即可，兩邊都不用再改程式碼。
 const TCTC_DEFAULT_ADMIN_UID = "itDBv0nzERgayUVmFQvGpLtdFnw2"
 
 function Check_Is_Admin(callback) {
@@ -2645,15 +1834,12 @@ function Check_Is_Admin(callback) {
                 callback(snapshot.val() === true)
             })
             .catch(function () {
-                // 讀不到（例如根本不是 admin，Rules 直接拒絕）一律當作「不是管理員」，
-                // 不要把 permission_denied 這種預期內的拒絕當成系統錯誤處理
+
                 callback(false)
             })
     })
 }
 
-// 把某筆意見回報標記成處理狀態。status 只接受這三種值，跟 Rules 的
-// .validate 對應（Rules 那邊也要記得放寬成允許這三種值，不是只有 'new'）
 function Admin_Set_Feedback_Status(feedback_id, status, callback) {
     const valid_status = ["new", "read", "resolved"]
     if (valid_status.indexOf(status) === -1) {
@@ -2668,20 +1854,24 @@ function Admin_Set_Feedback_Status(feedback_id, status, callback) {
         })
 }
 
-/* ============================================================
-   【新增】管理員刪除「某個被檢舉玩家」的雲端資料
-   ------------------------------------------------------------
-   跟玩家自己在設定頁按「刪除所有資料」（Delete_All_Player_Data）
-   邏輯上是同一件事，差別只在於：這裡的 target_anon_id 是管理員
-   指定的「別人」，不是 Get_Anon_Id() 讀到的「自己」。
+function Admin_Delete_Feedback(feedback_id, callback) {
+    tctc_db.ref(`site_feedback/${feedback_id}`).remove()
+        .then(function () { callback(true) })
+        .catch(function (error) {
+            console.warn("[admin] 刪除意見回報失敗：", error.message)
+            callback(false)
+        })
+}
 
-   注意：這裡「不會」連帶清除主線／挑戰模式排行榜的分數
-   （leaderboard / challenge_leaderboard），因為那兩個節點是用
-   public_id 當 key，這裡拿到的是玩家的真正 anon_id，兩者對不起來，
-   要清的話得先反查 public_id——先不做這塊，管理員通常在意的是
-   「這個人的暱稱、統計數字、帳號名稱不要再出現」，分數留著頂多
-   排行榜多一筆看起來奇怪的紀錄，不是急迫的安全問題。
-   ============================================================ */
+function Admin_Delete_Report(target_anon_id, report_id, callback) {
+    tctc_db.ref(`player_reports/${target_anon_id}/${report_id}`).remove()
+        .then(function () { callback(true) })
+        .catch(function (error) {
+            console.warn("[admin] 刪除檢舉失敗：", error.message)
+            callback(false)
+        })
+}
+
 function Admin_Delete_Player_Data(target_anon_id, callback) {
     if (!target_anon_id) {
         callback(false)
@@ -2704,9 +1894,7 @@ function Admin_Delete_Player_Data(target_anon_id, callback) {
 
     tctc_db.ref().update(updates)
         .then(function () {
-            // usernames 節點要另外處理：不知道這個玩家的暱稱對應到哪一把
-            // usernames/{key}，所以用 orderByChild('anon_id') 反查出來再刪，
-            // 這步找不到也不算失敗（代表這個玩家從來沒佔用過暱稱）
+
             tctc_db.ref("usernames").orderByChild("anon_id").equalTo(target_anon_id)
                 .once("value")
                 .then(function (snapshot) {
@@ -2720,11 +1908,11 @@ function Admin_Delete_Player_Data(target_anon_id, callback) {
                         .then(function () { callback(true) })
                         .catch(function (error) {
                             console.warn("[admin] 釋放暱稱失敗（其餘資料已刪除）：", error.message)
-                            callback(true) // 主要資料已經刪了，這步失敗不算整體失敗
+                            callback(true)
                         })
                 })
                 .catch(function () {
-                    callback(true) // 反查失敗也不算整體失敗，主要資料已經刪了
+                    callback(true)
                 })
         })
         .catch(function (error) {
