@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <script src="TCTC2-0-domain_redirect.js"></script>
+    <link rel="icon" href="favicon-32x32.png" type="image/png" sizes="32x32">
+    <title>管理員後台 - TCTC</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+
+    <link rel="stylesheet" href="TCTC2-0-intro_lobby.css">
+    <link rel="stylesheet" href="TCTC2-0-main_lobby.css">
+    <link rel="stylesheet" href="TCTC2-0-profile.css">
+    <link rel="stylesheet" href="TCTC2-0-mobile.css">
+    <link rel="stylesheet" href="TCTC2-0-auth_ui.css">
+    <script src="TCTC2-0-theme.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@200;300;400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        .adm_wrap{ max-width: 62rem; margin: 0 auto; padding: 0 1.2rem; }
+
+        .adm_tabs{
+            display: flex;
+            gap: 0.5rem;
+            margin: 0 0 1.4rem;
+            border-bottom: 1px solid rgba(var(--accent-rgb), 0.2);
+        }
+        .adm_tab{
+            padding: 0.6rem 1.1rem;
+            color: rgba(var(--text-rgb), 0.55);
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+        .adm_tab.adm_tab_active{
+            color: var(--champagne-gold);
+            border-bottom-color: var(--champagne-gold);
+        }
+
+        .adm_item{
+            background-color: var(--dark-blue);
+            border: 1px solid rgba(var(--accent-rgb), 0.22);
+            border-radius: 6px;
+            padding: 1rem 1.1rem;
+            margin-bottom: 0.8rem;
+        }
+        .adm_item_head{
+            display: flex;
+            align-items: baseline;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            margin-bottom: 0.5rem;
+        }
+        .adm_badge{
+            flex-shrink: 0;
+            padding: 0.1rem 0.5rem;
+            font-size: 0.72rem;
+            letter-spacing: 1px;
+            border-radius: 3px;
+            border: 1px solid rgba(var(--accent-rgb), 0.4);
+            color: var(--champagne-gold);
+        }
+        .adm_badge_bug{ border-color: var(--error-red); color: var(--error-red); }
+        .adm_badge_resolved{ border-color: rgba(var(--text-rgb),0.3); color: rgba(var(--text-rgb),0.45); }
+
+        .adm_item_title{
+            flex: 1;
+            min-width: 12rem;
+            color: rgba(var(--text-rgb), 0.92);
+            font-size: 1rem;
+            letter-spacing: 0.5px;
+        }
+        .adm_item_meta{
+            color: rgba(var(--text-rgb), 0.4);
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+        }
+        .adm_item_body{
+            color: rgba(var(--text-rgb), 0.72);
+            font-size: 0.88rem;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            word-break: break-word;
+            margin: 0.4rem 0 0.7rem;
+        }
+        .adm_item_actions{
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .adm_btn{
+            padding: 0.35rem 0.8rem;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+            background-color: transparent;
+            color: rgba(var(--text-rgb), 0.7);
+            border: 1px solid rgba(var(--text-rgb), 0.25);
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 150ms ease;
+        }
+        .adm_btn:hover{ border-color: var(--champagne-gold); color: var(--champagne-gold); }
+        .adm_btn_danger{ color: var(--error-red); border-color: rgba(var(--error-rgb), 0.5); }
+        .adm_btn_danger:hover{ background-color: var(--error-red); color: #fff; border-color: var(--error-red); }
+
+        .adm_empty{
+            color: rgba(var(--text-rgb), 0.4);
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            padding: 2rem 0;
+        }
+
+        .adm_kv{
+            display: grid;
+            grid-template-columns: 10rem 1fr;
+            gap: 0.3rem 1rem;
+            font-size: 0.84rem;
+            margin-top: 0.6rem;
+        }
+        .adm_kv div:nth-child(odd){ color: rgba(var(--text-rgb), 0.45); letter-spacing: 0.5px; }
+        .adm_kv div:nth-child(even){ color: rgba(var(--text-rgb), 0.85); word-break: break-all; }
+
+        .adm_search_row{
+            display: flex;
+            gap: 0.6rem;
+            margin-bottom: 1.2rem;
+            flex-wrap: wrap;
+        }
+        .adm_search_row .profile_input{ flex: 1; min-width: 14rem; margin: 0; }
+    </style>
+</head>
+<body>
+    <nav id="nav">
+        <img src="TCTC2.0 logo.png" class="logo_style" onclick="window.location.href='TCTC2-0-main.html'">
+        <div class="nav_css">
+            <div onclick="window.location.href='TCTC2-0-main.html'">回主畫面</div>
+        </div>
+    </nav>
+
+    <main class="profile_main_style" style="justify-content: flex-start;">
+        <section class="profile_first_section">
+            <div class="profile_page_header" style="text-align:left; max-width:62rem; margin:3rem auto 2rem; padding:0 1.2rem;">
+                <h1 class="profile_page_title" style="margin-top:0; text-align:center;">管理員後台</h1>
+                <p class="profile_page_subtitle" id="adm_subtitle">驗證權限中…</p>
+            </div>
+
+            <div class="adm_wrap is_hidden" id="adm_denied">
+                <div class="profile_card">
+                    <p class="adm_empty" id="adm_denied_text" style="padding:1rem 0;"></p>
+                    <button class="profile_update_btn" onclick="window.location.href='TCTC2-0-main.html'">回主畫面</button>
+                </div>
+            </div>
+
+            <div class="adm_wrap is_hidden" id="adm_panel">
+                <div class="adm_tabs">
+                    <div class="adm_tab adm_tab_active" data-tab="feedback" onclick="Adm_Switch_Tab('feedback')">意見回報</div>
+                    <div class="adm_tab" data-tab="reports" onclick="Adm_Switch_Tab('reports')">玩家檢舉</div>
+                    <div class="adm_tab" data-tab="player" onclick="Adm_Switch_Tab('player')">查詢玩家</div>
+                </div>
+
+                <div id="adm_tab_feedback">
+                    <div id="adm_feedback_list"><p class="adm_empty">載入中…</p></div>
+                </div>
+
+                <div id="adm_tab_reports" class="is_hidden">
+                    <div id="adm_reports_list"><p class="adm_empty">載入中…</p></div>
+                </div>
+
+                <div id="adm_tab_player" class="is_hidden">
+                    <div class="adm_search_row">
+                        <input type="text" class="profile_input" id="adm_player_search" placeholder="輸入玩家的 anon_id 或暱稱">
+                        <button class="profile_update_btn" onclick="Adm_Search_Player()">查詢</button>
+                    </div>
+                    <div id="adm_player_result"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="adm_toast" class="profile_toast"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+    <script src="TCTC2-0-firebase.js?v=3"></script>
+    <script src="TCTC2-0-auth_ui.js"></script>
+    <script src="TCTC2-0-admin.js"></script>
+</body>
+</html>

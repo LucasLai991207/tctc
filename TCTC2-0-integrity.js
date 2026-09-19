@@ -3,7 +3,6 @@
         ? window.crypto.randomUUID()
         : ("sess-" + Date.now() + "-" + Math.random().toString(36).slice(2))
 
-
     let total_keydown_count = 0
     let total_untrusted_count = 0
 
@@ -18,18 +17,16 @@
     }, true)
 
     window.TCTC_Integrity = {
-        // 給任何想單獨拿這組 id 的地方用（例如未來想在別的地方也標記同一個 session）
+
         getSessionId: function () {
             return SESSION_ID
         },
-
 
         markAttemptStart: function () {
             attempt_start_ts = Date.now()
             attempt_start_keydown = total_keydown_count
             attempt_start_untrusted = total_untrusted_count
         },
-
 
         getAttemptSnapshot: function () {
             const since_keydown = attempt_start_ts !== null ? attempt_start_keydown : 0

@@ -1,6 +1,5 @@
 function ACHV_Build_Badge_HTML(achv, data){
-    // 不計算真實進度（因為資料源不存在），直接顯示「尚未開放」，
-    // 避免用 0 去比對門檻造出一個看起來像「還沒達成」但其實是「功能還沒做」的假象
+
     if(achv.pending){
         return `
             <div class="achv_badge_row achv_badge_pending">
@@ -16,8 +15,6 @@ function ACHV_Build_Badge_HTML(achv, data){
         `
     }
 
-    // 【修改】優先用 getValue() 現場算值；沒有的話沿用原本的 metric 查表方式，
-    // 舊的成就完全不用改，只有「關卡完成度」分類的 4 個會用到 getValue
     const value = achv.getValue ? achv.getValue(data) : (data ? (data[achv.metric] || 0) : 0)
     const tierIndex = ACHV_Get_Tier_Index(value, achv.thresholds)
     const tierClass = ACHV_TIER_CLASSES[tierIndex]
@@ -25,18 +22,12 @@ function ACHV_Build_Badge_HTML(achv, data){
     const isLocked = tierIndex === 0
     const isMaxed = tierIndex === achv.thresholds.length
 
-    // 進度條的填色跟徽章邊框顏色綁在一起（用同一個 tierClass 當 CSS class），
-    // 這樣「進度越高、徽章顏色越高階」跟「進度條顏色」永遠是同一套視覺語言，
-    // 不會有徽章已經是金色、但進度條還是灰色這種不一致的情況
     const fillPercent = ACHV_Get_Tier_Progress_Percent(value, achv.thresholds, tierIndex)
 
     const caption = isMaxed
         ? `已達最高等級・目前 ${achv.format(value)}`
         : `${achv.format(value)} / ${achv.format(achv.thresholds[tierIndex])}（${fillPercent}%）`
 
-    // ===== 【新增】滿級（100%）且這個成就有掛 certificateLevel（見 achv_data.js）
-    // 才顯示「列印證書」連結——目前只有初級／中級完成度有掛這個屬性，
-    // 高級刻意沒加（能打完的人太少，做了也沒什麼人用得到）。
     const certLinkHTML = (isMaxed && achv.certificateLevel)
         ? `<a class="achv_cert_link" href="TCTC2-0-certificate.html?level=${achv.certificateLevel}" target="_blank" rel="noopener">🎓 列印證書</a>`
         : ""
@@ -194,18 +185,11 @@ function ACHV_Render_All(streakData, statsData){
         overviewFillEl.style.width = `${overallPercent}%`
     }
 
-    // ===== 【新增】把總覽數字回傳給呼叫端 =====
-    // 呼叫端（DOMContentLoaded 內）會拿 unlocked 這個數字去呼叫
-    // Sync_Achievements_Unlocked()，同步進 player_stats/{anon_id}/
-    // achievements_unlocked，給排行榜的「解鎖成就數量」榜用。
-    // 直接回傳「這次渲染算出的同一份數字」，不在外面重算一次，
-    // 確保排行榜看到的數字永遠跟畫面上顯示的總覽進度條一致。
     return { unlocked: overallUnlocked, total: overallTotal }
 }
 
 document.addEventListener("DOMContentLoaded", function(){
-    // 跟排行榜的 anon_id 機制一致：訪客跟已登入玩家都能看、都能累積，
-    // 不需要判斷登入狀態，直接讀資料渲染就好
+
     const streakPromise = (typeof TCTC_Get_Streak_Data === "function")
         ? TCTC_Get_Streak_Data()
         : Promise.resolve({ current_streak: 0, longest_streak: 0, total_login_days: 0, longest_gap_days: 0 })
@@ -214,26 +198,12 @@ document.addEventListener("DOMContentLoaded", function(){
         console.warn("[achievements] 找不到 TCTC_Get_Streak_Data，請確認有載入 TCTC2-0-login_streak.js")
     }
 
-    // streak 資料延遲 600ms 再讀：給 login_streak.js 頁面載入時的當日寫入請求
-    // 足夠時間完成，600ms 是憑經驗抓的寬鬆值，不是精確同步機制——如果玩家網路
-    // 真的很慢，這裡讀到的可能還是寫入前的舊資料，但不影響正確性，只是「畫面
-    // 慢一點才反映最新數字」，下次重新整理或再次造訪就會是對的。
-    // player_stats 資料跟 streak 是各自獨立的讀取，不用互相等待，用 Promise.all
-    // 同時發出兩個請求，最後一起渲染，避免畫面分兩次跳動。
     Promise.all([
         new Promise(function(resolve){ setTimeout(function(){ resolve(streakPromise) }, 600) }),
         ACHV_Get_Player_Stats()
     ]).then(function(results){
         const overview = ACHV_Render_All(results[0], results[1])
 
-        // ===== 【新增】把這次算出的「總解鎖成就數」同步進雲端 =====
-        // 只在榮譽牆頁面渲染完成後同步一次，不需要在其他頁面也呼叫——
-        // 這個數字本來就是「現場重新計算」出來的衍生值（邏輯等同
-        // avg_wpm 用 wpm_sum/wpm_count 算出來後才 set() 寫入），只要
-        // 玩家造訪過一次榮譽牆，雲端的數字就會更新到當下最新狀態，
-        // 不需要更即時的同步頻率。Sync_Achievements_Unlocked() 定義在
-        // TCTC2-0-firebase.js，這裡用 typeof 保護，避免哪個頁面忘記
-        // 載入 firebase.js 時直接噴錯。
         if(typeof Sync_Achievements_Unlocked === "function" && overview){
             Sync_Achievements_Unlocked(overview.unlocked)
         }

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+    <head>
+        <meta charset="UTF-8">
+        <script src="TCTC2-0-domain_redirect.js"></script>
+        <meta name="google-site-verification" content="fHfTpW9ouqdLEFGEQhLvwelT1xdZ7Sxmi-iKBHY7S_8" />
+
+        <link rel="icon" href="favicon-32x32.png" type="image/png" sizes="32x32">
+
+        <meta property="og:image" content="https://lucaslai991207.github.io/tctc/os_image.png">
+
+        <meta property="og:title" content="TCTC 繁體中文打字中心">
+
+        <title>意見回報 - TCTC 繁體中文打字練習中心</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="description" content="回報 TCTC 網站的錯誤、提出功能建議，或其他任何想讓我們知道的事。">
+        <meta name="robots" content="noindex, follow">
+
+        <link rel="stylesheet" href="TCTC2-0-intro_lobby.css">
+        <link rel="stylesheet" href="TCTC2-0-main_lobby.css">
+        <link rel="stylesheet" href="TCTC2-0-profile.css">
+
+        <link rel="stylesheet" href="TCTC2-0-view_profile.css">
+        <link rel="stylesheet" href="TCTC2-0-mobile.css">
+        <link rel="stylesheet" href="TCTC2-0-auth_ui.css">
+        <link rel="stylesheet" href="TCTC2-0-achv_notify.css">
+
+        <script src="TCTC2-0-theme.js"></script>
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@200;300;400;500;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@200;300;400;500&display=swap" rel="stylesheet">
+    </head>
+    <body>
+        <nav id="nav">
+            <img src="TCTC2.0 logo.png" class="logo_style" onclick="window.location.href='TCTC2-0-main.html'">
+            <div class="nav_css">
+                <div onclick="window.location.href='TCTC2-0-details.html'">常見問題</div>
+                <div class="nav_dropdown">
+                    模式 <span class="nav_dropdown_arrow">≡</span>
+                    <div class="nav_dropdown_menu">
+                        <div class="nav_dropdown_panel">
+                            <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-main.html'">主線模式</div>
+                            <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-challenge_lobby.html'">挑戰模式</div>
+                            <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-custom.html'">自訂模式</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="nav_dropdown">
+                    更多 <span class="nav_dropdown_arrow">≡</span>
+                    <div class="nav_dropdown_menu">
+                        <div class="nav_dropdown_panel">
+                            <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-ranking.html'">排行榜</div>
+                            <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-profile.html'">設定</div>
+                            <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-achievements.html'">個人榮譽牆</div>
+                            <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-classroom.html'">我的教室</div>
+                            <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-feedback.html'">回報問題</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <main class="profile_main_style" style="justify-content: flex-start;">
+            <section class="profile_first_section">
+                <div class="profile_page_header" style="text-align: left; max-width: 46rem; margin: 3rem auto 2rem; padding: 0 1.2rem;">
+                    <h1 class="profile_page_title" style="margin-top: 0; text-align: center;">意見回報</h1>
+                    <p class="profile_page_subtitle">錯誤回報、功能建議，或任何想讓我們知道的事</p>
+                </div>
+
+                <div style="max-width: 46rem; margin: 0 auto; padding: 0 1.2rem;">
+                    <div class="profile_card">
+
+                        <p class="profile_field_label">類別</p>
+                        <div class="vp_report_category_list" id="feedback_category_list" style="margin-bottom: 1.4rem;">
+                            <label class="vp_report_category_item">
+                                <input type="radio" name="feedback_category" value="bug" checked>錯誤回報
+                            </label>
+                            <label class="vp_report_category_item">
+                                <input type="radio" name="feedback_category" value="suggestion">功能建議
+                            </label>
+                            <label class="vp_report_category_item">
+                                <input type="radio" name="feedback_category" value="other">其他
+                            </label>
+                        </div>
+
+                        <label class="profile_field_label" for="feedback_title">標題（選填）</label>
+                        <input type="text" class="profile_input" id="feedback_title" maxlength="50" placeholder="簡單描述一下，例如：排行榜載入不出來" style="margin-bottom: 1.2rem;">
+
+                        <label class="profile_field_label" for="feedback_content">詳細內容</label>
+                        <textarea class="profile_textarea" id="feedback_content" maxlength="1000" placeholder="請盡量描述詳細一點，例如：發生的頁面、操作步驟、看到什麼結果……都會很有幫助"></textarea>
+
+                        <label class="profile_field_label" for="feedback_contact">聯絡方式（選填）</label>
+                        <input type="text" class="profile_input" id="feedback_contact" maxlength="100" placeholder="Email 或 Discord，方便的話我們想跟進時可以聯絡你">
+
+                        <p class="profile_username_warning" id="feedback_error"></p>
+
+                        <button type="button" class="profile_update_btn" id="feedback_submit_btn" onclick="Submit_Feedback_Form()">送出</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <div id="feedback_toast" class="profile_toast"></div>
+
+        <footer class="intro_footer">
+            <div class="footer_div">
+                <div class="footer_col">
+                    <p class="footer_col_title">聯絡我們</p>
+                    <a class="footer_link" href="mailto:tctc.official.tw@gmail.com">✉ tctc.official.tw@gmail.com</a>
+                </div>
+                <div class="footer_col">
+                    <p class="footer_col_title">平台連結</p>
+                    <a class="footer_link" href="https://www.youtube.com/channel/UCIA5fwMrvGpvcQbG0ZX2ZLA" target="_blank" rel="noopener">Youtube</a>
+                    <a class="footer_link" href="https://discord.gg/PQJyqPN5R" target="_blank" rel="noopener">Discord</a>
+                </div>
+            </div>
+            <div class="footer_copyright">
+                &copy; 2026 TCTC2.0 繁中打字中心. All Rights Reserved.
+            </div>
+        </footer>
+
+        <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+        <script src="TCTC2-0-firebase.js?v=3"></script>
+        <script src="TCTC2-0-auth_ui.js"></script>
+        <script src="TCTC2-0-online_time.js"></script>
+        <script src="TCTC2-0-feedback.js"></script>
+        <script src="TCTC2-0-mobile_nav.js"></script>
+        <script defer src="https://cloud.umami.is/script.js" data-website-id="070df494-4361-4dce-ad65-a25b404811e9"></script>
+    </body>
+</html>

@@ -1,23 +1,5 @@
-/* ============================================================
-   TCTC2-0-custom.js
-   自訂練習模式
-
-   跟挑戰模式的「文章模式」共用同一套核心概念（逐字容錯比對、即時上色、
-   即時 WPM／正確率），但這裡刻意獨立一份檔案、不是直接改 challenge.js，
-   原因：
-
-   1. 目標文字來源完全不同——挑戰模式從 Challenge_Data 題庫抽，這裡是
-      玩家自己貼的任意文字，長度、內容都不可預期。
-   2. 【刻意的設計決定，不是漏做】這個模式完全不寫入 Firebase：不上排行榜、
-      不計入成就／XP／積分、也不存歷史紀錄到雲端。原因不只是省資料庫用量，
-      更重要的是玩家自己貼的文字沒辦法保證公平——如果算進去，隨便貼一段
-      只有一兩個簡單字重複幾百次的文字，就能刷出誇張的 WPM 洗榜/洗成就，
-      這是「自訂文字」這個功能天生的漏洞，所以乾脆完全不接上任何會被拿來
-      比較／排名的系統，資料全部留在玩家自己的瀏覽器（localStorage）。
-   ------------------------------------------------------------ */
-
 const CUS_SAVED_KEY = "tctc2.0-custom_texts"
-const CUS_SAVED_MAX = 20   // 存在本機而已，上限只是避免 localStorage 無限長大
+const CUS_SAVED_MAX = 20
 
 const cus_setup_section    = document.getElementById("cus_setup_section")
 const cus_setup_textarea   = document.getElementById("cus_setup_textarea")
@@ -134,9 +116,6 @@ function cus_count_correct(typedValue){
     return correct
 }
 
-/* ============================================================
-   ===== 常用文本：本機儲存清單 =====
-   ============================================================ */
 function CUS_Get_Saved_Texts(){
     try {
         return JSON.parse(localStorage.getItem(CUS_SAVED_KEY)) || []
@@ -192,7 +171,7 @@ function CUS_Render_Saved_List(){
 
     cus_saved_list_el.querySelectorAll(".cus_saved_item").forEach(function(el){
         el.addEventListener("click", function(event){
-            // 點到刪除按鈕：只刪除，不要順便把文字帶進輸入框
+
             if(event.target.dataset.deleteId){
                 CUS_Delete_Saved_Text(event.target.dataset.deleteId)
                 return
@@ -207,9 +186,6 @@ function CUS_Render_Saved_List(){
     })
 }
 
-/* ============================================================
-   ===== 設定畫面 =====
-   ============================================================ */
 function CUS_Update_Char_Count(){
     const len = cus_setup_textarea.value.trim().length
     cus_char_count_el.textContent = `${len} 字`
@@ -227,9 +203,7 @@ if(cus_save_checkbox){
 
 if(cus_start_btn){
     cus_start_btn.addEventListener("click", function(){
-        // 多個空白／換行合併成一個空格：自訂模式的目標文字沿用挑戰模式
-        // 「文章是連續一整塊、靠可視寬度自動換行」的呈現方式，不處理玩家
-        // 原始輸入裡的真實換行符號，比對邏輯才能跟挑戰模式共用同一套。
+
         const raw = cus_setup_textarea.value.trim()
         const normalized = raw.replace(/\s+/g, " ")
         if(normalized.length === 0) return
@@ -242,9 +216,6 @@ if(cus_start_btn){
     })
 }
 
-/* ============================================================
-   ===== 練習畫面 =====
-   ============================================================ */
 function cus_render_article(){
     cus_article_box.innerHTML = ""
     const frag = document.createDocumentFragment()
@@ -307,8 +278,6 @@ function CUS_Start(text){
     cus_input_textarea.focus()
 }
 
-// ===== 計時只是「顯示用的碼表」（正著數），沒有倒數、沒有時間到強制結束——
-// 自訂模式的長度完全由玩家貼的文字決定，打完才算完成 =====
 function cus_start_timer(){
     if(cus_timer_handle) return
     cus_start_time = Date.now()
@@ -405,7 +374,6 @@ function cus_on_keydown_count_correction(event){
     }
 }
 
-// 打字音效：純粹依照按了哪個實體鍵，跟 game.html / challenge.js 同一套做法
 function cus_on_keydown_typing_sound(event){
     if(cus_finished) return
 
@@ -476,11 +444,6 @@ function cus_finish(){
         ]
     }
 
-    // ===== 完全不寫入 Firebase：沒有 Submit_Challenge_Score_To_Leaderboard、
-    // 沒有 Sync_Player_Stats、沒有 Sync_Chars_Typed、沒有 Sync_XP、沒有 Sync_Player_Points，
-    // 也沒有存任何歷史紀錄——這頁打完，資料就只存在這次的記憶體跟畫面上，
-    // 離開頁面就沒了（常用文本清單是唯一會留下來的東西，而且純粹是本機文字，不是成績）。
-
     cus_result_window.classList.remove("is_hidden")
 }
 
@@ -495,7 +458,6 @@ function CUS_Back_To_Setup(){
     cus_setup_section.classList.remove("is_hidden")
     cus_started = false
 
-    // 把剛剛打過的文字留在設定框裡，方便玩家微調後再練一次，而不是要重新貼一次
     if(cus_setup_textarea){
         cus_setup_textarea.value = cus_target_text
         CUS_Update_Char_Count()
@@ -507,7 +469,6 @@ function CUS_Share_Result(){
     if(typeof Open_Share_Card_Modal === "function") Open_Share_Card_Modal(last_custom_result_summary)
 }
 
-// ===== 返回鍵：只有「已經開始打字、還沒打完」才需要確認，避免誤觸弄丟正在打的內容 =====
 function CUS_Confirm_Leave(){
     const in_progress = cus_started && cus_start_time && !cus_finished
     if(in_progress && !confirm("練習還沒打完，現在離開這次的內容不會被保留，確定要離開嗎？")){
@@ -516,7 +477,6 @@ function CUS_Confirm_Leave(){
     window.location.href = "TCTC2-0-main.html"
 }
 
-// ===== 事件綁定 =====
 if(cus_input_textarea){
     cus_input_textarea.addEventListener("input", cus_on_input)
     cus_input_textarea.addEventListener("keydown", cus_on_keydown_count_correction)
@@ -527,7 +487,6 @@ if(cus_input_textarea){
         if(event.key === "Enter") event.preventDefault()
     })
 
-    // 練習模式的重點是「真的打」，貼上就練不到東西了
     cus_input_textarea.addEventListener("paste", function(event){
         event.preventDefault()
         alert("貼上就練不到打字囉，自己打打看吧！")
@@ -542,7 +501,6 @@ if(cus_article_box){
     })
 }
 
-// ===== 標點符號提示視窗 =====
 const cus_punct_hint_btn      = document.getElementById("cus_punct_hint_btn")
 const cus_punct_modal_overlay = document.getElementById("cus_punct_modal_overlay")
 const cus_punct_modal_close   = document.getElementById("cus_punct_modal_close")
@@ -565,7 +523,6 @@ if(cus_punct_modal_overlay){
     })
 }
 
-// ===== 打字音效開關（跟 game.html / challenge.js 共用同一份 localStorage 狀態）=====
 function CUS_Init_Sound_Toggle_Btn(){
     const btn = document.getElementById("cus_sound_toggle_btn")
     const icon = document.getElementById("cus_sound_toggle_icon")

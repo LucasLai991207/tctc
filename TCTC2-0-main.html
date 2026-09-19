@@ -10,26 +10,26 @@
     <meta name="robots" content="index, follow">
 
 
-    <meta name="google-site-verification" content="fHfTpW9ouqdLEFGEQhLvwelT1xdZ7Sxmi-iKBHY7S_8" /> <!--google驗證-->
+    <meta name="google-site-verification" content="fHfTpW9ouqdLEFGEQhLvwelT1xdZ7Sxmi-iKBHY7S_8" /> 
 
-    <!--瀏覽器分頁小圖-->
+    
     <link rel="icon" href="favicon-32x32.png" type="image/png" sizes="32x32">
 
-    <!-- 社群分享預覽圖-->
+    
     <meta property="og:image" content="https://lucaslai991207.github.io/tctc/os_image.png">
 
-    <!--分享時顯示的title-->
+    
     <meta property="og:title" content="TCTC 繁體中文打字中心">
 
 
     <link rel="stylesheet" href="TCTC2-0-intro_lobby.css">
     <link rel="stylesheet" href="TCTC2-0-main_lobby.css">
     <link rel="stylesheet" href="TCTC2-0-mobile.css">
-    <!-- 【新增】帳號系統彈窗樣式 -->
+    
     <link rel="stylesheet" href="TCTC2-0-auth_ui.css">
 
     <link rel="stylesheet" href="TCTC2-0-achv_notify.css">
-    <!-- 【新增】全站配色主題系統：務必放在 CSS 之後、其他 script 之前，同步載入避免換色閃爍 -->
+    
     <script src="TCTC2-0-theme.js"></script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -41,17 +41,16 @@
     <nav id="nav">
         <img src="TCTC2.0 logo.png" class="logo_style" onclick="window.location.href='TCTC2-0-main.html'">
         <div class="nav_css">
-            <!-- <div>登入</div> -->
+            
             <div onclick="window.location.href='TCTC2-0-details.html'">常見問題</div>
-            <!-- ===== 【修改】把「挑戰模式」單一連結，改成跟「更多」同一套 .nav_dropdown 元件 =====
-                 之後要加新模式，只要在 .nav_dropdown_panel 裡多加一個 .nav_dropdown_item 就好 -->
+            
             <div class="nav_dropdown">
                 模式 <span class="nav_dropdown_arrow">≡</span>
                 <div class="nav_dropdown_menu">
                     <div class="nav_dropdown_panel">
                         <div class="nav_dropdown_item nav_dropdown_item_active" onclick="window.location.href='TCTC2-0-main.html'">主線模式</div>
                         <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-challenge_lobby.html'">挑戰模式</div>
-                        <!-- 【新增】自訂模式入口 -->
+                        
                         <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-custom.html'">自訂模式</div>
                     </div>
                 </div>
@@ -62,9 +61,10 @@
                     <div class="nav_dropdown_panel">
                         <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-ranking.html'">排行榜</div>
                         <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-profile.html'">設定</div>
-                        <!-- 【新增】個人榮譽牆入口 -->
+                        
                         <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-achievements.html'">個人榮譽牆</div>
                         <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-classroom.html'">我的教室</div>
+                        <div class="nav_dropdown_item" onclick="window.location.href='TCTC2-0-feedback.html'">回報問題</div>
                     </div>
                 </div>
             </div>
@@ -133,82 +133,13 @@
                     </div>
                     <div class="main_lobby_main_frame_mode_selector_intro" onclick="Show_difficulty_selector()">？</div>
                 </div>
-                <div class="main_lobby_main_frame_row"> <!-- 左右槽 -->
-                    <div class="main_lobby_main_frame_mainblock" id="main_lobby_level_container"> <!--關卡選擇-->
-                        <!-- <div class="main_lobby_map_stage" id="easy_stage1">
-                            <div class="main_lobby_map_stage_row">
-                                <div class="main_lobby_map_stage_text1">第一階段</div>
-                                <div class="main_lobby_map_stage_text2">
-                                    <p class="main_lobby_map_stage_text2-1">
-                                        基礎注音 -<span class="main_lobby_map_stage_text2-2"> ㄑ ㄨ ㄔ ㄧ</span>
-                                    </p>
-                                <div class="main_lobby_map_stage_text3">注音練習</div>
-                                <div class="main_lobby_map_stage_difficulty_star">☆☆☆☆☆☆★</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="main_lobby_map_stage" id="easy_stage2">
-                            <div class="main_lobby_map_stage_row">
-                                <div class="main_lobby_map_stage_text1">第二階段</div>
-                                <div class="main_lobby_map_stage_text2">
-                                    <p class="main_lobby_map_stage_text2-1">
-                                        基礎注音 -<span class="main_lobby_map_stage_text2-2"> ㄎ ㄜ ㄍ ㄛ</span>
-                                    </p>
-                                <div class="main_lobby_map_stage_text3">注音練習</div>
-                                <div class="main_lobby_map_stage_difficulty_star">☆☆☆☆☆☆★</div>
-                                </div>
-                            </div>
-                        </div> -->
+                <div class="main_lobby_main_frame_row"> 
+                    <div class="main_lobby_main_frame_mainblock" id="main_lobby_level_container"> 
+                        
                     </div>
-                    <div class="main_lobby_main_frame_map_selector" id="main_lobby_chapter_selector"> <!--章節-->
+                    <div class="main_lobby_main_frame_map_selector" id="main_lobby_chapter_selector"> 
                         <p class="main_lobby_chapter_selector_text1">章節選擇</p>
-                        <!-- <div class="easy_chapter_frame" id="easy_chapter1" data-level="1-1">
-                            <div class="easy_chapter_frame_row">
-                                <p class="easy_chapter_frame_number">
-                                    01<span class="easy_chapter_name">認識鍵盤</span><span class="easy_chapter_progress">
-                                    
-                                </p>
-                            </div>
-                        </div>
-                        <div class="easy_chapter_frame" id="easy_chapter2" data-level="1-2">
-                            <div class="easy_chapter_frame_row">
-                                <p class="easy_chapter_frame_number">
-                                    02<span class="easy_chapter_name">基礎注音-1</span><span class="easy_chapter_progress">
-                                    
-                                </p>
-                            </div>
-                        </div>
-                        <div class="easy_chapter_frame" id="easy_chapter3" data-level="1-3">
-                            <div class="easy_chapter_frame_row">
-                                <p class="easy_chapter_frame_number">
-                                    03<span class="easy_chapter_name">基礎注音-2</span><span class="easy_chapter_progress">
-                                    
-                                </p>
-                            </div>
-                        </div>
-                        <div class="easy_chapter_frame" id="easy_chapter3" data-level="1-4">
-                            <div class="easy_chapter_frame_row">
-                                <p class="easy_chapter_frame_number">
-                                    04<span class="easy_chapter_name">基礎注音-3</span><span class="easy_chapter_progress">
-                                    
-                                </p>
-                            </div>
-                        </div>
-                        <div class="easy_chapter_frame" id="easy_chapter4" data-level="1-4">
-                            <div class="easy_chapter_frame_row">
-                                <p class="easy_chapter_frame_number">
-                                    04<span class="easy_chapter_name">基礎注音-4</span><span class="easy_chapter_progress">
-                                </p>
-                            </div>
-                        </div>
-                        <div class="easy_chapter_frame" id="easy_chapter5" data-level="1-5">
-                            <div class="easy_chapter_frame_row">
-                                <p class="easy_chapter_frame_number">
-                                    03<span class="easy_chapter_name">程度測試</span><span class="easy_chapter_progress">
-                                    
-                                </p>
-                            </div>
-                        </div> -->
+                        
                         <div id="chapter_list" class="main_lobby_chapter_list_style"></div>
                     </div>
                 </div>
@@ -267,10 +198,7 @@
                 </div>
             </div>
         </section>
-        <!-- ===== 【新增】首次進站的暱稱設定彈窗 =====
-             玩家選完難度後（不管是點主大廳的三張卡片，還是點「？」跳出的難度選擇彈窗），
-             如果偵測到「還沒有暱稱、也還沒被問過」，就跳出這個彈窗，讓玩家順手取個名字。
-             樣式定義見 TCTC2-0-main_lobby.css 的 .nickname_setup_* 系列 class。 -->
+        
         <section class="nickname_setup_window is_hidden" id="nickname_setup_window">
             <div class="nickname_setup_card">
                 <p class="nickname_setup_subtitle">歡迎來到 TCTC</p>
@@ -296,7 +224,7 @@
         <div class="footer_div">
             <div class="footer_col">
                 <p class="footer_col_title">回報問題</p>
-                <a class="footer_link" href="https://forms.gle/xJcvq3AZ4PeNd3eq5" target="_blank" rel="noopener">遇到Bug？點我回報</a>
+                <a class="footer_link" href="TCTC2-0-feedback.html">遇到問題或有建議？點我回報</a>
             </div>
             <div class="footer_col">
                 <p class="footer_col_title">聯絡我們</p>
@@ -313,60 +241,49 @@
             &copy; 2026 TCTC2.0 繁中打字中心. All Rights Reserved.
         </div>
     </footer>
-    <!-- 【新增】在線時長追蹤（全站共用，每個頁面都要載入）
-         這個頁面沒有載入 Firebase，時間只會先記在本機，
-         等下次去 game.html / TCTC2-0-challenge.html / TCTC2-0-ranking.html
-         其中一個頁面時才會被補交上雲端。 -->
-    <!-- 【新增】帳號系統：nav 上的帳號按鈕跟登入/註冊彈窗需要這幾支，
-         順序要在 TCTC2-0-online_time.js 之前，因為 online_time.js 內部
-         會用到 TCTC2-0-firebase.js 的 Get_Anon_Id() -->
-    <!-- 【新增】XP／等級系統設定檔：務必放在 firebase.js 之前，
-         firebase.js 裡的 Sync_XP / Sync_Stage_Completion / Sync_Chars_Typed
-         都會讀 XP_CONFIG 裡的數值 -->
+    
+    
+    
     <script src="TCTC2-0-xp_data.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
     <script src="TCTC2-0-firebase.js?v=3"></script>
     <script src="TCTC2-0-auth_ui.js"></script>
-    <!-- 【新增】xp_display.js：把等級/稱號/進度條畫到玩家資訊卡上，
-         需要用到 firebase.js 的 Get_Own_Player_Stats，所以放在它之後 -->
+    
     <script src="TCTC2-0-xp_display.js"></script>
 
     <script src="TCTC2-0-online_time.js"></script>
-    <!-- 【新增】連續登入天數：main.html 是玩家幾乎每次來都會先經過的頁面，
-         最適合當作「今天有登入」的記錄點。要放在 TCTC2-0-firebase.js 之後
-         （需要用到它的 tctc_db / Get_Anon_Id），順序不拘在 online_time.js 前後皆可，
-         兩者不互相依賴。 -->
+    
     <script src="TCTC2-0-login_streak.js"></script>
-    <!-- 【新增】把玩家在設定頁面上傳的頭像顯示在這裡的頭像框裡（只讀 localStorage，不碰 Firebase） -->
+    
     <script src="TCTC2-0-avatar_display.js"></script>
     <script src="TCTC2-0.js"></script>
     <script src="TCTC2-0-difficulty_selet.js"></script>
     <script src="TCTC2-0-level_data.js"></script>
     <script>
-        // ===== 【新增】首次進站的暱稱設定彈窗 =====
-        // 觸發時機：玩家「選完難度」之後——涵蓋兩種入口：
-        //   1) 主大廳三張卡片（mode_select_easy_btn / medium_btn / hard_btn），
-        //      這幾顆的 click 事件是綁在 TCTC2-0-difficulty_selet.js 裡，我們不動那支檔案，
-        //      改用「事件代理（event delegation）」在 document 上監聽，不管它原本的
-        //      handler 是怎麼綁的都能抓到這次點擊。
-        //   2) 「？」跳出的難度選擇彈窗（main_lobby_easy_mode / medium_mode / hard_mode），
-        //      這幾顆本來就有 inline onclick，直接在 HTML 那邊多加一段呼叫即可（見上方 main）。
-        // 兩條路徑最後都會呼叫到同一個 Maybe_Show_Nickname_Setup()，內部會自己判斷
-        // 「這次要不要真的跳出來」，所以就算兩條路徑同時觸發也不會跳出兩次。
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         document.addEventListener("click", function(event){
             const target = event.target.closest("#mode_select_easy_btn, #mode_select_medium_btn, #mode_select_hard_btn")
             if(!target) return
-            // 用 setTimeout 延到下一輪事件迴圈，確保原本綁在這幾顆卡片上、
-            // 負責「渲染關卡列表」的邏輯先跑完，我們的彈窗才出現，避免疊在一起造成畫面閃爍
+            
+            
             setTimeout(Maybe_Show_Nickname_Setup, 0)
         }, true)
 
-        // 判斷「要不要跳出暱稱設定彈窗」：
-        // - 已經有暱稱（localStorage 的 username）：代表玩家已經是舊玩家或剛設定過，不用再問
-        // - 已經被問過一次（不管當時是設定成功還是按了「先跳過」）：同一個瀏覽器/anon_id
-        //   不會被重複打擾，跟「換一台瀏覽器/清除資料會變成新的 anon_id」這個網站既有的邏輯一致
+        
+        
+        
+        
         function Maybe_Show_Nickname_Setup(){
             if(localStorage.getItem("username")) return
             if(localStorage.getItem("tctc_nickname_prompted")) return
@@ -374,8 +291,8 @@
             const win = document.getElementById("nickname_setup_window")
             if(!win) return
 
-            // 一旦顯示過，不管玩家接下來做什麼選擇，都標記成「問過了」，
-            // 之後選其他難度也不會再跳出來
+            
+            
             localStorage.setItem("tctc_nickname_prompted", "1")
 
             win.classList.remove("is_hidden")
@@ -394,25 +311,25 @@
             if(win) win.classList.add("is_hidden")
         }
 
-        // 「先跳過」：純粹關掉彈窗，不寫入任何名字，玩家之後仍然可以到「設定」頁面自己取名
+        
         function Skip_Nickname_Setup(){
             Close_Nickname_Setup()
         }
 
-        // 「確定」：跟 TCTC2-0-profile.js 的 Update_profile() 用同一套規則——
-        // 先用 Validate_Username_Format() 檢查格式，再用 Claim_Username() 去 Firebase
-        // 確認這個名字全站沒有人用過，兩關都過才算成功、才寫進 localStorage
-        //
-        // ===== 【修正】重大 bug：這裡原本自己又定義了一個同名的 Wait_For_Auth_Ready() =====
-        // 因為這段 <script> 在 TCTC2-0-firebase.js 載入「之後」才執行，
-        // 同名的 function 宣告後面蓋前面，會把 firebase.js 裡那個正確、真的會
-        // 把目前登入的使用者傳出來的 Wait_For_Auth_Ready 整個蓋掉。
-        // 更糟的是，這裡舊版蓋掉之後的版本呼叫 callback() 時完全沒有帶 user 參數，
-        // 導致 Claim_Username 內部判斷「有沒有登入」永遠拿到 undefined，
-        // 不管 Firebase 實際上有沒有登入成功，都會跳出「登入尚未完成，請稍後再試」。
-        // Claim_Username() 本身在 firebase.js 裡就已經會呼叫（正確版的）
-        // Wait_For_Auth_Ready 等登入完成才去搶名字，這裡不需要重複再等一次，
-        // 直接刪掉這段本地版本、改成直接呼叫 Claim_Username。
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         function Confirm_Nickname_Setup(){
             const inputEl = document.getElementById("nickname_setup_input")
             const warningEl = document.getElementById("nickname_setup_warning")
@@ -452,7 +369,7 @@
 
                 localStorage.setItem("username", trimmed_value)
 
-                // 主大廳頭像旁邊顯示的名字，順手一起更新，不用整頁重新整理
+                
                 const nameEl = document.querySelector(".main_lobby_main_frame_player_profile_left_div_username")
                 if(nameEl) nameEl.textContent = trimmed_value
 
@@ -465,7 +382,7 @@
             })
         }
 
-        // Enter 直接送出、Esc 直接跳過，跟一般表單彈窗的操作習慣一致
+        
         document.addEventListener("DOMContentLoaded", function(){
             const inputEl = document.getElementById("nickname_setup_input")
             if(inputEl){
@@ -483,28 +400,28 @@
 
 
         document.addEventListener("DOMContentLoaded", function () {
-            const lastStage = localStorage.getItem("tctc_last_stage") // 例如 "1-5-2"
-            if (!lastStage) return // 玩家還沒玩過任何關卡，getItem 找不到會回傳 null
+            const lastStage = localStorage.getItem("tctc_last_stage") 
+            if (!lastStage) return 
 
-            const difficulty = get_difficulty_by_stageid(lastStage) // "easy" / "medium" / "hard"
+            const difficulty = get_difficulty_by_stageid(lastStage) 
             if (!difficulty) return
 
-            const chapterKey = lastStage.split("-").slice(0, 2).join("-") // "1-5-2" -> "1-5"
+            const chapterKey = lastStage.split("-").slice(0, 2).join("-") 
 
-            // 用「上次關卡所屬的難度」重新選一次難度，
-            // 確保 chapter_list 渲染的章節跟 tctc_last_stage 是同一個難度
-            // （tctc2.0-saved_difficulty 記錄的難度不一定跟上次玩的關卡難度相同）
+            
+            
+            
             if (difficulty === "easy") Difficulty_Choose_Easy()
             else if (difficulty === "medium") Difficulty_Choose_Medium()
             else if (difficulty === "hard") Difficulty_Choose_Hard()
 
-            // 執行到這裡，render_chapter() 已經同步跑完，章節元素一定在 DOM 裡了
+            
             const chapterEl = document.getElementById(`chapter-${chapterKey}`)
             if (!chapterEl) return
 
-            // 觸發原本綁定在章節上的 click 監聽器
-            // （裡面會呼叫 select_chapter() + render_stage(difficulty, 正確的章節)，
-            // 覆蓋掉 Difficulty_Choose_X() 預設渲染的 chapter[0]）
+            
+            
+            
             chapterEl.click()
 
             const stageEl = document.getElementById(`stage-${lastStage}`)
