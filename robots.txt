@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
+Disallow: /TCTC2-0-admin.html
 
 Sitemap: https://tctc-typing.pages.dev/sitemap.xml
